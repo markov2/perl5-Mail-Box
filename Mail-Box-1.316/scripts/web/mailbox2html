@@ -4,7 +4,7 @@ use strict;
 use lib '/home/markov/fake';
 use Mail::Box::Manager;
 
-my $VERSION = '1.315';
+my $VERSION = '1.316';
 
 Mail::Box->VERSION($VERSION);
 
@@ -259,6 +259,7 @@ sub create_message(@)
      , folder   => $args{folder}
      , subject  => $subject
      , manager  => $manager
+     , indexfile=> $option{index}
      );
 
     select $oldout;
@@ -435,7 +436,7 @@ print "NR=$nr_subfolders, NR=".@$subfolders."\n";
   {   print "<H4>$nr_subfolders subfolders:</H4>\n";
       foreach (@$subfolders)
       {   my $subname = basename $_->{foldername};
-          print "<A HREF=\"$subname/\">$subname</A> "
+          print "<A HREF=\"$subname/$indexfile\">$subname</A> "
               , "($_->{nr_messages} messages)<BR>\n";
       }
   }
@@ -537,7 +538,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.315
+This code is beta, version 1.316
 
 =cut
 

@@ -3,6 +3,13 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.316: Sat Jul 14 10:15:01 CEST 2001
+
+	* [Tassilo von Parseval] extended scripts/lsmail with new options.
+
+	* Modifications to scripts/web/mailbox2html.
+
+
 version 1.315: Sat Jul 14 01:34:31 CEST 2001
 
 	* Synopsis in Mail::Box starts with Mail::Box::Manager now.
