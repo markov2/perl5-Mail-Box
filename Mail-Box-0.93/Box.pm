@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '0.92';
+$VERSION = '0.93';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -223,6 +223,7 @@ you can disable delayed loading.    With C<'ALWAYS'> you force unconditional
 delayed-loading.
 
 Examples:
+
     $folder->new(lazy_extract => 'NEVER');
     $folder->new(lazy_extract => 10000);
     $folder->new(lazy_extract => sub {$_[3] >= 10000 }); #same
@@ -246,6 +247,7 @@ See C<registerHeaders()> below, for a detailed explanation.  Please try
 to avoid calling that method when you can do with using this option.
 
 Examples:
+
    $folder->new( take_headers  => 'ALL');
    $folder->new( take_headers  => 'Subject');
    $folder->new( take_headers  =>
@@ -253,6 +255,7 @@ Examples:
    $folder->new( take_headers  => 'REAL'
                , realhead_type => 'MIME::Head'
                );
+
 =back
 
 =cut
@@ -340,6 +343,7 @@ the specified options must be new folder to be opened.  Other options
 overrule those of the folder where this is a clone from.
 
 Example:
+
    my $folder2 = $folder->clone(folder => '=jan');
 
 =cut
@@ -377,8 +381,10 @@ specify too many fields, your program will consume considerable more memory.
 
 You can specify a regular expression, although you cannot use parentheses
 in them which do count.  The expressions will be matched always on the
-whole field.  So C<X-.*> will only match lines starting with C<X->.
-You can not used C<X-(ab|cd).*>, but may say C<X-(?:ab|cd).*>.
+whole field.  So C<X-.*> will only match lines starting with
+C<X->.
+You can not used C<X-(ab|cd).*>,
+but may say C<X-(?:ab|cd).*>.
 
 There are three special constants.  With C<ALL> you get all header-lines
 from the message (same as pattern C<.*>)  and C<REAL> will cause headers
@@ -419,6 +425,7 @@ which specify the header-lines to be taken.
 =back
 
 Examples:
+
    $folder->registerHeaders('ALL');
    $folder->registerHeaders('Subject', 'X-Folder-.*');
 
@@ -488,6 +495,7 @@ When to want to add messages from a different foldertype to this folder,
 you need to join folders, as shown in the following example.
 
 Example read folder into folder:
+
    my $folder = Mail::Box::File->new(folder => 'InBox');
    my $old    = Mail::Box::MH->new(folder => 'Received');
    $folder->addMessages(@$old);
@@ -581,14 +589,14 @@ Options specific to C<close> are:
 
 =over 4
 
-=item write => 'ALWAYS'|'NEVER'|'MODIFIED'
+=item * write => 'ALWAYS'|'NEVER'|'MODIFIED'
 
 When must the folder be written.  As could be expected, C<'ALWAYS'> means
 always (even if there are no changes), C<'NEVER'> means that changes to
 the folder will be lost, and C<'MODIFIED'> (which is the default) only
 saves the folder if there are any changes.
 
-=item force => BOOL
+=item * force => BOOL
 
 Overrule the setting of C<access> when the folder was opened.  This only
 contributes to your program when you give it a TRUE value.  However: writing
@@ -642,6 +650,7 @@ sure that that folder is written to disk first!  Otherwise you may loose data
 in case of a system-crash or software problems.
 
 Examples of instance call:
+
    my $folder = Mail::Box::File->new(folder => 'InBox');
    $folder->delete;
 
@@ -682,6 +691,7 @@ Returns the name of this folder.  What the name represents depends on
 the actual type of mailboxes used.
 
 Example:
+
    print $folder->name;
 
 =cut
@@ -697,6 +707,7 @@ sub name() { shift->{MB_foldername} }
 Checks whether the current folder is writeable respectively readable.
 
 Example:
+
     $folder->addMessage($msg) if $folder->writeable;
 
 =cut
@@ -742,6 +753,7 @@ sub lazyExtract($$$)
 Get or set a message with on a certain index.
 
 Examples:
+
     my $msg = $folder->message(3);
     $folder->message(3)->delete;   # status changes to `deleted'
     $folder->message(3) = $msg;
@@ -795,6 +807,7 @@ messages in this folder.  Dereferencing a folder to an array is
 overloaded to call this method.
 
 Examples:
+
     foreach ($folder->messages) {...}
     foreach (@$folder)
     my $remaining_size = $folder->messages;
@@ -843,6 +856,7 @@ Returns a list of I<all> messages in the folder, including
 those which are to be deleted.
 
 Examples:
+
     foreach my $msg ($folder->allMessages)
     {   $msg->print;
     }
@@ -863,6 +877,7 @@ For some folder-types (like MH), this method may cause all message-files
 to be read.  See their respective manual-pages.
 
 Examples:
+
     foreach my $id ($folder->allMessageIDs)
     {   $folder->messageID($id)->print;
     }
@@ -883,6 +898,7 @@ object or a sub-class of that.
 Messages with id's which allready exist in this folder are neglected.
 
 Examples:
+
    $folder->addMessage($msg);
    $folder->addMessages($msg1, $msg2, ...);
 
@@ -1013,6 +1029,7 @@ sub messageDeleted($$)
 Get or set the directory which is used to store mail-folders by default.
 
 Examples:
+
    print $folder->folderdir;
    $folder->folderdir("$ENV{HOME}/nsmail");
 
@@ -1034,6 +1051,7 @@ are sure that the header is already loaded, otherwise they are not
 recognized).
 
 Examples:
+
    $folder->current(0);
    $folder->current($message);
 
@@ -1077,6 +1095,8 @@ which will cause changes to be lost.  In this condition, the two-way
 reference will cause Perl to call the DESTROY of the folder and its
 messages in undefined order.  It is not possible to write messages
 which are already removed...
+
+=back
 
 =cut
 
@@ -1245,7 +1265,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.92
+This code is alpha, version 0.93
 
 =cut
 

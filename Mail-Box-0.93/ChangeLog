@@ -1,5 +1,11 @@
 CHANGELOG of Mail::Box
 
+version 0.93: Fri Feb  2 16:16:09 CET 2001
+
+Mark Overmeer <mark@overmeer.net>
+
+	* Doc update only.  There where some mistakes against pod.
+
 version 0.92: Tue Jan 30 21:22:57 CET 2001
 
 Mark Overmeer <mark@overmeer.net>

@@ -140,7 +140,6 @@ will cause many messages to be parsed.
 
 NOT USED YET.  Defaults to FALSE.
 
-=item
 =back
 
 =cut
@@ -325,6 +324,7 @@ a message whose header was not read yet (as usual for MH-folders,
 for instance) the reading of that header will be triggered here.
 
 Examples:
+
    $folder->inThread($message);
    $message->inThread;    #same
 
@@ -339,8 +339,6 @@ sub inThread($)
     # this message.
     
     my $msgid   = $message->messageID;
-use Carp;
-confess if $message->isDummy;
     my $head    = $message->head;
 
     my $replies;
@@ -533,6 +531,7 @@ message in the folder.  Even a dummy message can be returned, when the
 first message in the thread was not stored in the folder.
 
 Example:
+
     my $start = $folder->message(42)->thread;
 
 =cut
@@ -573,19 +572,19 @@ Values for the STRING may be:
 
 =over 4
 
-=item * REPLY
+=item * 'REPLY'
 
 This relation was directly derived from an `in-reply-to' message header
 field.  The relation is very sure.
 
-=item * REFERENCE
+=item * 'REFERENCE'
 
 This relation is based on information found in a `Reference' message
 header field.  One message may reference a list of messages which
 precede it in the thread.  Let's hope they are stored in the right
 order.
 
-=item * GUESS
+=item * 'GUESS'
 
 The relation is a big guess, of undetermined type.
 
@@ -594,6 +593,7 @@ The relation is a big guess, of undetermined type.
 More constants may be added later.
 
 Examples:
+
    my $question = $answer->repliedTo;
    my ($question, $quality) = $answer->repliedTo;
    if($question && $quality eq 'REPLY') { ... };
@@ -630,6 +630,7 @@ sub follows($$)
     {   $self->{MBT_parent}  = ref $message ? $message->messageID : $message;
         $self->{MBT_quality} = $how;
     }
+
     $self;
 }
 
@@ -799,9 +800,11 @@ This is useful for debugging, but most message-readers
 will prefer to implement their own thread printer.
 
 Example:
+
    print $message->threadToString;
 
 may result in
+
    Subject of this message
    |- Re: Subject of this message
    |-*- Re: Re: Subject of this message
@@ -860,7 +863,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.92
+This code is alpha, version 0.93
 
 =cut
 

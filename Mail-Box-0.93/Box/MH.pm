@@ -853,6 +853,8 @@ name:
 
 So: label C<unseen> is translated into C<seen> for internal use.
 
+=back
+
 =over 4
 
 =cut
@@ -863,8 +865,6 @@ So: label C<unseen> is translated into C<seen> for internal use.
 
 Returns the filename of the dedicated file which contains the label
 related to the messages in this folder-directory.
-
-=back
 
 =cut
 

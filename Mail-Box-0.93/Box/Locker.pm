@@ -166,6 +166,8 @@ The C<lock>, C<test_lock>, and C<unlock> methods are to be
 used.  They call specific methods which implement the right locking
 mechanism.   I<Do not call> the various locking methods directly.
 
+=over 4
+
 =item lock [FOLDER] [METHOD]
 
 Get a lock on a folder, by using the predefined method, or a
@@ -492,9 +494,6 @@ sub NFS_unlock($)
      );
 }
 
-
-
-
 #-------------------------------------------
 
 =back
@@ -507,7 +506,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.92
+This code is alpha, version 0.93
 
 =cut
 

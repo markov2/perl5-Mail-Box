@@ -382,8 +382,6 @@ Examples:
    $mgr->appendMessage('=send', $message, folderdir => '/');
    $mgr->appendMessage('=received', $inbox->messages);
 
-=back
-
 =cut
 
 sub appendMessage($@)
@@ -471,6 +469,8 @@ sub delete($@)
 
 #-------------------------------------------
 
+=back
+
 =head1 AUTHOR
 
 Mark Overmeer (F<Mark@Overmeer.net>).
@@ -479,7 +479,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.92
+This code is alpha, version 0.93
 
 =cut
 

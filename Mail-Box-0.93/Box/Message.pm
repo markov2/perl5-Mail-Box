@@ -294,6 +294,7 @@ sub folder(;$)
 Returns the size of the message, including headers.
 
 Example:
+
     print $folder->message(8)->size;
 
 =cut
@@ -344,6 +345,7 @@ been changed by the program.  This is used later, when the messages are
 written back to file.
 
 Examples:
+
     if($message->modified) {...}
     $message->modified(1);
 
@@ -366,7 +368,8 @@ sub modified(;$)
 Flag the message to be deleted.  The real deletion only takes place on
 a synchronization of the folder.
 
-iExamples:
+Examples:
+
    $message->delete;
    delete $message;
 
@@ -383,6 +386,7 @@ undef (not deleted, false) or the time of deletion (true).  With a
 BOOL argument, the status is changed first.
 
 Examples:
+
    if($message->deleted) {...}
    $message->deleted(0);        # undelete
 
@@ -476,6 +480,7 @@ Get the value related to the label(s).  This returns a list of values, which
 may be empty, undefined, or a value which evaluates to TRUE.
 
 Example:
+
     if($message->label('seen')) {...}
     my ($seen, $current) = $msg->label('seen', 'current');
 
@@ -654,6 +659,7 @@ You usually do not need to call this yourself.
 The coerced message is returned on success, else C<undef>.
 
 Example:
+
    my $folder = Mail::Box::Mbox->new;
    my $entity = MIME::Entity->new(...);
    Mail::Box::MBox::Message->coerce($inbox, $entity);
@@ -730,6 +736,7 @@ returns a handle to a handle-type object which can be opened to read
 the body of the message.
 
 Example:
+
     sub print_body($)
     {   my ($self,$message) = @_;
         if($message->is_multipart)
@@ -857,6 +864,7 @@ which are found in a reference-list, but not (yet) in the folder.
 (Class method)  Create a new dummy message.
 
 Examples:
+
     my $message = Mail::Box::Message::Dummy->new($msgid);
     if($message->isDummy) {...}
 
@@ -899,6 +907,8 @@ A message where most of the data still resides in the folder-file, is a
 type of the object.
 
 =head2 PUBLIC INTERFACE
+
+=over 4
 
 =cut
 
@@ -976,6 +986,8 @@ use vars qw/$AUTOLOAD/;
 #our $AUTOLOAD;
 
 #-------------------------------------------
+
+=back
 
 =head1 Mail::Box::Message::NotReadHead
 
@@ -1113,6 +1125,7 @@ Load the message, then capture the real header, and finally calls the
 method on the what should have been called in the first place.
 
 Example:
+
     $message->head->get('some-field')
 
 where $message is a C<Mail::Box::Message::NotParsed>, will return a
@@ -1165,6 +1178,8 @@ sub DESTROY { shift }
 
 #-------------------------------------------
 
+=back
+
 =head1 AUTHOR
 
 Mark Overmeer (F<Mark@Overmeer.net>).
@@ -1173,7 +1188,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.92
+This code is alpha, version 0.93
 
 =cut
 
