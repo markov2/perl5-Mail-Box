@@ -142,7 +142,7 @@ sub print()
 
         $self->createStatus->createXStatus;
         $self->MIME::Entity::print($out);
-        $out->print("\n");
+        ref $out eq 'GLOB' ? print $out "\n" : $out->print("\n");
     }
     else
     {   # Unmodified messages are copied directly from their folder
@@ -157,7 +157,9 @@ sub print()
             $folder->fileClose unless $was_open;
             return 0;
         }
-        $out->print($msg);
+
+        # required for perl <5.6.0, otherwise just $out->print($msg)
+        ref $out eq 'GLOB' ? print $out $msg : $out->print($msg);
     }
 
     $folder->fileClose unless $was_open;
@@ -410,7 +412,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.110
+This code is beta, version 1.111
 
 =cut
 

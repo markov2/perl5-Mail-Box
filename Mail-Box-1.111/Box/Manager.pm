@@ -252,6 +252,9 @@ sub open(@)
 {   my ($self, %args) = @_;
     my $name          = $args{folder} ||= $ENV{MAIL};
 
+    $args{folderdir} ||= $self->{MBM_folderdirs}->[0]
+        if $self->{MBM_folderdirs};
+
     # Do not open twice.
     my ($folder) = $self->isOpenFolder($name);
     if(defined $folder)
@@ -278,7 +281,8 @@ sub open(@)
 
     # Try to autodetect foldertype.
     my @find_options;
-    push @find_options, folderdir => $args{folderdir};
+    push @find_options, folderdir => $args{folderdir}
+        if $args{folderdir};
 
     foreach (@{$self->{MBM_folder_types}})
     {   my ($type, $class, @options) = @$_;
@@ -594,7 +598,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.110
+This code is beta, version 1.111
 
 =cut
 

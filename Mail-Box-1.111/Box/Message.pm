@@ -751,14 +751,14 @@ sub parts(@)
     # Upgrade the parts to this extended object class.
     my $parts = 0;
     map {$self->part_upgrade($_, $parts++)}
-       $self->MIME::Entity::parts( [@_] );
+       $self->MIME::Entity::parts( @_ ? [@_] : () );
 }
 
 sub part_upgrade($$)   # from MIME::Entity into Mail::Box::Message::Parsed
 {   my ($self, $part, $count) = @_;
 
     $part->Mail::Box::Message::init
-      ( messageID => $self->messageID . '-p$count'
+      ( { messageID => $self->messageID . '-p$count' }
       );
 
     $part->{MBM_is_part} = 1;
@@ -1235,7 +1235,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.110
+This code is beta, version 1.111
 
 =cut
 

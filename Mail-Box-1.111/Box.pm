@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.110';
+$VERSION = '1.111';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -21,7 +21,7 @@ Mail::Box - Manage a message-folder.
 =head1 SYNOPSIS
 
    use Mail::Box;
-   my $folder = new Mail::Box::Mbox file => $ENV{MAIL}, ...;
+   my $folder = new Mail::Box::Mbox folder => $ENV{MAIL}, ...;
    print $folder->message(0)->head->get('subject');  # See Mail::Box::Message
    $folder->message(3)->deleted(1);
    my $emails = $folder->messages;          # amount
@@ -34,7 +34,7 @@ Mail::Box - Manage a message-folder.
 Tied-interface:
 
    use Mail::Box;
-   tie my @inbox, 'Mail::Box', file => $ENV{MAIL};
+   tie my @inbox, 'Mail::Box', folder => $ENV{MAIL};
    # See Mail::Box::Tied
 
 =head1 DESCRIPTION
@@ -1282,7 +1282,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.110
+This code is beta, version 1.111
 
 =cut
 

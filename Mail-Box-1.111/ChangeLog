@@ -1,8 +1,25 @@
 CHANGELOG of Mail::Box
 
-All changes till now were made by Mark Overmeer <mark@overmeer.net>
+All changes were made by Mark Overmeer <mark@overmeer.net>, unless
+specified differently.
 
-version 1.101:
+version 1.111: Sat Apr 28 16:15:52 CEST 2001
+
+	by Jochen Lutz <jlu@gmx.de>:
+
+	* readMessage accepts \r at end of `^From' line for the sake
+	  of folders written on Win*  in Mail::Box::Mbox
+
+	* Fixed folderdir handling in Mail::Box::Manager
+
+	by Lupe Christoph <lupe@lupe-christoph.de>:
+
+ 	* Fixes in transition from Mime::Entity to Mail::Box::Message
+	  related to multi-part messages.
+
+	* Solved small portability issue with 5.005, related to $out->print
+
+version 1.110: Mrt 24 2001
 
 	* Various small documentation fixes.
 
@@ -23,7 +40,7 @@ version 1.101:
 	* MIME::Entity's which are put in Mbox folders get a time
 	  assigned in the From-line.
 
-version 1.100:
+version 1.100: Mrt 4 2001
 
 	* MAJOR CHANGE, which shouldn't effect anyone except people
 	  who extend the module.  I renamed the message object (now
