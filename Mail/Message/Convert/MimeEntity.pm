@@ -116,7 +116,7 @@ sub export($$)
 
 #------------------------------------------
 
-=method from OBJECT, OPTIONS
+=method from OBJECT, [CONTAINER]
 
 Returns a new Mail::Message object based on the information from
 an message-type which is strange to the Mail::Box set of modules.
@@ -130,7 +130,7 @@ an message-type which is strange to the Mail::Box set of modules.
 =cut
 
 sub from($;$)
-{   my ($self, $me, $parent) = @_;
+{   my ($self, $me, $container) = @_;
 
     croak "Converting from MIME::Entity but got a ".ref($me).'.'
         unless $me->isa('MIME::Entity');
@@ -150,8 +150,8 @@ sub from($;$)
     {   $head->add($name, $_) foreach $me_head->get($name);
     }
 
-    my $message = defined $parent
-      ? Mail::Message::Part->new(head => $head, parent => $parent)
+    my $message = defined $container
+      ? Mail::Message::Part->new(head => $head, container => $container)
       : Mail::Message->new(head => $head);
 
     if($me->is_multipart)

@@ -67,9 +67,9 @@ C</usr/people/jan/.index>, nor C<subdir/.index>, but say C<.index>.)
 =option  index OBJECT
 =default index undef
 
-You may specify an OBJECT of a type which extends C<Mail::Box::MH::Index>
-(at least implements the C<get()> method), as alternative for an index file
-reader as created by C<Mail::Box::MH>.
+You may specify an OBJECT of a type which extends Mail::Box::MH::Index
+(at least implements the C<get> method), as alternative for an index file
+reader as created by Mail::Box::MH.
 
 =option  labels_filename FILENAME
 =default labels_filename foldername.'/.mh_sequence'
@@ -82,8 +82,8 @@ be overruled with this flag.
 =option  labels OBJECT
 =default labels undef
 
-You may specify an OBJECT of a type which extends C<Mail::Box::MH::Labels>
-(at least implements the C<get()> method), as alternative for labels file
+You may specify an OBJECT of a type which extends Mail::Box::MH::Labels
+(at least implements the C<get> method), as alternative for labels file
 reader as created by C<Mail::Box::MH>.
 
 =option  index_type CLASS
@@ -148,12 +148,15 @@ sub create($@)
     my $directory = $class->folderToDirectory($name, $folderdir);
 
     return $class if -d $directory;
-    unless(mkdir $directory, 0700)
-    {   warn "Cannot create directory $directory: $!\n";
+
+    if(mkdir $directory, 0700)
+    {   $class->log(PROGRESS => "Created folder $name.\n");
+        return $class;
+    }
+    else
+    {   $class->log(WARNING => "Cannot create folder $name: $!\n");
         return;
     }
-
-    $class;
 }
 
 #-------------------------------------------
@@ -497,7 +500,9 @@ sub appendMessages(@)
                  : exists $args{messages} ? @{$args{messages}}
                  : return ();
 
-    my $self     = $class->new(@_, access => 'a');
+    my $self     = $class->new(@_, access => 'a')
+        or return ();
+
     my $directory= $self->directory;
     return unless -d $directory;
 

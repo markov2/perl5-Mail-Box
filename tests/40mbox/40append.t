@@ -16,7 +16,7 @@ use Tools;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 31}
+BEGIN {plan tests => 32}
 
 #
 # We will work with a copy of the original to avoid that we write
@@ -66,15 +66,15 @@ my $msg = Mail::Message->build
   , data    => [ "a short message\n", "of two lines.\n" ]
   );
 
-ok(defined $msg);
+ok(defined $msg,                                "message build successful");
 my @appended = $mgr->appendMessage("=$cpyfn", $msg);
-cmp_ok($folder->messages, "==", 46);
-cmp_ok(@appended, "==", 1);
+cmp_ok($folder->messages, "==", 46,             "message extends folder");
+cmp_ok(scalar @appended, "==", 1,               "coerced message returned");
 isa_ok($appended[0], 'Mail::Box::Message');
 
 cmp_ok($mgr->openFolders, "==", 1);
 $mgr->close($folder);
-cmp_ok($mgr->openFolders, "==", 0);
+cmp_ok($mgr->openFolders, "==", 0,               "folder is closed");
 
 my $msg2 = Mail::Message->build
   ( From      => 'me_too@example.com'
@@ -131,6 +131,9 @@ cmp_ok($folder->messages, "==", 47);
 cmp_ok($sec->messages, "==", 1);
 
 my $copy   = $folder->message(2);
+ok(defined $copy);
+die unless defined $copy;
+
 my @copied = $mgr->copyMessage($sec, $copy);
 cmp_ok(@copied, "==", 1);
 isa_ok($copied[0], 'Mail::Box::Message');

@@ -49,6 +49,8 @@ have three choices: specify a foldername which resembles an URL, or
 specify a pop-client object, or separate options for user, password,
 pop-server and server-port.
 
+=default create <not applicable>
+
 =default server_port  110
 =default message_type 'Mail::Box::POP3::Message'
 

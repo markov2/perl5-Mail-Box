@@ -26,7 +26,7 @@ Mail::Message::Part - a part of a message, but a message by itself.
 =head1 DESCRIPTION
 
 A Mail::Message::Part object contains a message which is included in
-an other message.  For instance I<attachments> are I<parts>.
+the body of an other message.  For instance I<attachments> are I<parts>.
 
 READ Mail::Message FIRST.  A part is a special message: it has a
 reference to its parent message, and will usually not be sub-classed
@@ -48,11 +48,12 @@ into mail-folder-specific variants.
 
 Create a message part.
 
-=option  parent MESSAGE
-=default parent <obligatory>
+=option  container BODY
+=default container <obligatory>
 
-Reference to the parental Mail::Message object where this
-part is a member of.  That object may be a part itself.
+Reference to the parental Mail::Message::Body object where this
+part is a member of.  That object may be a Mail::Message::Body::Multipart
+or a Mail::Message::Body::Nested.
 
 =cut
 
@@ -60,10 +61,10 @@ sub init($)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
 
-    confess "No parent specified for part.\n"
-        unless exists $args->{parent};
+    confess "No container specified for part.\n"
+        unless exists $args->{container};
 
-    $self->{MMP_parent} = $args->{parent};
+    $self->{MMP_container} = $args->{container};
     $self;
 }
 
@@ -75,22 +76,23 @@ sub init($)
 
 #------------------------------------------
 
-=method buildFromBody BODY, PARENT, HEADERS
+=method buildFromBody BODY, CONTAINER, HEADERS
 
 (Class method) 
-Shape a message around a BODY.  Bodies have information about their
+Shape a message part around a BODY.  Bodies have information about their
 content in them, which is used to construct a header for the message.
 Next to that, more HEADERS can be specified.  No headers are obligatory.
 No extra headers are fabricated automatically.
 
 =example
 
- my $part = Mail::Message::Part $body, $parent;
+ my $multi = Mail::Message::Body::Multipart->new;
+ my $part  = Mail::Message::Part->buildFromBody($body, $multi);
 
 =cut
 
 sub buildFromBody($$;@)
-{   my ($class, $body, $parent) = (shift, shift, shift);
+{   my ($class, $body, $container) = (shift, shift, shift);
     my @log     = $body->logSettings;
 
     my $head    = Mail::Message::Head::Complete->new(@log);
@@ -100,8 +102,8 @@ sub buildFromBody($$;@)
     }
 
     my $part = $class->new
-     ( head   => $head
-     , parent => $parent
+     ( head      => $head
+     , container => $container
      , @log
      );
 
@@ -124,15 +126,16 @@ a MESSAGE residing in a folder, this message will automatically be cloned.
 =cut
 
 sub coerce($@)
-{   my ($class, $thing, $parent) = (shift, shift, shift);
+{   my ($class, $thing, $container) = (shift, shift, shift);
 
-    return $class->buildFromBody($thing, $parent, @_)
+    return $class->buildFromBody($thing, $container, @_)
         if $thing->isa('Mail::Message::Body');
 
     my $message = $thing->isa('Mail::Box::Message') ? $thing->clone : $thing;
 
     my $part = $class->SUPER::coerce($message);
-    $part->{MMP_parent} = $parent;
+
+    $part->{MMP_container} = $container;
     $part;
 }
 
@@ -171,18 +174,48 @@ sub deleted(;$)
 
 #------------------------------------------
 
-sub parent(;$)
+sub container(;$)
 {   my $self = shift;
-    @_ ? $self->{MMP_parent} = shift : $self->{MMP_parent};
+    @_ ? $self->{MMP_container} = shift : $self->{MMP_container};
 }
 
 #------------------------------------------
 
-sub toplevel() { shift->parent->toplevel }
+sub toplevel()
+{   my $body = shift->container or return;
+    my $msg  = $body->message   or return;
+    $msg->toplevel;
+}
 
 #------------------------------------------
 
 sub isPart() { 1 }
+
+#------------------------------------------
+
+=head2 Reading and Writing [internals]
+
+=cut
+
+#------------------------------------------
+
+sub readFromParser($;$)
+{   my ($self, $parser, $bodytype) = @_;
+
+    my $head = $self->readHead($parser)
+            || Mail::Message::Head::Complete->new
+                 ( message     => $self
+                 , field_type  => $self->{MM_field_type}
+                 , $self->logSettings
+                 );
+
+    my $body = $self->readBody($parser, $head, $bodytype)
+            || Mail::Message::Body::Lines->new(data => []);
+
+    $self->head($head);
+    $self->storeBody($body);
+    $self;
+}
 
 #------------------------------------------
 

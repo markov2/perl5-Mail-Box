@@ -69,11 +69,14 @@ sub init($)
     return undef
         unless $self->SUPER::init($args);
 
+    my $class            = ref $self;
     my $directory        = $self->{MBD_directory}
-       = (ref $self)->folderToDirectory($self->name, $self->folderdir);
+       = $class->folderToDirectory($self->name, $self->folderdir);
 
-    unless(-d $directory)
-    {   $self->log(PROGRESS => "No directory $directory (yet)\n");
+       if(-d $directory) {;}
+    elsif($args->{create} && $class->create($directory, %$args)) {;}
+    else
+    {   $self->log(PROGRESS => "$class: No directory $directory.\n");
         return undef;
     }
 
@@ -90,7 +93,7 @@ sub init($)
     # Check if we can write to the folder, if we need to.
 
     if($self->writable && -e $directory && ! -w $directory)
-    {   warn "Folder $directory is write-protected.\n";
+    {   $self->log(WARNING => "Folder directory $directory is write-protected.\n");
         $self->{MB_access} = 'r';
     }
 

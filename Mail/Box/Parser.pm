@@ -140,10 +140,10 @@ sub defaultParserType(;$)
     return $parser_type if $parser_type;
 
     # Try to use C-based parser.
-#  eval 'require Mail::Box::Parser::C';
-#warn "C-PARSER errors $@\n" if $@;
-#   return $parser_type = 'Mail::Box::Parser::C'
-#       unless $@;
+    eval 'require Mail::Box::Parser::C';
+# warn "C-PARSER errors $@\n" if $@;
+    return $parser_type = 'Mail::Box::Parser::C'
+        unless $@;
 
     # Fall-back on Perl-based parser.
     require Mail::Box::Parser::Perl;
@@ -456,8 +456,8 @@ sub closeFile(@) {shift->notImplemented}
 
 sub DESTROY
 {   my $self = shift;
-    $self->SUPER::DESTROY;
     $self->stop;
+    $self->SUPER::DESTROY;
 }
 
 #------------------------------------------

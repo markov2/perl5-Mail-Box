@@ -20,7 +20,7 @@ BEGIN {
    {   plan skip_all => 'Filenames not compatible with Windows';
        exit 1;
    }
-   plan tests => 28;
+   plan tests => 29;
 }
 
 my $mdsrc = File::Spec->catfile('folders', 'maildir.src');
@@ -37,6 +37,7 @@ my $folder = new Mail::Box::Maildir
   );
 
 ok(defined $folder);
+isa_ok($folder, 'Mail::Box::Maildir');
 
 cmp_ok($folder->messages, "==", 45);
 is($folder->organization, 'DIRECTORY');

@@ -410,17 +410,8 @@ sub open(@)
     my $folder = $class->new(@defaults, %args);
 
     unless(defined $folder)
-    {   # Create the folder if it does not exist yet.
-        $self->log(WARNING
-                => "Folder $name does not exist ($folder_type)."), return
-             unless $args{create};
-
-        $self->log(WARNING
-                => "Unable to create folder $name ($folder_type)."), return
-            unless $class->create($name, @defaults, %args);
-
-        $self->log(PROGRESS => "Created folder $name ($folder_type).");
-        $folder = $class->new(@defaults, %args);
+    {   $self->log(WARNING => "$folder_type: Folder $name does not exist.");
+        return;
     }
 
     $self->log(PROGRESS => "Opened folder $name ($folder_type).");
@@ -600,7 +591,7 @@ sub appendMessages(@)
         eval "require $class";
         next if $@;
 
-        if($class->foundIn($folder, @gen_options))
+        if($class->foundIn($folder, @gen_options, access => 'a'))
         {   $found++;
             last;
         }
@@ -618,8 +609,8 @@ sub appendMessages(@)
         }
     }
 
-    # Even the default foldertype was not found.
-    ($name, $class, @gen_options) = @{$self->{MBM_folder_types}[1]}
+    # Even the default foldertype was not found (or nor defined).
+    ($name, $class, @gen_options) = @{$self->{MBM_folder_types}[0]}
         unless $found;
 
     $class->appendMessages
@@ -651,10 +642,10 @@ which can be specified when opening a folder.
  my $outbox = $mgr->open(folder => 'Outbox');
  $mgr->copyMessage($outbox, $drafts->message(0));
 
- $mgr->copyMessage('Trash', $drafts->message(1), $drafts->message(2),
+ $mgr->copyMessage('=Trash', $drafts->message(1), $drafts->message(2),
     folderdir => '/tmp', create => 1);
 
- $mgr->copyMessage($drafts->message(1), folder => 'Drafts'
+ $mgr->copyMessage($drafts->message(1), folder => '=Drafts'
     folderdir => '/tmp', create => 1);
 
 =cut

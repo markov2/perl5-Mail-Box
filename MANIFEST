@@ -99,6 +99,7 @@ examples/multipart.pl
 examples/open.pl
 examples/reply.pl
 examples/send.pl
+examples/strip-attachments.pl
 examples/takelarge.pl
 pod.css
 scripts/lsmail

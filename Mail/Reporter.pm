@@ -192,7 +192,7 @@ sub log(;$@)
 
         my $level = shift;
         my $prio  = $levelprio{$level}
-            or croak "Unknown log-level $level.";
+            or croak "Unknown log-level $level";
 
         return $thing->{MR_log} = $prio unless @_;
 
@@ -208,7 +208,7 @@ sub log(;$@)
     else             # class method
     {   my $level = shift;
         my $prio  = $levelprio{$level}
-            or croak "Unknown log-level $level.";
+            or croak "Unknown log-level $level";
 
         return $thing unless $prio >= $default_trace;
 
@@ -408,9 +408,9 @@ produce a nice warning if the sub-classes cannot resolve a method.
 =cut
 
 sub AUTOLOAD(@)
-{   my $self  = shift;
+{   my $thing   = shift;
     our $AUTOLOAD;
-    my $class = ref $self;
+    my $class   = ref $thing || $thing;
     (my $method = $AUTOLOAD) =~ s/^$class\:\://;
 
     $Carp::MaxArgLen=20;

@@ -271,8 +271,8 @@ sub coerce($)
     }
 
     else
-    {   confess "Cannot coerce ".ref($message)." objects into "
-              . __PACKAGE__." objects.\n";
+    {   my $what = ref $message ? 'a'.ref($message).' object' : 'text';
+        confess "Cannot coerce $what into a ". __PACKAGE__." object.\n";
     }
 
     $message->{MM_modified}  ||= 0;
@@ -340,11 +340,10 @@ sub modified(;$)
 
 #------------------------------------------
 
-=method parent
+=method container
 
-If the message is a part of another message, C<parent> returns the reference
-to the containing message. C<parent> returns C<undef> if the message is not a
-part, but rather the main message.
+If the message is a part of another message, C<container> returns the
+reference to the containing body.
 
 =examples
 
@@ -355,16 +354,16 @@ part, but rather the main message.
  return unless $part->body->isMultipart;
  my $nested = $part->body->part(3);
 
- $nested->parent;     # returns $part
+ $nested->container;  # returns $msg->body
  $nested->toplevel;   # returns $msg
- $msg->parent;        # returns undef
+ $msg->container;     # returns undef
  $msg->toplevel;      # returns $msg
  $msg->isPart;        # returns false
  $part->isPart;       # returns true
 
 =cut
 
-sub parent() { undef } # overridden by Mail::Message::Part
+sub container() { undef } # overridden by Mail::Message::Part
 
 #------------------------------------------
 
@@ -372,7 +371,6 @@ sub parent() { undef } # overridden by Mail::Message::Part
 
 Returns true if the message is a part of another message.  This is
 the case for Mail::Message::Part extensions of Mail::Message.
-See parent() for examples.
 
 =cut
 
@@ -383,8 +381,7 @@ sub isPart() { 0 } # overridden by Mail::Message::Part
 =method toplevel
 
 Returns a reference to the main message, which will be the current
-message if the message is not part of
-another message.  See parent() for examples.
+message if the message is not part of another message.
 
 =cut
 
@@ -1115,7 +1112,11 @@ sub readFromParser($;$)
 {   my ($self, $parser, $bodytype) = @_;
 
     my $head = $self->readHead($parser)
-       or return;
+            || Mail::Message::Head::Complete->new
+                 ( message     => $self
+                 , field_type  => $self->{MM_field_type}
+                 , $self->logSettings
+                 );
 
     my $body = $self->readBody($parser, $head, $bodytype)
        or return;

@@ -188,8 +188,8 @@ sub forNested($)
     return $self if $new_body == $body;
 
     my $new_nested  = Mail::Message::Part->new
-       ( head   => $nested->head->clone
-       , parent => undef
+       ( head      => $nested->head->clone
+       , container => undef
        );
 
     $new_nested->body($new_body);
@@ -199,7 +199,7 @@ sub forNested($)
       , nested   => $new_nested
       );
 
-    $new_nested->parent($created);
+    $new_nested->container($created);
     $created;
 }
 

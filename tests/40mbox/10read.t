@@ -24,7 +24,7 @@ ok(Mail::Box::Mbox->foundIn(@src),    'check foundIn');
 # The folder is read.
 #
 
-my $folder = new Mail::Box::Mbox
+my $folder = Mail::Box::Mbox->new
   ( @src
   , lock_type    => 'NONE'
   , extract      => 'ALWAYS'

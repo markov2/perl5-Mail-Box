@@ -314,19 +314,24 @@ sub foreachComponent($)
     foreach (@new_bodies)
     {   my ($part, $body) = @$_;
         my $new_part = Mail::Message::Part->new
-           ( head   => $part->head->clone,
-             parent => $self->message
+           ( head      => $part->head->clone,
+             container => undef
            );
         $new_part->body($body);
         push @new_parts, $new_part;
     }
 
-    (ref $self)->new
+    my $constructed = (ref $self)->new
       ( preamble => $new_preamble
       , parts    => \@new_parts
       , epilogue => $new_epilogue
       , based_on => $self
       );
+
+    $_->container($constructed)
+       foreach @new_parts;
+
+    $constructed;
 }
 
 #------------------------------------------
@@ -540,7 +545,7 @@ sub read($$$$)
 
         my $part = Mail::Message::Part->new
          ( @msgopts
-         , parent => $self->message
+         , container => $self
          );
 
         last unless $part->readFromParser($parser, $bodytype);

@@ -82,7 +82,15 @@ sub create($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $directory = $class->folderToDirectory($name, $folderdir);
-    $class->createDirs($directory);
+
+    if($class->createDirs($directory))
+    {   $class->log(PROGRESS => "Created folder $name.");
+        return $class;
+    }
+    else
+    {   $class->log(WARNING => "Cannot create folder $name.");
+        return undef;
+    }
 }
 
 #-------------------------------------------

@@ -33,7 +33,7 @@ sub check_requirement($);
 sub update_requirement($);
 sub install_package($);
 
-my $default_install_answer = 'y';
+my $default_install_answer = -t STDIN ? 'y' : 'n';
 
 #
 # Get all the test-sets.
@@ -129,8 +129,7 @@ sub run_in_harness(@)
 #   $ENV{PERL_DL_NONLAZY} = 1;
     my @inc = map { "-I$_" } @INC;
 
-    system $^X
-      , @inc
+    system $^X, @inc
       , -e => 'use Test::Harness qw(&runtests $verbose);
                $verbose = shift @ARGV;
                my ($tot, $failed) = Test::Harness::_run_all_tests(@ARGV);
@@ -260,8 +259,9 @@ sub update_requirement($)
         if($@)
         {    # No Term::ReadKey
              flush STDOUT;
-             $key = <STDIN>;
-             $key = $install if $key =~ m/\n/;
+             my $line = <STDIN>;
+             $line    =~ m/(\S)/;
+             $key     = $1 || $install;
         }
         else
         {    # Has Term::ReadKey
@@ -285,10 +285,7 @@ sub update_requirement($)
 
     return 0 unless $install eq 'y';
 
-    unless(install_package $package)
-    {   warn "    WARNING: installation of $package ($module) failed.\n";
-        return 0;
-    }
+    install_package $package;
 }
 
 #

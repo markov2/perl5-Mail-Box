@@ -55,7 +55,7 @@ foreach my $message ($folder->messages)
     $msgnr++;
 }
 
-cmp_ok($end+$blank , "==",  -s $folder->filename);
+cmp_ok($end+$blank , "==",  -s $folder->filename, "full folder read");
 
 #
 # None of the messages should be modified.
@@ -63,7 +63,7 @@ cmp_ok($end+$blank , "==",  -s $folder->filename);
 
 my $modified = 0;
 $modified ||= $_->modified foreach $folder->messages;
-ok(! $modified);
+ok(! $modified,                                   "folder not modified");
 
 #
 # Write unmodified folder to different file.
@@ -74,8 +74,8 @@ ok(! $modified);
 my $oldsize = -s $folder->filename;
 
 $folder->modified(1);    # force write
-ok($folder->write);
-cmp_ok($oldsize, "==",  -s $folder->filename);
+ok($folder->write,                                 "writing folder");
+cmp_ok($oldsize, "==",  -s $folder->filename,      "expected size");
 
 # Try to read it back
 
@@ -86,8 +86,8 @@ my $copy = new Mail::Box::Mbox
   , extract      => 'LAZY'
   );
 
-ok(defined $copy);
-cmp_ok($folder->messages, "==", $copy->messages);
+ok(defined $copy,                                   "re-reading folder");
+cmp_ok($folder->messages, "==", $copy->messages,    "all messages found");
 
 # Check also if the subjects are the same.
 
@@ -99,7 +99,7 @@ while(@f_subjects)
     my $c = shift @c_subjects;
     last unless $f eq $c;
 }
-ok(!@f_subjects);
+ok(!@f_subjects,                                     "all msg-subjects found");
 
 #
 # None of the messages should be parsed yet.
@@ -107,7 +107,7 @@ ok(!@f_subjects);
 
 my $parsed = 0;
 $_->isParsed && $parsed++ foreach $folder->messages;
-cmp_ok($parsed, "==", 0);
+cmp_ok($parsed, "==", 0,                             "none of the msgs parsed");
 
 #
 # Check that the whole folder is continuous
@@ -126,7 +126,7 @@ foreach my $message ($copy->messages)
     $end = $bodyend;
     $msgnr++;
 }
-cmp_ok($end+$blank, "==",  -s $copy->filename);
+cmp_ok($end+$blank, "==",  -s $copy->filename,      "written file size ok");
 
 #
 # None of the messages should be parsed still.
@@ -134,14 +134,14 @@ cmp_ok($end+$blank, "==",  -s $copy->filename);
 
 $parsed = 0;
 $_->isParsed && $parsed++ foreach $copy->messages;
-cmp_ok($parsed, "==", 0);
+cmp_ok($parsed, "==", 0,                            "none of the msgs parsed");
 
 #
 # Force one message to be loaded.
 #
 
 my $message = $copy->message(3)->forceLoad;
-ok(ref $message);
+ok(ref $message,                                    "force load of one msg");
 my $body = $message->body;
 ok($message->isParsed);
 

@@ -985,6 +985,7 @@ sub build(@)
     }
 
     my $message = $class->new(head => $head);
+
     my $body
        = @parts==0 ? Mail::Message::Body::Lines->new()
        : @parts==1 ? $parts[0]

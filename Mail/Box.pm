@@ -164,14 +164,18 @@ and must be readable. The file or directory of the mailbox need not exist if it
 is opened for reading and writing (C<"rw">).  Write-permission is checked when
 opening an existing mailbox.
 
+The folder name can be preceded by a C<"=">, to indicate that it is named
+relative to the directory specified in new(folderdir).  Otherwise, it is
+taken as relative or absolute path.
+
 =option  folderdir DIRECTORY
 =default folderdir undef
 
 Where are folders to be found by default?  A folder-name may be preceded by
 a equals-sign (C<=>, a C<mutt> convension) to explicitly state that the folder
 is located below the default directory.  For example: in case
-C<folderdir =E<gt> '/tmp'> and C<folder =E<gt> '=abc'>, the name of the folder-file
-is C<'/tmp/abc'>.  Each folder type has already some default set.
+C<folderdir =E<gt> '/tmp'> and C<folder =E<gt> '=abc'>, the name of the
+folder-file is C<'/tmp/abc'>.  Each folder type has already some default set.
 
 =option  keep_dups BOOLEAN
 =default keep_dups <false>
@@ -929,7 +933,7 @@ sub _copy_to($@)
     # Take subfolders
   SUBFOLDER:
     foreach ($self->listSubFolders)
-    {   my $subfolder = $self->openSubFolder($_);
+    {   my $subfolder = $self->openSubFolder($_, access => 'r');
         $self->log(ERROR => "Unable to open subfolder $_"), return
             unless defined $subfolder;
 

@@ -7,6 +7,58 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.033: Thu Dec 12 11:23:42 CET 2002
+
+	Fixes:
+
+	- [Greg Matheson] found a truncate() difference between Windows and
+	  UNIX: fewer errors for the Windows test.
+
+	- [Greg Matheson] solved problem with mbox write-replace related to
+	  \n -> CRLF translations vice versa.  The number of problems for
+	  Mail::Box on Windows decreased even furter.
+
+	- Some improvements of the tests.pl scripts, related to the
+	  installation of optional modules when Term::ReadKey is not
+	  installed.
+
+	- Mail::Message::Part::parent() 4th try to solve... on some places,
+	  the body was returned, in other places the surrounding message.
+	  This was partially caused by the confusion created by the name
+	  of the method.  Therefore, the method is renamed to "container"
+	  which returns a Mail::Message::Body::Multipart or ::Nested.
+
+	- appendMessage requires access => 'a' to the folder. [Greg Matheson]
+
+	- Parts of multiparts which do not contain any header lines were
+	  stopping the parser to look for more parts: all the rest was put
+	  in the epilogue of the multipart.  Detected by [Melvyn Sopacua]
+
+	- Mail::Message::Part's can contain empty bodies.  Spotted by
+	  [Melvyn Sopacua]
+
+	- Hopefully, the installation of option modules has smoothened
+	  a little.
+
+	- Mail::Box::File::appendMessage() didn't check success for
+	  opening a folder. Reported by [Melvyn Sopacua]
+
+	- default for $mgr->appendMessage was to create an MH, not an mbox
+	  folder.
+
+	Improvements:
+
+	- tests/55locking/20flock excluded for Windows: no flock implemented.
+
+	- Added examples/strip-attachments.pl by [Pjotr Prins]
+
+	- Mail::Reporter::AUTOLOAD will produce a class name in the error
+	  message if a class method failed...  The blank is not very
+	  informative.
+
+	- "create" is now a valid option for Mail::Box::(Mbox|MH|Maildir)::new,
+	  which required some changes in the Mail::Box::Manager as well.
+
 version 2.032: Fri Nov 29 19:59:47 CET 2002
 
 	Fixes:
