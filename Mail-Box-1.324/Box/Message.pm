@@ -440,18 +440,16 @@ sub statusToLabels()
 {   my $self   = shift;
     my $status = $self->head->get('status') || return $self;
 
-    $self->setLabel( seen => $status =~ /R/
-                   , old  => $status =~ /O/
+    $self->setLabel( seen => ($status =~ /R/)
+                   , old  => ($status =~ /O/)
                    );
 }
 
 sub createStatus()
 {   my $self   = shift;
-    my ($seen, $old) = $self->labels('seen', 'old');
+    my ($seen, $old) = $self->label('seen', 'old');
 
-    $self->head->replace
-      ( 'Status', ($seen ? 'RO' : $old ? '0' : ''));
-
+    $self->head->replace(Status => ($seen ? 'RO' : $old ? 'O' : ''));
     $self;
 }
 
@@ -466,7 +464,7 @@ sub XstatusToLabels()
 
 sub createXStatus()
 {   my $self   = shift;
-    my ($replied, $flagged) = $self->labels('replied', 'flagged');
+    my ($replied, $flagged) = $self->label('replied', 'flagged');
 
     $self->head->replace
       ( 'X-Status', ($replied ? 'A' : '').($flagged ? 'F' : ''));
@@ -693,6 +691,7 @@ Example:
 
 sub copyTo($)
 {   my ($self, $folder) = @_;
+    $self->createStatus->createXStatus;
 
     # To create a copy, we print to file and then parse it back.  This
     # is a real trick which could consume inefficient amounts of memory
@@ -706,6 +705,7 @@ sub copyTo($)
     my $parser    = $folder->parser;
     my $copy      = $parser->parse_data($internal);
     $folder->coerce($copy);
+    $copy->statusToLabels->XstatusToLabels;
 
     $copy->fromLine($self->fromLine)
         if $copy->can('fromLine') && $self->can('fromLine');
@@ -1266,7 +1266,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.323
+This code is beta, version 1.324
 
 =cut
 

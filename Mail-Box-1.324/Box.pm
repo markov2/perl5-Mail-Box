@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.323';
+$VERSION = '1.324';
 
 use Carp;
 use MIME::Parser;
@@ -712,6 +712,18 @@ sub delete()
 }
 
 #-------------------------------------------
+
+=item openSubFolder NAME [,OPTIONS]
+
+Open (or create, if it does not exist yet) a new subfolder in an
+existing folder.
+
+Example:
+
+    my $folder = Mail::Box::Mbox->new(folder => '=Inbox');
+    my $sub    = $folder->openSubFolder('read');
+
+=cut
 
 sub openSubFolder(@)
 {   my $self    = shift;
@@ -1490,7 +1502,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.323
+This code is beta, version 1.324
 
 =cut
 

@@ -3,7 +3,15 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
-#to do: copy labels with the message
+version 1.324: Fri Dec 14 16:00:56 CET 2001
+
+	* Fix with labels which changed status when moved between files.
+	  The difference is one character... :(  Thanks to a patch by
+	  [Sam Vilain]
+
+	* Even more fixes with labels.  Now I how [Marcel de Boer] is
+	  happy (at last).  Took me a while, but he was pushing me
+	  regularly.
 
 version 1.323: Wed Oct 24 00:23:16 CEST 2001
 
