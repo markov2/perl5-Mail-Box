@@ -648,7 +648,7 @@ M<Mail::Message::Field::Full> object.
 sub study()
 {   my $self = shift;
     require Mail::Message::Field::Full;
-    Mail::Message::Field::Full->new($self->folded);
+    Mail::Message::Field::Full->new(scalar $self->folded);
 }
 
 #------------------------------------------
@@ -812,7 +812,7 @@ sub defaultWrapLength(;$)
 
 #------------------------------------------
 
-=method fold NAME, BODY, [MAXCHARS]
+=ci_method fold NAME, BODY, [MAXCHARS]
 
 Make the header field with NAME fold into multiple lines.
 Wrapping is performed by inserting newlines before a blanks in the
@@ -825,10 +825,10 @@ mainly ignored because it would make folding too slow.
 =cut
 
 sub fold($$;$)
-{   my $self = shift;
-    my $name = shift;
-    my $line = shift;
-    my $wrap = shift || $default_wrap_length;
+{   my $thing = shift;
+    my $name  = shift;
+    my $line  = shift;
+    my $wrap  = shift || $default_wrap_length;
 
     $line    =~ s/\n\s/ /gms;            # Remove accidental folding
     return " \n" unless length $line;    # empty field

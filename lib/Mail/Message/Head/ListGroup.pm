@@ -100,9 +100,9 @@ sub from($)
     return () unless $self->collectFields;
 
     my ($type, $software, $version, $field);
-    if(my $commpro = $head->get('X-ListServer'))  
-    {   ($software, $version) = $commpro =~ m/^(.*)\s+LIST\s*([\d.]+)\s*$/;
-        $type    = 'CommuniGate';
+    if(my $communigate = $head->get('X-ListServer'))
+    {   ($software, $version) = $communigate =~ m/^(.*)\s+LIST\s*([\d.]+)\s*$/i;
+        $type    = ($software =~ m/Pro/ ? 'CommuniGatePro' : 'CommuniGate');
     }
     elsif(my $mailman = $head->get('X-Mailman-Version'))
     {   $version = "$mailman";
@@ -161,7 +161,7 @@ sub from($)
 
 =method rfc
 
-When the mailing list software follows the guidelines of one of the dedictated
+When the mailing list software follows the guidelines of one of the dedicated
 RFCs, then this will be returned otherwise C<undef>.  The return values can
 be C<rfc2919>, C<rfc2369>, or C<undef>.
 
@@ -197,7 +197,7 @@ sub address()
     if($type eq 'Smartlist' && defined($field = $head->get('X-Mailing-List')))
     {   $address = $1 if $field =~ m/\<([^>]+)\>/ }
     elsif($type eq 'YahooGroups')
-    {   $address = $head->study('X-Apparently-To') }
+    {   $address = $head->get('X-Apparently-To')->unfoldedBody }
     elsif($type eq 'Listserv')
     {   $address = $head->get('Sender') }
 
@@ -264,6 +264,26 @@ sub listname()
 
 #------------------------------------------
 
+=section Access to the header
+
+=ci_method isListGroupFieldName NAME
+=cut
+
+my $list_field_names
+  = qr/ ^ (?: List|X-Envelope|X-Original ) - 
+      | ^ (?: Precedence|Mailing-List|Approved-By ) $
+      | ^ X-(?: Loop|BeenThere|Sequence|List|Sender|MLServer ) $
+      | ^ X-(?: Mailman|Listar|Egroups|Encartis|ML ) -
+      | ^ X-(?: Archive|Mailing|Original|Mail|ListServer ) -
+      | ^ (?: Mail-Followup|Delivered|Errors|X-Apperently ) -To $
+      /xi;
+
+sub isListGroupFieldName($) { $_[1] =~ $list_field_names }
+
+#------------------------------------------
+
+=section Internals
+
 =method collectFields
 
 Scan the header for fields which are usually contained in mailing list
@@ -279,28 +299,12 @@ or too many fields are included.
 
 =cut
 
-my $list_field_names
-  = qr/ ^ (?: List|X-Envelope|X-Original ) - 
-      | ^ (?: Precedence|Mailing-List|Approved-By ) $
-      | ^ X-(?: Loop|BeenThere|Sequence|List|Sender|MLServer ) $
-      | ^ X-(?: Mailman|Listar|Egroups|Encartis|ML ) -
-      | ^ X-(?: Archive|Mailing|Original|Mail|ListServer ) -
-      | ^ (?: Mail-Followup|Delivered|Errors|X-Apperently ) -To $
-      /xi;
-
 sub collectFields()
 {   my $self = shift;
     my @names = map { $_->name } $self->head->grepNames($list_field_names);
     $self->addFields(@names);
     @names;
 }
-
-#------------------------------------------
-
-=ci_method isListGroupFieldName NAME
-=cut
-
-sub isListGroupFieldName($) { $_[1] =~ $list_field_names }
 
 #------------------------------------------
 
@@ -352,7 +356,12 @@ the string returned by M<type()> when that differs from the software
 name.
 
 =over 4
-=item * CommuniGate Pro (CommuniGate)
+=item * CommuniGate
+
+Legacy commercial MacOS implementation by Stalker Software Inc.
+L<http://www.stalker.com/mac/default.html>
+
+=item * CommuniGate Pro (CommuniGatePro)
 Commercial rfc2919 compliant implementation by Stalker Software Inc.
 L<http://www.stalker.com>
 

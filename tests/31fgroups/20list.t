@@ -23,7 +23,7 @@ warn $@;
        exit 0;
    }
    else
-   {   plan tests => 113;
+   {   plan tests => 119;
    }
 }
 
@@ -156,12 +156,12 @@ my @expect =
    , details => 'Ecartis at adm@oasys.net (v1.0.0), 7 fields'
    , rfc     => undef
    }
- , { type    => 'CommuniGate'
+ , { type    => 'CommuniGatePro'
    , software=> 'CommuniGate Pro'
    , version => '4.0.6'
    , address => 'Mail-ListDetector@gunzel.org'
    , listname=> 'Mail-ListDetector.gunzel.org'
-   , details => 'CommuniGate at Mail-ListDetector@gunzel.org (CommuniGate Pro 4.0.6), 4 fields'
+   , details => 'CommuniGatePro at Mail-ListDetector@gunzel.org (CommuniGate Pro 4.0.6), 4 fields'
    , rfc     => 'rfc2919'
    }
  , { type    => 'FML'
@@ -210,6 +210,14 @@ my @expect =
    , address => '"Comedy Company" <COCO@LISTSERV.EXAMPLE.COM>'
    , listname=> 'Comedy Company'
    , details => 'Listserv at "Comedy Company" <COCO@LISTSERV.EXAMPLE.COM> (LISTSERV-TCP/IP 1.8d), 1 fields'
+   , rfc     => undef
+   }
+ , { type    => 'CommuniGate'
+   , software=> 'CommuniGate'
+   , version => '1.4'
+   , address => '<CGnet@total.example.com> (CGnet)'
+   , listname=> 'CGnet'
+   , details => 'CommuniGate at CGnet@total.example.com (1.4), 1 fields'
    , rfc     => undef
    }
  );

@@ -36,7 +36,8 @@ can add prepared bodies to the message
 which is built.
 A_FEW_LINES
 
-my $vcard = Mail::Message::Body->new(type => 'text/x-vcard', data => <<'SIG');
+my $vcard = Mail::Message::Body->new
+ ( mime_type => 'text/x-vcard', data => <<'SIG');
 This is a signature.  It has a different type.
 SIG
 

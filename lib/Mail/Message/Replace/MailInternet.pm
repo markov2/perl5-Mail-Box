@@ -204,13 +204,23 @@ sub MailFrom(;$)
 
 =section Constructing a message
 
-=method read ARRAY|FILEHANDLE
-Read header and body from the specified ARRAY or FILEHANDLE.
+=ci_method read ARRAY|FILEHANDLE, OPTIONS
+Read header and body from the specified ARRAY or FILEHANDLE.  When used as
+object method, M<Mail::Message::read()> is called, to be MailBox compliant.
+As class method, the Mail::Internet compatible read is called.  OPTIONS are
+only available in the first case.
+
 =cut
 
-sub read($)
-{   my ($self, $data) = @_;
-    $self->processRawData($data, 1, 1);
+sub read($@)
+{   my $thing = shift;
+
+    return $thing->SUPER::read(@_)   # Mail::Message behavior
+        unless ref $thing;
+
+    # Mail::Header emulation
+    my $data = shift;
+    $thing->processRawData($data, 1, 1);
 }
 
 =method read_body ARRAY|FILEHANDLE
@@ -350,7 +360,7 @@ sub sign(@)
     $set;
 }
 
-=section The message
+=section The Message
 =method send TYPE, OPTIONS
 Send via Mail Transfer Agents (MUA).  These will be handled by various
 M<Mail::Transport::Send> extensions.  The C<test> TYPE is not supported.

@@ -183,8 +183,6 @@ sub delete()
 
 #------------------------------------------
 
-=section Access to the header
-
 =method add (FIELD, VALUE) | OBJECT
 
 Add a field to the header, using the field group.  When the field group
@@ -251,6 +249,8 @@ sub addFields(@)
 }
 
 #------------------------------------------
+
+=section Access to the header
 
 =method version 
 Returns the version number of the software used to produce the fields.

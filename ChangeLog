@@ -11,21 +11,52 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.051: Mon Nov  3 16:16:09 CET 2003
+
+	Fixes:
+
+	- [Tim Sellar] example/build.pl omission: ::Body->new(type =>
+	  should be ::Body->new(mime_type =>
+
+	- [Lutz Gehlen] bumped into a mistake in the (not finished)
+	  ::Field::Full code: the class of unstructured fields was
+	  composed improperly.
+
+	- study()ing multi-line fields produced an improper field
+	  names.
+
+	Improvements:
+
+	- [Matthew Walker] added the distiction between CommuniGatePro
+	  and CommunGate software to the Mail::Message::Head::ListGroup 
+	  mailinglist detector.
+
+	- [Tim Sellar] suggested to ignore undef values in build(),
+	  which will simplify the code of the user.
+
+	- Added detector for MailScanner spam groups.
+
+	- new Mail::Message::Head::SpamGroup::spamDetected() and
+	      Mail::Message::Head::Complete::spamDetected()
+
+	- Mail::Message::Replace::MailInternet::read() distinguishes
+	  between Mail::Message->read() and $mailinternet_object->read
+
 version 2.050: Tue Sep 30 18:27:11 CEST 2003
 
 	Fixes:
 
-	- Due to an (unintended) change of behaviour in Text::MagicTemplate
+	- An (unintended) change of behaviour in Text::MagicTemplate
 	  (which is used to produce the POD and HTML) made all produced
 	  manuals exactly the same.
 
 	Improvements:
 
-	- [Mathew Walker] contributed various improvements to the ListGroup
+	- [Matthew Walker] contributed various improvements to the ListGroup
 	  detection and documentation.  Detection for Listserv software
 	  was added, and rfc2918 should have been rfc2919.
 
-	- [Mathew Walker] made test/Tools::copy_dir() skip directories.
+	- [Matthew Walker] made test/Tools::copy_dir() skip directories.
 
 	- Implementation of Mail::Message::Replace::MailInternet and
 	  ::MailHeader, as drop-in replacements for Mail::Internet and

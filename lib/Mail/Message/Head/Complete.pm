@@ -467,6 +467,27 @@ sub removeSpamGroups(@)
 
 #------------------------------------------
 
+=method spamDetected
+Returns whether one of the spam groups defines a report about spam.  If there
+are not header fields in the message which relate to spam-detection
+software, C<undef> is returned.  The spamgroups which report spam are returned.
+
+=examples
+ $message->delete if $message->spamDetected;
+
+ call_spamassassin($message)
+    unless defined $message->spamDetected;
+
+=cut
+
+sub spamDetected()
+{   my $self = shift;
+    my @sgs = $self->spamGroups or return undef;
+    grep { $_->spamDetected } @sgs;
+}
+
+#------------------------------------------
+
 =method print [FILEHANDLE]
 
 Print all headers to the specified FILEHANDLE, by default the selected

@@ -242,14 +242,6 @@ sub set($;$)
     $field;
 }
 
-#------------------------------------------
-
-=method add (FIELD =E<gt> VALUE) | OBJECT
-All fields appear only once, so C<add()> behaves as M<set()>.
-=cut
-
-sub add(@) { shift->set(@_) }
-
 #-------------------------------------------
 
 sub fields() { shift->orderedFields }
@@ -266,6 +258,14 @@ sub delete()
     $head->removeField($_) foreach $self->fields;
     $self;
 }
+
+#------------------------------------------
+
+=method add (FIELD =E<gt> VALUE) | OBJECT
+All fields appear only once, so C<add()> behaves as M<set()>.
+=cut
+
+sub add(@) { shift->set(@_) }
 
 #-------------------------------------------
 

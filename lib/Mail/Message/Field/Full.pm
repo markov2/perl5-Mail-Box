@@ -161,7 +161,7 @@ sub new($;$$@)
 
     $body    ||= delete $args{body};
     unless(defined $body)
-    {   (my $n, $body) = split /\s*\:\s*/, $name, 2;
+    {   (my $n, $body) = split /\s*\:\s*/s, $name, 2;
         $name = $n if defined $body;
     }
    
@@ -169,9 +169,9 @@ sub new($;$$@)
        if $class ne __PACKAGE__;
 
     # Look for best class to suit this field
-    my $myclass = $implementation{lc $name} || $class;
+    my $myclass = 'Mail::Message::Field::'
+                . ($implementation{lc $name} || 'Unstructured');
 
-    $myclass = "Mail::Message::Field::$myclass";
     eval "require $myclass";
     return if $@;
 
@@ -251,7 +251,7 @@ sub foldedBody($)
          $body =~ s/^\s*/ /;
          $self->{MMFF_body} = $body;
     }
-    elsif($body = $self->{MMFF_body}) { ; }
+    elsif(defined($body = $self->{MMFF_body})) { ; }
     else
     {   # Create a new folded body from the parts.
         $self->{MMFF_body} = $body
@@ -291,7 +291,7 @@ field is created what kind of class we get.
 
 sub from($@)
 {   my ($class, $field) = (shift, shift);
-    defined $field ?  $class->new($field->Name, $field->folded, @_) : ();
+    defined $field ?  $class->new($field->Name, $field->foldedBody, @_) : ();
 }
 
 #------------------------------------------

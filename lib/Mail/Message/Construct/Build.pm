@@ -41,10 +41,11 @@ new headers.  A BODY may be specified as well.  However, there are more
 ways to add data simply.
 
 The CONTENT is a list of key-value pairs and header field objects.
-The keys which start with a capital are used as header-lines.  Lowercased
+The keys which start with a capital are used as header-lines.  Lower-cased
 fields are used for other purposes as listed below.  Each field may be used
 more than once.  If more than one C<data>, C<file>, and C<attach> is
-specified, a multi-parted message is created.
+specified, a multi-parted message is created.  Pairs where the value is
+C<undef> are ignored.
 
 This C<build> method will use M<buildFromBody()> when the body object has
 been constructed.  Together, they produce your message.
@@ -128,6 +129,8 @@ sub build(@)
         }
 
         my $value = shift;
+        next unless defined $value;
+
         if($key eq 'head')
         {   $head = $value }
         elsif($key eq 'data')

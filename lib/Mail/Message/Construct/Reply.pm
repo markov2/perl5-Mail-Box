@@ -168,7 +168,6 @@ the subject of the original message as only argument.  By default,
 M<Mail::Message::replySubject()> is used.
 
 =examples
-
   my $reply = $msg->reply
    ( prelude         => "No spam, please!\n\n"
    , postlude        => "\nGreetings\n"

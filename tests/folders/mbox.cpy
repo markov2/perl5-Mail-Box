@@ -3346,16 +3346,3 @@ Include the following command in the body of your message:
 	unsubscribe magick-developer
 ***********************************************************************
 
-From unknown Tue Sep 30 16:32:53 2003
-From: me
-To: you
-Subject: Hello!
-Content-Type: text/plain
-Content-Length: 9
-Lines: 1
-Content-Transfer-Encoding: 8bit
-Message-Id: <mailbox-13372-1064939572@universe>
-Date: Tue, 30 Sep 2003 18:32:53 +0200
-MIME-Version: 1.0
-
-one line
