@@ -649,6 +649,9 @@ sub coerce($$@)
 
 sub make_multipart(@)
 {   my $self    = shift;
+
+    $self->body->load;
+
     my $options =
      { deleted  => $self->{MBM_deleted}
      , modified => 1
@@ -1256,7 +1259,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.3.19
+This code is beta, version 1.321
 
 =cut
 

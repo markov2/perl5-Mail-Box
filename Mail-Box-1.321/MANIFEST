@@ -36,7 +36,6 @@ Box/Tie.pm
 Box/Tie/HASH.pm
 Box/Tie/ARRAY.pm
 Message.pm
-Message/Body.pm
 ChangeLog
 Makefile.PL
 MANIFEST

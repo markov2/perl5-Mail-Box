@@ -14,8 +14,8 @@ Mail::Box::Threads - maintain threads within a set of folders
    my $folder  = $mgr->open(folder => '/tmp/inbox');
    my $threads = $mgr->threads(folder => $folder);
 
-   foreach my $thread ($threads->all)
-   {   $thread->print;
+   foreach my $thread ($threads->all) {
+       $thread->print;
    }
 
    $threads->includeFolder($folder);
@@ -704,9 +704,11 @@ Add one message to the thread-node.  If the node is filled with a dummy,
 then that one is replaced.  In other cases, the messages is added to the
 end of the list.
 
+=cut
+
 sub addMessage($)
-{   my ($self, $message) = @_
-    
+{   my ($self, $message) = @_;
+ 
     return $self->{MBT_messages} = [ $message ]
         if $self->isDummy;
 
@@ -1060,6 +1062,34 @@ sub startTimeEstimate()
 
 #-------------------------------------------
 
+=item endTimeEstimate
+
+Returns a guess as to when the thread has ended (although you never
+know for sure whether there fill follow messages in the future).
+
+=cut
+
+sub endTimeEstimate()
+{   my $self = shift;
+
+    return $self->message->timestamp
+        unless $self->isDummy;
+
+    my $latest;
+    $self->recurseThread
+     (  sub { my $node = shift;
+              unless($node->isDummy)
+              {   my $stamp = $node->message->timestamp;
+                  $latest = $stamp if !$latest || $stamp > $latest;
+              }
+            }
+     );
+
+    $latest;
+}
+
+#-------------------------------------------
+
 =back
 
 =head1 IMPLEMENTATION
@@ -1155,7 +1185,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.3.19
+This code is beta, version 1.321
 
 =cut
 

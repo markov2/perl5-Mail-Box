@@ -3,6 +3,16 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.321:
+
+	* Accidentally Mail::Box::Thread::addMessage was taken as pod,
+	  not as code :(
+
+	* Version numbers were not correctly reflected in the manual-pages.
+
+	* Added Mail::Box::Thread::endTimeEstimate on request
+	  by [Michael West]
+
 version 1.320: Wed Oct 10 15:38:12 CEST 2001
 
 	* make_multipart and add_part of MIME::Entity do some
