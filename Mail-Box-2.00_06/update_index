@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for f in `grep '^Mail/.*\.pm$' MANIFEST`
+do  echo "Updating $f"
+    update_one_index $f $f.new && mv $f.new $f
+done
