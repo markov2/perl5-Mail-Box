@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test rebuilding existing messages
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -11,6 +10,7 @@ use Tools;
 use Mail::Message;
 use Mail::Message::Construct::Rebuild;
 
+use Test::More;
 my $has_htmlFormatText;
 
 BEGIN {

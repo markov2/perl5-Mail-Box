@@ -3,12 +3,15 @@ use strict;
 package Tools;
 
 use base 'Exporter';
+use File::Copy 'copy';
+
 our @EXPORT =
-  qw/clean_dir
+  qw/clean_dir copy_dir
      unpack_mbox2mh unpack_mbox2maildir
      compare_lists listdir
      compare_message_prints
      compare_thread_dumps
+     start_pop3_server start_pop3_client
 
      $folderdir
      $src $unixsrc $winsrc
@@ -33,12 +36,13 @@ BEGIN {
    $windows       = $^O =~ m/mswin32|cygwin/i;
    $crlf_platform = $windows;
 
+   $folderdir     = -d 'folders' ? 'folders'
+                  : File::Spec->catdir('tests','folders');
+
    $logfile = File::Spec->catfile(getcwd(), 'run-log');
    $unixfn  = 'mbox.src';
    $winfn   = 'mbox.win';
    $cpyfn   = 'mbox.cpy';
-
-   $folderdir = -d 'folders' ? 'folders' : File::Spec->catdir('tests','folders');
 
    $unixsrc = File::Spec->catfile('folders', $unixfn);
    $winsrc  = File::Spec->catfile('folders', $winfn);
@@ -57,13 +61,41 @@ sub clean_dir($)
 {   my $dir = shift;
     opendir DIR, $dir or return;
 
-    foreach (map { "$dir/$_" } grep !/^\.\.?$/, readdir DIR)
+    my @items = map { m/(.*)/ && "$dir/$1" }   # untainted
+                    grep !/^\.\.?$/, readdir DIR;
+    foreach (@items)
     {   if(-d)  { clean_dir $_ }
         else    { unlink $_ }
     }
 
     closedir DIR;
     rmdir $dir;
+}
+
+#
+# COPY_DIR FROM, TO
+# Copy directory to other place (not recursively), cleaning the
+# destination first.
+#
+
+sub copy_dir($$)
+{   my ($orig, $dest) = @_;
+
+    clean_dir($dest);
+
+    mkdir $dest
+        or die "Cannot create copy destination $dest: $!\n";
+
+    opendir ORIG, $orig
+        or die "Cannot open directory $orig: $!\n";
+
+    foreach my $name (map { !m/^\.\.?$/ && m/(.*)/ ? $1 : () } readdir ORIG)
+    {   my $from = File::Spec->catfile($orig, $name);
+        my $to   = File::Spec->catfile($dest, $name);
+        copy($from, $to) or die "Couldn't copy $from,$to: $!\n";
+    }
+
+    close ORIG;
 }
 
 # UNPACK_MBOX2MH
@@ -240,6 +272,47 @@ sub listdir($)
     my @entities = grep !/^\.\.?$/, readdir LISTDIR;
     closedir LISTDIR;
     @entities;
+}
+
+#
+# Start POP3 server for 43pop3 tests
+#
+
+sub start_pop3_server($;$)
+{  my $popbox  = shift;
+   my $setting = shift || '';
+
+   $^X =~ m/(.*)/;
+   my $perl = $1;
+
+   my $serverscript = File::Spec->catfile('43pop3', 'server');
+
+   %ENV = ();
+   open(my $server, "$perl $serverscript $popbox $setting|")
+       or die "Could not start POP3 server\n";
+
+   my $line  = <$server>;
+   my $port  = $line =~ m/(\d+)/ ? $1
+     : die "Did not get port specification, but '$line'";
+
+   ($server, $port);
+}
+
+#
+# START_POP3_CLIENT PORT, OPTIONS
+#
+
+sub start_pop3_client($@)
+{   my ($port, @options) = @_;
+    require Mail::Transport::POP3;
+    
+    Mail::Transport::POP3->new
+     ( hostname => '127.0.0.1'
+     , port     => $port
+     , username => 'user'
+     , password => 'password'
+     , @options
+     );
 }
 
 #

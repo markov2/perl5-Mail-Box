@@ -158,19 +158,19 @@ Print only the body of the message, not the whole.
 =default undisclosed <false>
 
 Do not print the C<Bcc> and C<Resent-Bcc> lines.  Default false, which
-means that they are printed.
+means that they are not printed.
 
 =cut
 
 sub putContent($$@)
 {   my ($self, $message, $fh, %args) = @_;
 
-       if($args{body_only}) { $message->body->print($fh) }
-    elsif($args{undisclosed})
-    {    $message->head->printUndisclosed($fh);
-         $message->body->print($fh);
+       if($args{body_only})   { $message->body->print($fh) }
+    elsif($args{undisclosed}) { $message->Mail::Message::print($fh) }
+    else
+    {   $message->head->printUndisclosed($fh);
+        $message->body->print($fh);
     }
-    else { $message->Mail::Message::print($fh) }
 
     $self;
 }

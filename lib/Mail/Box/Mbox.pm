@@ -165,11 +165,11 @@ sub listSubFolders(@)
     my $dir;
     if(ref $thingy)   # Mail::Box::Mbox
     {    $extension ||= $thingy->{MBM_sub_ext};
-         $dir      = $thingy->filename;
+         $dir = $thingy->filename;
     }
     else
     {    $extension ||= $default_sub_extension;
-         $dir    = $class->folderToFilename($folder, $folderdir, $extension);
+         $dir = $class->folderToFilename($folder, $folderdir, $extension);
     }
 
     my $real       = -d $dir ? $dir : "$dir$extension";
@@ -210,7 +210,7 @@ sub listSubFolders(@)
         }
     }
 
-    keys %folders;
+    map { m/(.*)/ && $1 } keys %folders;   # untained names
 }
 
 #-------------------------------------------

@@ -10,7 +10,7 @@ sub requires { () }
 sub skip()
 {
       $windows
-    ? 'Maildir filenames are not compatible with Windows'
+    ? 'Maildir filenames are not compatible with Windows.'
     : undef;
 }
 

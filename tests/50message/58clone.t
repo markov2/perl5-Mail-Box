@@ -1,21 +1,20 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test cloning messages
 #
 
-use Test::More;
 use strict;
 use warnings;
-
-use Tools;
-use IO::Scalar;
 
 use Mail::Message;
 use Mail::Message::Construct;
 use Mail::Message::Body::Lines;
 use Mail::Message::Body::Multipart;
 use Mail::Message::Body::Nested;
+use Tools;
 
+use Test::More;
+use IO::Scalar;
 use Mail::Address;
 
 BEGIN {plan tests => 5}

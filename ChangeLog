@@ -11,7 +11,74 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
-version 2.046:
+version 2.047:
+
+	Fixes:
+
+	- [Jason Woodward] reported that reply on multiparts (with only
+	  one part) failed.
+
+	- For MBOX and POP3, delayed header will be read before labels()
+	  or label() return the values, because only reading will cause
+	  the [X-]Status fields to be parsed into labels.
+
+	- Tests are now suitable for perl5.8.1
+
+	- [Joe Junkin] reported a problem to send messages where the
+	  body is not in a temporary file via SMTP.
+
+	Improvements:
+
+	- On request by [Jason Woodward], POP3 received messages will
+	  get their Status and X-Status fields processed.  POP3 has no
+	  other means to pass-on status information, although not all
+	  servers support these fields.
+
+	- The library should now be taint-safe: all test-scripts now run
+	  in taint mode!
+
+	- The POP3 test-scripts now share common code in Tools.pm
+
+	- New release for Mail::Box::Parser::C (as separate package)
+	  which ignores message lines starting with 'From ' as
+	  separators in broken MBOX folders (like mutt produces).
+
+	- Refolding and Mail::Message::Field::AddrGroup will produce
+	  the address strings in alphabetic order, to get a reproduceable
+	  result (required for 5.8.1)
+
+version 2.046: Thu Jul 31 12:25:47 CEST 2003
+
+	Fixes:
+
+	- [Kees Dekker] found that HPUX mangles %z int textual timezone,
+	  so Mail::Message::Field::toDate() has changed again.  Quite
+	  complex now.
+
+	- [Kees Dekker] fixed a missed test for undef in
+	  Mail::Message::Head::ListGroup::display().
+
+	- [Kees Dekker] reported a problem in tests/42maildir/20write
+	  which was caused by a missing $folder->close;
+
+	- [Blair Zajac] & [Kees Dekker] signalled that User::Identity
+	  and URI are prerequisits now.
+
+	- [Kingpin] Wrong quotes in warnings and a typo, in
+	  Mail/Message/Body/Encoding.pm
+
+	- $msg->send was showing lines not to be disclosed by default,
+	  which is wrong.
+
+	- [Jan Stapel] reported prints of "GLOB()"s where text was
+	  expected.  This was a new bug in Mail::Message::Body::File
+
+	Improvements:
+
+	- [David Coppit] has a short list of improvements in handling
+	  blank lines at the end of messages and message parts, which
+	  will decrease the differences between a message read and then
+	  printed.
 
 version 2.045: Tue Jul 29 20:23:30 CEST 2003
 

@@ -1,10 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 
 #
 # Test access to folders using ties on hashes.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -13,7 +12,7 @@ use Mail::Box::Tie::HASH;
 use Mail::Message::Construct;
 use Tools;
 
-BEGIN {plan tests => 101}
+use Test::More tests => 101;
 
 #
 # The folder is read.

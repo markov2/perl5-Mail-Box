@@ -6,7 +6,7 @@ use base 'Mail::Reporter';
 
 use Carp;
 use Mail::Address;
-use Date::Parse;
+use POSIX      'strftime';
 
 our %_structured;  # not to be used directly: call isStructured!
 my $default_wrap_length = 78;
@@ -563,10 +563,10 @@ sub toInt()
 
 =ci_method toDate [TIME]
 
-Convert a timestamp into a MIME-acceptable date format.  This
-differs from the default output of C<localtime> in scalar context.  Without
-argument, the C<localtime> is used to get the current time. TIME can be
-specified as one numeric (like the result of C<time()>) and as list
+Convert a timestamp into an rfc2822 compliant date format.  This differs
+from the default output of C<localtime> in scalar context.  Without
+argument, the C<localtime> is used to get the current time. TIME can
+be specified as one numeric (like the result of C<time()>) and as list
 (like produced by c<localtime()> in list context).
 
 Be sure to have your timezone set right, especially when this script
@@ -576,11 +576,12 @@ runs automatically.
 
  my $now = time;
  Mail::Message::Field->toDate($now);
-
  Mail::Message::Field->toDate(time);
- Mail::Message::Field->toDate(localtime);  # same
- Mail::Message::Field->toDate;             # same
- # returns someting like:  Wed, 28 Aug 2002 10:40:25 +0200
+
+ Mail::Message::Field->toDate(localtime);
+ Mail::Message::Field->toDate;      # same
+ # returns someting like:
+ #     Wed, 28 Aug 2002 10:40:25 +0200
 
 =cut
 
@@ -588,16 +589,27 @@ my @weekday = qw/Sun Mon Tue Wed Thu Fri Sat Sun/;
 my @month   = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
 
 sub toDate(@)
-{   my $class = shift;
-    use POSIX 'strftime';
-    my @time  = @_== 0 ? localtime() : @_==1 ? localtime(shift) : @_;
-    my $time  = strftime("$weekday[$time[6]], %d $month[$time[4]] %Y %H:%M:%S %z", @time);
+{   my $class  = shift;
+    my @time   = @_== 0 ? localtime() : @_==1 ? localtime(shift) : @_;
+    my $format = "$weekday[$time[6]], %d $month[$time[4]] %Y %H:%M:%S %z";
+    my $time   = strftime($format, @time);
 
-    require Date::Format;
-    Date::Format::Generic->strftime($time, \@time)
-       if $time =~ m/\%z/;
+    # for C libs which do not (GNU compliantly) support %z
+    $time =~ s/ (\%z|[A-Z]+)$/_tz_offset($1)/e;
 
     $time; 
+}
+
+sub _tz_offset($)
+{  my $zone = shift;
+   require Time::Zone;
+
+   my $diff = $zone eq '%z' ? Time::Zone::tz_local_offset()
+           :                  Time::Zone::tz_offset($zone);
+   my $minutes = int((abs($diff)+0.01) / 60);     # float rounding errors :(
+   my $hours   = int(($minutes+0.01) / 60);
+   $minutes   -= $hours * 60;
+   sprintf( ($diff < 0 ? " -%02d%02d" : " +%02d%02d"), $hours, $minutes);
 }
 
 #------------------------------------------
@@ -656,7 +668,8 @@ sub dateToTimestamp($)
     # in RFC822, FWSes can appear within the time.
     $string =~ s/(\d\d)\s*\:\s*(\d\d)\s*\:\s*(\d\d)/$1:$2:$3/;
 
-    str2time($string, 'GMT');
+    require Date::Parse;
+    Date::Parse::str2time($string, 'GMT');
 }
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test the processing of a message header, in this case purely the reading
 # from a file.

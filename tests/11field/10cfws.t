@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test stripping CFWS  [comments and folding white spaces] as
 # specified by rfc2822.

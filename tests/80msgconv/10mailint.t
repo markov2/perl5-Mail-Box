@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test conversions between Mail::Internet and Mail::Message
 #
@@ -9,6 +9,7 @@ use warnings;
 use Mail::Message;
 use Mail::Message::Convert::MailInternet;
 use Tools;
+
 use Test::More;
 
 BEGIN

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing of field attributes in their most expensive implementation!
 #

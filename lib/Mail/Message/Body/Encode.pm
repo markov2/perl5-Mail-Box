@@ -150,7 +150,7 @@ sub encode(@)
     {   $decoded = $decoder->decode($self, result_type => $bodytype) }
     else
     {   $self->log(WARNING =>
-           'No decoder defined for transfer enconding $trans_was.');
+           "No decoder defined for transfer encoding $trans_was.");
         return $self;
     }
 
@@ -160,7 +160,7 @@ sub encode(@)
     {   $encoded = $encoder->encode($decoded, result_type => $bodytype) }
     else
     {   $self->log(WARNING =>
-           'No encoder defined for transfer encoding $trans_to.');
+           "No encoder defined for transfer encoding $trans_to.");
         return $decoded;
     }
     $encoded;

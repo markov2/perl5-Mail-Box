@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing of addresses
 #
@@ -137,8 +137,8 @@ is($a[3]->string, 'Who? <one@y-me.test>');
 is($cc->string, "Cc: $c");
 $cc->beautify;
 is($cc->string, <<'REFOLDED');
-Cc: Who? <one@y-me.test>, jdoe@example.org, "Mary Smith" <mary@x.test>,
- "Joe Q. Public" <john.q.public@example.com>
+Cc: "Joe Q. Public" <john.q.public@example.com>, "Mary Smith" <mary@x.test>,
+ Who? <one@y-me.test>, jdoe@example.org
 REFOLDED
 
 # Next!
@@ -174,10 +174,10 @@ cmp_ok($g[2]->addresses, '==', 0);
 is($cc->string, "Cc: $c3");
 $cc->beautify;
 is($cc->string, <<'REFOLDED');
-Cc: "Giant; \"Big\" Box" <sysservices@example.net>, boss@nil.test,
+Cc: "Giant; \"Big\" Box" <sysservices@example.net>,
  "Jane Brown" <j-brown@other.example>,
- "Mary Smith: Personal Account" <smith@home.example>,
- A Group: John <jdoe@one.test>, joe@where.test, "Chris Jones" <c@a.test>;
+ "Mary Smith: Personal Account" <smith@home.example>, boss@nil.test,
+ A Group: "Chris Jones" <c@a.test>, John <jdoe@one.test>, joe@where.test;
  Undisclosed recipients: ;
 REFOLDED
 
@@ -222,13 +222,13 @@ is($a0->username, 'jdoe');
 is($a0->domain, 'one.test');
 is($a0->comment, 'my dear friend');
 
-is($g[1]->string, 'A Group: John <jdoe@one.test> (my dear friend), joe@example.org, "Chris Jones" <c@public.example>;');
+is($g[1]->string, 'A Group: "Chris Jones" <c@public.example>, John <jdoe@one.test> (my dear friend), joe@example.org;');
 
 is($cc->string, "Cc: $c2");
 $cc->beautify;
 is($cc->string, <<'REFOLDED');
-Cc: Pete <pete@silly.test>, A Group: John <jdoe@one.test> (my dear friend),
- joe@example.org, "Chris Jones" <c@public.example>;
+Cc: Pete <pete@silly.test>, A Group: "Chris Jones" <c@public.example>,
+ John <jdoe@one.test> (my dear friend), joe@example.org;
 REFOLDED
 
 __END__

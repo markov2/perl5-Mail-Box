@@ -1,10 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 
 #
 # Test reading of Maildir folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -12,6 +11,7 @@ use Mail::Box::Maildir;
 use Mail::Box::Mbox;
 use Tools;
 
+use Test::More;
 use File::Compare;
 use File::Copy;
 

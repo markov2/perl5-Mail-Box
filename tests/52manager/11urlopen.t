@@ -1,10 +1,8 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test the url decoding for a folder name
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -12,8 +10,7 @@ use Tools;
 use Mail::Box::Manager;
 
 use File::Spec;
-
-BEGIN {plan tests => 16}
+use Test::More tests => 16;
 
 my $mgr = Mail::Box::Manager->new;
 

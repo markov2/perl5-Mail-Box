@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test the locking methods.
 #
@@ -9,10 +8,9 @@ use warnings;
 
 use Tools;
 use Mail::Box::Locker::Multi;
-use Test::More;
-use File::Spec;
 
-BEGIN {plan tests => 7}
+use File::Spec;
+use Test::More tests => 7;
 
 my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 

@@ -243,6 +243,7 @@ sub listSubFolders(@)
 
     # Check if the files we want to return are really folders.
 
+    @dirs = map { m/(.*)/ && $1 ? $1 : () } @dirs;   # untaint
     return @dirs unless $args{check};
 
     grep { $class->foundIn(File::Spec->catfile($dir,$_)) } @dirs;
@@ -399,9 +400,11 @@ sub readMessageFilenames
 {   my ($self, $dirname) = @_;
 
     opendir DIR, $dirname or return;
+
+    # list of numerically sorted, untainted filenames.
     my @msgnrs
        = sort {$a <=> $b}
-            grep { /^\d+$/ && -f File::Spec->catfile($dirname,$_) }
+            map { /^(\d+)$/ && -f File::Spec->catfile($dirname,$1) ? $1 : () }
                readdir DIR;
 
     closedir DIR;

@@ -1,15 +1,16 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test stripping signatures
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Mail::Message::Body::Construct;
 use Mail::Message::Body;
 use Tools;
+
+use Test::More;
 
 BEGIN {plan tests => 37}
 

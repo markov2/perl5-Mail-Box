@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test the creation of reply messages
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -13,6 +12,7 @@ use Mail::Message::Head;
 use Mail::Message::Body::Lines;
 use Mail::Message::Construct::Reply;
 
+use Test::More;
 use Mail::Address;
 
 BEGIN {plan tests => 23}

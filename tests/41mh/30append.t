@@ -1,10 +1,8 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test appending messages on MH folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -12,6 +10,7 @@ use Mail::Box::Manager;
 use Mail::Message::Construct;
 use Tools;
 
+use Test::More;
 use File::Compare;
 use File::Copy;
 

@@ -15,7 +15,8 @@ use POSIX 'getcwd';
 use Tools;             # test tools
 use IO::Dir;
 
-chdir 'tests' or die;    ##### CHANGE DIR TO tests
+chdir 'tests'    ##### CHANGE DIR TO tests
+   or die "Cannot go to test scripts directory: $!\n";
 
 my $verbose = 0;
 if(@ARGV && $ARGV[0] eq '-v')
@@ -25,7 +26,7 @@ if(@ARGV && $ARGV[0] eq '-v')
 
 my $select_tests;
 if(@ARGV)
-{   my $pat = join '|', map { "\Q$_" } @ARGV;
+{   my $pat = join '|', @ARGV;
     $select_tests   = qr/$pat/o;
 }
 
@@ -34,51 +35,23 @@ sub testnames($);
 sub run_in_harness(@);
 sub report();
 sub dl_format($@);
-sub check_requirement($);
-sub update_requirement($);
-sub install_package($);
 
-my $has_readkey;
-BEGIN
-{   eval "require Term::ReadKey";
-    $has_readkey = not length $@;
-}
-
-sub ask($$)
-{   my ($text, $default) = @_;
-    print $text, " [$default] ";
-    my $key;
-
-    if($has_readkey)
-    {   Term::ReadKey->import;
-        ReadMode(3);   # cbreak mode
-        $key = ReadKey(0) until defined($key);
-        ReadMode(1);
-
-        $key = $default if $key =~ m/\n/;
-        print "$key\n";
-    }
-    else
-    {   # No Term::ReadKey
-        flush STDOUT;
-        my $line = <STDIN>;
-        $line    =~ m/(\S)/;
-        $key     = $1 || $default;
-    }
-
-    $key;
-}
-
-my $default_install_answer = -t STDIN ? 'y' : 'n';
-
-warn <<'WARN' unless $select_tests;
+warn <<'WARN';
 
 *
 * Testing MailBox
+WARN;
+
+if(-f "skiptests")
+{   warn <<'WARN';
+* Tests are disabled, because you said so when the Makefile was created.
+* remove the file "skiptests" if you want to run them.
 *
-* During the test phase (even if you do not run any tests), you will
-* be asked to install optional modules.  You can always install those
-* modules later without re-installing MailBox.
+WARN
+    exit 0;
+}
+
+warn <<'WARN' unless $select_tests;
 *
 * Sometimes installing MailBox breaks because of the huge size
 * of the whole package. Simply restarting the installation is in
@@ -91,11 +64,6 @@ warn <<'WARN' unless $select_tests;
 
 WARN
 
-unless(defined $select_tests)
-{   my $run = ask("Do you want to run the (large set of) tests?", "yes");
-    $select_tests = "skip" unless $run =~ m/^y/i;
-}
-
 #
 # Get all the test-sets.
 #
@@ -105,9 +73,8 @@ my $setdir  = IO::Dir->new($testdir);
 die "Cannot open directory $testdir: $!"
      unless $setdir;
 
-my @sets = sort
-              grep { /^\d/ && -d File::Spec->catfile($testdir, $_) } 
-                 $setdir->read;
+my @sets = sort grep { /^\d/ && -d File::Spec->catfile($testdir, $_) } 
+                  $setdir->read;
 
 $setdir->close;
 
@@ -145,14 +112,6 @@ foreach my $set (@sets)
     elsif(defined $select_tests)  { ; }  # silence
     else
     {   printf "%-15.15s -- skip all tests; %s\n", $set, $package->name;
-    }
-
-    my @requires = $package->requires;
-    check_requirement $_ foreach @requires;
-
-    foreach my $req (@requires)
-    {   update_requirement $req;
-        check_requirement $req;    # do not always believe CPAN install
     }
 
     next unless @tests;
@@ -266,94 +225,4 @@ sub dl_format($@)
     }
 
     print "$line\n" if $line =~ /[^ ]/;
-}
-
-#
-# CHECK_REQUIREMENT HASH
-# Check whether the right version of the optional packages are installed.
-#
-
-sub check_requirement($)
-{   my $req = shift;
-
-    return 1 if ${$req->{present}};
-
-    my $package = $req->{package};
-
-    local $_;   # evals are destroying $_ sometimes.
-    eval "require $package";
-    if($@)
-    {   print "    package $package is not installed\n";
-        return 0;
-    }
-
-    my $version = $req->{version};
-    eval {$package->VERSION($version)};
-    if($@)
-    {   print "    package $package is too old; need version $version, installed is ".$package->VERSION.".\n";
-        return 0;
-    }
-
-    ${$req->{present}} = 1;
-}
-
-#
-# UPDATE_REQUIREMENT HASH
-# If the requirement is not present, or too old, the user gets a chance to
-# install it.
-#
-
-sub update_requirement($)
-{   my $req = shift;
-
-    return 1 if ${$req->{present}};
-
-    my $package = $req->{package};
-    my $module  = $req->{module} || $package;
-    my $install = $default_install_answer;
-
-    if($install eq 'a')
-    {   $install = 'y';
-    }
-    else
-    {   my $inmod   = $module ne $package ? " (in module $module)" : '';
-
-        print "    package $package$inmod is optional.\n";
-        if(my $reason  = $req->{reason})
-        {   $reason =~ s/^/        /mg;
-            print $reason;
-        }
-
-        my $key = ask("    do you want to install $package? yes/no/all", $install);
-
-        if($key eq 'a')
-        {   $default_install_answer = 'a';
-            $install = 'y';
-        }
-        else
-        {   $install = $key eq 'y' ? 'y' : 'n';
-        }
-    }
-
-    return 0 unless $install eq 'y';
-
-    install_package $package;
-}
-
-#
-# INSTALL_PACKAGE PACKAGE
-#
-
-sub install_package($)
-{   my $package = shift;
-    local $_;
-
-    print "    installing $package\n";
-    my $pwd = getcwd;
-
-    require CPAN;
-    eval { CPAN::install($package) };
-
-    chdir $pwd
-       or warn "Cannot return to $pwd: $!n";
 }

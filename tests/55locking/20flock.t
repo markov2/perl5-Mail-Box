@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 
 #
 # Test the locking methods.
@@ -8,10 +8,10 @@ use strict;
 use warnings;
 
 use Tools;
-use Test::More;
 use Mail::Box::Locker::Flock;
 
 use File::Spec;
+use Test::More;
 
 BEGIN
 {   if($windows)

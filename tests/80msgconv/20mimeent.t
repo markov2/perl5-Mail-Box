@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test conversions between Mail::Message and MIME::Entity
 #
@@ -8,6 +8,7 @@ use warnings;
 
 use Tools;
 use Mail::Message;
+
 use Test::More;
 
 BEGIN

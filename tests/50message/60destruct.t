@@ -1,16 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test destruction of (folder) messages
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Mail::Box::Mbox;
 use Tools;
 
-BEGIN {plan tests => 59}
+use Test::More tests => 59;
 
 my @src = (folder => "=$fn", folderdir => 'folders');
 

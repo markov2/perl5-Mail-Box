@@ -1,14 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test formatting as plain text with Text::Autoformat
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Tools;
 use Mail::Message;
+
+use Test::More;
 
 BEGIN {
     eval 'require Text::Autoformat';

@@ -1,14 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test the creation of forward subjects
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Tools;
 use Mail::Message::Construct::Forward;
+
+use Test::More;
+use Tools;
 
 BEGIN {plan tests => 7}
 

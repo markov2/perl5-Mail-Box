@@ -1,10 +1,8 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test access to folders using ties.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -13,7 +11,7 @@ use Mail::Box::Mbox;
 use Mail::Box::Tie::ARRAY;
 use Mail::Message::Construct;
 
-BEGIN {plan tests => 13}
+use Test::More tests => 13;
 
 #
 # The folder is read.

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 
 #
 # Test writing of maildir folders.
@@ -120,4 +120,5 @@ ok(! $folder->message(-1)->label('accepted'));
 $folder->message(-1)->accept;
 ok($folder->message(-1)->label('accepted'));
 
+$folder->close;
 clean_dir $mdsrc;

@@ -1,10 +1,8 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test folder-to-folder copy
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -13,8 +11,7 @@ use Mail::Box::Manager;
 use File::Copy;
 
 use IO::Scalar;
-
-BEGIN {plan tests => 28}
+use Test::More tests => 28;
 
 copy $src, $cpy or die "Copy failed";
 

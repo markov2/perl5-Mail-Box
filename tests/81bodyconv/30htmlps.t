@@ -1,14 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test conversions from HTML/XHTML to postscript with HTML::FormatPS
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Tools;
 use Mail::Message::Body::Lines;
+use Tools;
+
+use Test::More;
 
 BEGIN {
    

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing of multipart message bodies.
 #
@@ -86,7 +86,6 @@ Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
-
 --part-separator--
 EXPECTED
 
@@ -107,7 +106,6 @@ Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
-
 --part-separator
 Content-Type: text/plain; charset="us-ascii"
 Content-Length: 24
@@ -118,7 +116,6 @@ p2 l1
 p2 l2
 p2 l3
 p2 l4
-
 --part-separator--
 EXPECTED
 
@@ -151,7 +148,6 @@ Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
-
 --part-separator
 Content-Type: text/plain; charset="us-ascii"
 Content-Length: 24
@@ -162,7 +158,6 @@ p2 l1
 p2 l2
 p2 l3
 p2 l4
-
 --part-separator--
 epilogue
 EXPECTED
@@ -197,7 +192,6 @@ Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
-
 --part-separator
 Content-Type: text/plain; charset="us-ascii"
 Content-Length: 24
@@ -208,7 +202,6 @@ p2 l1
 p2 l2
 p2 l3
 p2 l4
-
 --part-separator--
 epilogue
 EXPECTED

@@ -1,10 +1,11 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/perl -T
 #
 # Test writing of MH folders.
 #
 
 use strict;
+use warnings;
+
 use Mail::Box::MH;
 use Mail::Box::Mbox;
 use Tools;

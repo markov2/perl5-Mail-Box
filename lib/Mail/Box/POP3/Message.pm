@@ -84,6 +84,22 @@ sub deleted(;$)
 
 #-------------------------------------------
 
+sub label(@)
+{   my $self = shift;
+    $self->loadHead;              # be sure the labels are read
+    $self->SUPER::label(@_);
+}
+
+#-------------------------------------------
+
+sub labels(@)
+{   my $self = shift;
+    $self->loadHead;              # be sure the labels are read
+    $self->SUPER::labels(@_);
+}
+
+#-------------------------------------------
+
 =section Internals
 
 =cut
@@ -93,7 +109,11 @@ sub loadHead()
     my $head     = $self->head;
     return $head unless $head->isDelayed;
 
-    $self->head($self->folder->getHead($self));
+    $head        = $self->folder->getHead($self);
+    $self->head($head);
+
+    $self->statusToLabels;  # not supported by al POP3 servers
+    $head;
 }
 
 #-------------------------------------------

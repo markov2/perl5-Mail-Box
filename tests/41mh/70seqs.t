@@ -1,16 +1,16 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 
 #
 # Test mh-sequences
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Mail::Box::Manager;
 use Tools;
 
+use Test::More;
 use File::Spec;
 
 BEGIN {plan tests => 10}

@@ -1,10 +1,8 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test searching with grep
 #
 
-use Test::More;
 use strict;
 use warnings;
 
@@ -14,8 +12,7 @@ use Mail::Box::Search::Grep;
 use File::Copy;
 
 use IO::Scalar;
-
-BEGIN {plan tests => 58}
+use Test::More tests => 58;
 
 copy $src, $cpy
     or die "Cannot create test folder: $!\n";

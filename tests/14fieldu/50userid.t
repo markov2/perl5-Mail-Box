@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing in combination with User::Identity as documented in
 # Mail::Message::Field.
@@ -134,5 +134,5 @@ is($g->string, 'groupie: "my \" quote" <somehow@example.com> (make it \) hard), 
 $g->addAddress('aap@hok.nl');
 @addrs = $g->addresses;
 cmp_ok(scalar @addrs, '==', 3);
-is($g->string, 'groupie: aap@hok.nl, "my \" quote" <somehow@example.com> (make it \) hard), him@home.net;');
+is($g->string, 'groupie: "my \" quote" <somehow@example.com> (make it \) hard), aap@hok.nl, him@home.net;');
 

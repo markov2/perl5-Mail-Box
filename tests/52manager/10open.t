@@ -1,19 +1,16 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl -T
 #
 # Test the folder manager
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Tools;
 use Mail::Box::Manager;
+use Tools;
 
 use File::Spec;
-
-BEGIN {plan tests => 16}
+use Test::More tests => 16;
 
 my $new  = File::Spec->catfile('folders', 'create');
 unlink $new;

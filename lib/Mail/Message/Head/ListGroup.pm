@@ -1,8 +1,9 @@
 
-use strict;
-
 package Mail::Message::Head::ListGroup;
 use base 'Mail::Reporter';
+
+use strict;
+use warnings;
 
 use Mail::Message::Field::Fast;
 
@@ -541,7 +542,7 @@ sub details()
     my $type     = $self->type || 'Unknown';
 
     my $software = $self->software;
-    undef $software if $type eq $software;
+    undef $software if defined($software) && $type eq $software;
     my $version  = $self->version;
     my $release
       = defined $software

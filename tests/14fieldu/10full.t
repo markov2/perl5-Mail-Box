@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing of full fields, the most complex (and slowest) kind of fields.
 #

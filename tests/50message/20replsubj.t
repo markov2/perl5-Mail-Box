@@ -1,15 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test the creation of reply subjects
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Mail::Message::Construct::Reply;
 use Tools;
 
+use Test::More;
 BEGIN {plan tests => 21}
 
 is(Mail::Message->replySubject('subject'), 'Re: subject');

@@ -4,30 +4,185 @@ use ExtUtils::MakeMaker;
 
 require 5.006_001;
 
-WriteMakefile
-  ( NAME	 => 'Mail::Box'
-  , VERSION_FROM => 'lib/Mail/Box.pm'
-  , AUTHOR       => 'Mark Overmeer'
-  , ABSTRACT     => 'E-mail handling'
-  , PREREQ_PM    =>
-    { Date::Parse    => 0.0
-    , File::Spec     => 0.7
-    , Errno          => 0.0
-    , Scalar::Util   => 1.07
-    , Object::Realize::Later => 0.12
-    , Mail::Address  => 0.0
-    , MIME::Types    => 1.004
-    , Sys::Hostname  => 0.0
-    , Test::More     => 0.47
-    , MIME::Base64   => 0.0
-    , URI            => 1.23
-    , IO::Scalar     => 0.0
-    , Digest::MD5    => 0.0
+my @optional =
+( 
 
-# Optional
-#   Text::Autoformat
-#   HTML::Format
-#   Mail::SpamAssassin
+  [ Encode => '1.86', requires => sub { $] >= 5.007_003 }
+  , reason  => <<'REASON', warning => <<'WARN' ]
+Conversions between character sets are done by Encode.  Many
+other Perl modules use Encode too.
+REASON
+Encode is a huge package, but not complicated to install.
+WARN
 
+, [ Mail::Transport::Dbx => '0.04', reason  => <<'REASON' ]
+The wrapper to the Outlook's dbx files consists of a c-library
+named libdbx (website http://sorceforge.net/project/ol2mbox/),
+and a wrapper which is distributed separately from Mail::Box.
+You get read-only access to the the dbx folders.
+REASON
+
+, [ Mail::SpamAssassin => '2.00', reason  => <<'REASON', warning => <<'WARN' ]
+Searching for spam in a mail folder needs the popular spam killer.
+REASON
+This distr is large: installing will take quite a while. You
+can install it later.  When your CPAN cache is small, this may
+break your Mail::Box installing process.
+WARN
+
+, [ Mail::Internet => '1.0', distr => 'MailTools', reason  => <<'REASON' ]
+Many existing e-mail applications use Mail::Internet objects.  If
+you want automatic conversions for compatibility, you need this.
+REASON
+
+, [ MIME::Entity => '3.0', distr  => 'MIME::Tools', reason  => <<'REASON' ]
+MIME::Entity extends Mail::Internet messages with multipart handling
+and composition.  Install this when you want compatibility with
+distrs which are based on this kind of messages.
+REASON
+
+, [ HTML::TreeBuilder => '3.13', reason => <<'REASON' ]
+     The tree builder is used by the HTML::Format* packages.
+     Version 3.12 is wrong, so you should install a newer version
+     if you want smart html conversions.
+REASON
+
+, [ HTML::FormatText => '2.01', distr => 'HTML::Format', reason => <<'REASON' ]
+Plug-in which converts HTML to Postscript or plain text.
+REASON
+
+);
+
+my %prereq =
+ ( Date::Parse    => 0.0
+ , File::Spec     => 0.7
+ , Errno          => 0.0
+ , Scalar::Util   => 1.07
+ , Object::Realize::Later => 0.12
+ , Mail::Address  => 0.0
+ , MIME::Types    => 1.004
+ , Sys::Hostname  => 0.0
+ , Test::More     => 0.47
+ , MIME::Base64   => 0.0
+ , URI            => 1.23
+ , IO::Scalar     => 0.0
+ , Digest::MD5    => 0.0
+ , User::Identity => 0.05
+ , Time::Zone     => 0.0
+ );
+
+my $has_readkey;
+BEGIN
+{   eval "require Term::ReadKey";
+    $has_readkey = not length $@;
+}
+
+sub ask($$)
+{   my ($text, $default) = @_;
+    print "---> $text [$default] ";
+    my $key;
+
+    if($has_readkey)
+    {   Term::ReadKey->import;
+        ReadMode(3);   # cbreak mode
+        $key = ReadKey(0) until defined($key);
+        ReadMode(1);
+
+        $key = $default if $key =~ m/\n/;
+        print "$key\n";
     }
-  );
+    else
+    {   # No Term::ReadKey
+        flush STDOUT;
+        my $line = <STDIN>;
+        $line    =~ m/(\S)/;
+        $key     = $1 || $default;
+    }
+
+    $key;
+}
+
+my $default_install_answer = $ENV{INSTALL_MAILBOX_OPTIONALS}
+    || (-t STDIN ? 'y' : 'n');
+
+print <<'INTRO';
+*
+**** Installing MailBox
+*
+* First, let me ask you whether you want some optional modules to be
+* installed as well.  You can always install these modules later, by
+* hand, without a need to re-install MailBox.
+*
+INTRO
+foreach my $optional (@optional)
+{   my ($module, $version, %args) = @$optional;
+    my $requirements = $args{requires} || sub {1};
+    next unless $requirements->();
+
+    print "\n";
+    eval "require $module";
+    if($@)
+    {   print "**** Optional $module failed:\n$@\n";
+    }
+    elsif($module->VERSION < $version )
+    {   print "**** Optional $module too old: requires $version but is ",
+            $module->VERSION,"\n";
+    }
+    else
+    {   print "**** Found optional $module version ", $module->VERSION,
+             " (required is $version)\n";
+        next;
+    }
+
+    my $reason = $args{reason};
+    $reason =~ s/^/     /gm;
+    $reason =~ s/\A    /Use:/;
+    print $reason;
+
+    if(my $warn = $args{warning})
+    {   $warn =~ s/^/     /gm;
+        $warn =~ s/\A    /WARN/;
+        print $warn;
+    }
+    
+    my $install  = $default_install_answer;
+    my $key = ask "Do you want to install $module? yes/no/all", $install;
+
+    if($key eq 'a')
+    {   $default_install_answer = 'a';
+        $install = 'y';
+    }
+    else
+    {   $install = $key eq 'y' ? 'y' : 'n';
+    }
+
+    return 0 unless $install eq 'y';
+
+    my $distr = $args{distr} || $module;
+
+    $prereq{$distr} = $version;
+    print "     Added $distr version $version to the requirements\n";
+}
+
+my $tests = ask "Do you want to run the (large set of) tests? yes/no", "yes";
+if($tests =~ m/n/i)
+{   open F, ">", "skiptests";
+    close F;
+}
+else
+{   unlink "skiptests";
+}
+
+print <<'DONE';
+
+**** Writing Makefile
+
+DONE
+
+WriteMakefile
+ ( NAME	 => 'Mail::Box'
+ , VERSION_FROM => 'lib/Mail/Box.pm'
+ , AUTHOR       => 'Mark Overmeer'
+ , ABSTRACT     => 'E-mail handling'
+ , PREREQ_PM    => \%prereq
+ );

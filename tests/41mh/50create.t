@@ -1,18 +1,18 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 
 #
 # Test creation/deletion and listing of folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Mail::Box::Mbox;
 use Mail::Box::MH;
 use Mail::Message::Construct;
-
 use Tools;
+
+use Test::More;
 use File::Copy;
 use File::Spec;
 

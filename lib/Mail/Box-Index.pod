@@ -107,7 +107,7 @@ Only the HTML version of this manual page will list the sections.
       <li>L<Mail::Message/Predefined labels> (M<Mail::Message>)
   <li>Storing labels folder dependent
       <li>L<Mail::Box::Maildir::Message/Flags in filename> (M<Mail::Box::Maildir::Message>)
-      <li>L<Mail::Box::Mbox::Message/Status and X-Status fields> (M<Mail::Box::Mbox::Message>)
+      <li>L<Mail::Message/Status and X-Status fields> (MBOX and POP3 folders)
       <li>L<Mail::Box::MH::Message/The .mh_sequences file> (M<Mail::Box::MH::Labels>)
       <li>L<Mail::Box::IMAP4::Message/IMAP protocol flags> (M<Mail::Box::IMAP4::Message>)
       </ul>

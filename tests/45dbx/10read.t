@@ -1,14 +1,14 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test reading of dbx folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 use Tools;
 
+use Test::More;
 use File::Compare;
 use File::Temp qw(tempdir tempfile);
 

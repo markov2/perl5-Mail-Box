@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing of message bodies which have their content stored
 # in a single string.  This does not test the reading of the bodies

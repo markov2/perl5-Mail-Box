@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test processing of header-fields with Mail::Message::Field::Fast.
 # Only single fields, not whole headers. This also doesn't cover reading

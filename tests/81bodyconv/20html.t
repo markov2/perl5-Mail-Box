@@ -1,19 +1,18 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Test conversions as HTML/XHTML without help of external modules
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Tools;
 use Mail::Message;
 use Mail::Message::Head::Complete;
 use Mail::Message::Field::Fast;
 use Mail::Message::Convert::Html;
+use Tools;
 
-BEGIN { plan tests => 7 }
+use Test::More tests => 7;
 
 my $html  = Mail::Message::Convert::Html->new;
 my $xhtml = Mail::Message::Convert::Html->new(produce => 'XHTML');

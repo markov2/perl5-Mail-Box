@@ -218,7 +218,7 @@ sub lines()
     push @lines, "--$boundary\n", $_->lines
         foreach $self->parts('ACTIVE');
 
-    push @lines, "\n--$boundary--\n";
+    push @lines, "--$boundary--\n";
 
     my $epilogue = $self->epilogue;
     push @lines, $epilogue->lines if $epilogue;
@@ -250,7 +250,6 @@ sub print(;$)
     {   foreach my $part ($self->parts('ACTIVE'))
         {   print $out "--$boundary\n";
             $part->print($out);
-            print $out "\n";
         }
         print $out "--$boundary--\n";
     }
@@ -258,7 +257,6 @@ sub print(;$)
     {   foreach my $part ($self->parts('ACTIVE'))
         {   $out->print("--$boundary\n");
             $part->print($out);
-            $out->print("\n");
         }
         $out->print("--$boundary--\n");
     }
