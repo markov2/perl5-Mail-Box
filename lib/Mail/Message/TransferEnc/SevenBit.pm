@@ -62,7 +62,7 @@ sub encode($@)
     my $changes = 0;
 
     foreach ($body->lines)
-    {   $changes++ if s/[^\000-\127]/chr(ord($&) & 0x7f)/ge;
+    {   $changes++ if s/([^\000-\127])/chr(ord($1) & 0x7f)/ge;
         $changes++ if s/[\000\013]//g;
 
         $changes++ if length > 997;

@@ -62,7 +62,7 @@ sub trySend($@)
     if(open(MAILER, '|-')==0)
     {   { exec $program; }
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
-        return 0;
+        exit 1;
     }
  
     $self->putContent($message, \*MAILER, undisclosed => 1);

@@ -5,6 +5,7 @@ package Mail::Message;
 
 use Mail::Message::Head::Complete;
 use Mail::Message::Field;
+use Carp         qw/croak/;
 
 =chapter NAME
 
@@ -56,6 +57,13 @@ still insist, use M<Mail::Message::body()>.
     Received => 'from ... by ...');
  $msg->bounce($rg)->send;
 
+=error bounce requires To, Cc, or Bcc
+The message M<bounce()> method forwards a received message off to someone
+else without modification; you must specified it's new destination.
+If you have the urge not to specify any destination, you probably
+are looking for M<reply()>. When you wish to modify the content, use
+M<forward()>.
+
 =cut
 
 sub bounce(@)
@@ -68,18 +76,21 @@ sub bounce(@)
          return $bounce;
     }
 
-    my @rgs    = $head->resentGroups;  # No groups yet, then require Received
+    my @rgs    = $head->resentGroups;
     my $rg     = $rgs[0];
 
     if(defined $rg)
-    {   $rg->delete;     # Remove group to re-add it later: others field order
-        while(@_)        #  in header would be disturbed.
+    {   $rg->delete;     # Remove group to re-add it later: otherwise
+        while(@_)        #   field order in header would be disturbed.
         {   my $field = shift;
             ref $field ? $rg->set($field) : $rg->set($field, shift);
         }
     }
-    else
+    elsif(@_)
     {   $rg = Mail::Message::Head::ResentGroup->new(@_);
+    }
+    else
+    {   croak "ERROR: bounce requires To, Cc, or Bcc";
     }
  
     #

@@ -626,7 +626,7 @@ sub toDate(@)
     my $time   = strftime($format, @time);
 
     # for C libs which do not (GNU compliantly) support %z
-    $time =~ s/ (\%z|[A-Z]+)$/_tz_offset($1)/e;
+    $time =~ s/ (\%z|[A-Z ]+)$/_tz_offset($1)/e;
 
     $time; 
 }

@@ -13,7 +13,7 @@ Optional:
 
   filehandle as folder source
 
-   no read for MH index in append mode niet lezen.
+  no read for MH index in append mode niet lezen.
 
   Processing folders with non-platform-native line separators.
   appendMessage opens folder, but not needed.

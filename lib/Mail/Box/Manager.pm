@@ -276,6 +276,13 @@ folder for writing, then the default will be the most recently registered
 type. (If you add more than one type at once, the first of the list is
 used.)
 
+=option authenticate  TYPE|ARRAY-OF-TYPES|'AUTO'
+=default authenticate C<'AUTO'>
+The TYPE of authentication to be used, or a list of TYPES which the
+client prefers.  The server may provide preferences as well, and that
+order will be kept.  This option is only supported by a small subset of
+folder types, especially by POP and IMAP.
+
 =examples opening folders via the manager
 
  my $jack  = $manager->open(folder => '=jack',
@@ -347,6 +354,7 @@ sub open(@)
 {   my $self = shift;
     my $name = @_ % 2 ? shift : undef;
     my %args = @_;
+    $args{authentication} ||= 'AUTO';
 
     $name    = defined $args{folder} ? $args{folder} : ($ENV{MAIL} || '')
         unless defined $name;
@@ -941,10 +949,11 @@ sub decodeFolderURL($)
     $username ||= $ENV{USER} || $ENV{LOGNAME};
 
     $password ||= '';        # decode password from url
-    $password =~ s/\+/ /g;
-    $password =~ s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
+    $password   =~ s/\+/ /g;
+    $password   =~ s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
 
     $hostname ||= 'localhost';
+
     $path     ||= '=';
 
     ( type        => $type,     folder      => $path

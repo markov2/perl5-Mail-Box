@@ -158,11 +158,14 @@ sub read(;$)
     my %index;
 
     while(my $head = $type->new(@options)->read($parser))
-    {   my $msgfile = $head->get('x-mailbox-filename');
+    {
+        # cleanup the index from files which were renamed
+        my $msgfile = $head->get('x-mailbox-filename');
         my $size    = int $head->get('x-mailbox-size');
         next unless -f $msgfile && -s _ == $size;
         next if defined $index_age && -M _ >= $index_age;
 
+        # keep this one
         $index{$msgfile} = $head;
     }
 

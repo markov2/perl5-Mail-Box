@@ -28,8 +28,8 @@ xbd files is not supported.
 
 These dbx folders are accessed using M<Mail::Transport::Dbx> which
 is distributed via CPAN as separate package.  This C<MAil::Transport::Dbx>
-module is based on the open source library named C<libdbx>, which can
-be found at L<http://sourceforge.net/project/ol2mbox/>.  The library does
+module is based on the open source library named C<libpst>, which can
+be found at L<http://alioth.debian.org/projects/libpst/>.  The library does
 not support writing of dbx files, and therefore limits the possibilities
 of this package.
 

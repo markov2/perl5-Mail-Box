@@ -7,6 +7,53 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.060: Tue Mar 15 22:02:34 CET 2005
+
+	Fixes:
+
+	- Mail::Transport::IMAP4 crash on getFlags(). Reported by [Tom Allison]
+
+	- Mail::Transport::IMAP4 authenticate now uses server's
+	  reported capabilities.  On the path paved by [Tom Allison]
+
+	- Mail::Message::Field::toDate() now works around %z interpretation
+	  as textual time-zones when there are blanks in the name.
+	  [aa26@mail.ru]
+
+	- Pod updage for Mail::Box::Dbx [Ralf Valerien]
+
+	- open('|-') does a fork, so a failure should result in an exit,
+	  not a return.  Found a few times in Mail::Transport::*, and
+	  discovered by [Slaven Rezic]
+
+	- $msg->send didn't pass the options correctly to the sending
+	  object. Reported by [Franck Richard].
+
+	- Mail::Transport::POP3 did only try APOP in AUTO mode. Found
+	  by [Markus Spann].
+
+	- Mail::Box::Manager::decodeFolderURL leaves the foldername
+	  starting with a slash.  That slash should be removed when
+	  the URL starts with a protocol ne 'file'. [Tom Allison]
+
+	- scripts/mailbox2html used setLabel(), which got replaced by
+	  label() a long time ago. Reported by [Alain Veylit]
+
+	- Mail::Message::Field::Attribute used Mail::Reporter without
+	  having it as base class.  Rewritten to have it that way.
+	  Reported by [Russell Mosemann]
+
+	- Removed the two uses of $& in reg-exps, which slows-down all
+	  regexp matches in older Perl versions.  Patch supplied by
+	  [jgmyers]
+
+	Improvements:
+
+	- Documented Mail::Box::Manager::open(authenticate) as
+	  suggested by [Tom Allison]
+
+	- $msg->bounce() without arguments now croaks. [Slaven Rezic]
+
 version 2.059: Tue Nov 30 19:50:42 CET 2004
 
 	Interface changes:

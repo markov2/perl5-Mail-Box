@@ -241,7 +241,7 @@ sub create_message(@)
     my $subject      = $message->head->get('subject') || '&lt;no subject&gt;';
     chomp $subject;
 
-    $message->setLabel
+    $message->label
      ( clean_id => $clean_id
      , filename => $filename
      , subject  => $subject

@@ -2,8 +2,7 @@ use strict;
 use warnings;
 
 package Mail::Message::Field::Attribute;
-
-use Mail::Reporter;
+use base 'Mail::Reporter';
 use 5.007003;
 use Encode ();
 
@@ -104,20 +103,23 @@ or risk applications to corrupt or ignore the message.
 sub new($$@)
 {   my ($class, $attr) = (shift, shift);
     my $value = @_ % 2 == 1 ? shift : undef;
-    my %args  = @_;
+    $class->SUPER::new(attr => $attr, value => $value, @_);
+}
+
+sub init($$)
+{   my ($self, $args)  = @_;
+    $self->SUPER::init($args);
+
+    my ($attr, $value, $cont) = @$args{ qw/attr value use_continuations/ };
 
     my $name  = ($attr =~ m/^(.*?)(?:\*\d+)?\*?\=/ ? $1 : $attr);
-    $class->log(WARNING => "Illegal character in parameter name '$name'.")
+    $self->log(WARNING => "Illegal character in parameter name '$name'.")
         if $name !~ m/^[!#-'*+\-.0-9A-Z^-~]+$/;
 
-    my $self  = bless
-     { MMFF_name    => $name
-     , MMFF_usecont =>
-          (defined $args{use_continuations} ? $args{use_continuations} : 1)
-     }, $class;
-
-    $self->{MMFF_charset}  = $args{charset}  if defined $args{charset};
-    $self->{MMFF_language} = $args{language} if defined $args{language};
+    $self->{MMFF_name}     = $name;
+    $self->{MMFF_usecont}  = defined $cont ? $cont : 1;
+    $self->{MMFF_charset}  = $args->{charset}  if defined $args->{charset};
+    $self->{MMFF_language} = $args->{language} if defined $args->{language};
 
     $self->value($value)       if defined $value;
     $self->addComponent($attr) unless $attr eq $name;

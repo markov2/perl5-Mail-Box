@@ -101,8 +101,8 @@ sub init($)
     {   $imap = $self->createImapClient($imap) or return undef;
     }
  
-    $self->imapClient($imap);
-    $self->login or return undef;
+    $self->imapClient($imap) or return undef;
+    $self->login             or return undef;
 }
 
 #------------------------------------------
@@ -132,22 +132,19 @@ a challange callback (which may be C<undef>).
 The settings are used by M<login()> to get server access.  The initial
 value origins from M<new(authenticate)>, but may be changed later.
 
-Available basic TYPES are C<CRAM-MD5> and C<PLAIN>.  The latter is sending
-username and password in plain text, and is therefore tried as last
-resort.
+Available basic TYPES are C<CRAM-MD5>, C<NTLM>, and C<PLAIN>.  With
+C<AUTO>, all available types will be tried.  When the M<Authen::NTLM>
+is not installed, the C<NTLM> option will silently be skipped.  Be warned
+that, because of C<PLAIN>, erroneous username/password combinations will
+be passed readible as last attempt!
 
 The C<NTLM> authentication requires M<Authen::NTLM> to be installed.  Other
 methods may be added later.  Besides, you may also specify a CODE
 reference which implements some authentication.
 
-When C<AUTO> is given, then C<CRAM-MD5>, C<NTLM> and C<PLAIN> are tried,
-in that specific order.  When the M<Authen::NTLM> is not installed it
-will silently be skipped.  Be warned that, because of C<PLAIN>, erroneous
-username/password combinations will be passed readible as last attempt!
-
 An ARRAY as TYPE can be used to specify both mechanism as callback.  When
 no array is used, callback of the pair is set to C<undef>.  See
-L<Mail::IMAPCleint/authenticate> for the gory details.
+L<Mail::IMAPClient/authenticate> for the gory details.
 
 =examples
  $transporter->authentication('CRAM-MD5', [MY_AUTH => \&c], 'PLAIN');
@@ -171,22 +168,37 @@ sub authentication(@)
         $ntml_installed = ! $@;
     }
 
+    # What the client wants to use to login
+
     if(@types == 1 && $types[0] eq 'AUTO')
     {   @types = ('CRAM-MD5', ($ntml_installed ? 'NTLM' : ()), 'PLAIN');
     }
 
-    my @auth;
+    my @clientside;
     foreach my $auth (@types)
-    {   push @auth,
-             ref $auth eq 'ARRAY' ? $auth
+    {   push @clientside
+           , ref $auth eq 'ARRAY' ? $auth
            : $auth eq 'NTLM'      ? [NTLM  => \&Authen::NTLM::ntlm ]
            :                        [$auth => undef];
     }
 
-    $self->log(WARNING => 'module Authen::NTLM is not installed')
-        if grep { !ref $_ &&  $_ eq 'NTLM' } @auth;
+    my %clientside = map { ($_->[0] => $_) } @clientside;;
+
+    # What does the server support? in its order of preference.
+
+    my $imap = $self->imapClient or return ();
+    my @serverside = map { m/^AUTH=(\w+)/ ? uc($1) : () }
+                        $imap->capability;
+
+    my @auth;
+    if(@serverside)  # server list auth capabilities
+    {   @auth = map { $clientside{$_->[0]} ? delete $clientside{$_->[0]} : () }
+             @serverside;
+    }
+    @auth = @clientside unless @auth;  # fallback to client's preference
 
     $self->{MTI_auth} = \@auth;
+    @auth;
 }
 
 #------------------------------------------

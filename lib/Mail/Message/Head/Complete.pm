@@ -980,7 +980,7 @@ sub createFromLine()
 
     my $from   = $self->get('from') || '';
     my $stamp  = $self->timestamp;
-    my $sender = $from =~ m/\<.*?\>/ ? $& : 'unknown';
+    my $sender = $from =~ m/(\<.*?\>)/ ? $1 : 'unknown';
     "From $sender ".(gmtime $stamp)."\n";
 }
 

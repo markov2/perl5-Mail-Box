@@ -425,11 +425,11 @@ sub send(@)
 
     my %args = @_;
     if( ! $args{via} && defined $default_mailer )
-    {   $mailer = $default_mailer
+    {   $mailer = $default_mailer;
     }
     else
     {   my $via = delete $args{via} || 'sendmail';
-        $default_mailer = $mailer = Mail::Transport->new(via => $via);
+        $default_mailer = $mailer = Mail::Transport->new(via => $via, %args);
     }
 
     $mailer->send($self, %args);
@@ -1041,7 +1041,7 @@ however folder types like MH define a separate label file.
  $message->label(deleted => 1);  # same as $message->delete
 =cut
 
-sub label($;$)
+sub label($;$@)
 {   my $self   = shift;
     return $self->{MM_labels}{$_[0]} unless @_ > 1;
     my $return = $_[1];
