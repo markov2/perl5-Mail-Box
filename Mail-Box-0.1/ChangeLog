@@ -1,0 +1,26 @@
+CHANGELOG of Mail::Box
+
+version 0.1: Sat Dec  9 20:38:40 CET 2000
+
+Mark Overmeer <mark@overmeer.net>
+	* Initial coding of
+		AT/Folder.pm
+		AT/Folder/Locker.pm
+		AT/Folder/Manager.pm
+		AT/Folder/Mbox.pm
+		AT/Folder/Message.pm
+		AT/Folder/Threads.pm
+		AT/Folder/Tie.pm
+	(including some tests)
+
+version 0.2:
+
+Mark Overmeer <mark@overmeer.net>
+	* Improvements on Threads
+		AT/Folder/Threads.pm
+
+	* Mail::Box->new(take_headers => ...)
+	  now documents that you can use regular-expressions and accepts
+          'ALL' and 'REAL'.  New option realhead_type to indicate which
+          type of header is used by MIME::Entity.
+		AT/Folder.pm

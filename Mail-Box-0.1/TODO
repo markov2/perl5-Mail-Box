@@ -1,0 +1,21 @@
+
+This program was written in December 2000.  This is quite recent, so
+please check for a new version: new programs often get many changes
+in their first months.
+
+The most important parts of the module were tested (see the test-scripts)
+but quite some things didn't get tested yet.  Please contribute with
+tests and fixed, were needed.  Even the tested parts, however, may still
+contain problems, because the number of tests is limited.
+
+TO BE TESTED (and improved):
+  thread discovery
+  file-lock
+  nfs-lock
+  sub-folders
+  delete folders
+
+TO BE IMPLEMENTED:
+  Thread lint
+  extracting large message-parts into persistent external files
+

@@ -1,0 +1,42 @@
+
+#
+# Test access to folders using ties.
+#
+
+use Test;
+use lib '..';
+
+BEGIN {plan tests => 8}
+
+use Mail::Box::Mbox;
+
+my $src  = 't/mbox.src';
+
+#exit 0;
+#
+# The folder is read.
+#
+
+my $folder = new Mail::Box::Mbox
+  ( folder       => $src
+  , lock_method  => 'NONE'
+  , lazy_extract => 'NEVER'
+  );
+
+ok(defined $folder);
+
+tie my(@folder), ref $folder, $folder;
+ok(@folder == 45);
+
+ok($folder->message(4) eq $folder[4]);
+
+delete $folder[2];
+ok($folder->message(2)->deleted);
+ok(@folder == 44);
+ok($folder->message(4) eq $folder[3]);
+
+push @folder, $folder[1];
+ok(@folder == 45);
+ok($folder->allMessages == 46);
+
+exit 0;
