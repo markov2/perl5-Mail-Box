@@ -1,7 +1,12 @@
 
+#
+# Test writing of mbox folders.
+#
+
 use Test;
 use File::Compare;
 use File::Copy;
+use strict;
 use lib '..';
 
 use Mail::Box::Mbox;

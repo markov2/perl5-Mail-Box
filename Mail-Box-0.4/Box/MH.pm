@@ -7,7 +7,7 @@ use Mail::Box;
 use Mail::Box::Index;
 
 our @ISA     = qw/Mail::Box Mail::Box::Index/;
-our $VERSION = v0.3;
+our $VERSION = v0.4;
 
 use Mail::Box;
 
@@ -92,6 +92,7 @@ see below, but first the full list.
  lock_method       Mail::Box::Locker  'dotlock'
  lock_timeout      Mail::Box::Locker  1 hour
  lock_wait         Mail::Box::Locker  10 seconds
+ manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::MH::Message'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::MH::Message::NotParsed'
@@ -269,6 +270,7 @@ sub readMessages()
         # Read the header.
 
         my @header;
+        local $_;
         while(<MESSAGE>)
         {   push @header, $_;
             last if /^\r?\n$/;
@@ -377,9 +379,15 @@ sub writeMessages()
         my $new      = $self->dirname . '/' . $writer;
         my $filename = $message->filename;
 
-        if($message->modified)
+        if(!$filename)
+        {   # New message for this folder.
+            my $new = FileHandle->new($new, 'w') or die;
+            $message->print($new);
+            $new->close;
+        }
+        elsif($message->modified)
         {   # Write modified messages.
-            my $oldtmp   = "$filename.old";
+            my $oldtmp   = $filename . '.old';
             move($filename, $oldtmp);
 
             my $new = FileHandle->new($new, 'w') or die;
@@ -614,6 +622,7 @@ sub readLabels()
     return unless open SEQ, '<', $seq;
     my @labels;
 
+    local $_;
     while(<SEQ>)
     {   s/\s*\#.*$//;
         next unless length;
@@ -720,7 +729,22 @@ sub foundIn($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $dirname   = $class->folderToDirname($name, $folderdir);
-    -f "$dirname/1";
+
+    return 0 unless -d $dirname;
+    return 1 if -f "$dirname/1";
+
+    # More thorough search required in case some numbered messages
+    # disappeared (lost at fsck or copy?)
+
+    return unless opendir DIR, $dirname;
+    foreach (readdir DIR)
+    {   next unless m/^\d+$/;   # Look for filename which is a number.
+        closedir DIR;
+        return 1;
+    }
+
+    closedir DIR;
+    0;
 }
 
 #-------------------------------------------
@@ -879,19 +903,18 @@ sub print()
     my $folder   = $self->folder;
     my $filename = $self->filename;
 
-    if($self->modified && -r $filename)
-    {   # Modified messages are printed as they were in memory.  This
-        # may change the order and content of header-lines and (of
-        # course) also the body.  If the message's original file
-        # unexplainably disappeared, we also print the internally
-        # stored message.
+    # Modified messages are printed as they were in memory.  This
+    # may change the order and content of header-lines and (of
+    # course) also the body.  If the message's original file
+    # unexplainably disappeared, we also print the internally
+    # stored message.
 
-        $self->createStatus->createXStatus;
-        $self->print($out);
+    if(!$self->modified && $filename && -r $filename)
+    {   copy($filename, $out);
     }
     else
-    {   # Unmodified message are hard-copied from their file.
-        copy($filename, $out);
+    {   $self->createStatus->createXStatus;
+        $self->MIME::Entity::print($out);
     }
 
     1;
@@ -1063,7 +1086,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.3
+This code is alpha, version 0.4
 
 =cut
 

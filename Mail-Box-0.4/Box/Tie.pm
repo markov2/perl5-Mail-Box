@@ -4,7 +4,7 @@ package Mail::Box::Tie;
 use strict;
 use v5.6.0;
 
-our $VERSION = '0.1';
+our $VERSION = '0.4';
 
 =head1 NAME
 
@@ -129,7 +129,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.3
+This code is alpha, version 0.4
 
 =cut
 

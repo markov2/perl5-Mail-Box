@@ -1,12 +1,17 @@
 
+#
+# Test delay-loading on mbox folders.
+#
+
 use Test;
 use File::Compare;
 use File::Copy;
+use strict;
 use lib '..';
 
 use Mail::Box::Mbox;
 
-BEGIN {plan tests => 12}
+BEGIN {plan tests => 13}
 #exit 0;
 
 #
@@ -79,6 +84,7 @@ ok(!$parsed);
 #
 
 my $message = $folder->message(3);
+ok(ref $message);
 my $body = $message->body;
 ok($message->isParsed);
 

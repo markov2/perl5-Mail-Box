@@ -36,3 +36,19 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/Box.pm
 		Mail/Box/Mbox.pm
 		Mail/Box/MH.pm
+
+version 0.4:   Fri Dec 29 23:19:25 CET 2000
+
+Mark Overmeer <mark@overmeer.net>
+	* Tests for appending messages to mboxes and MH(and fixes)
+		t/2mbox4a.t
+		t/3mh2a.t
+		Mail/Box/Mbox.pm
+		Mail/Box/MH.pm
+		Mail/Box/Manager.pm
+		Mail/Box.pm
+
+	* Close on folder informs manager
+		Mail/Box/Manager.pm
+		Mail/Box.pm
+

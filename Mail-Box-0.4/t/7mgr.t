@@ -1,10 +1,11 @@
 
 #
-# Test the folder manager with automatic folder-type detection.
+# Test the folder manager
 #
 
 use Test;
 use lib '..';
+use strict;
 
 BEGIN {plan tests => 5}
 

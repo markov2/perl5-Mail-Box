@@ -4,7 +4,7 @@ use v5.6.0;
 
 package Mail::Box::Mbox;
 our @ISA     = 'Mail::Box';
-our $VERSION = v0.3;
+our $VERSION = v0.4;
 
 use Mail::Box;
 
@@ -62,6 +62,7 @@ description of Mbox specific options.
  lock_method       Mail::Box::Locker  'dotlock'
  lock_timeout      Mail::Box::Locker  1 hour
  lock_wait         Mail::Box::Locker  10 seconds
+ manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::Mbox::Message'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::Mbox::Message::NotParsed'
@@ -178,7 +179,10 @@ sub fileOpen()
     my $source = $self->filename;
     my $file;
 
-    unless($file = FileHandle->new($source, 'r'))
+    my $access = $self->{MB_access} || 'r';
+    $access = 'r+' if $access eq 'rw';
+
+    unless($file = FileHandle->new($source, $access))
     {   warn "Where did the folder-file $self (file $source) go?\n";
         return;
     }
@@ -243,6 +247,7 @@ sub readMessages(@)
     my $delayed    = 0;
 
     my ($begin, $end) = (0, undef);
+    local $_;
     my $from_line  = $file->getline;
 
     while($from_line)
@@ -332,9 +337,10 @@ sub readMessages(@)
             $delayed++;
         }
 
-        $message->statusToLabels->XstatusToLabels;
+        next unless $message;
 
-        $self->addMessage($message) if $message;
+        $message->statusToLabels->XstatusToLabels;
+        $self->addMessage($message);
     }
 
     # Release the folder.
@@ -412,7 +418,7 @@ sub appendMessages(@)
     my $folder = $class->new(@_, access => 'a');
     $folder->lock;
 
-    my $file   = $folder->fileOpen || return ();
+    my $file   = $folder->fileOpen or return ();
     seek $file, 0, SEEK_END;
 
     $_->print($file) foreach @messages;
@@ -489,13 +495,13 @@ sub foundIn($@)
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $filename  = $class->folderToFilename($name, $folderdir);
     return 0 unless -f $filename;
-    return 1 if -z $filename;  # empty folder is ok
+    return 1 if -z $filename;      # empty folder is ok
 
-    open FILE, '<', $filename or return 0;
-    local $_;                  # Save external $_
-    while(<FILE>)
+    my $file = FileHandle->new($filename, 'r') or return 0;
+    local $_;                      # Save external $_
+    while(<$file>)
     {   next if /^\s*$/;
-        close FILE;
+        $file->close;
         return m/^From /;
     }
 
@@ -709,7 +715,7 @@ sub print()
 
         $self->createStatus->createXStatus;
         print $out $self->fromLine;
-        $self->print($out);
+        $self->MIME::Entity::print($out);
         print $out "\n";
     }
     else
@@ -861,7 +867,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.3
+This code is alpha, version 0.4
 
 =cut
 

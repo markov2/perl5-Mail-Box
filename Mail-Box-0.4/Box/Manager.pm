@@ -3,7 +3,7 @@ package Mail::Box::Manager;
 
 use strict;
 use v5.6.0;
-our $VERSION = v0.3;
+our $VERSION = v0.4;
 
 use Mail::Box;
 
@@ -99,7 +99,7 @@ a loss of information.
 
 =cut
 
-my @folder_types =
+my @basic_folder_types =
   ( [ mbox  => 'Mail::Box::Mbox' ]
   , [ mh    => 'Mail::Box::MH'  ]
   );
@@ -114,13 +114,15 @@ sub init($)
 
     # Register all folder-types.  There may be some added later.
 
-    my @types = @folder_types;
+    my @types;
     if(exists $args->{folder_types})
-    {   unshift @types, ref $args->{folder_types}[0]
-                      ? @{$args->{folder_types}}
-                      : $args->{folder_types};
+    {   @types = ref $args->{folder_types}[0]
+               ? @{$args->{folder_types}}
+               : $args->{folder_types};
     }
-    $self->registerType(@$_) foreach @types;
+
+    $self->{MBM_folder_types} = [];
+    $self->registerType(@$_) foreach @types, @basic_folder_types;
 
     $self->{MBM_default_type} = $args->{default_folder_type};
 
@@ -162,11 +164,10 @@ Example:
 
 sub registerType($$@)
 {   my ($self, $name, $class, @options) = @_;
-    my @newtypes;
 
     eval "require $class";
     if($@)
-    {   warn "Cannot find foldertype $name: $@";
+    {   warn "Cannot find foldertype $name: $@\n";
         return 0;
     }
 
@@ -176,18 +177,19 @@ sub registerType($$@)
 
 #-------------------------------------------
 
-=item folder_types
+=item folderTypes
 
-The C<folder_types> returns the list of currently defined types.
+The C<folderTypes> returns the list of currently defined types.
 
 Example:
-   print join("\n", $manager->folder_types), "\n";
+   print join("\n", $manager->folderTypes), "\n";
 
 =cut
 
-sub folder_types()
-{   my %uniq;
-    $uniq{$_->[0]}++ foreach @{shift->{MBM_folder_types}};
+sub folderTypes()
+{   my $self = shift;
+    my %uniq;
+    $uniq{$_->[0]}++ foreach @{$self->{MBM_folder_types}};
     sort keys %uniq;
 }
 
@@ -239,11 +241,11 @@ sub open(@)
     return $folder if $folder;
 
     # Set general folder options.
-
     # User-specified foldertype prevails.
     if(defined $args{type})
     {   foreach (@{$self->{MBM_folder_types}})
-        {   my ($type, $class, @options) = @_;
+        {   my ($type, $class, @options) = @$_;
+            push @options, manager => $self;
             return $self->addOpenFolder($class->new(@options, %args))
                 if $args{type} eq $type || $args{type} eq $class;
         }
@@ -256,6 +258,7 @@ sub open(@)
 
     foreach (@{$self->{MBM_folder_types}})
     {   my ($type, $class, @options) = @$_;
+        push @options, manager => $self;
         next unless $class->foundIn($name, @find_options);
         return $self->addOpenFolder($class->new(@options, %args))
     }
@@ -268,7 +271,7 @@ sub open(@)
 
     # Create a new folder.
     my $retry = $self->{MBM_default_type} || $self->{MBM_folder_types}[0][1];
-    $self->open(%args, type => $retry);
+    $self->open(%args, type => $retry, manager => $self);
 }
 
 #-------------------------------------------
@@ -301,7 +304,16 @@ C<close> removes the specified folder from the list of open folders.
 Indirectly it will update the files on disk if needed (depends on
 the L</save_on_exit> flag of each folder).
 
-C<closeAllFolders> calls L</close> for each folder managed by this object.
+You may also close the folder directly.  The manager will be informed
+about this event.
+
+Examples:
+    my $inbox = $mgr->open('inbox');
+    $mgr->close($inbox);
+    $inbox->close;        # alternative
+
+C<closeAllFolders> calls L</close> for each folder managed by
+this object.
 
 =cut
 
@@ -309,8 +321,10 @@ sub close($)
 {   my ($self, $folder) = @_;
     return unless $folder;
 
-    my @result = grep {$folder ne $_} $self->openFolders;
-    if(@result==$self->openFolders)
+    my @open   = $self->openFolders;
+    my @result = grep {$folder ne $_} @open;
+
+    if(@result==@open)
     {   warn "The folder was not opened by this folder-manager.\n";
         return;
     }
@@ -328,7 +342,7 @@ sub closeAllFolders()
 
 #-------------------------------------------
 
-=item appendMessage FOLDER|FOLDERNAME, MESSAGES
+=item appendMessage FOLDER|FOLDERNAME, MESSAGES, OPTIONS
 
 Append one or more messages to a folder.  As first argument, you
 may specify a FOLDERNAME or an opened folder.  When the name is
@@ -347,15 +361,22 @@ the data is added.  However, this is not a concern of the caller:
 the folders will try to resolve the differences with minimal loss of
 information.
 
+The OPTIONS is a list of key-values, which are added to (overruling)
+the default options for the detected folder-type.
+
 Examples:
-   $mgr->appendMessage('=send', $message);
+   $mgr->appendMessage('=send', $message, folderdir => '/');
    $mgr->appendMessage('=received', $inbox->messages);
 
 =back
 
+=cut
+
 sub appendMessage($@)
-{   my $self   = shift;
-    my $folder = shift;
+{   my ($self, $folder) = (shift, shift);
+    my @messages;
+    push @messages, shift while @_ && ref $_[0];
+    my @options = @_;
 
     # Try to resolve filenames into opened-files.
     unless(ref $folder)
@@ -374,26 +395,27 @@ sub appendMessage($@)
             return;
         }
 
-        return $folder->addMessages(@_);
+        return $folder->addMessages(@messages);
     }
 
     # Not an open file.
     # Try to autodetect the folder-type and then add the message.
 
-    my ($name, $class, @options, $found);
+    my ($name, $class, @gen_options, $found);
 
     foreach (@{$self->{MBM_folder_types}})
-    {   ($name, $class, @options) = @$_;
-        if($class->foundIn($folder, @options))
+    {   ($name, $class, @gen_options) = @$_;
+        if($class->foundIn($folder, @gen_options))
         {   $found++;
             last;
         }
     }
  
     # The folder was not found at all, so we take the default folder-type.
-    if(!$found && my $type = $self->{MBM_default_type})
+    my $type = $self->{MBM_default_type};
+    if(!$found && $type)
     {   foreach (@{$self->{MBM_folder_types}})
-        {   ($name, $class, @options) = @_;
+        {   ($name, $class, @gen_options) = @$_;
             if($type eq $name || $type eq $class)
             {   $found++;
                 last;
@@ -402,21 +424,16 @@ sub appendMessage($@)
     }
 
     # Even the default foldertype was not found.
-    ($name, $class, @options) = @{$self->{MBM_folder_types}[1]}
+    ($name, $class, @gen_options) = @{$self->{MBM_folder_types}[1]}
        unless $found;
 
     $class->appendMessages
-      ( folder   => $name
-      , messages => [ @_ ]
+      ( folder   => $folder
+      , type     => $name
+      , messages => \@messages
+      , @gen_options
       , @options
       );
-}
-
-#-------------------------------------------
-
-END
-{   my $self = shift;
-    $self->closeAllFolders;
 }
 
 #-------------------------------------------
@@ -429,7 +446,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.3
+This code is alpha, version 0.4
 
 =cut
 

@@ -1,6 +1,11 @@
 
+#
+# Test the locking methods.
+#
+
 use Test;
 use File::Compare;
+use strict;
 use lib '..';
 
 BEGIN {plan tests => 4}

@@ -1,16 +1,23 @@
 
+#
+# Test reading of mbox folders.
+#
+
 use Test;
 use File::Compare;
+use strict;
 use lib '..';
 
-BEGIN {plan tests => 7}
+BEGIN {plan tests => 8}
 
 use Mail::Box::Mbox;
 
 my $src  = 't/mbox.src';
 my $dest = 't/mbox.cpy';
 
-#exit 0;
+
+ok(Mail::Box::Mbox->foundIn($src));
+
 #
 # The folder is read.
 #

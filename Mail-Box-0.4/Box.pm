@@ -2,7 +2,7 @@
 package Mail::Box;
 
 use strict;
-our $VERSION = '0.3';
+our $VERSION = '0.4';
 
 use v5.6.0;
 
@@ -100,6 +100,7 @@ manual-pages)
  lock_method       Mail::Box::Locker  'dotlock'
  lock_timeout      Mail::Box::Locker  1 hour
  lock_wait         Mail::Box::Locker  10 seconds
+ manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::Message'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::Message::NotParsed'
@@ -152,6 +153,11 @@ what to do.  By default, this is TRUE;
 Remove the folder-file or directory (dependent on the type of folder)
 automatically when the write would result in a folder without sub-folders
 and messages.  This is true by default.
+
+=item * manager => MANAGER
+
+The object which manages this folder.  Typically a (sub-class of)
+Mail::Box::Manager.
 
 =back
 
@@ -299,6 +305,8 @@ sub init($)
     $self->{MB_messages}     = [];
     $self->{MB_modifications}= 0;
     $self->{MB_save_on_exit} = $args->{save_on_exit}      || 1;
+    $self->{MB_manager}      = $args->{manager}
+        if exists $args->{manager};
 
     my $message_type         = $self->{MB_message_type}
         = $args->{message_type}     || 'Mail::Box::Message';
@@ -509,6 +517,10 @@ sub close(@)
     return if exists $self->{MB_is_closed};
     $self->{MB_is_closed} = 1;
 
+    # Inform manager that the folder is closed.
+    $self->{MB_manager}->close($self)
+        if exists $self->{MB_manager};
+
     my $write
       = !exists $args{write} || $args{write} eq 'MODIFIED' ? $self->modified
         : $args{write} eq 'ALWAYS'                         ? 1
@@ -518,7 +530,7 @@ sub close(@)
     if($write && !$self->writeable)
     {   unless($args{force} || 0)
         {   warn "$self is write protected.\n";
-            return;
+            return 1;
         }
         $self->{MB_access} = 'rw';
     }
@@ -760,12 +772,18 @@ sub addMessage($)
 
     # Be sure that the message is of the correct type.
     $msg      = $self->coerce($msg);
-    $msg->folder($self);
     my $msgid = $msg->messageID;
 
-    # Threads may have created dummy place-holders.
-    my $dummy = $self->messageWithId($msgid);
-    $msg->addFollowUps($dummy->followUps) if $dummy;
+    my $found = $self->messageWithId($msgid);
+    if($found && $found->isDummy)
+    {   # Copy information from dummy message into the real message.
+        $msg->addFollowUps($found->followUps);
+    }
+    elsif($found)
+    {   # Detecting the same message for the second time.  We ignore
+        # this one.
+        return $self;
+    }
 
     $self->messageWithId($msgid, $msg);
 
@@ -785,7 +803,7 @@ sub addMessages(@)
 
 #-------------------------------------------
 
-=item append LIST-OF-OPTIONS
+=item appendMessages LIST-OF-OPTIONS
 
 (Class method) Append one or more messages to an unopened folder.
 Usually, this method is called by the Mail::Box::Manager (its method
@@ -816,10 +834,10 @@ message-type to fit in the folder, and then be added to it.
 
 =cut
 
-sub append(@)
+sub appendMessages(@)
 {   my ($class, $foldername) = @_;
     use Carp;
-    confess "Foldertype $class does not implement append.\n";
+    confess "Foldertype $class does not implement appendMessages.\n";
     $class;
 }
 
@@ -838,8 +856,11 @@ sub coerce($)
     # We do not have to take actions when we have the right type for
     # this folder.
 
-    return $message if $message->isa($self->{MB_message_type})
-                    || $message->isa($self->{MB_notparsed_type});
+    if(   $message->isa($self->{MB_message_type})
+       || $message->isa($self->{MB_notparsed_type}))
+    {   $message->folder($self);
+        return $message;
+    }
 
     # Be sure that the message is loaded, before it is converted
     # to a new type.
@@ -858,11 +879,12 @@ sub coerce($)
     # Reinitialize the message, but with the options as specified by the
     # creation of this folder, not the folder where the message came from.
 
-#warn "Blessing $message into a $self->{MB_message_type}
-# with @{$self->{MB_message_opts}};.\n";
-
     bless ($message, $self->{MB_message_type})
        ->init(@{$self->{MB_message_opts}});
+
+    $message->folder($self);
+    $message->modified(1);
+    $message;
 }
 
 #-------------------------------------------
@@ -1088,7 +1110,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.3
+This code is alpha, version 0.4
 
 =cut
 

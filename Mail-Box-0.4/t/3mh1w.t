@@ -1,4 +1,8 @@
 
+#
+# Test writing (and reading) of MH folders.
+#
+
 use Test;
 use File::Compare;
 use File::Copy;
@@ -8,7 +12,7 @@ use strict;
 use Mail::Box::MH;
 use Mail::Box::Mbox;
 
-BEGIN {plan tests => 9}
+BEGIN {plan tests => 10}
 
 my $orig = 't/mbox.src';
 my $src = 't/mh.src';
@@ -32,7 +36,7 @@ sub unpack_file($$)
     clean_dir($dir);
 
     mkdir $dir;
-    my $count = 0;
+    my $count = 1;
 
     open FILE, $file or die;
     open OUT, '/dev/null';
@@ -56,6 +60,8 @@ sub unpack_file($$)
 #
 
 unpack_file($orig, $src);
+
+ok(Mail::Box::MH->foundIn($src));
 
 my $folder = new Mail::Box::MH
   ( folder       => $src

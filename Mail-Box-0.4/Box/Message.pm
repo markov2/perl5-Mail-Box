@@ -3,6 +3,8 @@ use strict;
 use MIME::Entity;
 use Mail::Box::Threads;
 
+our $VERSION = 0.4;
+
 =head1 NAME
 
 Mail::Box::Message - Manage one message within a mail-folder
@@ -1099,7 +1101,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.3
+This code is alpha, version 0.4
 
 =cut
 
