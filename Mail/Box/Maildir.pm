@@ -163,9 +163,8 @@ sub listSubFolders(@)
 
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    my $dir = $self->directory . '/' . $name;
     $self->createDirs(File::Spec->catfile($self->directory, $name));
-    $self->openRelatedFolder(@_, folder => $dir);
+    $self->SUPER::openSubFolder($name, @_);
 }
 
 #-------------------------------------------
@@ -404,7 +403,7 @@ sub writeMessages($)
         my $basename = (File::Spec->splitpath($filename))[2];
 
         my $newtmp   = File::Spec->catfile($directory, 'tmp', $basename);
-        my $new      = FileHandle->new($newtmp, 'w')
+        my $new      = IO::File->new($newtmp, 'w')
            or croak "Cannot create file $newtmp: $!";
 
         $message->labelsToStatus;  # just for fun

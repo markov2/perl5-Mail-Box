@@ -62,7 +62,7 @@ ok($message);
 
 my $this = $threads->thread($message);
 ok($this);
-is($this->threadToString, <<'MIDDLE');
+compare_thread_dumps($this->threadToString, <<'MIDDLE', 'thread from here');
 1.2K Problem resizing images through perl script
 820  `- Re: Problem resizing images through perl script
 1.8K    `- RE: Problem resizing images through perl script
@@ -77,7 +77,7 @@ isa_ok($startmsg, 'Mail::Message::Dummy');
 isa_ok($startmsg, 'Mail::Message');
 ok($startmsg->isDummy);
 ok($startmsg->messageID ne $message->messageID);
-is($start->threadToString, <<'START');
+compare_thread_dumps($start->threadToString, <<'START', 'thread from top');
 1.2K *- Problem resizing images through perl script
 820  |  `- Re: Problem resizing images through perl script
 1.8K |     `- RE: Problem resizing images through perl script
@@ -86,13 +86,13 @@ is($start->threadToString, <<'START');
 START
 
 $this->folded(1);
-is($start->threadToString, <<'FOLDED');
+compare_thread_dumps($start->threadToString, <<'FOLDED', 'folded thread');
      *- [4] Problem resizing images through perl script
 1.2K `- Re: Convert HTM, HTML files to the .jpg format
 FOLDED
 
 $this->folded(0);
-is($start->threadToString, <<'START');
+compare_thread_dumps($start->threadToString, <<'START', 'unfolded thread');
 1.2K *- Problem resizing images through perl script
 820  |  `- Re: Problem resizing images through perl script
 1.8K |     `- RE: Problem resizing images through perl script
@@ -106,7 +106,7 @@ my @lines = split "\n", $out;
 pop @lines;
 ok(@lines = $folder->messages);
 
-is($out, <<'DUMP');
+compare_thread_dumps($out, <<'DUMP', 'sorted full dump');
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF

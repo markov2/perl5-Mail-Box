@@ -22,7 +22,7 @@ copy $src, $cpy
 
 my $mgr    = Mail::Box::Manager->new;
 
-my $folder = $mgr->open($cpy);
+my $folder = $mgr->open($cpy, lock_type => 'NONE');
 ok(defined $folder,                             'open folder');
 cmp_ok($folder->messages , "==",  45,           'folder full of messages');
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=2.029
+VERSION=2.031
 
 umask 022
 
@@ -74,10 +74,13 @@ $BIN/make_podindex method-index >podindex.html
 
 rm method-index
 
-echo -n "Continue with distribution? [n/y] "
+echo -n "Continue with distribution? [n/y/pre] "
 read CONT
 case "$CONT" in
 y*) ;;
+
+p*) PRE="-pre";;
+
 *)  echo ">>> No distribution created"
     exit 0;;
 esac
@@ -97,15 +100,22 @@ open_up  $SITE/html
 
 echo ">>> Make dist"
 cd $TMP
-DIST=Mail-Box-$VERSION.tar.gz
+DIST="Mail-Box-$VERSION.tar.gz"
 rm -f $DIST
 make dist >/dev/null
+
+if [ -n "$PRE" ]
+then PREDIST="Mail-Box-$VERSION-pre.tar.gz"
+     mv $DIST $PREDIST
+     DIST="$PREDIST"
+fi
 
 (cd $TMP; ls -lh $DIST)
 
 [ -d $SITE/source ] || mkdir $SITE/source
 cp $TMP/$DIST $SITE/source/
-ln -sf $DIST $SITE/source/source-current.tar.gz
+
+[ -z "$PRE" ] && ln -sf $DIST $SITE/source/source-current.tar.gz
 open_up $SITE/source
 
 INDEX=$SITE/source/index.html
@@ -130,6 +140,7 @@ cd $TOP
 RAW=Mail-Box-raw.$VERSION.cpio
 cat MANIFEST MANIFEST.raw | cpio -oca >$SITE/raw/$RAW
 bzip2 -9f $SITE/raw/$RAW
+
 ln -sf $RAW.bz2 $SITE/raw/raw-current.cpio.bz2
 (cd $SITE/raw; ls -lh $RAW.bz2)
 open_up $SITE/raw

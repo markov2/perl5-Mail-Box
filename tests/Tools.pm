@@ -4,8 +4,13 @@ package Tools;
 
 use base 'Exporter';
 our @EXPORT =
-  qw/clean_dir unpack_mbox2mh unpack_mbox2maildir
-     cmplists listdir
+  qw/clean_dir
+     unpack_mbox2mh unpack_mbox2maildir
+     compare_lists listdir
+     compare_message_prints
+     compare_thread_dumps
+
+     $folderdir
      $src $unixsrc $winsrc
      $fn  $unixfn  $winfn
      $cpy $cpyfn
@@ -13,29 +18,33 @@ our @EXPORT =
      $crlf_platform $windows
     /;
 
+use Test::More;
 use File::Spec;
 use Sys::Hostname;
 use Cwd;
 
-our ($logfile);
+our ($logfile, $folderdir);
 our ($src, $unixsrc, $winsrc);
 our ($fn,  $unixfn,  $winfn);
 our ($cpy, $cpyfn);
 our ($crlf_platform, $windows);
 
 BEGIN {
-   $windows       = $^O =~ m/win32|cygwin/i;
+   $windows       = $^O =~ m/mswin32|cygwin/i;
    $crlf_platform = $windows;
 
    $logfile = File::Spec->catfile(getcwd(), 'run-log');
    $unixfn  = 'mbox.src';
    $winfn   = 'mbox.win';
    $cpyfn   = 'mbox.cpy';
+
+   $folderdir = -d 'folders' ? 'folders' : File::Spec->catdir('tests','folders');
+
    $unixsrc = File::Spec->catfile('folders', $unixfn);
    $winsrc  = File::Spec->catfile('folders', $winfn);
    $cpy     = File::Spec->catfile('folders', $cpyfn);
 
-   ($src, $fn) = $windows ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
+   ($src, $fn) = $crlf_platform ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
 }
 
 #
@@ -179,13 +188,45 @@ sub unpack_mbox2maildir($$)
 # Compare two lists.
 #
 
-sub cmplists($$)
+sub compare_lists($$)
 {   my ($first, $second) = @_;
     return 0 unless @$first == @$second;
     for(my $i=0; $i<@$first; $i++)
     {   return 0 unless $first->[$i] eq $second->[$i];
     }
     1;
+}
+
+#
+# Compare the text two messages.
+# On CRLF platforms, the Content-Length may be different.
+#
+
+sub compare_message_prints($$$)
+{   my ($first, $second, $label) = @_;
+
+    if($crlf_platform)
+    {   $first  =~ s/Content-Length: (\d+)/Content-Length: <removed>/g;
+        $second =~ s/Content-Length: (\d+)/Content-Length: <removed>/g;
+    }
+
+    is($first, $second, $label);
+}
+
+#
+# Compare two outputs of thread details.
+# On CRLF platforms, the reported sizes are ignored.
+#
+
+sub compare_thread_dumps($$$)
+{   my ($first, $second, $label) = @_;
+
+    if($crlf_platform)
+    {   $first  =~ s/^..../    /gm;
+        $second =~ s/^..../    /gm;
+    }
+
+    is($first, $second, $label);
 }
 
 #

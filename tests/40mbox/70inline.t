@@ -87,6 +87,11 @@ foreach ($folder->messages)
     $msgnr++;
 }
 
+my @folder_subjects = sort map {$_->get('subject')||''} $folder->messages;
+my $folder_messages = $folder->messages;
+
+$folder->close;
+
 # Check also if the subjects are the same.
 # Try to read it back
 
@@ -98,11 +103,10 @@ my $copy = new Mail::Box::Mbox
   );
 
 ok(defined $copy);
-cmp_ok($folder->messages, "==", $copy->messages);
+cmp_ok($folder_messages, "==", $copy->messages);
 
 # Check also if the subjects are the same.
 
-my @folder_subjects = sort map {$_->get('subject')||''} $folder->messages;
 my @copy_subjects   = sort map {$_->get('subject')||''} $copy->messages;
 
 while(@folder_subjects)
@@ -110,7 +114,6 @@ while(@folder_subjects)
 }
 ok(!@folder_subjects);
 
-$folder->close(write => 'NEVER');
 $copy->close(write => 'NEVER');
 
 __END__

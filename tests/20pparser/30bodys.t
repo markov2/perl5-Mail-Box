@@ -54,8 +54,10 @@ my $body = Mail::Message::Body::String->new;
 $body->read($parser, $head, undef, $length, $lines);
 ok(defined $body,                  "reading of first body");
 
-cmp_ok($body->size, "==", $length, "size of body");
 my @lines = $body->lines;
+$length -= @lines if $crlf_platform;
+
+cmp_ok($body->size, "==", $length, "size of body");
 cmp_ok(@lines, "==", $lines,       "lines of body");
 
 #
@@ -99,6 +101,7 @@ while(1)
     cmp_ok($li , "==",  $lines,                "1 lines $count")
         if defined $li;
 
+    $cl -= $li if $crlf_platform;
     cmp_ok($cl , "==",  $size,                 "1 size $count")
         if defined $cl;
 

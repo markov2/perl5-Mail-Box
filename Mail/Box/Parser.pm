@@ -76,33 +76,28 @@ when no C<file> is specified.
 =cut
 
 sub new(@)
-{   my $class       = shift;
+{   my $class = shift;
 
-    return $class->defaultParserType->new(@_)   # bootstrap right parser
-        if $class eq __PACKAGE__;
-
-    my $self = $class->SUPER::new(@_) or return;
-    $self->start;     # new includes init.
+    $class eq __PACKAGE__
+    ? $class->defaultParserType->new(@_)   # bootstrap right parser
+    : $class->SUPER::new(@_);
 }
 
 sub init(@)
 {   my ($self, $args) = @_;
 
-    $args->{trace} ||= 'WARNING';
+    $args->{trace}  ||= 'WARNING';
 
     $self->SUPER::init($args);
 
-    $self->{MBP_separator} = $args->{separator} || '';
-    $self->{MBP_mode}      = $args->{mode}      || 'r';
+    $self->{MBP_mode} = $args->{mode} || 'r';
 
-    my $filename =
-    $self->{MBP_filename}  = $args->{filename}
-        or confess "Filename obligatory to create a parser.";
+    unless($self->{MBP_filename} = $args->{filename} || ref $args->{file})
+    {    $self->log(ERROR => "Filename or handle required to create a parser.");
+         return;
+    }
 
-    $self->takeFileInfo;
-    $self->log(NOTICE => "Created parser for $filename");
-
-    $self;
+    $self->start(file => $args->{file});
 }
 
 #------------------------------------------
@@ -159,32 +154,26 @@ sub defaultParserType(;$)
 
 =method start OPTIONS
 
-Start the parser.  The parser is automatically started when the parser is
-created, however can be stopped (see stop()).  During the start,
-the file to be parsed will be opened.
+Start the parser by opening a file.
 
-=option  trust_file BOOLEAN
-=default trust_file <false>
+=option  file FILEHANDLE|undef
+=default file undef
 
-When we continue with the parsing of the folder, and the modification-time
-(on operating-systems which support that) or size changed, the parser
-will refuse to start, unless this option is true.
+The file is already open, for instance because the data must be read
+from STDIN.
 
 =cut
 
 sub start(@)
-{   my ($self, %args) = @_;
+{   my $self = shift;
+    my %args = (@_, filename => $self->filename, mode => $self->{MBP_mode});
 
-    my $filename = $self->filename;
+    $self->openFile(\%args)
+        or return;
 
-    unless($args{trust_file})
-    {   if($self->fileChanged)
-        {   $self->log(ERROR => "File $filename changed, refuse to continue.");
-            return;
-        }
-    }
+    $self->takeFileInfo;
 
-    $self->log(NOTICE => "Open file $filename to be parsed");
+    $self->log(PROGRESS => "Opened folder $args{filename} to be parsed");
     $self;
 }
 
@@ -199,12 +188,36 @@ folder will not be removed (is not the responsibility of the parser).
 
 sub stop()
 {   my $self     = shift;
+
     my $filename = $self->filename;
 
     $self->log(WARNING => "File $filename changed during access.")
        if $self->fileChanged;
 
-    $self->log(NOTICE => "Close parser for file $filename");
+    $self->log(NOTICE  => "Close parser for file $filename");
+    $self->closeFile;
+}
+
+#------------------------------------------
+
+=method restart
+
+Restart the parser on a certain file, usually because the content has
+changed.
+
+=cut
+
+sub restart()
+{   my $self     = shift;
+    my $filename = $self->filename;
+
+    $self->closeFile or return;
+
+    $self->openFile( {filename => $filename, mode => $self->{MBP_mode}} )
+        or return;
+
+    $self->takeFileInfo;
+    $self->log(NOTICE  => "Restarted parser for file $filename");
     $self;
 }
 
@@ -218,8 +231,7 @@ Capture some data about the file being parsed, to be compared later.
 
 sub takeFileInfo()
 {   my $self     = shift;
-    my $filename = $self->filename;
-    @$self{ qw/MBP_size MBP_mtime/ } = (stat $filename)[7,9];
+    @$self{ qw/MBP_size MBP_mtime/ } = (stat $self->filename)[7,9];
 }
 
 #------------------------------------------
@@ -233,8 +245,7 @@ time takeFileInfo() was called.
 
 sub fileChanged()
 {   my $self = shift;
-    my $filename       = $self->filename;
-    my ($size, $mtime) = (stat $filename)[7,9];
+    my ($size, $mtime) = (stat $self->filename)[7,9];
     return 0 unless $size;
 
       $size != $self->{MBP_size} ? 0
@@ -408,6 +419,38 @@ a LF.  Mac uses CR.
 =cut
 
 sub lineSeparator() {shift->{MBP_linesep}}
+
+#------------------------------------------
+
+=head2 Reading and Writing [internals]
+
+=cut
+
+#------------------------------------------
+
+=method openFile ARGS
+
+Open the file to be parsed.  ARGS is a ref-hash of options.
+
+=option  filename FILENAME
+=default filename <required>
+
+=option  mode STRING
+=default mode <required>
+
+=cut
+
+sub openFile(@) {shift->notImplemented}
+
+#------------------------------------------
+
+=method closeFile
+
+Close the file which was being parsed.
+
+=cut
+
+sub closeFile(@) {shift->notImplemented}
 
 #------------------------------------------
 

@@ -5,6 +5,7 @@ package Mail::Message::Body::File;
 use base 'Mail::Message::Body';
 
 use Mail::Box::Parser;
+use Mail::Message;
 
 use Carp;
 use IO::File;
@@ -162,7 +163,9 @@ sub clone()
 
 sub nrLines()
 {   my $self    = shift;
-    return $self->{MMBF_nrlines} if defined $self->{MMBF_nrlines};
+
+    return $self->{MMBF_nrlines}
+        if defined $self->{MMBF_nrlines};
 
     my $file    = $self->tempFilename;
     my $nrlines = 0;
@@ -184,9 +187,15 @@ sub nrLines()
 sub size()
 {   my $self = shift;
 
-    return $self->{MMBF_size} if exists $self->{MMBF_size};
+    return $self->{MMBF_size}
+       if exists $self->{MMBF_size};
 
-    $self->{MMBF_size} = -s $self->tempFilename;
+    my $size = -s $self->tempFilename;
+
+    $size   -= $self->nrLines
+        if $Mail::Message::crlf_platform;   # remove count for extra CR's
+
+    $self->{MMBF_size} = $size;
 }
 
 

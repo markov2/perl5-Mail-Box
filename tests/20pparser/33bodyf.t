@@ -52,11 +52,11 @@ cmp_ok($lines, "==", $hard_coded_lines_msg0,   "first message lines");
 
 my $body = Mail::Message::Body::File->new;
 $body->read($parser, $head, undef, $length, $lines);
-ok(defined $body,                  "reading of first body");
+ok(defined $body,                    "reading of first body");
 
-cmp_ok($body->size, "==", $length, "size of body");
+cmp_ok($body->size, "==", $hard_coded_length_msg0,   "size of body");
 my @lines = $body->lines;
-cmp_ok(@lines, "==", $lines,       "lines of body");
+cmp_ok(@lines, "==", $lines,         "lines of body");
 
 #
 # Try to read the rest of the folder, with specified content-length
@@ -99,6 +99,7 @@ while(1)
     cmp_ok($li , "==",  $lines,                "1 lines $count")
         if defined $li;
 
+    $cl -= $li if $crlf_platform;
     cmp_ok($cl , "==",  $size,                 "1 size $count")
         if defined $cl;
 

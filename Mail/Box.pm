@@ -655,6 +655,75 @@ sub readable()  {1}  # compatibility
 
 #-------------------------------------------
 
+=method write OPTIONS
+
+Write the data to disk.  The folder (a C<true> value) is returned if
+successful.  Deleted messages are transformed into destroyed messages:
+their memory is freed.
+
+WARNING: When moving messages from one folder to another, be sure to write
+(or close()) the destination folder before writing (or closing) the source
+folder: otherwise you may lose data if the system crashes or if there are
+software problems.
+
+To write a folder to a different file, you must first create
+a new folder, then move all the messages, and then write or close() that
+new folder.
+
+=option  force BOOLEAN
+=default force <false>
+
+Override write-protection by the C<access> option while opening the folder
+(whenever possible, it may still be blocked by the operating system).
+
+=option  save_deleted BOOLEAN
+=default save_deleted <false>
+
+Do also write messages which where flagged to be deleted to their folder.  The
+flag for deletion is conserved (when possible), which means that a re-open of
+the folder may remove the messages for real.  See close(save_deleted).
+
+=cut
+
+sub write(@)
+{   my ($self, %args) = @_;
+
+    unless($args{force} || $self->writable)
+    {   $self->log(ERROR => "Folder $self is opened read-only.\n");
+        return;
+    }
+
+    my (@keep, @destroy);
+    if($args{save_deleted}) {@keep = $self->messages }
+    else
+    {   foreach ($self->messages)
+        {   if($_->deleted)
+            {   push @destroy, $_;
+                $_->diskDelete;
+            }
+            else {push @keep, $_}
+        }
+    }
+
+    unless(@destroy || $self->modified)
+    {   $self->log(PROGRESS => "Folder $self not changed, so not updated.");
+        return $self;
+    }
+
+    $args{messages} = \@keep;
+    unless($self->writeMessages(\%args))
+    {   $self->log(WARNING => "Writing folder $self failed.");
+        return undef;
+    }
+
+    $self->modified(0);
+    $self->{MB_messages} = \@keep;
+
+    $self;
+}
+
+#-------------------------------------------
+
 =method update OPTIONS
 
 Read new messages from the folder, which where received after opening
@@ -825,8 +894,7 @@ sub copyTo($@)
 
     my $select      = $args{select} || 'ACTIVE';
     my $subfolders  = exists $args{subfolders} ? $args{subfolders} : 1;
-    my $can_recurse
-       = $to->can('openSubFolder') ne Mail::Box->can('openSubFolder');
+    my $can_recurse = not $self->isa('Mail::Box::POP3');
 
     my ($flatten, $recurse)
        = $subfolders eq 'FLATTEN' ? (1, 0)
@@ -859,6 +927,7 @@ sub _copy_to($@)
     return $self unless $flatten || $recurse;
 
     # Take subfolders
+  SUBFOLDER:
     foreach ($self->listSubFolders)
     {   my $subfolder = $self->openSubFolder($_);
         $self->log(ERROR => "Unable to open subfolder $_"), return
@@ -873,9 +942,8 @@ sub _copy_to($@)
         else           # recurse
         {    my $subto = $to->openSubFolder($_, create => 1, access => 'rw');
              unless($subto)
-             {   $self->log(ERROR => "Unable to create subfolder $_ to $to");
-                 $subfolder->close;
-                 return;
+             {   $self->log(ERROR => "Unable to create subfolder $_ of $to");
+                 next SUBFOLDER;
              }
 
              unless($subfolder->_copy_to($subto, @options))
@@ -903,8 +971,9 @@ sub _copy_to($@)
 
 =method close OPTIONS
 
-lose the folder, optionally writing it. C<close> takes the same options as
-write(), as well as a few others:
+Close the folder, which usually implies writing the changes.  This will
+return C<false> when writing is required but fails.  Please do check this
+result.
 
 WARNING: When moving messages from one folder to another, be sure to write the
 destination folder before writing and closing the source folder.  Otherwise
@@ -926,6 +995,24 @@ option only has an effect if its value is TRUE. NOTE: Writing to the folder
 may not be permitted by the operating system, in which case even C<force> will
 not help.
 
+=option  save_deleted BOOLEAN
+=default save_deleted C<false>
+
+Do also write messages which where flagged to be deleted to their folder.  The
+flag for deletion is conserved (when possible), which means that a re-open of
+the folder may remove the messages for real.  See write(save_deleted).
+
+=example
+
+ my $f = $mgr->open('spam', access => 'rw')
+     or die "Cannot open spam: $!\n";
+
+ $f->message(0)->delete
+     if $f->messages;
+
+ $f->close
+     or die "Couldn't write $f: $!\n";
+
 =cut
 
 sub close(@)
@@ -946,7 +1033,7 @@ sub close(@)
     {   $write = $_ eq 'MODIFIED' ? $self->modified
                : $_ eq 'ALWAYS'   ? 1
                : $_ eq 'NEVER'    ? 0
-               : croak "Unknown value to write options: $_.";
+               : croak "Unknown value to folder->close(write => $_).";
     }
 
     if($write && !$force && !$self->writable)
@@ -956,11 +1043,13 @@ Suggestion: \$folder->close(write => 'NEVER')");
         return 0;
     }
 
-    my $rc = 1;
-    if($write) { $rc = $self->write(force => $force) }
-    else       { $self->{MB_messages} = [] }
+    my $rc = !$write
+          || $self->write
+               ( force => $force
+               , save_deleted => $args{save_deleted} || 0
+               );
 
-    $self->{MB_locker}->unlock;
+    $self->{MB_messages} = [];   # Boom!
     $rc;
 }
 
@@ -1337,29 +1426,14 @@ sub scanForMessages($$$$)
 
 #-------------------------------------------
 
-=method openSubFolder NAME, OPTIONS
-
-Open (or create, if it does not exist yet) a new subfolder in an
-existing folder.
-
-=examples
-
- my $folder = Mail::Box::Mbox->new(folder => '=Inbox');
- my $sub    = $folder->openSubFolder('read');
-
-=cut
-
-sub openSubFolder(@) {shift->notImplemented}
-
-
-#-------------------------------------------
-
 =method listSubFolders OPTIONS
 
 (Class and Instance method)
-List the names of all sub-folders to this folder.  Use these names
-in openSubFolder(), to open these folders on a mailbox type way.
-For Mbox-folders, sub-folders are simulated.
+List the names of all sub-folders to this folder, not recursively
+decending.  Use these names as argument to openSubFolder(), to get
+access to that folder.
+
+For MBOX folders, sub-folders are simulated.
 
 =option  folder FOLDERNAME
 =default folder <obligatory>
@@ -1372,9 +1446,9 @@ The folder whose sub-folders should be listed.
 =option  check BOOLEAN
 =default check <false>
 
-Specifies whether empty folders (folders which currently do not contain any
-messages) should be included. It may not be useful to open empty folders, but 
-saving to them is useful.
+Should all returned foldernames be checked to be sure that they are of
+the right type?  Each sub-folder may need to be opened to check this,
+with a folder type dependent penalty (in some cases very expensive).
 
 =option  skip_empty BOOL
 =default skip_empty <false>
@@ -1393,7 +1467,7 @@ to save to.
 
 =cut
 
-sub listSubFolders(@) { () }
+sub listSubFolders(@) { () }   # by default no sub-folders
 
 #-------------------------------------------
 
@@ -1413,6 +1487,39 @@ sub openRelatedFolder(@)
     $self->{MB_manager}
     ?  $self->{MB_manager}->open(@options)
     :  (ref $self)->new(@options);
+}
+
+#-------------------------------------------
+
+=method openSubFolder NAME, OPTIONS
+
+Open (or create, if it does not exist yet) a new subfolder in an
+existing folder.
+
+=examples
+
+ my $folder = Mail::Box::Mbox->new(folder => '=Inbox');
+ my $sub    = $folder->openSubFolder('read');
+
+=cut
+
+sub openSubFolder($@)
+{   my ($self, $name) = (shift, shift);
+    $self->openRelatedFolder(@_, folder => "$self/$name");
+}
+
+#-------------------------------------------
+
+=method nameOfSubfolder NAME
+
+Returns the constructed name of the folder with NAME, which is a sub-folder
+of this current one.
+
+=cut
+
+sub nameOfSubfolder($)
+{   my ($self, $name)= @_;
+    "$self/$name";
 }
 
 #-------------------------------------------
@@ -1556,83 +1663,6 @@ sub lineSeparator(;$)
 
 #-------------------------------------------
 
-=method write OPTIONS
-
-Write the data to disk.  The folder is returned if successful. To write to a
-different file, you must first create a new folder, then move the messages,
-and then write the folder.
-
-WARNING: When moving messages from one folder to another, be sure to write the
-destination folder before writing and closing the source folder.  Otherwise
-you may lose data if the system crashes or if there are software problems.
-
-=option  force BOOLEAN
-=default force <false>
-
-Override write-protection by the C<access> option while opening the folder
-(whenever possible, it may still be blocked by the operating system).
-
-=option  keep_deleted BOOLEAN
-=default keep_deleted <false>
-
-Do not remove messages which were flagged to be deleted from the folder
-from memory, but do remove them from disk.
-
-=option  save_deleted BOOLEAN
-=default save_deleted <false>
-
-Do also write messages which where flagged to be deleted to their folder.  The
-flag is conserved (when possible), which means that the next write may
-remove them for real.
-
-=cut
-
-sub write(@)
-{   my ($self, %args) = @_;
-
-    unless($args{force} || $self->writable)
-    {   $self->log(ERROR => "Folder $self is opened read-only.\n");
-        return;
-    }
-
-    $args{save_deleted} = 1 if $args{keep_deleted};
-
-    my @messages = $self->messages;
-    my @keep;
-
-    foreach my $message (@messages)
-    {
-        unless($message->deleted)
-        {   push @keep, $message;
-            next;
-        }
-
-        $message->diskDelete
-            unless $args{save_deleted};
-
-        if($args{keep_deleted}) {push @keep, $message}
-        else
-        {   $message->head(undef);
-            $message->body(undef);
-        }
-    }
-
-    $self->{MB_messages} = \@keep;
-
-    if(@keep!=@messages || $self->modified)
-    {   $args{messages} = \@keep;
-        $self->writeMessages(\%args);
-        $self->modified(0);
-    }
-    else
-    {   $self->log(PROGRESS => "Folder $self not changed, so not updated.");
-    }
-
-    $self;
-}
-
-#-------------------------------------------
-
 =method coerce MESSAGE
 
 Coerce the MESSAGE to be of the correct type to be placed in the
@@ -1684,10 +1714,18 @@ sub updateMessages(@) {shift}
 
 #-------------------------------------------
 
-=method writeMessages
+=method writeMessages OPTIONS
 
 Called by write() to actually write the messages from one specific
-folder type.  The C<write> organizes the general activities.
+folder type.  The C<write> organizes the general activities.  All options
+to C<write> are passed to writeMessages as well.  Besides, a few extra
+are added by C<write>.
+
+=option  messages ARRAY
+=default messages <required>
+
+The messages to be written, which is a sub-set of all messages in the
+current folder.
 
 =cut
 

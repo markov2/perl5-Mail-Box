@@ -20,16 +20,29 @@ Mail::Box::Search::Grep - select messages within a mail box like grep does
  my $folder = $mgr->open('Inbox');
 
  my $filter = Mail::Box::Search::Grep->new
-    ( $folder, label => 'selected'
+    ( label => 'selected'
     , in => 'BODY', match => qr/abc?d*e/
     );
+
  my @msgs   = $filter->search($folder);
 
- my $filter = Mail::Box::Search::Grep
-    ->new(field => 'To', match => $my_email);
+ my $filter = Mail::Box::Search::Grep->new
+   ( field => 'To'
+   , match => $my_email
+   );
+
  if($filter->search($message)) {...}
 
 =head1 DESCRIPTION
+
+Try to find some text strings in the header and footer of messages.  Various
+ways to limit the search to certain header fields, the whole header, only
+the body, the whole message, but even binary multiparts, are provided for.
+
+The name `grep' is derived from the UNIX tool `grep', which means: "Get
+Regular Expression and Print".  Although you can search using regular
+expressions (the Perl way of them), you do not have to print those as
+result.
 
 =head1 METHODS
 

@@ -367,7 +367,7 @@ only the public headers.
  $head->print(\*OUT);
  $head->print;
 
- my $fh = FileHandle->new(...);
+ my $fh = IO::File->new(...);
  $head->print($fh);
 
 =cut
@@ -439,7 +439,9 @@ sub nrLines() { sum 1, map { $_->nrLines } shift->orderedFields }
 =method size
 
 Return the number of bytes needed to display this header (including
-the trailing newline).
+the trailing newline).  On systems which use CRLF as line separator,
+the number of lines in the header (see nlLines()) must be added to
+find the actual size in the file.
 
 =cut
 

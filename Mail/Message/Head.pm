@@ -9,7 +9,6 @@ use Mail::Message::Field::Fast;
 
 use Carp;
 use Scalar::Util 'weaken';
-use FileHandle;
 
 use overload qq("") => 'string_unless_carp'
            , bool   => 'isEmpty';

@@ -15,7 +15,6 @@ use Mail::Message::Head;
 use Mail::Message::Head::Delayed;
 
 use Carp;
-use FileHandle;
 use File::Copy;
 use File::Spec;
 use File::Basename;

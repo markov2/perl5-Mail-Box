@@ -56,7 +56,7 @@ my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
 $msg->print($g);
 
-is($fakeout, <<'MSG');
+compare_message_prints($fakeout, <<'MSG', 'build from body');
 From: me
 To: you
 Date: now

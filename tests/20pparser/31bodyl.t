@@ -36,7 +36,7 @@ ok(defined $head);
 
 $head->read($parser);
 ok(defined $head);
-ok($head,                          "overloaded boolean");
+ok($head,                         "overloaded boolean");
 
 my $hard_coded_lines_msg0  = 33;
 my $hard_coded_length_msg0 = 1280;
@@ -45,7 +45,7 @@ my $binary_size = $hard_coded_length_msg0
       + ($crlf_platform ? $hard_coded_lines_msg0 : 0);
 
 my $length = int $head->get('Content-Length');
-cmp_ok($length, "==", $binary_size, "first message size");
+cmp_ok($length, "==", $binary_size,            "first message size");
 
 my $lines  = int $head->get('Lines');
 cmp_ok($lines, "==", $hard_coded_lines_msg0,   "first message lines");
@@ -54,8 +54,10 @@ my $body = Mail::Message::Body::Lines->new;
 $body->read($parser, $head, undef, $length, $lines);
 ok(defined $body,                  "reading of first body");
 
-cmp_ok($body->size, "==", $length, "size of body");
 my @lines = $body->lines;
+$length -= @lines if $crlf_platform;
+
+cmp_ok($body->size, "==", $length, "size of body");
 cmp_ok(@lines, "==", $lines,       "lines of body");
 
 #
@@ -99,6 +101,7 @@ while(1)
     cmp_ok($li , "==",  $lines,                "1 lines $count")
         if defined $li;
 
+    $cl -= $li if $crlf_platform;
     cmp_ok($cl , "==",  $size,                 "1 size $count")
         if defined $cl;
 
@@ -204,4 +207,3 @@ while(1)
 
     $count++;
 }
-

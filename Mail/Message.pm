@@ -92,6 +92,9 @@ I<delayed loading>.
 
 =cut
 
+our $crlf_platform;
+BEGIN { $crlf_platform = $^O =~ m/win32|cygwin/i }
+
 #------------------------------------------
 
 =method new OPTIONS
@@ -468,7 +471,13 @@ sub send(@)
 
 =method size
 
-Returns the size of the whole message in bytes.
+Returns the size of the whole message in bytes.  This does assume that each
+line ending is represented by one character (like UNIX, MacOS, and sometimes
+Cygwin), and not two characters (like Windows and sometimes Cygwin).
+
+If you write the message to file on a system which uses CR and LF to end a
+single line (all Windows versions), the result in file will be nrLines() larger
+than this method returns.
 
 =cut
 
@@ -860,10 +869,14 @@ sub body(;$@)
     confess unless defined $head;
 
     $head->set($body->type);
-    $head->set('Content-Length' => $body->size)
-       unless $body->isMultipart;  # too slow
 
-    $head->set(Lines => $body->nrLines);
+    my $body_lines = $body->nrLines;
+    my $body_size  = $body->size;
+    $body_size    += $body_lines if $crlf_platform;
+
+    $head->set('Content-Length' => $body_size);
+    $head->set(Lines            => $body_lines);
+
     $head->set($body->transferEncoding);
     $head->set($body->disposition);
 

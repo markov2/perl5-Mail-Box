@@ -23,7 +23,7 @@ BEGIN {plan tests => 31}
 # over our test file.
 #
 
-my $empty = File::Spec->catfile('folders', 'empty');
+my $empty = File::Spec->catfile($folderdir, 'empty');
 
 copy $src, $cpy
     or die "Cannot create test folder $cpy: $!\n";
@@ -40,7 +40,7 @@ my @fopts =
 
 my $folder = $mgr->open
   ( folder    => "=$cpyfn"
-  , folderdir => 'folders'
+  , folderdir => $folderdir
   , @fopts
   );
 
@@ -97,7 +97,7 @@ ok($old_size != -s $cpy);
 
 $folder = $mgr->open
   ( folder    => "=$cpyfn"
-  , folderdir => 'folders'
+  , folderdir => $folderdir
   , @fopts
   , access    => 'rw'
   );
@@ -107,20 +107,22 @@ cmp_ok($folder->messages, "==", 47);
 
 my $sec = $mgr->open
   ( folder    => '=empty'
-  , folderdir => 'folders'
+  , folderdir => $folderdir
   , @fopts
   , create    => 1
   );
 
-ok($sec);
-cmp_ok($sec->messages, "==", 0);
-cmp_ok($mgr->openFolders, "==", 2);
+ok(defined $sec,                         "open newly created empty folder");
+exit unless defined $sec;
+
+cmp_ok($sec->messages, "==", 0,          "no messages in new folder");
+cmp_ok($mgr->openFolders, "==", 2,       "but the manager knows it is created");
 
 my $move = $folder->message(1);
-ok(defined $move);
+ok(defined $move,                        "select a message to be moved");
 
 my @moved = $mgr->moveMessage($sec, $move);
-cmp_ok(@moved, "==", 1);
+cmp_ok(@moved, "==", 1,                  "one message has been moved");
 isa_ok($moved[0], 'Mail::Box::Message');
 is($moved[0]->folder->name, $sec->name);
 

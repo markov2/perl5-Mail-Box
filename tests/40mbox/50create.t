@@ -17,7 +17,7 @@ use Tools;
 use File::Copy;
 use File::Spec;
 
-BEGIN {plan tests => 24}
+BEGIN {plan tests => 28}
 
 my $top  = File::Spec->catdir('folders', 'Mail');
 clean_dir $top;
@@ -39,15 +39,23 @@ sub dir($;$)
 sub folder($$;$)
 {   my $filename = File::Spec->catfile(shift, shift);
 
-    my $content  = shift || $src;
+    my $content  = shift || $src;   # by default copies whole default mbox
     copy $content, $filename
        or die "Cannot copy $content to $filename: $!\n";
 }
 
+clean_dir $top;   # restart
+
 dir $top;
 folder $top, "f1", $0;
 folder $top, "f2";
-folder $top, "f3", File::Spec->devnull;   # empty file
+
+{   # Create an empty file.
+    my $f = IO::File->new(File::Spec->catfile($top,'f3'), 'w')
+        or die "Empty? $top/f3: $!";
+
+    $f->close;
+}
 
 my $dir = dir $top, "sub1";
 folder $dir, "s1f1";
@@ -63,9 +71,10 @@ folder $dir, "f4f2";
 folder $dir, "f4f3";
 
 my $success =
-   cmplists [ sort Mail::Box::Mbox->listSubFolders(folderdir => $top) ]
+   compare_lists [ sort Mail::Box::Mbox->listSubFolders(folderdir => $top) ]
           , [ qw/f1 f2 f3 f4 sub1 sub2/ ];
-ok($success,                            'Initial tree');
+
+ok($success,                            'Initial tree creation');
 unless($success)
 {   require File::Find;
     File::Find::find( { wanted => sub {print STDERR "$_\n" }
@@ -74,31 +83,31 @@ unless($success)
     exit 1;
 }
 
-ok(cmplists [ sort Mail::Box::Mbox->listSubFolders(folderdir => $top) ]
+ok(compare_lists [ sort Mail::Box::Mbox->listSubFolders(folderdir => $top) ]
           , [ qw/f1 f2 f3 f4 sub1 sub2/ ]
   );
 
-ok(cmplists [ sort Mail::Box::Mbox->listSubFolders
+ok(compare_lists [ sort Mail::Box::Mbox->listSubFolders
                      ( folderdir  => $top
                      , skip_empty => 1
                      ) ]
           , [ qw/f1 f2 f4 sub1/ ]
   );
 
-ok(cmplists [ sort Mail::Box::Mbox->listSubFolders
+ok(compare_lists [ sort Mail::Box::Mbox->listSubFolders
                      ( folderdir  => $top
                      , check      => 1
                      ) ]
           , [ qw/f2 f3 f4 sub1 sub2/ ]
   );
 
-ok(cmplists [ sort Mail::Box::Mbox->listSubFolders
+ok(compare_lists [ sort Mail::Box::Mbox->listSubFolders
                      ( folderdir  => File::Spec->catfile($top, "f4.d")
                      ) ]
           , [ qw/f4f1 f4f2 f4f3/ ]
   );
 
-ok(cmplists [ sort Mail::Box::Mbox->listSubFolders
+ok(compare_lists [ sort Mail::Box::Mbox->listSubFolders
                      ( folderdir  => $top
                      , folder     => "=f4.d"
                      )
@@ -106,7 +115,7 @@ ok(cmplists [ sort Mail::Box::Mbox->listSubFolders
           , [ qw/f4f1 f4f2 f4f3/ ]
   );
 
-ok(cmplists [ sort Mail::Box::Mbox->listSubFolders
+ok(compare_lists [ sort Mail::Box::Mbox->listSubFolders
                      ( folder => File::Spec->catfile($top, "f4")) ]
           , [ qw/f4f1 f4f2 f4f3/ ]
   );
@@ -121,8 +130,10 @@ my $folder = Mail::Box::Mbox->new
   , lock_type   => 'NONE'
   );
 
-ok($folder);
-cmp_ok($folder->messages, "==", 45);
+ok(defined $folder,                       'open =f4/f4f2');
+die unless defined $folder;
+
+cmp_ok($folder->messages, "==", 45,       'found all messages');
 $folder->close;
 
 #
@@ -167,24 +178,28 @@ $folder = Mail::Box::Mbox->new
   , lock_type   => 'NONE'
   );
 
-ok(-f File::Spec->catfile($top, "f4"));
-$folder->delete;
+ok(defined $folder.                           'open folder =f4');
+die unless defined $folder;
+
+ok(-f File::Spec->catfile($top, "f4"),        'folder-file found');
+$folder->delete;                             # remove folder contents
 $folder->close;
-ok(! -f File::Spec->catfile($top, "f4")); 
-ok(! -d File::Spec->catfile($top, "f4.d")); 
+
+ok(! -f File::Spec->catfile($top, "f4"),      'empty folder clean-up'); 
+ok(! -d File::Spec->catfile($top, "f4.d"),    'empty subfolder clean-up'); 
 
 #
 # Write a folder, but at the same place is a subdir.  The subdir should
 # be moved to a name ending on `.d'
 #
 
-my $sub1 = File::Spec->catfile($top, "sub1"); 
-ok(-d $sub1);
-Mail::Box::Mbox->create('=sub1', folderdir => $top);
-ok(-d File::Spec->catfile($top, "sub1.d")); 
-
-ok(-f $sub1); 
-ok(-z $sub1); 
+my $sub1 = File::Spec->catfile($top, "sub1");
+ok(-d $sub1,                                  'dir to be promoted');
+ok(Mail::Box::Mbox->create('=sub1', folderdir => $top),
+                                              'promote dir to subfolder');
+ok(-d File::Spec->catfile($top, "sub1.d"),    'check promotion'); 
+ok(-f $sub1,                                  'new folder exists'); 
+ok(-z $sub1,                                  'new folder is empty'); 
 
 $folder = Mail::Box::Mbox->new
   ( folderdir   => $top
@@ -192,6 +207,9 @@ $folder = Mail::Box::Mbox->new
   , access      => 'rw'
   , lock_type   => 'NONE'
   );
+
+ok(defined $folder,                           'open empty subfolder');
+cmp_ok($folder->messages, "==", 0,            'subfolder is empty');
 
 my $msg2 = Mail::Message->build
   ( From    => 'me@example.com'

@@ -15,7 +15,14 @@ use Mail::Box::Locker::POSIX;
 
 use File::Spec;
 
-BEGIN {plan tests => 7}
+BEGIN
+{   if($windows)
+    {   plan skip_all => "not available on MicroSoft Windows.";
+        exit 0;
+    }
+
+    plan tests => 7;
+}
 
 my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 

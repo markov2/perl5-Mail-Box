@@ -6,6 +6,7 @@ use base 'Mail::Box::Locker';
 
 use IO::File;
 use Carp;
+use File::Spec;
 
 =head1 NAME
 
@@ -29,6 +30,34 @@ same name as the folder, extended by C<.lock>.
 =head2 Initiation
 
 =cut
+
+#-------------------------------------------
+
+=method new OPTIONS
+
+=option  file FILENAME
+=default file <folderfile>.lock
+
+Name of the file to lock.  By default, the folder's name is extended with
+C<.lock>.
+
+=cut
+
+sub init($)
+{   my ($self, $args) = @_;
+
+    unless($args->{file})
+    {   my $folder = $self->folder;
+        my $org    = $folder->organization;
+
+        $args->{file}
+          = $org eq 'FILE'      ? $folder->filename . '.lock'
+          : $org eq 'DIRECTORY' ? File::Spec->catfile($folder->directory, '.lock')
+          : croak "Need lock file name for DotLock.";
+    }
+
+    $self->SUPER::init($args);
+}
 
 #-------------------------------------------
 
@@ -123,6 +152,5 @@ sub lock()
 
 sub isLocked() { -e shift->filename }
 
-#-------------------------------------------
-
 1;
+

@@ -7,6 +7,7 @@ use base 'Mail::Message::Convert';
 
 use Mail::Internet;
 use Mail::Header;
+use Mail::Message;
 use Mail::Message::Head::Complete;
 use Mail::Message::Body::Lines;
 

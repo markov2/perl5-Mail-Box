@@ -80,7 +80,7 @@ sub coerce($)
 
 Write one message to a file handle.  Unmodified messages are taken
 from the folder-file where they were stored.  Modified messages
-are written to memory.  Specify a FILEHANDLE to write to
+are written from memory.  Specify a FILEHANDLE to write to
 (defaults to the selected handle).
 
 =cut
@@ -181,10 +181,6 @@ sub readFromParser($)
     $self->{MBMM_begin}     = $start;
 
     $self->SUPER::readFromParser($parser) or return;
-
-    $self->{MBMM_parser}    = $parser
-        if $self->isDelayed;
-
     $self;
 }
 
@@ -204,8 +200,9 @@ sub loadBody()
     my $body     = $self->body;
     return $body unless $body->isDelayed;
 
-    my $parser   = delete $self->{MBMM_parser};
     my ($begin, $end) = $body->fileLocation;
+
+    my $parser   = $self->folder->parser;
     $parser->filePosition($begin);
 
     my $newbody  = $self->readBody($parser, $self->head);

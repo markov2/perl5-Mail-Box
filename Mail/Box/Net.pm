@@ -15,7 +15,6 @@ use Mail::Message::Head;
 use Mail::Message::Head::Delayed;
 
 use Carp;
-use FileHandle;
 use File::Copy;
 use File::Spec;
 use File::Basename;
@@ -30,14 +29,15 @@ Mail::Box::Net - handle folders which are stored remote.
 
 =head1 DESCRIPTION
 
-This documentation describes how directory organized mailboxes work.
-Please read C<Mail::Box-Overview> first.
-
 At the moment, this object is extended by
 
 =over 4
 
-=item * POP3
+=item * Mail::Box::POP3
+
+=item * Mail::Box::IMAP4
+
+UNDER DEVELOPMENT
 
 =back
 
@@ -57,13 +57,11 @@ At the moment, this object is extended by
 
 =default body_type 'Mail::Message::Body::Lines'
 
+=default folderdir <not used>
 =default lock_type 'NONE'
-=default lock_file <not used>
-=default lock_timeout <not used>
-=default lock_wait <not used>
 =default remove_when_empty <false>
-
-=default folder <username@server_name>
+=default trusted <false>
+=default folder '/'
 
 =option  server_name HOSTNAME
 =default server_name undef
@@ -93,6 +91,7 @@ sub init($)
     $args->{lock_type}  ||= 'NONE';
     $args->{body_type}  ||= 'Mail::Message::Body::Lines';
     $args->{folder}     ||= '/';
+    $args->{trusted}    ||= 0;
 
     $self->SUPER::init($args);
 
@@ -103,6 +102,35 @@ sub init($)
 
     $self;
 }
+
+#-------------------------------------------
+
+=head2 Opening folders
+
+=cut
+
+#-------------------------------------------
+
+=method create FOLDER, OPTIONS
+
+Create a new folder on the remote server.
+
+=default folderdir <not used>
+
+=cut
+
+sub create(@) {shift->notImplemented}
+
+#-------------------------------------------
+
+=method folderdir [DIRECTORY]
+
+Not applicatable for folders on a remote server, so will always return
+the C<undef>.
+
+=cut
+
+sub folderdir(;$) { undef }
 
 #-------------------------------------------
 

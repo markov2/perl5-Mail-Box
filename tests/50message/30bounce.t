@@ -60,7 +60,7 @@ my $filedata;
 my $file = IO::Scalar->new(\$filedata);
 $bounce->print($file);
 
-is($filedata, <<'EXPECTED')
+compare_message_prints($filedata, <<'EXPECTED', 'bounce print')
 To: me@example.com (Me the receiver)
 From: him@somewhere.else.nl (Original Sender)
 Cc: the.rest@world.net

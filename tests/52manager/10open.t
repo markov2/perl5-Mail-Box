@@ -43,7 +43,8 @@ is($second, $folder,                             'same: no new folder');
 my @notices = $manager->report('NOTICES');
 cmp_ok(@notices, "==", 1,                        'mgr noticed double');
 
-$notices[-1] =~ s#\\#/#g;  # Windows
+$notices[-1] =~ s#\\mbox\.win#/mbox.src#g;  # Windows
+
 is($notices[-1], "Folder folders/mbox.src is already open.\n");
 cmp_ok($manager->openFolders, "==", 1,           'only one folder open');
 

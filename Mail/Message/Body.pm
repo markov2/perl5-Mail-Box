@@ -30,7 +30,7 @@ Mail::Message::Body - the data of a body in a message
  my $body  = $msg->body;
  my @text  = $body->lines;
  my $text  = $body->string;
- my FileHandle $file = $body->file;
+ my IO::Handle $file = $body->file;
  $body->print(\*FILE);
 
  my $content_type = $body->type;

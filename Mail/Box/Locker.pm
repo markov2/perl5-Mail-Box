@@ -136,8 +136,7 @@ will always wait until the lock has been received.
 =option  file FILENAME
 =default file undef
 
-Name of the file to lock, or the name of the lockfile (depends on the
-kind of lock used).
+Name of the file to lock.  By default, the name of the folder is taken.
 
 =cut
 
@@ -183,7 +182,7 @@ sub init($)
 
     $self->{MBL_expires}  = $args->{expires}   || 3600;  # one hour
     $self->{MBL_timeout}  = $args->{timeout}   || 10;    # ten secs
-    $self->{MBL_filename} = $args->{file};
+    $self->{MBL_filename} = $args->{file}      || $args->{folder}->name;
     $self->{MBL_has_lock} = 0;
 
     $self;
@@ -219,32 +218,6 @@ sub lockMethod($$$$)
 
 #-------------------------------------------
 
-=method filename
-
-Returns the filename which is used to lock the folder.  How this file is
-used depends on the locking method.
-
-Examples:
-
-   print $locker->filename;
-   print $folder->lockFilename;
-
-=cut
-
-sub filename($)
-{   my $self   = shift;
-    return $self->{MBL_filename} if defined $self->{MBL_filename};
-
-    my $folder = $self->{MBL_folder};
-    my $org    = $folder->organization;
-    $self->{MBL_filename}
-        = $org eq 'FILE'      ? $folder->filename . '.lock'
-        : $org eq 'DIRECTORY' ? File::Spec->catfile($folder->directory, '.lock')
-        : croak "Need lock-file name.";
-}
-
-#-------------------------------------------
-
 =method DESTROY
 
 When the locker is destroyed, for instance when the folder is closed
@@ -274,7 +247,7 @@ Get a lock on a folder.  This will return false if the lock fails.
 =examples
 
  die unless $locker->lock;
- if($folder->lock) {...}
+ if($folder->locker->lock) {...}
 
 =cut
 
@@ -289,7 +262,7 @@ Test if the folder is locked by this or a different application.
 =examples
 
  if($locker->isLocked) {...}
- if($folder->isLocked) {...}
+ if($folder->locker->isLocked) {...}
 
 =cut
 
@@ -319,7 +292,7 @@ Undo the lock on a folder.
 =examples
 
  $locker->unlock;
- $folder->unlock;
+ $folder->locker->unlock;
 
 =cut
 
@@ -331,5 +304,28 @@ sub unlock() { shift->{MBL_has_lock} = 0 }
 
 #-------------------------------------------
 
+=method folder
+
+Returns the folder object which is locker.
+
+=cut
+
+sub folder() {shift->{MBL_folder}}
+
+#-------------------------------------------
+
+=method filename
+
+Returns the filename which is used to lock the folder.
+
+=example
+
+ print $locker->filename;
+
+=cut
+
+sub filename() { shift->{MBL_filename} }
+
+#-------------------------------------------
 
 1;

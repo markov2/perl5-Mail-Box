@@ -31,41 +31,45 @@ SIMULATED_FILE
 my $f = IO::Scalar->new(\$filedata);
 
 my $body = Mail::Message::Body::Lines->new(file => $f);
-ok($body);
-is($body->string, $filedata);
-cmp_ok($body->nrLines, "==", 5);
-cmp_ok($body->size, "==", length $filedata);
+ok($body,                                        "body from file is true");
+
+is($body->string, $filedata,                     "body strings to data");
+cmp_ok($body->nrLines, "==", 5,                  "body reports 5 lines");
+cmp_ok($body->size, "==", length $filedata,      "body size as data");
 
 my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
 $body->print($g);
-is($fakeout, $filedata);
+is($fakeout, $filedata,                          "body prints right data");
 
 my @lines = $body->lines;
-cmp_ok(@lines, "==", 5);
+cmp_ok(@lines, "==", 5,                          "body produces five lines");
+
 my @filedata = split /^/, $filedata;
-cmp_ok(@filedata, "==", 5);
-foreach (0..4) { is($lines[$_], $filedata[$_]) }
+cmp_ok(@filedata, "==", 5,                       "data 5 lines");
+
+foreach (0..4) { is($lines[$_], $filedata[$_],   "expected line $_") }
 
 # Reading data from lines.
 
 $body = Mail::Message::Body::Lines->new(data => [@filedata]);
-ok($body);
-is($body->string, $filedata);
-cmp_ok($body->nrLines, "==", 5);
-cmp_ok($body->size, "==", length $filedata);
+ok($body,                                        "body from array is true");
+
+is($body->string, $filedata,                     "body string is data");
+cmp_ok($body->nrLines, "==", 5,                  "body reports 5 lines");
+cmp_ok($body->size, "==", length $filedata,      "body reports correct size");
 
 $fakeout = '';
 $body->print($g);
-is($fakeout, $filedata);
+is($fakeout, $filedata,                          "body prints to data");
 
 @lines = $body->lines;
-cmp_ok(@lines, "==", 5);
-foreach (0..4) { is($lines[$_], $filedata[$_]) }
+cmp_ok(@lines, "==", 5,                          "body produces 5 lines");
+foreach (0..4) { is($lines[$_], $filedata[$_],   "body line $_") }
 
 # Test overloading
 
-is("$body", $filedata);
+is("$body", $filedata,                           "stringification");
 @lines = @$body;
-cmp_ok(@lines, "==", 5);
-foreach (0..4) { is($lines[$_], $filedata[$_]) }
+cmp_ok(@lines, "==", 5,                          "overload array-deref");
+foreach (0..4) { is($lines[$_], $filedata[$_],   "overload array $_") }

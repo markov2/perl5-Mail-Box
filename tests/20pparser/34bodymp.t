@@ -70,6 +70,7 @@ while(1)
     cmp_ok($li , "==",  $lines,                "1 lines $count")
         if defined $li;
 
+    $cl -= $li if $crlf_platform;
     cmp_ok($cl , "==",  $size,                 "1 size $count")
         if defined $cl;
 

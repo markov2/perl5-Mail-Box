@@ -1,11 +1,11 @@
 
-package Mail::Box::POP3;
+package Mail::Box::IMAP4;
 use base 'Mail::Box::Net';
 
 use strict;
 use warnings;
 
-use Mail::Box::POP3::Message;
+use Mail::Box::IMAP4::Message;
 use Mail::Box::Parser::Perl;
 
 use IO::File;
@@ -15,20 +15,22 @@ use Carp;
 
 =head1 NAME
 
-Mail::Box::POP3 - handle POP3 folders as client
+Mail::Box::IMAP4 - handle IMAP4 folders as client
 
 =head1 SYNOPSIS
 
- use Mail::Box::POP3;
- my $folder = new Mail::Box::POP3 folder => $ENV{MAIL}, ...;
+ use Mail::Box::IMAP4;
+ my $folder = new Mail::Box::IMAP4 folder => $ENV{MAIL}, ...;
 
 =head1 DESCRIPTION
 
+UNDER DEVELOPMENT: Cannot be used yet!
+
 Maintain a folder which has its messages stored on a remote server.  The
 communication between the client application and the server is implemented
-using the POP3 protocol.  This class uses Mail::Transport::POP3 to
+using the IMAP4 protocol.  This class uses Mail::Transport::IMAP4 to
 hide the transport of information, and focusses solely on the correct
-handling of messages within a POP3 folder.
+handling of messages within a IMAP4 folder.
 
 =head1 METHODS
 
@@ -49,29 +51,32 @@ have three choices: specify a foldername which resembles an URL, or
 specify a pop-client object, or separate options for user, password,
 pop-server and server-port.
 
-=default server_port  110
-=default message_type 'Mail::Box::POP3::Message'
+=default server_port  143
+=default message_type 'Mail::Box::IMAP4::Message'
 
-=option  authenticate 'LOGIN'|'APOP'|'AUTO'
+=option  authenticate 'KERBEROS_V4'|'GSSAPI'|'SKEY'|'AUTO'
 =default authenticate 'AUTO'
 
-POP3 can use two methods of authentication: the old LOGIN protocol, which
-transmits a username and password in plain text, and the newer APOP
-protocol which uses MD5 encryption.  APOP is therefore much better, however
-not always supported by the server.  With AUTO, first APOP is tried and
-if that fails LOGIN.
+IMAP defines various authentications mechanisms.
+See Mail::Transport::IMAP4::new(authenticate).
 
-=option  pop_client OBJECT
-=default pop_client undef
+=option  imap_client OBJECT
+=default imap_client undef
 
-You may want to specify your own pop-client object.  The object
-which is passed must extend Mail::Transport::POP3.
+You may want to specify your own imap-client object.  The object
+which is passed must extend Mail::Transport::IMAP4.
+
+=option  sub_sep CHARACTER
+=default sub_sep <autodetect>
+
+A single character used as sub-folder indicator.  The IMAP protocol is
+able to find-out the right separator itself.
 
 =examples
 
- my $pop = Mail::Box::POP3->new('pop3://user:password@pop.xs4all.nl');
+ my $imap = Mail::Box::IMAP4->new('imap4://user:password@imap.xs4all.nl');
 
- my $pop = $mgr->open(type => 'pop3', username => 'myname',
+ my $imap = $mgr->open(type => 'imap4', username => 'myname',
     password => 'mypassword', server_name => 'pop.xs4all.nl');
 
 =cut
@@ -79,12 +84,15 @@ which is passed must extend Mail::Transport::POP3.
 sub init($)
 {   my ($self, $args) = @_;
 
-    $args->{server_port} ||= 110;
+    $args->{server_port} ||= 143;
 
     $self->SUPER::init($args);
 
-    $self->{MBP_client}    = $args->{pop_client}; 
-    $self->{MBP_auth}      = $args->{authenticate} || 'AUTO';
+    $self->{MBI_client}    = $args->{imap_client}; 
+    $self->{MBI_auth}      = $args->{authenticate} || 'AUTO';
+
+    my $imap               = $self->imapClient or return;
+    $self->{MBI_subsep}    = $args->{sub_sep}      || $imap->askSubfolderSeparator;
 
     $self;
 }
@@ -98,14 +106,11 @@ sub init($)
 
 #-------------------------------------------
 
-=method create FOLDER, OPTIONS
-
-It is not possible to create a new folder on a POP3 server.  This method
-will always return C<false>.
-
-=cut
-
-sub create($@) { undef }         # fails
+sub create($@)
+{   my ($class, %args) =  @_;
+    $class->log(INTERNAL => "Folder creation for IMAP4 not implemented yet");
+    undef;
+}
 
 #-------------------------------------------
 
@@ -114,8 +119,8 @@ sub foundIn(@)
     unshift @_, 'folder' if @_ % 2;
     my %options = @_;
 
-       (exists $options{type}   && lc $options{type} eq 'pop3')
-    || (exists $options{folder} && $options{folder} =~ m/^pop/);
+       (exists $options{type}   && $options{type}   =~ m/^imap/i)
+    || (exists $options{folder} && $options{folder} =~ m/^imap/);
 }
 
 #-------------------------------------------
@@ -126,47 +131,7 @@ sub foundIn(@)
 
 #-------------------------------------------
 
-=method addMessage MESSAGE
-
-It is impossible to write messages to the average POP3 server.  There are
-extensions to the protocol which do permit it, however these are not
-implemented (yet, patches welcome).
-
-C<undef> is returned, and an error displayed.  However, no complaint is
-given when the MESSAGE is C<undef> itself.
-
-=cut
-
-sub addMessage($)
-{   my ($self, $message) = @_;
-
-    $self->log(ERROR => "You cannot write a message to a pop server (yet)")
-       if defined $message;
-
-    undef;
-}
-
-#-------------------------------------------
-
-=method addMessages MESSAGES
-
-As useless as addMessage().  The only acceptable call to this method
-is without any message.
-
-=cut
-
-sub addMessages(@)
-{   my $self = shift;
-
-    $self->log(ERROR => "You cannot write messages to a pop server")
-        if @_;
-
-    ();
-}
-
-#-------------------------------------------
-
-sub type() {'pop3'}
+sub type() {'imap4'}
 
 #-------------------------------------------
 
@@ -179,28 +144,10 @@ sub type() {'pop3'}
 sub close()
 {   my $self = shift;
 
-    my $pop  = $self->popClient;
-    $pop->disconnect if defined $pop;
+    my $imap  = $self->imapClient;
+    $imap->disconnect if defined $imap;
 
     $self->SUPER::close;
-}
-
-#-------------------------------------------
-
-=method delete
-
-It is not possible to delete a POP3 folder remotely: the best we can do
-is remove all the messages in it... which is the action implemented here.
-A notice is logged about this.
-
-=cut
-
-sub delete()
-{   my $self = shift;
-    $self->log(NOTICE => "You cannot delete a POP3 folder remotely.");
-
-    $_->deleted(1) foreach $self->messages;
-    $self;
 }
 
 #-------------------------------------------
@@ -211,21 +158,30 @@ sub delete()
 
 #-------------------------------------------
 
-sub listSubFolders(@) { () }     # no
+sub listSubFolders(@)
+{   my ($thing, %args) = @_;
+
+    my $self
+     = ref $thing ? $thing                # instance method
+     :              $thing->new(%args);   # class method
+
+    return () unless defined $self;
+
+    my $imap = $self->imapClient
+        or return ();
+
+    my $name      = $imap->folderName;
+    $name         = "" if $name eq '/';
+
+    $self->askSubfoldersOf("$name$self->{MBI_subsep}");
+}
 
 #-------------------------------------------
 
-sub openSubFolder($@) { undef }  # fails
-
-#-------------------------------------------
-
-=method update
-
-NOT IMPLEMENTED YET
-
-=cut
-
-sub update() {shift->notImplemented}
+sub nameOfSubfolder($)
+{   my ($self, $name) = @_;
+    "$self" . $self->{MBI_subsep} . $name;
+}
 
 #-------------------------------------------
 
@@ -235,33 +191,34 @@ sub update() {shift->notImplemented}
 
 #-------------------------------------------
 
-=method popClient
+=method imapClient
 
-Returns the pop client object.  This does not establish the connection.
+Returns the imap client object: a Mail::Transport::IMAP4 object.
+This does not establish the connection.
 
 =cut
 
-sub popClient()
+sub imapClient()
 {   my $self = shift;
 
-    return $self->{MBP_client}
-        if defined $self->{MBP_client};
+    return $self->{MBI_client}
+        if defined $self->{MBI_client};
 
     my $auth = $self->{auth};
 
-    require Mail::Transport::POP3;
-    my $client  = Mail::Transport::POP3->new
+    require Mail::Transport::IMAP4;
+    my $client  = Mail::Transport::IMAP4->new
       ( username     => $self->{MBN_username}
       , password     => $self->{MBN_password}
       , hostname     => $self->{MBN_hostname}
       , port         => $self->{MBN_port}
-      , authenticate => $self->{MBP_auth}
+      , authenticate => $self->{MBI_auth}
       );
 
-    $self->log(ERROR => "Cannot create POP3 client ".$self->url)
+    $self->log(ERROR => "Cannot create IMAP4 client ".$self->url)
        unless defined $client;
 
-    $self->{MBP_client} = $client;
+    $self->{MBI_client} = $client;
 }
 
 #-------------------------------------------
@@ -269,11 +226,12 @@ sub popClient()
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
-    my $pop   = $self->popClient;
+    my $imap   = $self->imapClient;
     my @log   = $self->logSettings;
     my $seqnr = 0;
 
-    foreach my $id ($pop->ids)
+#### Things must be changed here...
+    foreach my $id ($imap->ids)
     {   my $message = $args{message_type}->new
          ( head      => $args{head_delayed_type}->new(@log)
          , unique    => $id
@@ -300,10 +258,10 @@ Read the header for the specified message from the remote server.
 
 sub getHead($)
 {   my ($self, $message) = @_;
-    my $pop   = $self->popClient or return;
+    my $imap   = $self->imapClient or return;
 
     my $uidl  = $message->unique;
-    my $lines = $pop->header($uidl);
+    my $lines = $imap->header($uidl);
 
     unless(defined $lines)
     {   $lines = [];
@@ -311,7 +269,7 @@ sub getHead($)
      }
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
-     ( filename  => "$pop"
+     ( filename  => "$imap"
      , file      => IO::ScalarArray->new($lines)
      );
 
@@ -336,10 +294,10 @@ Read all data for the specified message from the remote server.
 
 sub getHeadAndBody($)
 {   my ($self, $message) = @_;
-    my $pop   = $self->popClient or return;
+    my $imap  = $self->imapClient or return;
 
     my $uidl  = $message->unique;
-    my $lines = $pop->message($uidl);
+    my $lines = $imap->message($uidl);
 
     unless(defined $lines)
     {   $lines = [];
@@ -347,7 +305,7 @@ sub getHeadAndBody($)
      }
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
-     ( filename  => "$pop"
+     ( filename  => "$imap"
      , file      => IO::ScalarArray->new($lines)
      );
 
@@ -377,13 +335,20 @@ sub writeMessages($@)
 {   my ($self, $args) = @_;
 
     if(my $modifications = grep {$_->modified} @{$args->{messages}})
-    {   $self->log(WARNING =>
-           "Update of $modifications messages ignored for pop3 folder $self.");
+    {
     }
 
     $self;
 }
 
 #-------------------------------------------
+
+=head1 IMPLEMENTATION
+
+=head2 How IMAP4 folders work
+
+=head2 This implementation
+
+=cut
 
 1;

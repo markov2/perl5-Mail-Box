@@ -1,13 +1,15 @@
 
 package MailBox::Test::42maildir::Definition;
 
+use Tools    qw/$windows/;
+
 sub name     {"Mail::Box::Maildir; maildir folders"}
-sub critical {0}
+sub critical { 0 }
 sub requires { () }
 
 sub skip()
 {
-      $^O =~ m/mswin/i
+      $windows
     ? 'Maildir filenames are not compatible with Windows'
     : undef;
 }

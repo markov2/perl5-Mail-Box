@@ -2,27 +2,32 @@
 use strict;
 use warnings;
 
-package Mail::Transport::POP3;
+package Mail::Transport::IMAP4;
 use base 'Mail::Transport::Receive';
-
-use IO::Socket  ();
-use Digest::MD5 ();
 
 =head1 NAME
 
-Mail::Transport::POP3 - receive messages via POP3
+Mail::Transport::IMAP4 - handle messages via the IMAP4 protocol
 
 =head1 SYNOPSIS
 
- my $receiver = Mail::Transport::POP3->new(...);
- my $message = $receiver->receive($id);
+ my $imap = Mail::Transport::IMAP4->new(...);
+ my $message = $imap->receive($id);
+ $imap->send($message);
 
 =head1 DESCRIPTION
 
-Receive messages via the POP3 protocol from one remote server, as specified
-in rfc1939.  This object hides much of the complications in the protocol and
-recovers broken connections automatically.  Although it is part of the
-Mail::Box module, this object can be used separately.
+UNDER DEVELOPMENT: Cannot be used yet.
+
+The IMAP4 protocol is quite complicated: it is feature rich and allows
+verious asynchronous actions.  The main document describing IMAP is
+rfc2060.
+
+This package, as part of Mail::Box, does not implement the actual
+protocol itself, but uses Mail::IMAPClient to do the work.  The task
+for this package is to hide as much differences between that module's
+interface and the common Mail::Box folder types.  This package is used
+by Mail::Box::IMAP4 for the real work.
 
 =head1 METHODS
 
@@ -38,27 +43,24 @@ Mail::Box module, this object can be used separately.
 
 =method new OPTIONS
 
-Create a new pop3 server connection.  One object can only handle one
-connection: for a single user to one single server.  If the server
-could not be reached, or when the login fails, this instantiating C<new>
-will return C<undef>.
+Create the IMAP connection to the server.  IMAP servers can handle
+multiple folders for a single user, which means that connections
+may get shared.  This is sharing is hidden for the user.
 
-=default port 110
+=default port 143
 
-=option  authenticate 'LOGIN'|'APOP'|'AUTO'
+=option  authenticate 'KERBEROS_V4'|'GSSAPI'|'SKEY'|'AUTO'
 =default authenticate 'AUTO'
 
-Authenthication method.  The standard defines two methods, named LOGIN and
-APOP.  The first sends the username and password in plain text to the server
-to get permission, the latter encrypts this data using MD5.  When AUTO is
-used, first APOP is tried, and then LOGIN.
+Authenthication method.  RFC1731 defines a few authentication methods
+to be (optionally) used with IMAP. NOT IMPLEMENTED YET.
 
 =cut
 
 sub init($)
 {   my ($self, $args) = @_;
-    $args->{via}    = 'pop3';
-    $args->{port} ||= 110;
+    $args->{via}    = 'imap4';
+    $args->{port} ||= 143;
 
     $self->SUPER::init($args);
 
@@ -72,13 +74,15 @@ sub init($)
 
 =method url
 
-Represent this pop3 connection as URL.
+Represent this imap4 connection as URL.
 
 =cut
 
-sub url(;$)
-{   my ($host, $port, $user, $pwd) = shift->remoteHost;
-    "pop3://$user:$pwd\@$host:$port";
+sub url()
+{   my $self = shift;
+    my ($host, $port, $user, $pwd) = $self->remoteHost;
+    my $name = $self->folderName;
+    "imap4://$user:$pwd\@$host:$port$name";
 }
 
 #------------------------------------------
@@ -142,7 +146,7 @@ which should be added, by default none.
 
 =example
 
- my $ref_lines = $pop3->header($uidl);
+ my $ref_lines = $imap4->header($uidl);
  print @$ref_lines;
 
 =cut
@@ -168,7 +172,7 @@ wrong.
 
 =example
 
- my $ref_lines = $pop3->message($uidl);
+ my $ref_lines = $imap->message($uidl);
  print @$ref_lines;
 
 =cut
@@ -183,7 +187,7 @@ sub message($;$)
 
     return unless $message;
 
-    # Some POP3 servers add a trailing empty line
+    # Some IMAP4 servers add a trailing empty line
     pop @$message if @$message && $message->[-1] =~ m/^[\012\015]*$/;
 
     return if exists $self->{MTP_nouidl};
@@ -267,31 +271,6 @@ with the mail box.
 
 sub disconnect()
 {   my $self = shift;
-
-    my $quit;
-    if($self->{MTP_socket}) # can only disconnect once
-    {   if(my $socket = $self->socket)
-        {   my $dele  = $self->{MTP_dele} || {};
-            while(my $uidl = each %$dele)
-            {   my $n = $self->id2n($uidl) or next;
-                $self->send($socket, "DELE $n\n") or last;
-            }
-
-            $quit = $self->send($socket, "QUIT\n");
-            close $socket;
-        }
-    }
-
-    delete @$self{ qw(
-     MTP_socket
-     MTP_dele
-     MTP_uidl2n
-     MTP_n2uidl
-     MTP_n2length
-     MTP_fetched
-    ) };
-
-    OK($quit);
 }
 
 #------------------------------------------
@@ -302,7 +281,7 @@ Returns a reference to a list of ID's that have been fetched using the
 message() method.  This can be used to update a database of messages that
 were fetched (but maybe not yet deleted) from the mailbox.
 
-Please note that if the POP3 server did not support the UIDL command, this
+Please note that if the IMAP4 server did not support the UIDL command, this
 method will always return undef because it is not possibly to reliably
 identify messages between sessions (other than looking at the contents of
 the messages themselves).
@@ -322,7 +301,7 @@ sub fetched(;$)
 =method id2n ID
 
 Translates the unique ID of a message into a sequence number which
-represents the message as long a this connection to the POP3 server
+represents the message as long a this connection to the IMAP4 server
 exists.  When the message has been deleted for some reason, C<undef>
 is returned.
 
@@ -343,8 +322,8 @@ by a normal user of this class.
 
 =method socket
 
-Returns a connection to the POP3 server.  If there was no connection yet,
-it will be created transparently.  If the connection with the POP3 server
+Returns a connection to the IMAP4 server.  If there was no connection yet,
+it will be created transparently.  If the connection with the IMAP4 server
 was lost, it will be reconnected and the assures that internal
 state information (STAT and UIDL) is up-to-date in the object.
 
@@ -505,7 +484,7 @@ sub _login(;$)
     my $welcome = <$socket>;
     unless(OK($welcome))
     {   $self->log(ERROR =>
-           "Server at $host:$port does not seem to be talking POP3");
+           "Server at $host:$port does not seem to be talking IMAP4");
         return;
     }
 
@@ -609,6 +588,81 @@ sub _status($;$)
     }
     $self->{MTP_uidl2n} = \%uidl2n;
     1;
+}
+
+#------------------------------------------
+
+=method askSubfolderSeparator
+
+Returns the separator which is used on the server side to indicate
+sub-folders.
+
+=cut
+
+sub askSubfolderSeparator()
+{   my $self = shift;
+
+    # $self->send(A000 LIST "" "")
+    # receives:  * LIST (\Noselect) "/" ""
+    #                                ^ $SEP
+    # return $SEP    [exactly one character)
+
+    $self->notImplemented;
+}
+
+#------------------------------------------
+
+=method askSubfoldersOf NAME
+
+Returns a list of subfolders for this server.
+
+=cut
+
+sub askSubfoldersOf($)
+{   my ($self, $name) = @_;
+    
+    # $imap->send(LIST "$name" %)
+    # receives multiple lines
+    #     * LIST (.*?) NAME
+    # return list of NAMEs
+
+    $self->notImplemented;
+}
+
+#------------------------------------------
+
+=method getFlag ID, LABEL
+
+Returns the value of the LABEL for the message with this ID.
+
+=cut
+
+my %systemflags =             # all other flags should be passed unharmed
+ ( '\Seen'     => 'seen'
+ , '\Answered' => 'replied'
+ , '\Flagged'  => 'flagged'
+ , '\Deleted'  => 'deleted'   # requires special treatent: call deleted()
+ , '\Draft'    => 'draft'
+ , '\Recent'   => 'old'       #  NOT old
+ );
+
+sub getLabel($$)
+{   my ($self, $id, $label) = @_;
+
+    $self->notImplemented;
+}
+
+#------------------------------------------
+
+=method setFlags ID, LABEL, VALUE, [LABEL, VALUE], ...
+
+=cut
+
+sub setFlags($@)
+{   my ($self, $id) = (shift, shift);
+    my @flags = @_;  # etc
+
+    $self->notImplemented;
 }
 
 #------------------------------------------

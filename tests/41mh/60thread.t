@@ -43,7 +43,7 @@ my @lines = split "\n", $out;
 pop @lines;
 ok(@lines = $folder->messages);
 
-is($out, <<'DUMP');
+compare_thread_dumps($out, <<'DUMP', 'sort thread full dump');
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF

@@ -27,8 +27,9 @@ Mail::Box::File - handle file-based folders
 
 =head1 DESCRIPTION
 
-Mail::Box::File is the base-class for all file-based folders.  Each
-file based folders: messages are bundled in single files.
+Mail::Box::File is the base-class for all file-based folders: folders which
+bundle multiple messages into one single file.  Usually, these messages are
+separated by a special line which indicates the start of the next one.
 
 =head1 METHODS
 
@@ -45,42 +46,36 @@ file based folders: messages are bundled in single files.
 =method new OPTIONS
 
 =default folderdir $ENV{HOME}.'/Mail'
-=default lock_file foldername.lock-extension
+=default lock_file <foldername>.<lock-extension>
 
 =default message_type 'Mail::Box::File::Message'
 
 =option  lock_extension FILENAME|STRING
 =default lock_extension '.lock'
 
-When the dotlock locking mechanism is used, the lock is created by
-the creation of a file.  For Mail::Box::File type of folders, this
-file is by default named the same as the folder-file itself, followed by
-C<.lock>.
+When the dotlock locking mechanism is used, the lock is created with a
+hardlink to the folder file.  For Mail::Box::File type of folders, this
+file is by default named as the folder-file itself followed by
+C<.lock>.  For example: the F<Mail/inbox> folder file will have a hardlink
+made as F<Mail/inbox.lock>.
 
 You may specify an absolute filename, a relative (to the folder's
 directory) filename, or an extension (preceded by a dot).  So valid
 examples are:
 
- .lock                  # append to filename
+ .lock                  # appended to the folder's filename
  my_own_lockfile.test   # full filename, same dir
  /etc/passwd            # somewhere else
 
-=option  subfolder_extension STRING
-=default subfolder_extension '.d'
-
-Mail folders which store their messages in files usually do not
-support sub-folders, as do mail folders which store messages
-in a directory.
-
-However, this module can simulate sub-directories if the user wants it to.
-When a subfolder of folder C<xyz> is created, we create a directory which
-is called C<xyz.d> to contain them.  This extension C<.d> can be changed
-using this option.
+When the program runs with less priviledges (as normal user), often the
+default inbox folder can not be locked with the lockfile name which is produced
+by default.
 
 =option  write_policy 'REPLACE'|'INPLACE'|undef
 =default write_policy undef
 
-Sets the default write policy.  See the C<policy> option to write().
+Sets the default write policy (see write(policy)).  With C<undef>, the best
+policy is autodetected.
 
 =option  body_type CLASS|CODE
 =default body_type <see description>
@@ -99,7 +94,6 @@ smaller files in memory.
 =cut
 
 my $default_folder_dir = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
-my $default_extension  = '.d';
 
 sub _default_body_type($$)
 {   my $size = shift->guessBodySize || 0;
@@ -108,33 +102,43 @@ sub _default_body_type($$)
 
 sub init($)
 {   my ($self, $args) = @_;
-    $args->{folderdir}        ||= $default_folder_dir;
-    $args->{body_type}        ||= \&_default_body_type;
+    $args->{folderdir} ||= $default_folder_dir;
+    $args->{body_type} ||= \&_default_body_type;
+    $args->{lock_file} ||= '--';   # to be resolved later
 
     $self->SUPER::init($args);
 
-    my $sub_extension          = $self->{MBM_sub_ext}
-       = $args->{subfolder_extension} || $default_extension;
-
-    my $filename               = $self->{MBF_filename}
-       = (ref $self)->folderToFilename
+    my $filename         = $self->{MBF_filename}
+       = $self->folderToFilename
            ( $self->name
            , $self->folderdir
-           , $sub_extension
            );
 
     return unless -e $filename;
 
-    $self->{MBM_policy}        = $args->{write_policy};
+    $self->{MBF_policy}  = $args->{write_policy};
 
-    my $lockdir   = $filename;
-    $lockdir      =~ s!/([^/]*)$!!;
-    my $extension = $args->{lock_extension} || '.lock';
-    $self->locker->filename
-      ( File::Spec->file_name_is_absolute($extension) ? $extension
-      : $extension =~ m!^\.!  ? "$filename$extension"
-      :                         File::Spec->catfile($lockdir, $extension)
-      );
+    # Lock the folder.
+
+    my $locker   = $self->locker;
+
+    my $lockfile = $locker->filename;
+    if($lockfile eq '--')
+    {   my $lockdir   = $filename;
+        $lockdir      =~ s!/([^/]*)$!!;
+        my $extension = $args->{lock_extension} || '.lock';
+
+        $self->locker->filename
+          ( File::Spec->file_name_is_absolute($extension) ? $extension
+          : $extension =~ m!^\.!  ? "$filename$extension"
+          :                         File::Spec->catfile($lockdir, $extension)
+          );
+    }
+
+    unless($locker->lock)
+    {   $self->log(WARNING => "Couldn't get a lock on folder $self.");
+        return;
+    }
 
     # Check if we can write to the folder, if we need to.
 
@@ -151,28 +155,11 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-sub organization() { 'FILE' }
-
-#-------------------------------------------
-
-=method create FOLDERNAME, OPTIONS
-
-=option  subfolder_extension STRING
-=default subfolder_extension undef
-
-=cut
-
 sub create($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
-    my $extension = $args{subfolder_extension} || $default_extension;
-    my $filename  = $class->folderToFilename($name, $folderdir, $extension);
+    my $subext    = $args{subfolder_extension};
+    my $filename  = $class->folderToFilename($name, $folderdir, $subext);
 
     return $class if -f $filename;
 
@@ -180,17 +167,14 @@ sub create($@)
     $class->log(ERROR => "Cannot create directory $dir for $name"), return
         unless -d $dir || mkdir $dir, 0755;
 
-    if(-d $filename)
-    {   # sub-dir found, start simulating sub-folders.  The sub-folder dir
-        # is moved to make place for this real folder.
-        move $filename, $filename . $extension;
-    }
+    $class->dirToSubfolder($filename, $subext)
+        if -d $filename && defined $subext;
 
     if(my $create = IO::File->new($filename, 'w'))
     {   $create->close or return;
     }
     else
-    {   warn "Cannot create folder $name: $!\n";
+    {   $class->log(WARNING => "Cannot create folder $name: $!\n");
         return;
     }
 
@@ -199,18 +183,6 @@ sub create($@)
 
 #-------------------------------------------
 
-=method foundIn [FOLDERNAME] [,OPTIONS]
-
-If no FOLDERNAME is specified, then the C<folder> option is taken.
-
-=option  folder FOLDERNAME
-=default folder undef
-
-=option  subfolder_extension STRING
-=default subfolder_extension <from object>
-
-=cut
-
 sub foundIn($@)
 {   my $class = shift;
     my $name  = @_ % 2 ? shift : undef;
@@ -218,27 +190,20 @@ sub foundIn($@)
     $name   ||= $args{folder} or return;
 
     my $folderdir = $args{folderdir} || $default_folder_dir;
-    my $extension = $args{subfolder_extension} || $default_extension;
-    my $filename  = $class->folderToFilename($name, $folderdir, $extension);
+    my $filename  = $class->folderToFilename($name, $folderdir);
 
-    if(-d $filename)      # fake empty folder, with sub-folders
-    {   return 1 unless -f File::Spec->catfile($filename, '1')   # MH
-                     || -d File::Spec->catdir($filename, 'cur'); # Maildir
-    }
-
-    return 0 unless -f $filename;
-    return 1 if -z $filename;      # empty folder is ok
-
-    my $file = IO::File->new($filename, 'r') or return 0;
-    local $_;                      # Save external $_
-    while(<$file>)
-    {   next if /^\s*$/;
-        $file->close;
-        return m/^From /;
-    }
-
-    return 1;
+    -f $filename;
 }
+
+#-------------------------------------------
+
+=head2 Opening folders
+
+=cut
+
+#-------------------------------------------
+
+sub organization() { 'FILE' }
 
 #-------------------------------------------
 
@@ -250,7 +215,8 @@ sub foundIn($@)
 
 =method filename
 
-Returns the filename for this folder.
+Returns the filename for this folder, which may be an absolute or relative
+path to the file.
 
 =examples
 
@@ -268,7 +234,9 @@ sub close(@)
     shift;
 
     my $rc = $self->SUPER::close(@_);
-    $self->parserClose;
+
+    if(my $parser = delete $self->{MBF_parser}) { $parser->stop }
+
     $rc;
 }
 
@@ -283,73 +251,6 @@ sub close(@)
 =head2 Sub-folders
 
 =cut
-
-#-------------------------------------------
-
-=method listSubFolders OPTIONS
-
-=option  subfolder_extension STRING
-=default subfolder_extension <from object>
-
-=cut
-
-sub listSubFolders(@)
-{   my ($thingy, %args)  = @_;
-    my $class      = ref $thingy || $thingy;
-
-    my $skip_empty = $args{skip_empty} || 0;
-    my $check      = $args{check}      || 0;
-    my $extension  = $args{subfolder_extension} || $default_extension;
-
-    my $folder     = exists $args{folder} ? $args{folder} : '=';
-    my $folderdir  = exists $args{folderdir}
-                   ? $args{folderdir}
-                   : $default_folder_dir;
-
-    my $dir        = ref $thingy  # Mail::Box::File
-                   ? $thingy->filename
-                   : $class->folderToFilename($folder, $folderdir, $extension);
-
-    my $real       = -d $dir ? $dir : "$dir$extension";
-    return () unless opendir DIR, $real;
-
-    # Some files have to be removed because they are created by all
-    # kinds of programs, but are no folders.
-
-    my @entries = grep { ! m/\.lo?ck$/ && ! m/^\./ } readdir DIR;
-    closedir DIR;
-
-    # Look for files in the folderdir.  They should be readable to
-    # avoid warnings for usage later.  Furthermore, if we check on
-    # the size too, we avoid a syscall especially to get the size
-    # of the file by performing that check immediately.
-
-    my %folders;  # hash to immediately un-double names.
-
-    foreach (@entries)
-    {   my $entry = File::Spec->catfile($real, $_);
-        next unless -r $entry;
-        if( -f _ )
-        {   next if $args{skip_empty} && ! -s _;
-            next if $args{check} && !$class->foundIn($entry);
-            $folders{$_}++;
-        }
-        elsif( -d _ )
-        {   # Directories may create fake folders.
-            if($args{skip_empty})
-            {   opendir DIR, $entry or next;
-                my @sub = grep !/^\./, readdir DIR;
-                closedir DIR;
-                next unless @sub;
-            }
-
-            (my $folder = $_) =~ s/$extension$//;
-            $folders{$folder}++;
-        }
-    }
-
-    keys %folders;
-}
 
 #-------------------------------------------
 
@@ -376,50 +277,24 @@ the folder is open.
 sub parser()
 {   my $self = shift;
 
-    return $self->{MBM_parser}
-        if defined $self->{MBM_parser};
+    return $self->{MBF_parser}
+        if defined $self->{MBF_parser};
 
     my $source = $self->filename;
 
-    my $access = $self->{MB_access} || 'r';
-    $access = 'r+' if $access eq 'rw' || $access eq 'a';
+    my $mode = $self->{MB_access} || 'r';
+    $mode    = 'r+' if $mode eq 'rw' || $mode eq 'a';
 
-    my $locker = $self->locker;
-    unless($locker->lock)
-    {   $self->log(WARNING =>
-                   "Couldn't get a lock on folder $self (file $source)");
-        return;
-    }
-
-    my $parser = $self->{MBM_parser}
+    my $parser = $self->{MBF_parser}
        = Mail::Box::Parser->new
         ( filename  => $source
-        , mode      => $access
+        , mode      => $mode
         , trusted   => $self->{MB_trusted}
         , $self->logSettings
         ) or return;
 
     $parser->pushSeparator('From ');
     $parser;
-}
-
-#-------------------------------------------
-
-=method parserClose
-
-Destroy the parser explicilty.  This will free various data-structures,
-and close open file-handles.
-
-=cut
-
-sub parserClose()
-{   my $self   = shift;
-    my $parser = delete $self->{MBM_parser} or return;
-    $parser->stop;    # but there may be more handles out-there which
-                      # can start the parser again.
-
-    $self->locker->unlock;
-    $self;
 }
 
 #-------------------------------------------
@@ -514,15 +389,10 @@ sub writeMessages($)
         {   $self->log(WARNING =>
                "Couldn't remove folder $self (file $filename): $!");
         }
-
-        # Can the sub-folder directory be removed?  Don't mind if this
-        # doesn't work (probably no subdir).
-        rmdir $filename . $self->{MBM_sub_ext};
-
         return $self;
     }
 
-    my $policy = exists $args->{policy} ? $args->{policy} : $self->{MBM_policy};
+    my $policy = exists $args->{policy} ? $args->{policy} : $self->{MBF_policy};
     $policy  ||= '';
 
     my $success
@@ -537,9 +407,11 @@ sub writeMessages($)
         return;
     }
 
+    $self->parser->restart;
+    $_->modified(0) foreach @{$args->{messages}};
+
     $self;
 }
-
 
 sub _write_new($)
 {   my ($self, $args) = @_;
@@ -548,14 +420,13 @@ sub _write_new($)
     my $new      = IO::File->new($filename, 'w');
     return 0 unless defined $new;
 
-    my @messages = @{$args->{messages}};
-    foreach my $message (@messages)
-    {   $message->print($new);
-        $message->modified(0);
-    }
+    $_->print($new) foreach @{$args->{messages}};
 
-    $self->log(PROGRESS => "Written new folder $self with ".@messages,"msgs.");
-    $new->close;
+    $new->close or return 0;
+
+    $self->log(PROGRESS =>
+                  "Wrote new folder $self with ".@{$args->{messages}}."msgs.");
+    1;
 }
 
 # First write to a new file, then replace the source folder in one
@@ -568,9 +439,9 @@ sub _write_replace($)
 
     my $filename = $self->filename;
     my $tmpnew   = $self->tmpNewFolder($filename);
-    my $new      = IO::File->new($tmpnew, 'w');
-    return 0 unless defined $new;
-    return 0 unless open FILE, '<', $filename;
+
+    my $new      = IO::File->new($tmpnew, 'w')   or return 0;
+    my $old      = IO::File->new($filename, 'r') or return 0;
 
     my ($reprint, $kept) = (0,0);
 
@@ -581,22 +452,21 @@ sub _write_replace($)
 
         if($message->modified)
         {   $message->print($new);
-            $message->modified(0);
-
             $message->moveLocation($newbegin - $oldbegin)
                if defined $oldbegin;
             $reprint++;
         }
         else
         {   my ($begin, $end) = $message->fileLocation;
-            seek FILE, $begin, 0;
-            my $whole;
-
             my $need = $end-$begin;
-            my $size = read FILE, $whole, $need;
+
+            $old->seek($begin, 0);
+            my $whole;
+            my $size = $old->read($whole, $need);
+
             $self->log(ERROR => "File too short to get write message "
-                                . $message->seqnr, " ($size, $need)")
-               if $size != $need;
+                                . $message->seqnr. " ($size, $need)")
+               unless $size == $need;
 
             $new->print($whole);
             $new->print("\n");
@@ -606,21 +476,18 @@ sub _write_replace($)
         }
     }
 
-    return 0
-        unless $new->close && CORE::close FILE;
+    my $ok = $new->close;
+    return 0 unless $old->close && $ok;
 
-    if(move $tmpnew, $filename)
-    {    $self->log(PROGRESS => "Folder $self replaced ($kept, $reprint)");
-         $self->parser->takeFileInfo;
-         $self->parserClose;
-    }
-    else
+    unless(move $tmpnew, $filename)
     {   $self->log(WARNING =>
             "Could not replace $filename by $tmpnew, to update $self: $!");
+
         unlink $tmpnew;
         return 0;
     }
 
+    $self->log(PROGRESS => "Folder $self replaced ($kept, $reprint)");
     1;
 }
 
@@ -650,29 +517,28 @@ sub _write_inplace($)
     my $mode     = $^O =~ m/^Win/i ? 'a' : '+<';
     my $filename = $self->filename;
 
-    return 0 unless open FILE, $mode, $filename;
+    my $old      = IO::File->new($filename, $mode) or return 0;
 
     # Chop the folder after the messages which does not have to change.
+
     my $keepend  = $messages[0]->fileLocation;
-    unless(truncate FILE, $keepend)
-    {   CORE::close FILE;  # truncate impossible: try replace writing
+    unless($old->truncate($keepend))
+    {   $old->close;  # truncate impossible: try replace writing
         return 0;
     }
-    seek FILE, 0, 2;       # go to end
+    $old->seek(0, 2);       # go to end
 
     # Print the messages which have to move.
     my $printed = @messages;
     foreach my $message (@messages)
     {   my $oldbegin = $message->fileLocation;
-        my $newbegin = tell FILE;
-        $message->print(\*FILE);
+        my $newbegin = $old->tell;
+        $message->print($old);
         $message->moveLocation($newbegin - $oldbegin);
     }
 
-    CORE::close FILE or return 0;
+    $old->close or return 0;
     $self->log(PROGRESS => "Folder $self updated in-place ($kept, $printed)");
-    $self->parser->takeFileInfo;
-
     1;
 }
 
@@ -709,36 +575,29 @@ sub appendMessages(@)
         push @coerced, $coerced;
     }
 
-    return 0 unless $out->close && $folder->close;
+    my $ok = $folder->close;
+    return 0 unless $out->close && $ok;
+
     @coerced;
 }
 
 #-------------------------------------------
 
-=method folderToFilename FOLDERNAME, FOLDERDIR, EXTENSION
+=method folderToFilename FOLDERNAME, FOLDERDIR, [SUBEXT]
 
-(Class method)  Translate a folder name into a filename, using the
-FOLDERDIR value to replace a leading C<=>.
+(Class or instance method)  Translate a folder name into a filename, using the
+FOLDERDIR value to replace a leading C<=>.  SUBEXT is only used for MBOX
+folders.
 
 =cut
 
-sub folderToFilename($$$)
-{   my ($class, $name, $folderdir, $extension) = @_;
-    return $name if File::Spec->file_name_is_absolute($name);
+sub folderToFilename($$;$)
+{   my ($thing, $name, $folderdir) = @_;
 
-    my @parts = split m!/!, $name;
-    my $real  = shift @parts;
-    if(@parts)
-    {   my $file  = pop @parts;
+    substr $name, 0, 1, $folderdir
+        if substr $name, 0, 1 eq '=';
 
-        $real = File::Spec->catdir($real.(-d $real ? '' : $extension), $_) 
-           foreach @parts;
-
-        $real = File::Spec->catfile($real.(-d $real ? '' : $extension), $file);
-    }
-
-    $real =~ s#^=#$folderdir/#;
-    $real;
+    $name;
 }
 
 sub tmpNewFolder($) { shift->filename . '.tmp' }
@@ -752,38 +611,6 @@ sub tmpNewFolder($) { shift->filename . '.tmp' }
 File-based folders store many messages in one file (let's call this a
 `file-based' folder, in comparison to a `directory-based' folder types
 like MH and Maildir).
-
-In file-based folders, each message begins with a line which starts with
-the string C<From >.  Lines inside a message which accidentally start with
-C<From> are, in the file, preceded by `E<gt>'. This character is stripped
-when the message is read.
-
-In this module, the name of a folder may be an absolute or relative path.
-You can also precede the foldername by C<=>, which means that it is
-relative to new(folderdir).
-
-=head2 Simulation of sub-folders
-
-File-based folders do not really have a sub-folder concept as directory-based
-folders do, but this module tries to simulate them.  In this implementation
-a directory like
-
- Mail/subject1/
-
-is taken as an empty folder C<Mail/subject1>, with the folders in that
-directory as sub-folders for it.  You may also use
-
- Mail/subject1
- Mail/subject1.d/
-
-where C<Mail/subject1> is the folder, and the folders in the
-C<Mail/subject1.d> directory are used as sub-folders.  If your situation
-is similar to the first example and you want to put messages in that empty
-folder, the directory is automatically (and transparently) renamed, so
-that the second situation is reached.
-
-Because of these simulated sub-folders, the folder manager does not need to
-distinguish between file- and directory-based folders in this respect.
 
 =cut
 

@@ -277,7 +277,7 @@ sub openSubFolder($@)
         return;
     }
 
-    $self->openRelatedFolder(@_, folder => "$self/$name");
+    $self->SUPER::openSubFolder($name, @_);
 }
 
 #-------------------------------------------

@@ -14,7 +14,7 @@ use Test::More;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 56}
+BEGIN {plan tests => 54}
 
 my $mhsrc = File::Spec->catfile('folders', 'mh.src');
 
@@ -39,14 +39,14 @@ my $msg3 = $folder->message(3);
 $folder->modified(1);
 $folder->write(renumber => 0);
 
-ok(cmplists [sort {$a cmp $b} listdir $mhsrc],
+ok(compare_lists [sort {$a cmp $b} listdir $mhsrc],
             [sort {$a cmp $b} '.mh_sequences', 1..12, 14..46]
   );
 
 $folder->modified(1);
 $folder->write(renumber => 1);
 
-ok(cmplists [sort {$a cmp $b} listdir $mhsrc],
+ok(compare_lists [sort {$a cmp $b} listdir $mhsrc],
             [sort {$a cmp $b} '.mh_sequences', 1..45]
   );
 
@@ -55,16 +55,13 @@ ok($folder->message(2)->isDelayed);
 ok(defined $folder->message(3)->get('subject')); # load, creates index
 
 $folder->write;
-ok(cmplists [sort {$a cmp $b} listdir $mhsrc],
+ok(compare_lists [sort {$a cmp $b} listdir $mhsrc],
             [sort {$a cmp $b} '.index', '.mh_sequences', 1..44]
   );
+
 cmp_ok($folder->messages, "==", 44);
 
 $folder->message(8)->delete;
-ok($folder->message(8)->deleted);
-cmp_ok($folder->messages, "==", 44);
-
-$folder->write(keep_deleted => 1);
 ok($folder->message(8)->deleted);
 cmp_ok($folder->messages, "==", 44);
 

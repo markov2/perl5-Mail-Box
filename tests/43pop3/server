@@ -12,6 +12,10 @@ t/server/start - simple POP3 server for testing Mail::Transport::POP3
 
  open( $pop3,"$^X t/server/start t/messages autodelete | " );
 
+ open( $pop3,"$^X t/server/start t/messages noextra | " );
+
+ open( $pop3,"$^X t/server/start t/messages standardport | " );
+
 =head1 DESCRIPTION
 
 This POP3 server is created for testing the Mail::Transport::POP3 only.  It
@@ -64,6 +68,20 @@ retrieved with RETR or TOP (without specification of number of lines in the
 body to return) will be automatically marked for deletion.  This will cause
 those messages to be deleted if the session is finished with a QUIT command.
 This coincides with system resource restrictions imposed by some providers.
+
+=item noextra
+
+If the keyword "noextra" is specified, then all messages will be served with
+a check for a CRLF pair at the end of the original messasge: if a CRLF is
+found, then only ".\r\n" will be added to indicate the end of a message that
+are retrieved with RETR or TOP.
+
+=item standardport
+
+If the keyword "standardport" is specified, then an attempt will be made to
+start the POP3 server on port 110, the standard POP3 port.  Please note that
+this will only be successful if the current user has sufficient privileges
+(usually only the root user will be allowed to listen on ports < 1024).
 
 =back
 
@@ -138,28 +156,15 @@ die qq(Must specify directory to work with\n) unless $directory;
 die qq(Trouble using directory "$directory": $!\n)
  unless -d $directory and -w _;
 
-# Make sure no buffering takes place
-# Create a server that can only take one connection at a time
-
-$| = 1;
-my $server = IO::Socket::INET->new(
-  Type      => SOCK_STREAM,
-  Listen    => 1,
-) or die "Couldn't start a POP3 server:\n $@\n";
-
-# Find out the port we're running on
-# Let the caller know which port we're running on
-
-my $port = $server->sockport;
-print "$port\n";
-
 # Initialize the flag settings
 
 my $minimal = 0;
 my $apoponly = 0;
 my $autodelete = 0;
+my $noextra = 0;
 my $exitonquit = 0;
 my $exitnow = 0;
+my @port;
 
 # While there are keywords specified
 #  Set appropriate flags if so specified
@@ -168,7 +173,25 @@ while (my $keyword = shift) {
   $minimal = ($keyword eq 'minimal');
   $apoponly = ($keyword eq 'apoponly');
   $autodelete = ($keyword eq 'autodelete');
+  $noextra = ($keyword eq 'noextra');
+  @port = qw(LocalPort 110) if $keyword eq 'standardport';
 }
+
+# Make sure no buffering takes place
+# Create a server that can only take one connection at a time
+
+$| = 1;
+my $server = IO::Socket::INET->new(
+  Type      => SOCK_STREAM,
+  Listen    => 1,
+  @port,
+) or die "Couldn't start a POP3 server:\n $@\n";
+
+# Find out the port we're running on
+# Let the caller know which port we're running on
+
+my $port = $server->sockport;
+print "$port\n";
 
 # Initialize the connected flag
 # Initialize the list of available messages
@@ -471,10 +494,12 @@ sub RETR {
   }
 
 # Mark this message to be deleted automatically if flag set
-# Return the result with an extra . at the end to indicate end of list
+# Add the right marker to the text
+# Return the finished text
 
   $autodelete{$ordinal} = undef if $autodelete;
-  return "$text$lf.$lf";
+  addmarker( \$text );
+  $text;
 } #RETR
 
 #------------------------------------------------------------------------
@@ -538,9 +563,11 @@ sub TOP {
     $autodelete{$ordinal} = undef if $autodelete;
   }
 
+# Add the right marker to the text
 # Return the result with an extra . at the end to indicate end of list
 
-  return "$text$lf.$lf";
+  addmarker( \$text );
+  $text;
 } #TOP
 
 #------------------------------------------------------------------------
@@ -656,3 +683,22 @@ sub ordinal {
   $error ||= "-ERR already deleted$lf" if shift and exists( $delete{$ordinal} );
   return ($ordinal,$error);
 } #ordinal
+
+#------------------------------------------------------------------------
+#  IN: 1 reference to text (to add the right end-of-data marker to)
+
+sub addmarker {
+
+# Obtain the reference to the text
+# If we should check for extra newlines at the end
+#  Add the right stuff depending on the end of the text so far
+# Else
+#  Add it as most POP3 servers do
+
+  my $textref = shift;
+  if ($noextra) {
+    $$textref .= ($$textref =~ m#\r\n$#so ? ".$lf" : "$lf.$lf");
+  } else {
+    $$textref .= "$lf.$lf";
+  }
+}

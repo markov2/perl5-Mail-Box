@@ -62,37 +62,42 @@ folder $f4, 'f4f1';
 unpack_mbox2mh $src, File::Spec->catfile($f4, 'f4f2');
 folder $f4, 'f4f3';
 
-ok(cmplists [ sort Mail::Box::MH->listSubFolders(folderdir => $top) ]
-          , [ qw/f1 f2 f3 f4 sub1 sub2/ ]
+ok(compare_lists
+        [ sort Mail::Box::MH->listSubFolders(folderdir => $top) ]
+      , [ qw/f1 f2 f3 f4 sub1 sub2/ ]
   );
 
-ok(cmplists [ sort Mail::Box::MH->listSubFolders(folderdir => $top) ]
-          , [ qw/f1 f2 f3 f4 sub1 sub2/ ]
+ok(compare_lists
+        [ sort Mail::Box::MH->listSubFolders(folderdir => $top) ]
+      , [ qw/f1 f2 f3 f4 sub1 sub2/ ]
   );
 
-ok(cmplists [ sort Mail::Box::MH->listSubFolders
-                     ( folderdir  => $top
-                     , skip_empty => 1
-                     ) ]
-          , [ qw/f2 f4 sub1/ ]
+ok(compare_lists
+        [ sort Mail::Box::MH->listSubFolders
+               ( folderdir  => $top
+               , skip_empty => 1
+               ) ]
+      , [ qw/f2 f4 sub1/ ]
   );
 
-ok(cmplists [ sort Mail::Box::MH->listSubFolders
-                     ( folderdir  => $top
-                     , check      => 1
-                     ) ]
-          , [ qw/f2 f4/ ]
+ok(compare_lists
+        [ sort Mail::Box::MH->listSubFolders
+               ( folderdir  => $top
+               , check      => 1
+               ) ]
+      , [ qw/f2 f4/ ]
   );
 
-ok(cmplists [ sort Mail::Box::MH->listSubFolders
-                     ( folderdir  => $top
-                     , folder     => "=f4"
-                     )
-            ]
-          , [ qw/f4f1 f4f2 f4f3/ ]
+ok(compare_lists
+      [ sort Mail::Box::MH->listSubFolders
+               ( folderdir  => $top
+               , folder     => "=f4"
+               )
+      ]
+      , [ qw/f4f1 f4f2 f4f3/ ]
   );
 
-ok(cmplists [ sort Mail::Box::MH->listSubFolders(folderdir  => "$top/f4") ]
+ok(compare_lists [ sort Mail::Box::MH->listSubFolders(folderdir  => "$top/f4") ]
           , [ qw/f4f1 f4f2 f4f3/ ]
   );
 

@@ -7,8 +7,72 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-block addMessage/appendMessage for POP3?
-check all close return-codes
+version 2.031: Mon Nov 25 14:50:23 CET 2002
+
+	Fixes:
+
+	- Mail::Box::Locker::new(file) has now comparible meaning for DotLock
+	  and flock locking methods.
+
+	- Removed Mail::Box::Locker::POSIX from Windows options: not all fcntls
+	  present.
+
+	Improvements:
+
+	- MBOX handling of the parser much simplified.
+
+	- [Blair Zajac] is still nitpicking about close()...
+
+	- $Mail::Message::crlf_platform added as central resource for all
+	  modules which have to know.
+
+	- Mail::Message::Body::File::size() compensates for "superfluous" CRs
+	  in the file's line-endings.
+
+	- Messages in test-scripts are compared by a special function which
+	  permits differences in Content-Length for platforms with CRLF
+	  (Windows)
+	
+	- Message sizes in thread-dumps within test-scripts are ignored by
+	  a special function, but only on CRLF platforms like Windows.
+
+	- Some code has moved from Mail::Box::Parser::Perl into Mail::Box::Parser
+	  Cannot break existing code.
+
+	- Quite some code has moved from Mail::Box::File to Mail::Box::Mbox.
+	  Cannot break existing code.
+
+	- Added Mail::Box::Search::IMAP as place-holder for a dedicated (remote)
+	  search implementation using the IMAP protocol features.
+
+	- Added Mail::Transport::IMAP, Mail::Box::IMAP, and
+	  Mail::Box::IMAP::Message with some pseudo-code how IMAP folders
+	  could be handled.
+
+	- Improved the docs on ::POP3
+
+	- Mail::Box::POP3 now refuses addMessage() and addMessages() with nice
+	  errors.   When someone implements the writing extensions to POP3, this
+	  may change.  update() still has to be implemented
+
+	- Multipart message will also have a Content-Length in the header.
+
+	- Mail::Message::Convert::MailInternet requires Mail::Message
+	  [Adam Byrtek 'alpha']
+
+	- New version of tests/POP3/server, which can be used to test
+	  the POP3 client against some weird POP3 servers. [Liz Mattijsen]
+
+	- Upgraded Mail::Box::write() to allow mid-life writes of files.
+
+	- Removed option Mail::Box::write(keep_deleted), because it is
+	  unsafe.
+
+	- Replaced all uses of FileHandle by IO::File.
+
+	- test scripts ask for optional packages to be installed.  The user
+	  will be asked per package... more info about it has been added,
+	  for instance the option Mail::SpamAssassin.
 
 version 2.029: Mon Nov  4 21:06:30 CET 2002
 

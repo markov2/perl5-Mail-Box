@@ -79,7 +79,7 @@ ok($newbody != $body);
 cmp_ok($newbody->parts, "==", 1);
 $newbody->print($g);
 
-is($fakeout, <<'EXPECTED');
+compare_message_prints($fakeout, <<'EXPECTED', 'print with attachment');
 --part-separator
 Content-Type: text/html; charset="us-ascii"
 Content-Length: 12
@@ -100,7 +100,7 @@ cmp_ok($newerbody->parts, "==", 2);
 
 $fakeout = '';
 $newerbody->print($g);
-is($fakeout, <<'EXPECTED');
+compare_message_prints($fakeout, <<'EXPECTED', 'print with two attachments');
 --part-separator
 Content-Type: text/html; charset="us-ascii"
 Content-Length: 12
@@ -142,7 +142,7 @@ ok($newestbody != $newbody);
 
 $fakeout = '';
 $newestbody->print($g);
-is($fakeout, <<'EXPECTED');
+compare_message_prints($fakeout, <<'EXPECTED', 'with preamble and epilogue');
 preamb1
 preamb2
 --part-separator
@@ -178,12 +178,13 @@ my $message = Mail::Message->buildFromBody($newestbody,
 
 $fakeout = '';
 $message->print($g);
-is($fakeout, <<'EXPECTED');
+compare_message_prints($fakeout, <<'EXPECTED', 'build from multipart body');
 From: me
 To: you
 Date: now
 Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
+Content-Length: 327
 Lines: 24
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
@@ -219,12 +220,13 @@ my $m1 = Mail::Message->buildFromBody($body, From => 'me', To => 'you',
 
 $fakeout = '';
 $m1->print($g);
-is($fakeout, <<'EXPECTED');
+compare_message_prints($fakeout, <<'EXPECTED', 'build from multipart body');
 From: me
 To: you
 Date: now
 Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
+Content-Length: 19
 Lines: 1
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
@@ -237,7 +239,7 @@ my $m2 = Mail::Message->buildFromBody($b1, From => 'me', To => 'you',
 
 $fakeout = '';
 $m2->print($g);
-is($fakeout, <<'EXPECTED');
+compare_message_prints($fakeout, <<'EXPECTED', 'build from multipart body');
 From: me
 To: you
 Date: now
