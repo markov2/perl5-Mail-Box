@@ -407,17 +407,18 @@ sub printUndisclosed($)
 
 #------------------------------------------
 
-=method toString
+=method string
 
 Returns the whole header as one scalar (in scalar context) or list
 of lines (list context).  Triggers completion.
 
 =cut
 
-sub toString()
+sub toString() {shift->string}
+sub string()
 {   my $self  = shift;
 
-    my @lines = map {$_->toString} $self->orderedFields;
+    my @lines = map {$_->string} $self->orderedFields;
     push @lines, "\n";
 
     wantarray ? @lines : join('', @lines);
@@ -533,19 +534,24 @@ C<Received> field.
 
 sub resentGroups()
 {   my $self = shift;
-    my (@groups, $return_path, @fields);
+    my (@groups, $return_path, $delivered_to, @fields);
     require Mail::Message::Head::ResentGroup;
 
     foreach my $field ($self->orderedFields)
     {   my $name = $field->name;
         if($name eq 'return-path')              { $return_path = $field }
+        elsif($name eq 'delivered-to')          { $delivered_to = $field }
         elsif(substr($name, 0, 7) eq 'resent-') { push @fields, $field }
         elsif($name eq 'received')
         {   push @groups, Mail::Message::Head::ResentGroup->new
                (@fields, head => $self)
                    if @fields;
 
-            @fields = defined $return_path ? ($return_path, $field) : ($field);
+            @fields = $field;
+            unshift @fields, $delivered_to if defined $delivered_to;
+            undef $delivered_to;
+
+            unshift @fields, $return_path  if defined $return_path;
             undef $return_path;
         }
     }

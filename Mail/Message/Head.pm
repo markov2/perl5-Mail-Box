@@ -337,6 +337,7 @@ C<Bcc> and C<Resent-Bcc> lines are included.
 # To satisfy overload in static resolving.
     
 sub toString() { shift->load->toString }
+sub string()   { shift->load->string }
 
 sub string_unless_carp()
 {   my $self = shift;

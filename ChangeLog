@@ -7,6 +7,33 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.034: Thu Jan  2 15:08:56 CET 2003
+
+	Fixes:
+
+	- When a message is added to a folder, it shall be flagged as
+	  modified, otherwise the message is not written when the folder
+	  closes.  Problem discovered by [Greg Matheson].
+
+	- Mail::Message->read() did not inspect the status fields.
+	  Spotted by [Simon von Janowsky]
+
+	- When an empty field is folded, at least a new-line must be
+	  produced.
+
+	- Mail::Box::File::appendMessage() doesn't need to open the folder
+	  locked: appending should be a safe action. Reported by [Greg Matheson].
+
+	- multipart->lines accidentally did not include the headers of the
+	  parts.  Spotted by [Constantin Khatsckevich]
+
+	Enhancements:
+
+	- Resent Groups in the header now also support Delivered-To.
+
+	- Renamed some toString() methods to the more consistent name string(),
+	  without breaking backwards compatibility.
+
 version 2.033: Thu Dec 12 11:23:42 CET 2002
 
 	Fixes:

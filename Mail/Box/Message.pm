@@ -135,6 +135,7 @@ sub folder(;$)
     if(@_)
     {   $self->{MBM_folder} = shift;
         weaken($self->{MBM_folder});
+        $self->modified(1);
     }
     $self->{MBM_folder};
 }

@@ -107,7 +107,7 @@ LINE:
 
         unless(defined $body)
         {   $self->log(WARNING =>
-                "Unexpected end of header in :".$self->filename.":\n $line");
+                "Unexpected end of header in ".$self->filename.":\n $line");
 
             $file->seek(-length $line, 1);
             last LINE;

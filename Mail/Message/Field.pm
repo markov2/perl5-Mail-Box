@@ -34,7 +34,7 @@ Mail::Message::Field - one line of a message header
  print $field->comment;
  print $field->content;  # body & comment
  $field->print(\*OUT);
- print $field->toString;
+ print $field->string;
  print "$field\n";
  print $field->attribute('charset') || 'us-ascii';
 
@@ -444,7 +444,7 @@ sub print(;$)
 
 #------------------------------------------
 
-=method toString [WRAP]
+=method string [WRAP]
 
 Returns the field as string.  By default, this returns the same as
 folded(). However, the optional WRAP will cause to re-fold to take
@@ -452,7 +452,8 @@ place (without changing the folding stored inside the field).
 
 =cut
 
-sub toString(;$)
+sub toString(;$) {my $self = shift;$self->string(@_)}
+sub string(;$)
 {   my $self  = shift;
     return $self->folded unless @_;
 
@@ -732,6 +733,7 @@ sub fold($$;$)
     my $wrap = shift || $default_wrap_length;
 
     $line    =~ s/\ns*/ /gms;            # Remove accidental folding
+    return " \n" unless length $line;    # empty field
 
     my @folded;
     while(1)

@@ -104,7 +104,7 @@ sub export($$)
     my $me_head = MIME::Head->new;
     my $head    = $message->head;
     foreach my $name ($head->names)
-    {   $me_head->add(undef, $_->toString."\n")
+    {   $me_head->add(undef, $_->string."\n")
             foreach $head->get($name);
     }
 

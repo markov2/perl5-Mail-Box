@@ -155,6 +155,8 @@ sub new(@)
     return $class->SUPER::new(@_)
         unless $class eq __PACKAGE__;
 
+    # Try to figure out which locking method we really want (bootstrap)
+
     my %args   = @_;
     my $method = defined $args{method} ? uc $args{method} : 'DOTLOCK';
     my $create = $lockers{$method} || $args{$method};

@@ -126,6 +126,7 @@ sub read($@)
     $head->set('Message-ID' => $self->messageId)
         unless $head->get('Message-ID');
 
+    $self->statusToLabels;
     $self;
 }
 
@@ -857,10 +858,10 @@ sub forwardPrelude()
     my $cc    = $head->get('cc');
     my $date  = $head->get('date');
 
-    push @lines, $from->toString if defined $from;
-    push @lines,   $to->toString if defined $to;
-    push @lines,   $cc->toString if defined $cc;
-    push @lines, $date->toString if defined $date;
+    push @lines, $from->string if defined $from;
+    push @lines,   $to->string if defined $to;
+    push @lines,   $cc->string if defined $cc;
+    push @lines, $date->string if defined $date;
     push @lines, "\n";
 
     \@lines;
@@ -1146,7 +1147,10 @@ Returns the whole message as string.
 
 =cut
 
-sub string() { join '', shift->lines }
+sub string()
+{   my $self = shift;
+    $self->head->string . $self->body->string;
+}
 
 #------------------------------------------
 

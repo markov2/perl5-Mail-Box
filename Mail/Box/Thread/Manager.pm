@@ -256,7 +256,7 @@ are getting parsed first, for each folder in this threads-object.
 
  my $threads = $mgr->threads(folder => $inbox);
  my $thread  = $threads->thread($inbox->message(3));
- print $thread->toString;
+ print $thread->string;
 
 =cut
 

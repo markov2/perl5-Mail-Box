@@ -220,7 +220,7 @@ sub lines()
     my $preamble = $self->preamble;
     push @lines, $preamble->lines if $preamble;
 
-    push @lines, "--$boundary\n", $_->body->lines
+    push @lines, "--$boundary\n", $_->lines
         foreach $self->parts('ACTIVE');
 
     push @lines, "\n--$boundary--\n";
@@ -560,7 +560,6 @@ sub read($$$$)
         ->read($parser, $head);
 
     $self->{MMBM_epilogue} = $epilogue if defined $epilogue;
-
     my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
             : @parts            ? ($parts[-1]->fileLocation)[1]
             : defined $preamble ? ($preamble->fileLocation)[1]

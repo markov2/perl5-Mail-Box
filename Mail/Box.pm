@@ -102,7 +102,7 @@ of the message.
 Pop3 is a protocol which can be used to retreive messages from a
 remote system.  After the connection to a POP server is made, the
 messages can be looked at and removed as if they are on the local
-system.  [IMPLEMENTATION NOT FINISHED YET]
+system.
 
 =back
 
@@ -348,7 +348,7 @@ is needed, but not before.
 
 The type of the locker object.  This may be the full name of a CLASS
 which extends Mail::Box::Locker, or one of the known locker types
-C<'DotLock'>, C<'File'>, C<'MULTI'>, C<'NFS'>, C<'POSIX'>, or C<'NONE'>.
+C<'DotLock'>, C<'File'>, C<'Multi'>, C<'NFS'>, C<'POSIX'>, or C<'NONE'>.
 
 =option  locker OBJECT
 =default locker undef
@@ -486,7 +486,7 @@ sub init($)
           , method   => $args->{lock_type}
           , timeout  => $args->{lock_timeout}
           , wait     => $args->{lock_wait}
-          , file     => $args->{lockfile} || $args->{lock_file}
+          , file     => ($args->{lockfile} || $args->{lock_file})
           );
 
     $self;
@@ -842,7 +842,6 @@ ERROR
     }
 
     $self->storeMessage($coerced);
-    $self->{MB_modified}++;
     $coerced;
 }
 

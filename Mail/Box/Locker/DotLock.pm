@@ -47,7 +47,7 @@ sub init($)
 {   my ($self, $args) = @_;
 
     unless($args->{file})
-    {   my $folder = $args->{folder};
+    {   my $folder = $args->{folder} or confess;
         my $org    = $folder->organization;
 
         $args->{file}

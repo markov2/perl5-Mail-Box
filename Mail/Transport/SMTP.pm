@@ -304,7 +304,7 @@ sub destinations($;$)
     }
     elsif(my @rgs = $message->head->resentGroups)
     {   @to = $rgs[0]->destinations;
-        $self->log(ERROR => "Resent group does not defined destinations"), return ()
+        $self->log(ERROR => "Resent group does not define destinations"), return ()
             unless @to;
     }
     else

@@ -89,7 +89,7 @@ sub export($@)
 
     my $head    = $message->head;
     foreach my $name ($head->names)
-    {   $mi_head->add(undef, $_->toString)
+    {   $mi_head->add(undef, $_->string)
             foreach $head->get($name);
     }
 

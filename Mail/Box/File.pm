@@ -564,7 +564,7 @@ sub appendMessages(@)
       : exists $args{messages} ? @{$args{messages}}
       :                          return ();
 
-    my $folder   = $class->new(@_, access => 'a')
+    my $folder   = $class->new(lock_type => 'NONE', @_, access => 'a')
        or return ();
  
     my $filename = $folder->filename;

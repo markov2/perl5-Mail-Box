@@ -16,7 +16,7 @@ Mail::Message::Head::ResentGroup - a group of header fields about resending
 =head1 SYNOPSIS
 
  my $rg = Mail::Message::Head::ResentGroup->new(head => $head,
-    From => 'me@home.nl', To => 'You@tux.aq');
+              From => 'me@home.nl', To => 'You@tux.aq');
  $head->addResentGroup($rg);
 
  my $rg = $head->addResentGroup(From => 'me');
@@ -43,8 +43,8 @@ C<reply>, C<forward> or C<bounce> messages at all!
 
 =cut
 
-my @ordered_field_names = qw/return_path received date from sender to
-  cc bcc message_id/;
+my @ordered_field_names = qw/return_path delivered_to received date from
+  sender to cc bcc message_id/;
 
 #------------------------------------------
 
@@ -98,6 +98,12 @@ it selects one of these addresses as the main originator of the message.
 
 The C<Resent-Message-ID> which identifies this resent group.  The FIELD
 must contain a message id.
+
+=option  Return-Path STRING|FIELD
+=default Return-Path undef
+
+=option  Delivered-To STRING|FIELD
+=default Delivered-To undef
 
 =cut
 
@@ -193,7 +199,7 @@ sub set($$)
     if(@_==1) { $field = shift }
     else
     {   my ($fn, $value) = @_;
-        $name  = $fn =~ m!^(received|return\-path|resent\-\w*)$!i ? $fn
+        $name  = $fn =~ m!^(received|return\-path|delivered\-to|resent\-\w*)$!i ? $fn
                : "Resent-$fn";
 
         $field = Mail::Message::Field::Fast->new($name, $value);
@@ -214,6 +220,16 @@ The field which describes the C<Return-Path> of this resent group.
 =cut
 
 sub returnPath() { shift->{MMHR_return_path} }
+
+#------------------------------------------
+
+=method deliveredTo
+
+The field which describes the C<Delivered-To> of this resent group.
+
+=cut
+
+sub deliveredTo() { shift->{MMHR_delivered_to} }
 
 #------------------------------------------
 
@@ -376,8 +392,8 @@ sub messageId() { shift->{MMHR_message_id} }
 
 Returns the fields in the order as should appear in header according
 to rfc2822.  For the C<Resent-> fields of the group, the order is
-not that important, but the C<Return-Path> and C<Received> must come
-first.  Only fields mentioned in the RFC are returned.
+not that important, but the C<Return-Path>, C<Delivered-To>, and C<Received>
+must come first.  Only fields mentioned in the RFC are returned.
 
 =cut
 

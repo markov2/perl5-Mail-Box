@@ -252,7 +252,7 @@ sub printMatchedHead($$)
         $self->{MBSG_last_printed} = "$folder $msgnr";
     }
 
-    my @lines   = $match->{field}->toString;
+    my @lines   = $match->{field}->string;
     my $inpart  = $match->{part}->isPart ? 'p ' : '  ';
     $out->print($inpart, join $inpart, @lines);
     $self;
