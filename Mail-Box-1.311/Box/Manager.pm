@@ -120,8 +120,8 @@ a loss of information.
 =cut
 
 my @basic_folder_types =
-  ( [ mh    => 'Mail::Box::MH'  ]    # try first!
-  , [ mbox  => 'Mail::Box::Mbox' ]
+  ( [ mbox  => 'Mail::Box::Mbox' ]
+  , [ mh    => 'Mail::Box::MH'  ]
   );
 
 sub new(@)
@@ -142,7 +142,7 @@ sub init($)
     }
 
     $self->{MBM_folder_types} = [];
-    $self->registerType(@$_) foreach @types, @basic_folder_types;
+    $self->registerType(@$_) foreach @types, reverse @basic_folder_types;
 
     $self->{MBM_default_type} = $args->{default_folder_type};
 
@@ -692,7 +692,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.310
+This code is beta, version 1.311
 
 =cut
 

@@ -112,7 +112,7 @@ sub fromLine(;$)
     # Create a fake.
     my $from   = $self->head->get('from') || '';
     my $stamp  = $self->timestamp || time;
-    my $sender = $from =~ m/\<.*?\>/ ? $1 : 'unknown';
+    my $sender = $from =~ m/\<.*?\>/ ? $& : 'unknown';
     $self->{MBM_from_line} = "From $sender ".(gmtime $stamp)."\n";
 }
 
@@ -416,7 +416,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.310
+This code is beta, version 1.311
 
 =cut
 

@@ -3,6 +3,17 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.311:
+
+	* Fixed halt in some folders by undef message ($_ problem)
+
+	* Fixed creating new folder as mh, where Mbox is the
+	  default.
+
+	* Newly created folders must be written too ;)  Added
+	  increment on modifications for a folder when a message
+	  is added after reading the folder.
+
 version 1.310: Sun Jul  1 00:05:25 CEST 2001
 
 	* Mail::Box::Threads::threadToString can be passed a function

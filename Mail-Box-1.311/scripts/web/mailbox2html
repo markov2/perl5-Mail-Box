@@ -184,17 +184,17 @@ sub create_folder(@)
     $sum{foldersize} += $_->{foldersize} foreach @subfolders;
     $sum{newest} = $sum{oldest} = $messages[0]->timestamp if @messages;
 
-    foreach (@messages)
-    {   $sum{deleted}++       if $_->deleted;
-        $sum{seen_messages}++ if $_->label('seen');
-        $sum{foldersize}    += $_->size;
-        if(my $timestamp = $_->timestamp)
+    foreach my $message (@messages)
+    {   $sum{deleted}++       if $message->deleted;
+        $sum{seen_messages}++ if $message->label('seen');
+        $sum{foldersize}    += $message->size;
+        if(my $timestamp = $message->timestamp)
         {   $sum{newest_message} = $timestamp if $timestamp > $sum{newest};
             $sum{oldest_message} = $timestamp if $timestamp < $sum{oldest};
         }
 
         create_message
-         ( message   => $_
+         ( message   => $message
          , folder    => $folder
          , manager   => $manager
          , dirname   => $dirname
@@ -241,7 +241,7 @@ sub create_message(@)
     my $subject      = $message->head->get('subject') || '<no subject>';
     chomp $subject;
 
-    $_->setLabel
+    $message->setLabel
      ( clean_id => $clean_id
      , filename => $filename
      , subject  => $subject
@@ -383,7 +383,7 @@ trace "Opening folder `$option{src}'.";
 my $folder = $manager->open
   ( folderdir    => $option{src}
   , folder       => '='          # open folderdir
-  , lazy_extract => 'NEVER'      # need all messages anyway.
+# , lazy_extract => 'NEVER'      # need all messages anyway.
   );
 
 die "Cannot open folder `$option{src}'.\n"

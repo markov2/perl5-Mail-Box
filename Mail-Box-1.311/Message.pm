@@ -47,13 +47,13 @@ be read later, unless specified at construction.
 
 =over 4
 
-=item * body =E<&gt>; OBJECT
+=item * body =E<gt> OBJECT
 
 Instantiate the message with a body, which has been created somewhere
 before the message is constructed.  The OBJECT must be a (sub-)class
 of Mail::Message::Body.
 
-=item * head =E<&gt>; OBJECT
+=item * head =E<gt> OBJECT
 
 Instantiate the message with a head, which has been created somewhere
 before the message is constructed.  The OBJECT must be a (sub-)class

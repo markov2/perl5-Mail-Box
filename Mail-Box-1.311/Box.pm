@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 use Carp;
 use MIME::Parser;
@@ -525,10 +525,13 @@ Example read folder into folder:
 
 sub read(@)
 {   my $self = shift;
-    $self->{MB_open_time}  = time;
+    $self->{MB_open_time}     = time;
 
     # Read from existing folder.
-    return $self if $self->readMessages(@_);
+    return unless $self->readMessages(@_);
+
+    $self->{MB_modifications} = 0;  #after reading, no changes found yet.
+    $self;
 }
 
 #-------------------------------------------
@@ -637,6 +640,7 @@ sub close(@)
     # Inform manager that the folder is closed.
     $self->{MB_manager}->close($self)
         if exists $self->{MB_manager};
+    delete $self->{MB_manager};
 
     my $write
       = !exists $args{write} || $args{write} eq 'MODIFIED' ? $self->modified
@@ -645,7 +649,7 @@ sub close(@)
         :                                                    0;
 
     if($write && !$force && !$self->writeable)
-    {   warn "No changes made to read-only folder.\n";
+    {   warn "Changes not written to read-only folder.\n";
         return 1;
     }
 
@@ -759,8 +763,8 @@ INCR value can be negative to undo effects.
 
 =cut
 
-sub modified($)      { shift->{MB_modifications} }
-sub modifications($) { shift->{MB_modifications} += shift }
+sub modified($)       { shift->{MB_modifications} }
+sub modifications(;$) { shift->{MB_modifications} += shift||1 }
 
 #-------------------------------------------
 
@@ -982,7 +986,7 @@ sub addMessage($)
         unless $message->deleted || !exists $self->{MB_alive};
 
     $message->seqnr( @{$self->{MB_messages}} -1);
-
+    $self->{MB_modifications}++;
     $self;
 }
 
@@ -1466,7 +1470,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.310
+This code is beta, version 1.311
 
 =cut
 
