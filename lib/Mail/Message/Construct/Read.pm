@@ -113,7 +113,8 @@ sub read($@)
         $file     = Mail::Box::FastScalar->new(\$buffer);
     }
     else
-    {   croak "Cannot read from $from";
+    {   $class->log(ERROR => "Cannot read from $from");
+        return undef;
     }
 
     my $strip_status = exists $args{strip_status_fields}

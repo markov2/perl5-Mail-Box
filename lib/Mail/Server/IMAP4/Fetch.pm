@@ -2,22 +2,22 @@
 use strict;
 use warnings;
 
-package Mail::Box::IMAP4::Fetch;
+package Mail::Server::IMAP4::Fetch;
 
 use Date::Parse;
 use Digest::MD5   qw/md5_base64/;
 
 =chapter NAME
 
-Mail::Box::IMAP4::Fetch - message info for IMAP protocol speed-up
+Mail::Server::IMAP4::Fetch - message info for IMAP protocol speed-up
 
 =chapter SYNOPSIS
 
- my $fetch = Mail::Box::IMAP4::Fetch->new($msg);
- print $fetch->fetchBody(1);   # for FETCH BODYSTRUCTURE
- print $fetch->fetchBody;      # for FETCH BODY
- print $fetch->fetchEnvelope;  # for FETCH ENVELOPE
- print $fetch->fetchSize;
+ my $imap = Mail::Server::IMAP4::Fetch->new($msg);
+ print $imap->fetchBody(1);   # for FETCH BODYSTRUCTURE
+ print $imap->fetchBody;      # for FETCH BODY
+ print $imap->fetchEnvelope;  # for FETCH ENVELOPE
+ print $imap->fetchSize;
 
 =chapter DESCRIPTION
 
@@ -146,7 +146,7 @@ sub messageLocation() { @{ (shift) }{ qw/headbegin bodyend/ } }
 
 #------------------------------------------
 
-=section IMAP Fetch
+=section IMAP Commands
 
 =method fetchBody EXTENDED
 Returns one string, representing the message's structure as defined by

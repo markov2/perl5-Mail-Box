@@ -19,7 +19,7 @@ unlink $new;
 
 my $manager = Mail::Box::Manager->new
  ( log      => 'NOTICES'
- , trace    => 'ERRORS'
+ , trace    => 'NONE'
  );
 
 my $folder  = $manager->open
@@ -37,12 +37,12 @@ my $second = $manager->open
  );
 
 ok(!defined $second,                             'open same folder fails');
-my @warnings = $manager->report('WARNINGS');
-cmp_ok(@warnings, "==", 1,                       'mgr noticed double');
+my @errors = $manager->report('ERRORS');
+cmp_ok(@errors, "==", 1,                       'mgr noticed double');
 
-$warnings[-1] =~ s#\\mbox\.win#/mbox.src#g;  # Windows
+$errors[-1] =~ s#\\mbox\.win#/mbox.src#g;  # Windows
 
-is($warnings[-1], "Folder folders/mbox.src is already open.\n");
+is($errors[-1], "Folder folders/mbox.src is already open.");
 cmp_ok($manager->openFolders, "==", 1,           'only one folder open');
 
 undef $second;
@@ -57,10 +57,10 @@ my $n = $manager->open
 ok(! -f $new,                                   'folder file does not exist');
 ok(! defined $n,                                'open non-ex does not succeed');
 
-@warnings = $manager->report('WARNINGS');
-cmp_ok(@warnings, "==", 2,                      'new warning');
+my @warnings = $manager->report('WARNINGS');
+cmp_ok(@warnings, "==", 1,                      'new warning');
 $warnings[-1] =~ s#\\#/#g;  # Windows
-is($warnings[-1], "Folder does not exist, failed opening mbox folder folders/create.\n");
+is($warnings[-1], "Folder does not exist, failed opening mbox folder folders/create.");
 
 $manager->log('WARNINGS');  # back to default reporting.
 $manager->trace('WARNINGS');

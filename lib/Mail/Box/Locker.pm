@@ -5,7 +5,6 @@ package Mail::Box::Locker;
 use base 'Mail::Reporter';
 
 use Carp;
-use File::Spec;
 use Scalar::Util 'weaken';
 
 #-------------------------------------------

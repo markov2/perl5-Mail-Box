@@ -20,25 +20,10 @@ Only the HTML version of this manual page will list the sections.
 <li><strong><a name="general">General</a> sources of information</strong>
   <ul>
   <li>MailBox distribution overview (M<Mail::Box-Overview>)
-      <ul>
-      <li>L<Mail::Box-Overview/Introduction>
-      <li>L<Mail::Box-Overview/The class relations>
-      <li>L<Mail::Box-Overview/The Manager>
-      <li>L<Mail::Box-Overview/The Messages>
-      <li>L<Mail::Box-Overview/The Folder types>
-      <li>L<Mail::Box-Overview/Various Other Classes>
-      </ul>
   <li>MailBox simple recepies (M<Mail::Box-Cookbook>)
-      <ul>
-      <li>L<Mail::Box-Cookbook/The Manager>
-      <li>L<Mail::Box-Cookbook/Multi part messages>
-      <li>L<Mail::Box-Cookbook/Filter>
-      <li>L<Mail::Box-Cookbook/Create a reply>
-      <li>L<Mail::Box-Cookbook/Build a message>
-      </ul>
   </ul>
 
-<li><strong><a name="messages">Messages</a></strong> (M<Mail::Message>)
+<li><strong><a name="messages">Messages</a></strong> (M<Mail::Message>)<br />
       See separate entries on header, body, fields
       and construction in this index below.
   <ul>
@@ -148,10 +133,14 @@ Only the HTML version of this manual page will list the sections.
   <li>Folder types (M<Mail::Box>)
       <ul>
       <li>L<Mail::Box/Different kinds of folders>
-      <li>L<Mail::Box/Supported folder types>
+      <li>L<Mail::Box/Available folder types>
       <li>L<Mail::Box/Folder class implementation>
       </ul>
   <li>The folder manager (M<Mail::Box::Manager>)
+      <ul>
+      <li>L<Mail::Box::Manager/Managing open folders>
+      <li>L<Mail::Box::Manager/Managing a user>
+      </ul>
   <li>L<Mail::Box::Tie::ARRAY/Folder tied as array> (M<Mail::Box::Tie::ARRAY>)
       <ul>
       <li>L<Mail::Box::Tie::ARRAY/Limitations>

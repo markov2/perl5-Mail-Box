@@ -11,9 +11,9 @@ use Tools;
 use lib qw(. .. tests);
 use Mail::Message;
 use Mail::Message::Body::Lines;
-use Mail::Box::IMAP4::Fetch;
+use Mail::Server::IMAP4::Fetch;
 
-my $mbif = 'Mail::Box::IMAP4::Fetch';
+my $msif = 'Mail::Server::IMAP4::Fetch';
 
 BEGIN
 {   plan tests => 44;
@@ -31,8 +31,8 @@ my $msg = Mail::Message->build
 
 ok($msg, "First, simple message built");
 
-my $f = $mbif->new($msg);
-isa_ok($f, $mbif);
+my $f = $msif->new($msg);
+isa_ok($f, $msif);
 ok($f->part() == $f);
 ok(!defined $f->part('1'));
 
@@ -74,8 +74,8 @@ my $mp = Mail::Message->build
 
 ok(defined $mp, "Simple multipart");
 
-$f = $mbif->new($mp);
-isa_ok($f, $mbif);
+$f = $msif->new($mp);
+isa_ok($f, $msif);
 
 ok($f->part() == $f);
 
@@ -97,7 +97,7 @@ ok(!$f->part('3'));
 ok(!$f->part('1.1'));
 
 my $g = $f->part('2');
-isa_ok($g, $mbif);
+isa_ok($g, $msif);
 
 is($g->fetchBody(0)."\n", <<__BODY, '...body');
 ("AUDIO" "MPEG3" ("charset" "utf8") NIL NIL "BASE64" 5 1)
@@ -149,8 +149,8 @@ cmp_ok(keys %attrs, '==', 2, '...nr attrs');
 is($attrs{filename}, 'private-video.ras', '...filename');
 is($attrs{size}, 100, '...size');
 
-$f = $mbif->new($a);
-isa_ok($f, $mbif);
+$f = $msif->new($a);
+isa_ok($f, $msif);
 
 is($f->fetchBody(0)."\n", <<__BODY, "...body");
 ("VIDEO" "VHS" ("charset" "utf8") "<unique-id-123>" "blue movie" "BASE64" 29 1)
@@ -180,8 +180,8 @@ ok(defined $b, "Constructed nested message");
 isa_ok($b, 'Mail::Message');
 ok($b->isNested, 'check structure');
 
-$f = $mbif->new($b);
-isa_ok($f, $mbif);
+$f = $msif->new($b);
+isa_ok($f, $msif);
 
 #$b->print(\*STDERR);
 
@@ -202,7 +202,7 @@ __ENVELOPE
 $g = $f->part('1');
 ok(defined $g, "nested info");
 
-isa_ok($g, $mbif);
+isa_ok($g, $msif);
 ok($f != $g);
 
 is($g->fetchBody(0)."\n", <<__BODY, "...body");

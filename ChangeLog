@@ -13,6 +13,124 @@ MH index in append mode niet lezen.
 flock() op flock(): zelfde process op AIX en Solaris
 References/mozilla-flags
 
+version 2.057: Thu Aug 26 14:31:34 CEST 2004
+
+	Interface change:
+
+	- Moved the new Mail::Box::IMAP4::Fetch to Mail::Server::IMAP4::Fetch,
+	  which is a more logical name: part of a full server implementation.
+
+	- Moved the unusable module Mail::Box::Search::IMAP4 over to
+	  Mail::Server::IMAP4::Search... but still not implemented ;-)
+
+	- You have to add (share => 0) to $msg->moveTo if the source message
+	  can get undeleted in your program (for instance in a user
+	  application).
+
+	- Mail::Reporter->report(...) will return strings without \n. Sporadic
+	  locations where log() was called with trailing \n are removed.
+
+	- Opening a folder which is already open is considered an error (was
+	  warning) by the manager.
+
+	Fixes:
+
+	- [Jan Martin Mathiassen] add IO::File to Mail::Box::Dir::Message
+
+	- [Torsten Luettgert] found that field labels like '-' where not
+	  beautified correctly with wellformedName.
+
+	- Changed '.' from most preferred folder directory for the manager
+	  into the least preferred.
+
+	- $field->setWrapLength only worked for "fast" fields.  Tests in
+	  tests/11field/40wrap.t
+
+	- [Mike Mimic] showed that constructing unstructured "full" fields
+	  was broken.
+
+	- Mail::Box::POP3::delete() will not take any action.  Deleting all
+	  contained messages was not consequent.
+
+	Improvements:
+
+	- [David A Golden] demonstrated the need for $head->wrap(<size>)
+
+	- $folder->coerce($message) will only call MSGTYPE->coerce($message)
+	  when not a MSGTYPE yet.
+
+	- Mail::Box::Message::coerce() could be removed: no-op.
+
+	- Reimplemented folder->delete(), which is not reading the messages
+	  before deletion, but bluntly removes the folder in the most
+	  Efficient way. You probably want the new option 'recursive'.
+
+	- Mail::Box::new(access) now has mode 'd', which speeds up removal
+	  of folders.  Used by $folder->delete().
+
+	- Mail::Box::IMAP4 now supports deletion of a folder (untested)
+
+	- $folder->copyTo/moveTo and $msg->copyTo can have option 'share'
+	  which tries to use hardlinks i.s.o. clone() to put a message in
+	  a different folder.  Only available for some M<Mail::Box::Dir>
+	  folders.
+
+	- Mail::Message::clone() now accepts shallow_head and shallow_body
+	  arguments which avoid deep-cloning.
+
+	- Added references to the Netzwert folder type, which got implemented,
+	  but not released as GPL (yet?)
+
+	- Increased the status of the IMAP folder client from alpha to beta.
+
+	- New methods
+             Mail::Box::Manager::folderdir()
+	     Mail::Box::Manager::defaultFolderType()
+
+	- New methods
+	     Mail::Box::topFolderWithMessages()
+
+	- Moved tests/44imap/40fetch.t to tests/60imap/10fetch.t
+
+	- Mail::Box::nameOfSubFolder() now can be used as class method.
+
+	- New, specialized folder manager
+	     Mail::Box::Manage::User   manager with user knowledge
+	  tests in tests/52manager/20user.t
+	  explanation added to Mail::Box::Manager, about the two kinds
+	  of managers.
+
+	- New classes to administer folders, even when not opened
+	     Mail::Box::Identity       info about (possibly unopened) folder
+	     Mail::Box::Collection     info about groups of folders
+	  tests in tests/52manager/30collect.t
+
+	- New classes to implement parts of an IMAP4 server
+	     Mail::Server              place-holder
+	     Mail::Server::IMAP4       place-holder
+	     Mail::Server::IMAP4::List
+	  tests in tests/60imap/20list.t
+
+	- Split tests/10report/10errors.t into
+	  tests/10reporter/10errors.t and tests/10reporter/20reports.t
+
+	- Mail::Reporter::defaultTrace can now set a callback to catch
+	  each log/trace message.  Tests in tests/10reporter/30callback.t
+
+	- [chris] Mail::Message::Field::wellformedName() will upper-case
+	  *-ID as part in the fieldname.
+
+	- [M M] tried to user MBMbox->create and expected it to open the
+	  folder at the same time.  Documentation problem: moved the
+	  method from "constructors" to "internal".  Did the same for
+	  "foundIn".
+
+	- Produce an error if people try to build Mail::Box::*
+	  messages directly.
+
+	- Many improvements on User::Identity module.  MailBox requires
+	  version UI 0.90 now.
+
 version 2.056: Sat Jul 31 13:28:29 CEST 2004
 
 	Interface change:

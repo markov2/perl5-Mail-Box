@@ -121,11 +121,11 @@ sub init($)
     $self->{MBM_folder_types} = [];
     $self->registerType(@$_) foreach @new_types, @basic_types;
 
-    $self->{MBM_default_type} = $args->{default_folder_type};
+    $self->{MBM_default_type} = $args->{default_folder_type} || 'mbox';
 
     # Inventory on existing folder-directories.
 
-    $self->{MBM_folderdirs} = [ '.' ];
+    $self->{MBM_folderdirs} = [ ];
     if(exists $args->{folderdir})
     {   my @dirs = $args->{folderdir};
         @dirs = @{$dirs[0]} if ref $dirs[0];
@@ -137,6 +137,7 @@ sub init($)
         @dirs = @{$dirs[0]} if ref $dirs[0];
         push @{$self->{MBM_folderdirs}}, @dirs;
     }
+    push @{$self->{MBM_folderdirs}}, '.';
 
     $self->{MBM_folders} = [];
     $self->{MBM_threads} = [];
@@ -149,7 +150,7 @@ sub init($)
 
 #-------------------------------------------
 
-=section Manage folders
+=section Attributes
 
 =method registerType TYPE, CLASS [,OPTIONS]
 
@@ -175,6 +176,18 @@ sub registerType($$@)
 
 #-------------------------------------------
 
+=method folderdir
+In list context, this returns all folderdirs specified.  In SCALAR
+context only the first.
+=cut
+
+sub folderdir()
+{   my $dirs = shift->{MBM_folderdirs} or return ();
+    wantarray ? @$dirs : $dirs->[0];
+}
+
+#-------------------------------------------
+
 =method folderTypes
 Returns the list of currently defined folder types.
 
@@ -190,8 +203,27 @@ sub folderTypes()
     sort keys %uniq;
 }
 
+#-------------------------------------------
+
+=method defaultFolderType
+Returns the default folder type, some class name.
+=cut
+
+sub defaultFolderType()
+{   my $self = shift;
+    my $name = $self->{MBM_default_type};
+    return $name if $name =~ m/\:\:/;  # obviously a class name
+
+    foreach my $def (@{$self->{MBM_folder_types}})
+    {   return $def->[1] if $def->[0] eq $name || $def->[1] eq $name;
+    }
+
+    undef;
+}
 
 #-------------------------------------------
+
+=section Manage open folders
 
 =method open [FOLDERNAME], OPTIONS
 
@@ -273,7 +305,7 @@ MAIL environment variable is checked.  When even that does not result in
 a usable folder, then this error is produced.  The error may be caused by
 an accidental odd-length option list.
 
-=error Will never create a folder $name without having write access.
+=warning Will never create a folder $name without having write access.
 
 You have set M<open(create)>, but only want to read the folder.  Create is
 only useful for folders which have write or append access modes
@@ -300,7 +332,7 @@ There will probably be another warning or error message which is related
 to this report and provides more details about its cause.  You may also
 have a look at M<new(autodetect)> and M<new(folder_types)>.
 
-=warning Folder $name is already open.
+=error Folder $name is already open.
 You cannot ask the manager for a folder which is already open. In some
 older releases (before MailBox 2.049), this was permitted, but then
 behaviour changed, because many nasty side-effects are to be expected.
@@ -342,7 +374,7 @@ sub open(@)
     }
 
     unless(defined $name && length $name)
-    {   $self->log(ERROR => "No foldername specified to open.\n");
+    {   $self->log(ERROR => "No foldername specified to open.");
         return undef;
     }
         
@@ -359,7 +391,7 @@ sub open(@)
 
     # Do not open twice.
     if(my $folder = $self->isOpenFolder($name))
-    {   $self->log(WARNING => "Folder $name is already open.\n");
+    {   $self->log(ERROR => "Folder $name is already open.");
         return undef;
     }
 
@@ -427,7 +459,9 @@ sub open(@)
     my $folder = $class->new(@defaults, %args);
 
     unless(defined $folder)
-    {   $self->log(WARNING =>"Folder does not exist, failed opening $folder_type folder $name.");
+    {   $self->log(WARNING =>
+           "Folder does not exist, failed opening $folder_type folder $name.")
+           unless $args{to_delete};
         return;
     }
 
@@ -521,19 +555,25 @@ END {map {defined $_ && $_->closeAllFolders} @managers}
 
 =method delete FOLDERNAME, OPTIONS
 
-Remove the named folder, including all its sub-folders.  The OPTIONS
-are the same as those for M<open()>.
+Remove the named folder.  The OPTIONS are the same as those for M<open()>.
 
 The deletion of a folder can take some time.  Dependent on the type of
 folder, the folder must be read first.  For some folder-types this will
 be fast.
 
+=option  recursive BOOLEAN
+=default recursive <folder's default>
+Some folder can only be recursively deleted, other have more flexibility.
 =cut
 
 sub delete($@)
-{   my ($self, $name, @options) = @_;
-    my $folder = $self->open(folder => $name, @options) or return;
-    $folder->delete;
+{   my ($self, $name, %args) = @_;
+    my $recurse = delete $args{recursive};
+
+    my $folder = $self->open(folder => $name, access => 'd', %args)
+        or return $self;  # still successful
+
+    $folder->delete(recursive => $recurse);
 }
 
 #-------------------------------------------
@@ -670,14 +710,18 @@ sub appendMessages(@)
 =method copyMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
 
 Copy a message from one folder into another folder.  If the destination
-folder is already opened, the copied message is stored in memory and
-written to disk when a write of the folder is later performed. Otherwise,
-the destination folder will be opened, the message written, and then the
-folder closed.
+folder is already opened, M<Mail::Box::copyTo()> is used.  Otherwise,
+M<Mail::Box::appendMessages()> is called.
 
 You need to specify a folder's name or folder object as the first
 argument, or in the options list.  The options are the same as those
 which can be specified when opening a folder.
+
+=option  share BOOLEAN
+=default share <false>
+Try to share the physical storage of the messages.  The folder types
+may be different, but it all depends on the actual folder where the
+message is copied to.  Silently ignored when not possible to share.
 
 =examples
 
@@ -686,7 +730,7 @@ which can be specified when opening a folder.
  $mgr->copyMessage($outbox, $drafts->message(0));
 
  my @messages = $drafts->message(1,2);
- $mgr->copyMessage('=Trash', @messages.
+ $mgr->copyMessage('=Trash', @messages,
     folderdir => '/tmp', create => 1);
 
  $mgr->copyMessage($drafts->message(1),
@@ -714,8 +758,9 @@ sub copyMessage(@)
         push @messages, $message;
     }
 
-    my %options = @_;
-    $folder ||= $options{folder};
+    my %args = @_;
+    $folder ||= $args{folder};
+    my $share   = exists $args{share} ? $args{share} : $args{_delete};
 
     # Try to resolve filenames into opened-files.
     $folder = $self->isOpenFolder($folder) || $folder
@@ -723,11 +768,11 @@ sub copyMessage(@)
 
     my @coerced
      = ref $folder
-     ? map {$_->copyTo($folder)} @messages
-     : $self->appendMessages(@messages, %options, folder => $folder);
+     ? map {$_->copyTo($folder, share => $args{share})} @messages
+     : $self->appendMessages(@messages, %args, folder => $folder);
 
     # hidden option, do not use it: it's designed to optimize moveMessage
-    if($options{_delete})
+    if($args{_delete})
     {   $_->label(deleted => 1) foreach @messages;
     }
 
@@ -746,8 +791,11 @@ flagged to be deleted in the opened source folder.
 
 is equivalent to
 
- $mgr->copyMessage($received, $inbox->message(1));
+ $mgr->copyMessage($received, $inbox->message(1), share => 1);
  $inbox->message(1)->delete;
+
+=option  share BOOLEAN
+=default share <true>
 
 =cut
 
@@ -796,7 +844,7 @@ sub threads(@)
        :                           $folders
        );
 
-    $self->log(INTERNAL => "No folders specified.\n")
+    $self->log(INTERNAL => "No folders specified.")
        unless @folders;
 
     my $threads;
@@ -897,6 +945,62 @@ sub decodeFolderURL($)
 #-------------------------------------------
 
 =section Error handling
+
+=cut
+
+=chapter DETAILS
+On many places in the documentation you can read that it is useful to
+have a manager object.  There are two of them: the M<Mail::Box::Manager>,
+which maintains a set of open folders, and an extension of it: the
+M<Mail::Box::Manage::User>.
+
+=section Managing open folders
+It is useful to start your program by creating a folder manager object,
+an M<Mail::Box::Manager>.  The object takes a few burdons from your neck:
+
+=over 4
+=item * autodetect the type of folder which is used.
+This means that your application can be fully folder type independent.
+
+=item * autoload the required modules
+There are so many modules involved in MailBox, that it is useful to
+have some lazy autoloading of code.  The manager knows which modules
+belong to which type of folder.
+
+=item * avoid double openings
+Your programming mistakes may cause the same folder to be opened twice.
+The result of that could be very destructive.  Therefore, the manager
+keeps track on all open folders and avoids the same folder to be opened
+for the second time.
+
+=item * close folders at clean-up
+When the program is ending, the manager will cleanly close all folders
+which are still open.  This is required, because the autodestruct
+sequence of Perl works in an unpredicatable order.
+
+=item * message thread detection
+MailBox can discover message threads which span multiple folders. Any set
+of open folders may be grouped in a tree of replies on replies on replies.
+When a folder is closed, it will automatically be removed from the threads,
+and a new folder can dynamically be added to the structure.
+=back
+
+The manager is really simplifying things, and should therefore be the
+base of all programs. However, it is possible to write useful programs
+without it.
+
+=section Managing a user
+
+One step further is the M<Mail::Box::Manage::User> object (since MailBox
+v2.057), which not only keeps track on open folders, but also collects
+information about not-open folders.
+
+The user class is, as the name says, targeted on managing one single user.
+Where the M<Mail::Box::Manager> will open any set of folder files, probably
+from multiple users, the user class want one root folder directory.
+
+In many aspects, the user manager simplifies the task for user-based servers
+and other user-centric applications by setting smart defaults.
 
 =cut
 

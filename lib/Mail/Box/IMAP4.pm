@@ -7,7 +7,6 @@ use base 'Mail::Box::Net';
 
 use Mail::Box::IMAP4::Message;
 use Mail::Box::IMAP4::Head;
-use Mail::Box::IMAP4::Fetch;
 use Mail::Transport::IMAP4;
 
 use Mail::Box::Parser::Perl;
@@ -29,17 +28,12 @@ Mail::Box::IMAP4 - handle IMAP4 folders as client
 
 Maintain a folder which has its messages stored on a remote server.  The
 communication between the client application and the server is implemented
-using the IMAP4 protocol.
+using the IMAP4 protocol.  See also M<Mail::Server::IMAP4>.
 
 This class uses M<Mail::Transport::IMAP4> to hide the transport of
 information, and focusses solely on the correct handling of messages
 within a IMAP4 folder.  More than one IMAP4 folder can be handled by
 one single IMAP4 connection.
-
-Helper class M<Mail::Box::IMAP4::Fetch> simplifies writing IMAP servers
-and clients by supplying code to handle the IMAP protocol's C<FETCH>
-command.  It is not complete, currently focussing on server side
-protocol handling.
 
 =chapter METHODS
 
@@ -171,7 +165,7 @@ sub init($)
     my $transport = $args->{transporter} || 'Mail::Transport::IMAP4';
     unless(ref $transport)
     {   eval "require $transport";
-        $self->log(ERROR => "Cannot install transporter $transport:\n$@\n"),
+        $self->log(ERROR => "Cannot install transporter $transport:\n$@"),
            return () if $@;
 
         $transport = $self->createTransporter($transport, %$args)
@@ -237,10 +231,7 @@ sub listSubFolders(@)
 
 #-------------------------------------------
 
-sub nameOfSubfolder($)
-{   my ($self, $name) = @_;
-    $name;
-}
+sub nameOfSubfolder($;$) { $_[1] }
 
 #-------------------------------------------
 
@@ -431,6 +422,15 @@ sub write(@)
     else { $imap->destroyDeleted }
 
     $self;
+}
+
+#-------------------------------------------
+
+sub delete(@)
+{   my $self   = shift;
+    my $transp = $self->transporter;
+    $self->SUPER::delete(@_);   # subfolders
+    $transp->deleteFolder($self->name);
 }
 
 #-------------------------------------------

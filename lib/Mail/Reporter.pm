@@ -76,8 +76,8 @@ sub new(@)
     (bless {}, $class)->init({@_});
 }
 
-my $default_log   = $levelprio{WARNINGS};
-my $default_trace = $levelprio{WARNINGS};
+my($default_log, $default_trace, $trace_callback);
+INIT {  __PACKAGE__->defaultTrace('WARNINGS'); }
 
 sub init($)
 {   my ($self, $args) = @_;
@@ -90,45 +90,77 @@ sub init($)
 
 =section Error handling
 
-=ci_method defaultTrace [LEVEL, [LEVEL]
+=ci_method defaultTrace [LEVEL]|[LOGLEVEL, TRACELEVEL]|[LEVEL, CALLBACK]
 
-Reports the default trace and log LEVEL which is used for object as list
+Reports the default log and trace level which is used for object as list
 of two elements.  When not explicitly set, both are set to C<WARNINGS>.
-Two values are returned: the first is the log level, the second represents
-the trace level.  Both are special variables: in numeric context they
-deliver a value (the internally used value), and in string context the
-string name.  Be warned that the string is always singular!
 
-You may specify one or two arguments.  In case of one argument, the
-default log and trace levels will both be set to that value.  When two
-levels are specified, the first represent the default log-level and
-the second the default trace level.
+This method has three different uses. When one argument is specified, that
+LEVEL is set for both loglevel as tracelevel.
 
-=examples
+With two arguments, the second determines which configuration you like.  If
+the second argument is a CODE reference, you install a CALLBACK.  The loglevel
+will be set to NONE, and all warnings produced in your program will get
+passed to the CALLBACK function.  That function will get the problem level,
+the object or class which reports the problem, and the problem text passed
+as arguments.
 
+In any case two values are returned: the first is the log level, the
+second represents the trace level.  Both are special variables: in numeric
+context they deliver a value (the internally used value), and in string
+context the string name.  Be warned that the string is always in singular
+form!
+
+=examples setting loglevels
  my ($loglevel, $tracelevel) = Mail::Reporter->defaultTrace;
  Mail::Reporter->defaultTrace('NOTICES');
 
  my ($l, $t) = Mail::Reporter->defaultTrace('WARNINGS', 'DEBUG');
  print $l;     # prints "WARNING"  (no S!)
  print $l+0;   # prints "4"
+ print "Auch" if $l >= $self->logPriority('ERROR');
+
+ Mail::Reporter->defaultTrace('NONE');  # silence all reports
+
+ $folder->defaultTrace('DEBUG');   # Still set as global default!
+ $folder->trace('DEBUG');          # local default
+
+=example installing a callback
+ Mail::Reporter->defaultTrace
 
 =cut
+
+sub _trace_warn($$$)
+{   my ($who, $level, $text) = @_;
+    warn "$level: $text\n";
+}
 
 sub defaultTrace(;$$)
 {   my $thing = shift;
 
-    if(@_)
-    {   my ($log, $trace) = @_==1 ? ($_[0], $_[0]) : @_;
+    return ($default_log, $default_trace)
+        unless @_;
 
-        $default_log   = $levelprio{$log}
-           or croak "Undefined log level $log";
+    my $level = shift;
+    my $prio  = $thing->logPriority($level)
+        or croak "Unknown trace-level $level.";
 
-        $default_trace = $levelprio{$trace}
-           or croak "Undefined trace level $trace";
+    if( ! @_)
+    {   $default_log    = $default_trace = $prio;
+        $trace_callback = \&_trace_warn;
+    }
+    elsif(ref $_[0])
+    {   $default_log    = $thing->logPriority('NONE');
+        $default_trace  = $prio;
+        $trace_callback = shift;
+    }
+    else
+    {   $default_log    = $prio;
+        $default_trace  = $thing->logPriority(shift);
+        $trace_callback = \&_trace_warn;
     }
 
-    ( $thing->logPriority($default_log), $thing->logPriority($default_trace) );
+    ($default_log, $default_trace);
 }
 
 #------------------------------------------
@@ -142,7 +174,7 @@ and the string which represents it.  See M<logPriority()>.
 
 =cut
 
-sub trace(;$)
+sub trace(;$$)
 {   my $self = shift;
 
     return $self->logPriority($self->{MR_trace})
@@ -191,9 +223,9 @@ be added.
 
 =cut
 
-# Implementation detail: the C code avoids calls back to Perl by
-# checking the trace-level itself.  In the perl code of this module
-# however, just always call the log() method, and let it check
+# Implementation detail: the Mail::Box::Parser::C code avoids calls back
+# to Perl by checking the trace-level itself.  In the perl code of this
+# module however, just always call the log() method, and let it check
 # whether or not to display it.
 
 sub log(;$@)
@@ -211,9 +243,7 @@ sub log(;$@)
             unless @_;
 
         my $text    = join '', @_;
-        $text      .= "\n" unless (substr $text, -1) eq "\n";
-
-        warn "$level: $text"
+        $trace_callback->($thing, $level, $text)
             if $prio >= $thing->{MR_trace};
 
         push @{$thing->{MR_report}[$prio]}, $text
@@ -224,12 +254,8 @@ sub log(;$@)
         my $prio  = $levelprio{$level}
             or croak "Unknown log-level $level";
 
-        return $thing unless $prio >= $default_trace;
-
-        my $text    = join '', @_;
-        $text      .= "\n" unless (substr $text, -1) eq "\n";
-
-        warn "$level: $text";
+        $trace_callback->($thing, $level, join('',@_)) 
+           if $prio >= $default_trace;
     }
 
     $thing;

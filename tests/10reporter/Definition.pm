@@ -1,5 +1,5 @@
 
-package MailBox::Test::10report::Definition;
+package MailBox::Test::10reporter::Definition;
 
 sub name     {"Mail::Report; general base class"}
 sub critical {1}

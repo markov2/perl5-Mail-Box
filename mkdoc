@@ -13,12 +13,13 @@ use lib '../UserIdentity/lib';  # latest version of User::Identity
 use lib '../MimeTypes/lib';     # latest version of MIME::Types
 use lib '../ORL/lib';           # latest version of Object::Realize::Later
 
+use lib '/home/markov/shared/netzwert/MailBoxN/lib';
+                                # latest version of Mail::Box::Netzwert
+
 use Mail::Box::IMAP4::Head;
 use OODoc;
 
 my $verbose      = $ARGV[0] || 0;
-
-##### Synchronize these constants with the mkdist script.
 my $workdir      = '/tmp/MailBox';
 
 -d $workdir

@@ -223,7 +223,7 @@ sub unfoldedBody($;$)
 {   my ($self, $body) = (shift, shift);
 
     if(defined $body)
-    {    $self->foldedBody($self->fold($self->{MMFF_name}, $body));
+    {    $self->foldedBody(scalar $self->fold($self->{MMFF_name}, $body));
          return $body;
     }
 

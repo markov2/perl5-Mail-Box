@@ -5,8 +5,8 @@ use warnings;
 package Mail::Box::Dir::Message;
 use base 'Mail::Box::Message';
 
-use Carp;
 use File::Copy qw/move/;
+use IO::File;
 
 =chapter NAME
 
@@ -24,17 +24,23 @@ directory organized folder; each message is stored in a separate file.
 There are no objects of type C<Mail::Box::Dir::Message>, only extensions
 are allowed to be created.
 
-At the moment, two of these extended message types are implemented:
+At the moment, three of these extended message types are implemented:
 
 =over 4
 
 =item * M<Mail::Box::MH::Message>
-
-which represents one message in a M<Mail::Box::MH> folder.
+which represents one message in a M<Mail::Box::MH> folder.  MH folders are
+very, very simple.... and hence not sophisticated nor fast.
 
 =item * M<Mail::Box::Maildir::Message>
+which represents one message in a M<Mail::Box::Maildir> folder.  Flags are
+kept in the message's filename.  It is stateless, so you will never loose
+a message.
 
-which represents one message in a M<Mail::Box::Maildir> folder.
+=item * M<Mail::Box::Netzwert::Message>
+which represents one message in a M<Mail::Box::Netzwert> folder.  As advantage,
+it stores pre-parsed information in the message file.  As disadvantage: the
+code is not GPLed (yet).
 
 =back
 
@@ -112,7 +118,7 @@ will return C<undef> when the message is not stored in a file.
 
 sub filename(;$)
 {   my $self = shift;
-    @_ ? $self->{MBDM_filename} = shift : $self->{MBDM_filename};
+    @_ ? ($self->{MBDM_filename} = shift) : $self->{MBDM_filename};
 }
 
 #-------------------------------------------
@@ -270,7 +276,6 @@ sub loadBody()
 #-------------------------------------------
 
 =method create FILENAME
-
 Create the message in the specified file.  If the message already has
 a filename and is not modified, then a move is tried.  Otherwise the
 message is printed to the file.  If the FILENAME already exists for
@@ -278,13 +283,11 @@ this message, nothing is done.  In any case, the new FILENAME is set
 as well.
 
 =error Cannot write message to $filename: $!
-
 When a modified or new message is written to disk, it is first written
 to a temporary file in the folder directory.  For some reason, it is
 impossible to create this file.
 
 =error Failed to move $new to $filename: $!
-
 When a modified or new message is written to disk, it is first written
 to a temporary file in the folder directory.  Then, the new file is
 moved to replace the existing file.  Apparently, the latter fails.
@@ -318,6 +321,9 @@ sub create($)
          unless move($new, $filename);
 
     $self->modified(0);
+
+    # Do not affect flags for Maildir (and some other) which keep it
+    # in there.  Flags will be processed later.
     $self->Mail::Box::Dir::Message::filename($filename);
 
     $self;

@@ -6,9 +6,11 @@ use strict;
 use File::Spec;
 use File::Basename;
 
-use lib 'tests';
+use lib qw/tests lib/;
+
 use Config;
 use Tools;             # test tools
+use Mail::Reporter;    # to avoid 'too late for INIT'
 
 use IO::Dir;
 use Test::Harness qw($verbose);

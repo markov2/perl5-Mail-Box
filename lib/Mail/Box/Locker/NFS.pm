@@ -123,7 +123,7 @@ sub lock()
 
     if(-e $lockfile && -A $lockfile > $expires)
     {   if(unlink $lockfile)
-             { $self->log(WARNING => "Removed expired lockfile $lockfile.\n") }
+             { $self->log(WARNING => "Removed expired lockfile $lockfile.") }
         else { $self->log(ERROR =>
                         "Unable to remove expired lockfile $lockfile: $!") }
     }

@@ -118,6 +118,16 @@ sub foundIn($@)
 
 #-------------------------------------------
 
+sub delete(@)
+{   my $self = shift;
+    $self->SUPER::delete(@_);
+
+    my $subfdir = $self->filename . $default_sub_extension;
+    rmdir $subfdir;   # may fail, when there are still subfolders (no recurse)
+}
+
+#-------------------------------------------
+
 sub writeMessages($)
 {   my ($self, $args) = @_;
 

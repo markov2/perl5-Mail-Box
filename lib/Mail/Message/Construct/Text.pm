@@ -127,4 +127,7 @@ sub printStructure(;$$)
     $_->printStructure($fh, $indent.'   ') foreach @parts;
 }
     
+=section Flags
+=cut
+
 1;

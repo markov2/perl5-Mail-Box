@@ -33,6 +33,12 @@ from stage, the message's body and head objects may change.
 
 =chapter METHODS
 
+=section Constructors
+
+=cut
+
+#-------------------------------------------
+
 =c_method new OPTIONS
 
 =requires folder FOLDER
@@ -59,34 +65,12 @@ sub init($)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
 
-    $self->{MBM_body_type}  = $args->{body_type}
-        if exists $args->{body_type};
-
-    $self->{MBM_folder}     = $args->{folder};
+    $self->{MBM_body_type} = $args->{body_type};
+    $self->{MBM_folder}    = $args->{folder};
     weaken($self->{MBM_folder});
 
     return $self if $self->isDummy;
-
     $self;
-}
-
-#-------------------------------------------
-
-=c_method coerce MESSAGE
-
-Coerce a message to be included in a folder.  The folder itself
-is not specified, but the type of the message is transformed correctly.
-The coerced version of the message is returned.  When no changes had
-to be made, the original message is returned.
-
-=cut
-
-sub coerce($)
-{   my ($class, $message) = @_;
-    return bless $message, $class
-        if $message->isa(__PACKAGE__);
-
-    $class->SUPER::coerce($message);
 }
 
 #-------------------------------------------
@@ -153,39 +137,84 @@ sub seqnr(;$)
 
 #-------------------------------------------
 
-=method copyTo FOLDER
+=method copyTo FOLDER, OPTIONS
 
 Copy the message to the indicated opened FOLDER, without deleting the
-original.  The coerced message (the copy in the desitnation folder) is
-returned.
+original.  The coerced message (the clone in the destination folder)
+is returned.
+
+=option  share  BOOLEAN
+=default share  <false>
+Try to share the physical storage of the message between the two folders.
+Sometimes, they even may be of different types.  When not possible, this
+options will be silently ignored.
+
+=option  shallow BOOLEAN
+=default shallow <false>
+Used for M<clone(shallow)>.
+
+=option  shallow_body BOOLEAN
+=default shallow_body <false>
+Used for M<clone(shallow_body)>.
+
+=option  shallow_head BOOLEAN
+=default shallow_head <false>
+Used for M<clone(shallow_head)>.
 
 =example
-
  my $draft = $mgr->open(folder => 'Draft');
- $message->copyTo($draft);
+ $message->copyTo($draft, share => 1);
 
 =cut
 
-sub copyTo($)
-{   my ($self, $folder) = @_;
-    $folder->addMessage($self->clone);
+sub copyTo($@)
+{   my ($self, $folder) = (shift, shift);
+    my $clone = $self->clone(@_);
+
+    $folder->addMessage($clone);
 }
 
 #-------------------------------------------
 
-=method moveTo FOLDER
+=method moveTo FOLDER, OPTIONS
 
 Move the message from this folder to the FOLDER specified.  This will
-create a copy using M<clone()> first, and flag this original message
-to be deleted.  So until the source folder is closed, two copies of
-the message stay in memory.  The newly created message (part of the
-destination folder) is returned.
+create a copy using M<clone()> first.  Then, this original message is
+flagged to get deleted.  So until the source folder is closed, two copies
+of the message may stay in memory.
+
+The newly created message clone (part of the destination folder)
+is returned.  All OPTIONS are passed to M<copyTo()>
+
+=option  share  BOOLEAN
+=default share  <true unless shallow_body exists>
+When there is a chance that the original message can be undeleted, then
+this must be set to false.  Otherwise a shallow clone will be made, which
+will share the header which can be modified in the undeleted message.
+
+=option  shallow_body BOOLEAN
+=default shallow_body <undef>
+Only create a shallow body, which means that the header can not be
+reused.  A message can therefore not be shared in storage unless
+explicitly stated.
+
+=example of moving a message
+ my $t = $msg->moveTo('trash');
+
+is equivalent to
+
+ my $t = $msg->copyTo('trash', share => 1);
+ $msg->delete;
 
 =cut
 
-sub moveTo($)
-{   my ($self, $folder) = @_;
-    my $added = $folder->addMessage($self->clone);
+sub moveTo($@)
+{   my ($self, $folder, %args) = @_;
+
+    $args{share} = 1
+         unless exists $args{share} || exists $args{shallow_body};
+
+    my $added = $folder->copyTo($folder, %args);
     $self->label(deleted => 1);
     $added;
 }

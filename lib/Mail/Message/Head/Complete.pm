@@ -53,7 +53,7 @@ sub clone(;@)
 #------------------------------------------
 
 =method build [PAIR|FIELD]-LIST
-=warning field objects have an implied name ($name)
+=warning Field objects have an implied name ($name)
 =cut
 
 sub build(@)
@@ -69,7 +69,7 @@ sub build(@)
 
         my $content = shift;
         if(ref $content && $content->isa('Mail::Message::Field'))
-        {   $self->log(WARNING => "field objects have an implied name ($name)");
+        {   $self->log(WARNING => "Field objects have an implied name ($name)");
             $head->add($content);
             next;
         }
@@ -111,6 +111,21 @@ find the actual size in the file.
 =cut
 
 sub size() { sum 1, map {$_->size} shift->orderedFields }
+
+#------------------------------------------
+
+=method wrap INTEGER
+Re-fold all fields from the header to contain at most INTEGER number of
+characters per line.
+
+=example re-folding a header
+ $msg->head->wrap(78);
+=cut
+
+sub wrap($)
+{   my ($self, $length) = @_;
+    $_->setWrapLength($length) foreach $self->orderedFields;
+}
 
 #------------------------------------------
 

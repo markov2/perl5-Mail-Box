@@ -11,7 +11,7 @@ Mail::Message::Replace::MailHeader - fake Mail::Header
 
 =chapter SYNOPSIS
 
- !!! VERY ALPHA CODE !!!
+ !!! ALPHA CODE !!!
 
  # change
  use Mail::Internet;
@@ -311,7 +311,7 @@ sub cleanup() { shift }
 =cut
 
 BEGIN
-{   no warnings 'redefined';
+{   no warnings;
     *Mail::Header::new =
      sub { my $class = shift;
            Mail::Message::Replace::MailHeader->new(@_);

@@ -93,6 +93,7 @@ REASON
 my %prereq =
  ( Date::Parse    => 0.0
  , File::Spec     => 0.7
+ , File::Remove   => 0.20
  , Errno          => 0.0
  , Scalar::Util   => 1.13
  , Object::Realize::Later => 0.14
@@ -105,7 +106,7 @@ my %prereq =
  , URI            => 1.23
  , IO::Scalar     => 0.0
  , Digest::HMAC_MD5 => 0.0
- , User::Identity => 0.07
+ , User::Identity => 0.90
  , Time::Zone     => 0.0
  );
 

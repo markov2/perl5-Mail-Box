@@ -126,10 +126,23 @@ Start with a prepared header, otherwise one is created.
   , data   => "<html></html>"
   );
 
+=error Only build() Mail::Message's; they are not in a folder yet
+You may wish to construct a message to be stored in a some kind
+of folder, but you need to do that in two steps.  First, create a
+normal M<Mail::Message>, and then add it to the folder.  During this
+M<Mail::Box::addMessage()> process, the message will get M<coerce()>-d
+into the right message type, adding storage information and the like.
+
 =cut
 
 sub build(@)
 {   my $class = shift;
+
+    if($class->isa('Mail::Box::Message'))
+    {   $class->log(ERROR
+           => "Only build() Mail::Message's; they are not in a folder yet"); 
+         return undef;
+    }
 
     my @parts
       = ! ref $_[0] ? ()

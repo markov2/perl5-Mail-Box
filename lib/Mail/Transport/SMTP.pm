@@ -249,14 +249,14 @@ sub contactAnyServer()
 
         defined $server or next;
 
-        $self->log(PROGRESS => "Opened SMTP connection to $host.\n");
+        $self->log(PROGRESS => "Opened SMTP connection to $host.");
 
         if(defined $username)
         {   if($server->auth($username, $password))
-            {    $self->log(PROGRESS => "$host: Authentication succeeded.\n");
+            {    $self->log(PROGRESS => "$host: Authentication succeeded.");
             }
             else
-            {    $self->log(ERROR => "Authentication failed.\n");
+            {    $self->log(ERROR => "Authentication failed.");
                  return undef;
             }
         }

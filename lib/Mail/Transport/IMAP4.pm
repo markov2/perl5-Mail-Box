@@ -666,6 +666,17 @@ sub destroyDeleted()
 
 #------------------------------------------
 
+=method deleteFolder NAME
+Remove one folder.
+=cut
+
+sub deleteFolder($)
+{   my $imap = shift->imapClient or return ();
+    $imap->delete(shift);
+}
+
+#------------------------------------------
+
 =section Error handling
 
 =section Cleanup
@@ -687,16 +698,14 @@ sub DESTROY()
 
 #------------------------------------------
 
-package Mail::IMAPClient::Debug;
-
 # Tied filehandle translates IMAP's debug system into Mail::Reporter
 # calls.
-sub TIEHANDLE($)
+sub  Mail::IMAPClient::Debug::TIEHANDLE($)
 {   my ($class, $logger) = @_;
     bless \$logger, $class;
 }
 
-sub PRINT(@)
+sub  Mail::IMAPClient::Debug::PRINT(@)
 {   my $logger = ${ (shift) };
     $logger->log(DEBUG => @_);
 }

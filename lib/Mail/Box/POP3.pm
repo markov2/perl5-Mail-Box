@@ -169,27 +169,24 @@ sub close()
 
 #-------------------------------------------
 
-=method delete
+=method delete OPTIONS
 
 It is not possible to delete a POP3 folder remotely: the best we can do
 is remove all the messages in it... which is the action implemented here.
 A notice is logged about this.
 
-=notice A POP3 folder cannot be deleted: it will be emptied.
+=default recursive <not used>
 
+=warning POP3 folders cannot be deleted.
 Each user has only one POP3 folder on a server.  This folder is created and
-deleted by the server's administrator only.  A delete can only remove the
-messages in the folder for you.
+deleted by the server's administrator only.
 
 =cut
 
-sub delete()
+sub delete(@)
 {   my $self = shift;
-    $self->log(NOTICE =>
-        "A POP3 folder cannot be deleted: it will be emptied.");
-
-    $_->label(deleted => 1) foreach $self->messages;
-    $self;
+    $self->log(WARNING => "POP3 folders cannot be deleted.");
+    undef;
 }
 
 #-------------------------------------------
@@ -214,6 +211,10 @@ is returned to indicate a failure.
 =cut
 
 sub openSubFolder($@) { undef }  # fails
+
+#-------------------------------------------
+
+sub topFolderWithMessages() { 1 }  # Yes: only top folder
 
 #-------------------------------------------
 

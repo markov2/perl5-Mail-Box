@@ -147,10 +147,11 @@ sub updateMessages() { shift }
 
 #-------------------------------------------
 
-sub nameOfSubFolder($)
-{   my ($self, $name) = (shift, shift);
-    my $dirname = dirname $self->filename;
-    File::Spec->catfile($dirname, "$name.dbx");
+sub nameOfSubFolder($;$)
+{   my $thing  = shift;
+    my $name   = (shift). '.dbx';
+    my $parent = @_ ? shift : ref $thing ? $thing->filename : undef;
+    defined $parent ?  File::Spec->catfile(dirname($parent), $name) : $name;
 }
 
 #-------------------------------------------

@@ -1,17 +1,13 @@
 
-package Mail::Box::Search::IMAP;
-use base 'Mail::Box::Search';
-
 use strict;
 use warnings;
 
-use Carp;
-
-#-------------------------------------------
+package Mail::Server::IMAP4::Search;
+use base 'Mail::Box::Search';
 
 =chapter NAME
 
-Mail::Box::Search::IMAP - select messages within a IMAP folder
+Mail::Server::IMAP4::Search - select messages within a IMAP folder (not completed)
 
 =chapter SYNOPSIS
 
@@ -19,7 +15,7 @@ Mail::Box::Search::IMAP - select messages within a IMAP folder
  my $mgr    = Mail::Box::Manager->new;
  my $folder = $mgr->open('imap4:Inbox');
 
- my $filter = Mail::Box::Search::IMAP->new
+ my $filter = Mail::Server::IMAP4::Search->new
     (  ...to be defined...
     );
 
@@ -28,8 +24,7 @@ Mail::Box::Search::IMAP - select messages within a IMAP folder
 
 =chapter DESCRIPTION
 
-THIS PACKAGES IS NOT IMPLEMENTED YET: it waits for
-M<Mail::Transport::IMAP4> to be available.
+THIS PACKAGES IS NOT IMPLEMENTED YET...  (it's waiting for a volunteer)
 
 =chapter METHODS
 

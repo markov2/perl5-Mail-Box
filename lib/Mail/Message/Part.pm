@@ -3,7 +3,8 @@ use warnings;
 
 package Mail::Message::Part;
 use base 'Mail::Message';
-use Scalar::Util 'weaken';
+
+use Scalar::Util    'weaken';
 
 use Carp;
 

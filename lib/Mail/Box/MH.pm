@@ -8,8 +8,9 @@ use Mail::Box::MH::Message;
 use Mail::Box::MH::Labels;
 
 use Carp;
-use File::Spec;
-use File::Basename;
+use File::Spec       ();
+use File::Basename   'basename';
+use IO::Handle       ();
 
 # Since MailBox 2.052, the use of File::Spec is reduced to the minimum,
 # because it is too slow.  The '/' directory separators do work on
@@ -144,11 +145,11 @@ sub create($@)
     return $class if -d $directory;
 
     if(mkdir $directory, 0700)
-    {   $class->log(PROGRESS => "Created folder $name.\n");
+    {   $class->log(PROGRESS => "Created folder $name.");
         return $class;
     }
     else
-    {   $class->log(ERROR => "Cannot create MH folder $name: $!\n");
+    {   $class->log(ERROR => "Cannot create MH folder $name: $!");
         return;
     }
 }
@@ -268,19 +269,20 @@ sub openSubFolder($)
 
 #-------------------------------------------
 
-=c_method appendMessages OPTIONS
+sub topFolderWithMessages() { 1 }
 
+#-------------------------------------------
+
+=c_method appendMessages OPTIONS
 Append a message to a folder which is not open.
 
 =error Cannot append message without lock on $folder.
-
 It is impossible to append one or more messages to the folder which is
 not opened, because locking it failes.  The folder may be in use by
 an other application, or you may need to specify some lock related
 options (see M<new()>).
 
 =error Unable to write message for $folder to $filename: $!
-
 The new message could not be written to its new file, for the specific
 reason.
 
@@ -466,6 +468,23 @@ sub readMessages(@)
  
 #-------------------------------------------
 
+sub delete(@)
+{   my $self = shift;
+    $self->SUPER::delete(@_);
+
+    my $dir = $self->directory;
+    return 1 unless opendir DIR, $dir;
+    IO::Handle::untaint \*DIR;
+
+    # directories (subfolders) are not removed, as planned
+    unlink "$dir/$_" for readdir DIR;
+    closedir DIR;
+
+    rmdir $dir;    # fails when there are subdirs (without recurse)
+}
+
+#-------------------------------------------
+
 =method writeMessages OPTIONS
 
 =option  renumber BOOLEAN
@@ -537,8 +556,6 @@ sub writeMessages($)
 
     $self;
 }
-
-#-------------------------------------------
 
 #-------------------------------------------
 

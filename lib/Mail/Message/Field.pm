@@ -206,7 +206,7 @@ place (without changing the folding stored inside the field).
 
 =cut
 
-sub toString(;$) {my $self = shift;$self->string(@_)}
+sub toString(;$) {shift->string(@_)}
 sub string(;$)
 {   my $self  = shift;
     return $self->folded unless @_;
@@ -296,7 +296,7 @@ and returned.  When a STRING is used, that one is formatted.
 
 my %wf_lookup
   = qw/mime MIME  ldap LDAP  soap SOAP  swe SWE
-       bcc Bcc  cc Cc/;
+       bcc Bcc  cc Cc  id ID/;
 
 sub wellformedName(;$)
 {   my $thing = shift;
@@ -304,7 +304,7 @@ sub wellformedName(;$)
 
     join '-',
        map { $wf_lookup{lc $_} || ( /[aeiouyAEIOUY]/ ? ucfirst lc : uc ) }
-          split /\-/, $name;
+          split /\-/, $name, -1;
 }
 
 #------------------------------------------
@@ -329,6 +329,8 @@ a little faster because that's the way they are stored internally...
  print scalar $field->folded; # faster
 
 =cut
+
+sub folded { shift->notImplemented }
 
 #------------------------------------------
 
@@ -366,6 +368,8 @@ The optional BODY argument changes the field's body.  The folding of the
 argument must be correct.
 
 =cut
+
+sub foldedBody { shift->notImplemented }
 
 #------------------------------------------
 
@@ -633,7 +637,7 @@ sub _tz_offset($)
 
    my $diff = $zone eq '%z' ? Time::Zone::tz_local_offset()
            :                  Time::Zone::tz_offset($zone);
-   my $minutes = int((abs($diff)+0.01) / 60);     # float rounding errors :(
+   my $minutes = int((abs($diff)+0.01) / 60);     # float rounding errors
    my $hours   = int(($minutes+0.01) / 60);
    $minutes   -= $hours * 60;
    sprintf( ($diff < 0 ? " -%02d%02d" : " +%02d%02d"), $hours, $minutes);
@@ -751,7 +755,7 @@ sub consume($;$)
         $body =~ s/[\012\015]+/\n/g;
         $body =~ s/^[ \t]*/ /;  # start with one blank, folding kept unchanged
 
-        $self->log(NOTICE => "Empty field: $name\n")
+        $self->log(NOTICE => "Empty field: $name")
            if $body eq " \n";
     }
 
@@ -803,21 +807,16 @@ Force the wrapping of this field to the specified LENGTH characters. The
 wrapping is performed with M<fold()> and the results stored within
 the field object.
 
-Without LENGTH, the message will be folded, unless it is already folded.
-Pre-folded lines are detected on a trailing new-line character.
-
-=examples
-
+=examples refolding the field
  $field->setWrapLength(99);
- $field->setWrapLength;
 
 =cut
 
 sub setWrapLength(;$)
 {   my $self = shift;
 
-    $self->[1] = $self->fold($self->[0],$self->unfoldedBody, @_)
-        if @_ || $self->[1] !~ m/\n$/;
+    $self->foldedBody(scalar $self->fold($self->Name, $self->unfoldedBody, @_))
+        if @_;
 
     $self;
 }

@@ -48,7 +48,6 @@ case of MH-like mailboxes, each message is contained in a single file,
 so each message has its own parser object.
 
 =requires  filename FILENAME
-
 The name of the file to be read.
 
 =option  file FILE-HANDLE
@@ -65,7 +64,6 @@ See C<perldoc -f open> for possible modes.  Only applicable
 when no C<file> is specified.
 
 =error Filename or handle required to create a parser.
-
 A message parser needs to know the source of the message at creation.  These
 sources can be a filename (string), file handle object or GLOB.
 See new(filename) and new(file).

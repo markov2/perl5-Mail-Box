@@ -143,16 +143,21 @@ we want delay-loading.
 =option  access MODE
 =default access C<'r'>
 
-Access-rights to the folder. MODE can be read-only (C<"r">), append (C<"a">),
-and read-write (C<"rw">).  Folders are opened for read-only (C<"r">)
-(which means write-protected) by default!
+Access-rights to the folder.  Folders are opened for read-only (which
+means write-protected) by default! MODE can be
+=over 4
+=item C<'r'>: read-only (default)
+=item C<'a'>: append
+=item C<'rw'>: read-write
+=item C<'d'>: delete
+=back
 
-These MODEs have no relation to the modes actually used to open the
-folder files within this module.  For instance, if you specify C<"rw">, and
+These MODE has no relation to the modes actually used to open the folder
+files within this module.  For instance, if you specify C<"rw">, and
 open the folder, only read permission on the folder-file is required.
 
-Be warned: writing a MBOX folder may create a new file to replace the
-old folder.  The permissions and owner of the file get changed by this.
+Be warned: writing a MBOX folder may create a new file to replace the old
+folder.  The permissions and owner of the file may get changed by this.
 
 =option  create BOOLEAN
 =default create <false>
@@ -524,23 +529,6 @@ sub init($)
 
 #-------------------------------------------
 
-=ci_method create FOLDERNAME, OPTIONS
-
-Create a folder.  If the folder already exists, it will
-be left unchanged.  As options, you may specify:
-
-=option  folderdir DIRECTORY
-=default folderdir undef
-
-When the foldername is preceded by a C<=>, the C<folderdir> directory
-will be searched for the named folder.
-
-=cut
-
-sub create($@) {shift->notImplemented}
-
-#-------------------------------------------
-
 =section The folder
 
 =method folderdir [DIRECTORY]
@@ -559,36 +547,6 @@ sub folderdir(;$)
     $self->{MB_folderdir} = shift if @_;
     $self->{MB_folderdir};
 }
-
-#-------------------------------------------
-
-=c_method foundIn [FOLDERNAME], OPTIONS
-
-Determine if the specified folder is of the type handled by the
-folder class. This method is extended by each folder sub-type.
-
-The FOLDERNAME specifies the name of the folder, as is specified by the
-application.  You need to specified the C<folder> option when you skip
-this first argument.
-
-OPTIONS is a list of extra information for the request.  Read
-the documentation for each type of folder for type specific options, but
-each folder class will at least support the C<folderdir> option:
-
-=option  folderdir DIRECTORY
-=default folderdir undef
-
-The location where the folders of this class are stored by default.  If the
-user specifies a name starting with a C<=>, that indicates that the folder is
-to be found in this default DIRECTORY.
-
-=examples
-
- Mail::Box::Mbox->foundIn('=markov',
-     folderdir => "$ENV{HOME}/Mail");
- Mail::Box::MH->foundIn(folder => '=markov');
-
-=cut
 
 sub foundIn($@) { shift->notImplemented }
 
@@ -697,9 +655,7 @@ sub organization() { shift->notImplemented }
 
 #-------------------------------------------
 
-=method addMessage  MESSAGE
-
-=method addMessages MESSAGE [, MESSAGE, ...]
+=method addMessage MESSAGE, OPTIONS
 
 Add a message to the folder.  A message is usually a
 M<Mail::Box::Message> object or a sub-class thereof.  The message
@@ -709,20 +665,33 @@ M<Mail::Box::Manager::copyMessage()> via the manager.
 
 Messages with id's which already exist in this folder are not added.
 
-=examples
+=option  share BOOLEAN
+=default share <not used>
+Try to share the physical resource of the current message with the
+indicated message.  It is sometimes possible to share messages between
+different folder types.  When the sharing is not possible, than this
+option is simply ignored.
 
+Sharing the resource is quite dangerous, and only available for a
+limited number of folder types, at the moment only some M<Mail::Box::Dir>
+folders; these file-based messages can be hardlinked (on platforms that
+support it).  The link may get broken when one message is modified in one
+of the folders.... but maybe not, depending on the folder types involved.
+
+=examples
  $folder->addMessage($msg);
  $folder->addMessages($msg1, $msg2, ...);
 
 =cut
 
-sub addMessage($)
+sub addMessage($@)
 {   my $self    = shift;
     my $message = shift or return $self;
+    my %args    = @_;
 
-    confess <<ERROR if $message->can('folder') && $message->folder;
+    confess <<ERROR if $message->can('folder') && defined $message->folder;
 You cannot add a message which is already part of a folder to a new
-one.  Please use moveMessage or copyMessage.
+one.  Please use moveTo or copyTo.
 ERROR
 
     # Force the message into the right folder-type.
@@ -747,6 +716,17 @@ ERROR
     $self->storeMessage($coerced);
     $coerced;
 }
+
+#-------------------------------------------
+
+=method addMessages MESSAGE [, MESSAGE, ...]
+Adds a set of MESSAGE objects to the open folder at once.  For some folder
+types this may be faster than adding them one at a time.
+
+=examples
+ $folder->addMessages($msg1, $msg2, ...);
+=cut
+
 
 sub addMessages(@)
 {   my $self = shift;
@@ -782,6 +762,11 @@ included in the main copy.  C<RECURSE> recursively copies the
 sub-folders as well.  By default, when the destination folder
 supports sub-folders C<RECURSE> is used, otherwise C<FLATTEN>.  A value
 of true will select the default.
+
+=option  share      BOOLEAN
+=default share      <not used>
+Try to share the message between the folders.  Some M<Mail::Box::Dir>
+folder types do support it by creating a hardlink (on UNIX/Linux).
 
 =examples
 
@@ -827,14 +812,15 @@ sub copyTo($@)
        :                            (1, 0);
 
     my $delete = $args{delete_copied} || 0;
+    my $share  = $args{share}         || 0;
 
-    $self->_copy_to($to, $select, $flatten, $recurse, $delete);
+    $self->_copy_to($to, $select, $flatten, $recurse, $delete, $share);
 }
 
 # Interface may change without warning.
 sub _copy_to($@)
 {   my ($self, $to, @options) = @_;
-    my ($select, $flatten, $recurse, $delete) = @options;
+    my ($select, $flatten, $recurse, $delete, $share) = @options;
 
     $self->log(ERROR => "Destination folder $to is not writable."),
         return unless $to->writable;
@@ -845,7 +831,8 @@ sub _copy_to($@)
         "Copying ".@select." messages from $self to $to.");
 
     foreach my $msg (@select)
-    {   if($msg->copyTo($to)) { $msg->label(deleted => 1) if $delete }
+    {   if($msg->copyTo($to, share => $share))
+             { $msg->label(deleted => 1) if $delete }
         else { $self->log(ERROR => "Copying failed for one message.") }
     }
 
@@ -983,19 +970,26 @@ Suggestion: \$folder->close(write => 'NEVER')");
 
 #-------------------------------------------
 
-=method delete
+=method delete OPTIONS
 
 Remove the specified folder file or folder directory (depending on
 the type of folder) from disk.  Of course, THIS IS DANGEROUS: you "may"
-lose data.
+lose data.  Returns a C<true> value on success.
 
 WARNING: When moving messages from one folder to another, be sure to write the
 destination folder before deleting the source folder.  Otherwise you may lose
 data if the system crashes or if there are software problems.
 
-=examples
+=option  recursive BOOLEAN
+=default recursive 1
 
- my $folder = Mail::Box::Mbox->new(folder => 'InBox');
+=example removing an open folder
+ my $folder = Mail::Box::Mbox->new(folder => 'InBox', access => 'rw');
+ ... some other code ...
+ $folder->delete;
+
+=example removing an closed folder
+ my $folder = Mail::Box::Mbox->new(folder => 'INBOX', access => 'd');
  $folder->delete;
 
 =error Folder $name not deleted: not writable.
@@ -1007,8 +1001,9 @@ C<delete> method permits you to.  The reverse remark is valid as well.
 
 =cut
 
-sub delete()
-{   my $self = shift;
+sub delete(@)
+{   my ($self, %args) = @_;
+    my $recurse = exists $args{recursive} ? $args{recursive} : 1;
 
     # Extra protection: do not remove read-only folders.
     unless($self->writable)
@@ -1018,17 +1013,15 @@ sub delete()
     }
 
     # Sub-directories need to be removed first.
-    foreach ($self->listSubFolders)
-    {   my $sub = $self->openRelatedFolder(folder => "$self/$_",access => 'rw');
-        next unless defined $sub;
-        $sub->delete;
+    if($recurse)
+    {   foreach ($self->listSubFolders)
+        {   my $sub = $self->openRelatedFolder
+               (folder => "$self/$_", access => 'd', create => 0);
+            defined $sub && $sub->delete(%args);
+        }
     }
 
-    $_->delete foreach $self->messages;
-
-    $self->{MB_remove_empty} = 1;
-    $self->close(write => 'ALWAYS');
-
+    $self->close(write => 'NEVER');
     $self;
 }
 
@@ -1040,9 +1033,10 @@ Append one or more messages to an unopened folder.
 Usually, this method is called by the M<Mail::Box::Manager::appendMessage()>,
 in which case the correctness of the folder type is checked.
 
-This method takes a list of labeled parameters, which may contain
-any option which can be used when a folder is opened, most importantly
-M<new(folderdir)>.
+For some folder types it is required to open the folder before it can
+be used for appending.  This can be fast, but this can also be very
+slow (depends on the implementation).  All OPTIONS passed will also be
+used to open the folder, if needed.
 
 =requires folder FOLDERNAME
 
@@ -1059,6 +1053,11 @@ resource consuming.
 One reference to a MESSAGE or a reference to an ARRAY of MESSAGEs, which may
 be of any type.  The messages will be first coerced into the correct
 message type to fit in the folder, and then will be added to it.
+
+=option  share BOOLEAN
+=default share <false>
+Try to share physical storage of the message.  Only available for a
+limited number of folder types, otherwise no-op.
 
 =examples
 
@@ -1090,9 +1089,17 @@ Checks whether the current folder is writable.
 
 =cut
 
-sub writable()  {shift->{MB_access} =~ /w|a/ }
+sub writable()  {shift->{MB_access} =~ /w|a|d/ }
 sub writeable() {shift->writable}  # compatibility [typo]
 sub readable()  {1}  # compatibility
+
+#-------------------------------------------
+
+=method access
+Returns the access mode of the folder, as set by M<new(access)>
+=cut
+
+sub access()    {shift->{MB_access}}
 
 #-------------------------------------------
 
@@ -1556,8 +1563,8 @@ access to that folder.
 
 For MBOX folders, sub-folders are simulated.
 
-=requires folder FOLDERNAME
-
+=option  folder FOLDERNAME
+=default folder <from calling object>
 The folder whose sub-folders should be listed.
 
 =option  folderdir DIRECTORY
@@ -1611,7 +1618,7 @@ sub openRelatedFolder(@)
 
 #-------------------------------------------
 
-=method openSubFolder NAME, OPTIONS
+=method openSubFolder SUBNAME, OPTIONS
 
 Open (or create, if it does not exist yet) a new subfolder in an
 existing folder.
@@ -1631,17 +1638,37 @@ sub openSubFolder($@)
 
 #-------------------------------------------
 
-=method nameOfSubFolder NAME
-
+=ci_method nameOfSubFolder SUBNAME, [PARENTNAME]
 Returns the constructed name of the folder with NAME, which is a
-sub-folder of this current one.
+sub-folder of this current one.  You have either to call this method
+as instance method, or specify a PARENTNAME.
+
+=examples how to get the name of a subfolder
+ my $sub = Mail::Box::Mbox->nameOfSubfolder('xyz', 'abc');
+ print $sub;                        # abc/xyz
+
+ my $f = Mail::Box::Mbox->new(folder => 'abc');
+ print $f->nameOfSubfolder('xyz');  # abc/xyz
+
+ my $sub = Mail::Box::Mbox->nameOfSubfolder('xyz', undef);
+ print $sub;                        # xyz
 
 =cut
 
-sub nameOfSubFolder($)
-{   my ($self, $name)= @_;
-    "$self/$name";
+sub nameOfSubFolder($;$)
+{   my ($thing, $name) = (shift, shift);
+    my $parent = @_ ? shift : ref $thing ? $thing->name : undef;
+    defined $parent ? "$parent/$name" : $name;
 }
+
+#-------------------------------------------
+
+=ci_method topFolderWithMessages
+Some folder types can have messages in the top-level folder, some other
+can't.
+=cut
+
+sub topFolderWithMessages() { 1 }
 
 #-------------------------------------------
 
@@ -1736,7 +1763,7 @@ sub write(@)
 {   my ($self, %args) = @_;
 
     unless($args{force} || $self->writable)
-    {   $self->log(ERROR => "Folder $self is opened read-only.\n");
+    {   $self->log(ERROR => "Folder $self is opened read-only.");
         return;
     }
 
@@ -1852,19 +1879,67 @@ sub lineSeparator(;$)
 
 #-------------------------------------------
 
-=method coerce MESSAGE
+=ci_method create FOLDERNAME, OPTIONS
 
+Create a folder.  If the folder already exists, it will be left unchanged.
+The folder is created, but not opened!  If you want to open a file which
+may need to be created, then use M<Mail::Box::Manager::open()> with the
+create flag, or M<Mail::Box::new(create)>.
+
+=option  folderdir DIRECTORY
+=default folderdir undef
+
+When the foldername is preceded by a C<=>, the C<folderdir> directory
+will be searched for the named folder.
+
+=cut
+
+sub create($@) {shift->notImplemented}
+
+#-------------------------------------------
+
+=c_method foundIn [FOLDERNAME], OPTIONS
+
+Determine if the specified folder is of the type handled by the
+folder class. This method is extended by each folder sub-type.
+
+The FOLDERNAME specifies the name of the folder, as is specified by the
+application.  You need to specified the C<folder> option when you skip
+this first argument.
+
+OPTIONS is a list of extra information for the request.  Read
+the documentation for each type of folder for type specific options, but
+each folder class will at least support the C<folderdir> option:
+
+=option  folderdir DIRECTORY
+=default folderdir undef
+
+The location where the folders of this class are stored by default.  If the
+user specifies a name starting with a C<=>, that indicates that the folder is
+to be found in this default DIRECTORY.
+
+=examples
+
+ Mail::Box::Mbox->foundIn('=markov',
+     folderdir => "$ENV{HOME}/Mail");
+ Mail::Box::MH->foundIn(folder => '=markov');
+
+=cut
+
+#-------------------------------------------
+
+=method coerce MESSAGE, OPTIONS
 Coerce the MESSAGE to be of the correct type to be placed in the
 folder.  You can specify M<Mail::Internet> and M<MIME::Entity> objects
 here: they will be translated into Mail::Message messages first.
 
 =cut
 
-sub coerce($)
-{   my ($self, $message) = @_;
-    $self->{MB_message_type}->coerce($message);
+sub coerce($@)
+{   my ($self, $message) = (shift, shift);
+    my $mmtype = $self->{MB_message_type};
+    $message->isa($mmtype) ? $message : $mmtype->coerce($message, @_);
 }
-
 
 #-------------------------------------------
 
@@ -1994,7 +2069,7 @@ sub timespan2seconds($)
         :                $1 * 604800;  # week
     }
     else
-    {   $_[0]->log(ERROR => "Invalid timespan '$_' specified.\n");
+    {   $_[0]->log(ERROR => "Invalid timespan '$_' specified.");
         undef;
     }
 }
@@ -2108,12 +2183,11 @@ database oriented message storage.
 
 =back
 
-=section Supported folder types
+=section Available folder types
 
 =over 4
 
 =item * M<Mail::Box::Dbx> (read only)
-
 Dbx files are created by Outlook Express. Using the external (optional)
 M<Mail::Transport::Dbx> module, you can read these folders, even
 when you are running MailBox on a UNIX/Linux platform.
@@ -2122,10 +2196,13 @@ Writing and deleting messages is not supported by the library, and
 therefore not by MailBox. Read access is enough to do folder conversions,
 for instance.
 
-=item * M<Mail::Box::IMAP4> (under development)
+=item * M<Mail::Box::IMAP4> (partially)
+The IMAP protocol is very complex.  Some parts are implemented to
+create (sub-optimal but usable) IMAP clients.  Besides, there are
+also some parts for IMAP servers present.  The most important lacking
+feature is support for encrypted connections.
 
 =item * M<Mail::Box::Maildir>
-
 Maildir folders have a directory for each folder.  A folder directory
 contains C<tmp>, C<new>, and C<cur> sub-directories, each containting
 messages with a different purpose.  Files with new messages are created
@@ -2138,23 +2215,25 @@ Maildir folders can not be used on Windows by reason of file-name
 limitations on that platform.
 
 =item * M<Mail::Box::Mbox>
-
 A folder type in which all related messages are stored in one file.  This
 is a very common folder type for UNIX.
 
 =item * M<Mail::Box::MH>
-
 This folder creates a directory for each folder, and a message is one
 file inside that directory.  The message files are numbered sequentially
 on order of arrival.  A special C<.mh_sequences> file maintains flags
 about the messages.
 
 =item * M<Mail::Box::POP3> (read/delete only)
-
 POP3 is a protocol which can be used to retreive messages from a
 remote system.  After the connection to a POP server is made, the
 messages can be looked at and removed as if they are on the local
 system.
+
+=item * M<Mail::Box::Netzwert>
+The Netzwert folder type is optimized for mailbox handling on a cluster
+of systems with a shared NFS storage.  The code is not released under
+GPL (yet)
 
 =back
 
@@ -2167,11 +2246,12 @@ The class structure of folders is very close to that of messages.  For
 instance, a M<Mail::Box::File::Message> relates to a M<Mail::Box::File>
 folder.  The folder types are:
 
- M<Mail::Box::Mbox>    M<Mail::Box::Maildir>  M<Mail::Box::POP3>
- |  M<Mail::Box::Dbx>  |  M<Mail::Box::MH>    |  M<Mail::Box::IMAP4>
- |  |               |  |                |  |
- |  |               |  |                |  |
- M<Mail::Box::File>    M<Mail::Box::Dir>      M<Mail::Box::Net>
+                    M<Mail::Box::Netzwert>
+ M<Mail::Box::Mbox>   | M<Mail::Box::Maildir> M<Mail::Box::POP3>
+ |  M<Mail::Box::Dbx> | | M<Mail::Box::MH>    |  M<Mail::Box::IMAP4>
+ |  |               | | |                 |  |
+ |  |               | | |                 |  |
+ M<Mail::Box::File>   M<Mail::Box::Dir>       M<Mail::Box::Net>
        |                  |                   |
        `--------------.   |   .---------------'
                       |   |   |

@@ -360,7 +360,7 @@ sub sign(@)
     $set;
 }
 
-=section The Message
+=section The message
 =method send TYPE, OPTIONS
 Send via Mail Transfer Agents (MUA).  These will be handled by various
 M<Mail::Transport::Send> extensions.  The C<test> TYPE is not supported.
@@ -647,7 +647,7 @@ sub as_mbox_string()
 =cut
 
 BEGIN {
- no warnings 'redefined';
+ no warnings;
  *Mail::Internet::new =
     sub { my $class = shift;
           Mail::Message::Replace::MailInternet->new(@_);

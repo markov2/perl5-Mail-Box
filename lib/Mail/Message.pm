@@ -13,6 +13,7 @@ use Mail::Message::Body::Multipart;
 use Mail::Message::Body::Nested;
 
 use Carp;
+use Scalar::Util   'weaken';
 
 =chapter NAME
 
@@ -168,95 +169,7 @@ sub init($)
 
 #------------------------------------------
 
-=c_method coerce MESSAGE
-
-Coerce a MESSAGE into a Mail::Message.  In some
-occasions, for instance where you add a message to a folder, this
-coercion is automatically called to ensure that the correct message
-type is stored.
-
-The coerced message is returned on success, otherwise C<undef>.  The
-coerced message may be a reblessed version of the original message
-or a new object.  In case the message has to be specialized, for
-instance from a general Mail::Message into a Mail::Box::Mbox::Message,
-no copy is needed.  However, to coerce a Mail::Internet object into
-a Mail::Message, a lot of copying and converting will take place.
-
-Valid MESSAGEs which can be coerced into Mail::Message objects
-are of type
-
-=over 4
-
-=item * Any type of M<Mail::Box::Message>
-
-=item * M<MIME::Entity>'s, using M<Mail::Message::Convert::MimeEntity>
-
-=item * M<Mail::Internet>'s, using M<Mail::Message::Convert::MailInternet>
-
-=back
-
-M<Mail::Message::Part>'s, which are extensions of C<Mail::Message>'s,
-can also be coerced directly from a M<Mail::Message::Body>.
-
-=examples
-
- my $folder  = Mail::Box::Mbox->new;
- my $message = Mail::Message->build(...);
-
- my $coerced = Mail::Box::Mbox::Message->coerce($message);
- $folder->addMessage($coerced);
-
-Simpler replacement for the previous two lines:
-
- my $coerced = $folder->addMessage($message);
-
-=cut
-
-my $mail_internet_converter;
-my $mime_entity_converter;
-
-sub coerce($)
-{   my ($class, $message) = @_;
-
-    return bless $message, $class
-        if $message->isa(__PACKAGE__);
-
-    if($message->isa('MIME::Entity'))
-    {   unless($mime_entity_converter)
-        {   eval {require Mail::Message::Convert::MimeEntity};
-                confess "Install MIME::Entity" if $@;
-
-            $mime_entity_converter = Mail::Message::Convert::MimeEntity->new;
-        }
-
-        $message = $mime_entity_converter->from($message)
-            or return;
-    }
-
-    elsif($message->isa('Mail::Internet'))
-    {   unless($mail_internet_converter)
-        {   eval {require Mail::Message::Convert::MailInternet};
-            confess "Install Mail::Internet" if $@;
-
-           $mail_internet_converter = Mail::Message::Convert::MailInternet->new;
-        }
-
-        $message = $mail_internet_converter->from($message)
-            or return;
-    }
-
-    else
-    {   my $what = ref $message ? 'a'.ref($message).' object' : 'text';
-        confess "Cannot coerce $what into a ". __PACKAGE__." object.\n";
-    }
-
-    $message->{MM_modified}  ||= 0;
-    bless $message, $class;
-}
-
-#------------------------------------------
-
-=method clone
+=method clone OPTIONS
 
 Create a copy of this message.  Returned is a C<Mail::Message> object.
 The head and body, the log and trace levels are taken.  Labels are
@@ -271,22 +184,51 @@ to be added.
 
 See also M<Mail::Box::Message::copyTo()> and M<Mail::Box::Message::moveTo()>.
 
+=option  shallow BOOLEAN
+=default shallow <false>
+When a shallow clone is made, the header and body of the message will not
+be cloned, but shared.  This is quite dangerous: for instance in some
+folder types, the header fields are used to store folder flags.  When
+one of both shallow clones change the flags, that will update the header
+and thereby be visible in both.
+
+There are situations where a shallow clone can be used safely.  For instance,
+when M<Mail::Box::Message::moveTo()> is used and you are sure that the
+original message cannot get undeleted after the move.
+
+=option  shallow_head BOOLEAN
+=default shallow_head <false>
+Only the head uses is reused, not the body.  This is probably a bad choice,
+because the header fields can be updated, for instance when labels change.
+
+=option  shallow_body BOOLEAN
+=default shallow_body <false>
+A rather safe bet, because you are not allowed to modify the body of a
+message: you may only set a new body with M<body()>.
+
 =example
 
  $copy = $msg->clone;
 
 =cut
 
-sub clone()
-{   my $self  = shift;
+sub clone(@)
+{   my ($self, %args) = @_;
 
     # First clone body, which may trigger head load as well.  If head is
     # triggered first, then it may be decided to be lazy on the body at
     # moment.  And then the body would be triggered.
 
+    my ($head, $body) = ($self->head, $self->body);
+    $head = $head->clone
+       unless $args{shallow} || $args{shallow_head};
+
+    $body = $body->clone
+       unless $args{shallow} || $args{shallow_body};
+
     my $clone = Mail::Message->new
-     ( body  => $self->body->clone
-     , head  => $self->head->clone
+     ( head  => $head
+     , body  => $body
      , $self->logSettings
      );
 
@@ -295,6 +237,10 @@ sub clone()
     delete $labels{deleted};
 
     $clone->{MM_labels} = \%labels;
+
+    $clone->{MM_cloned} = $self;
+    weaken($clone->{MM_cloned});
+
     $clone;
 }
 
@@ -302,7 +248,7 @@ sub clone()
 
 =section Constructing a message
 
-=section The Message
+=section The message
 
 =method messageId
 
@@ -1278,6 +1224,103 @@ sub statusToLabels()
 =cut
 
 #------------------------------------------
+
+=c_method coerce MESSAGE, OPTIONS
+
+Coerce a MESSAGE into a Mail::Message.  In some
+occasions, for instance where you add a message to a folder, this
+coercion is automatically called to ensure that the correct message
+type is stored.
+
+The coerced message is returned on success, otherwise C<undef>.  The
+coerced message may be a reblessed version of the original message
+or a new object.  In case the message has to be specialized, for
+instance from a general Mail::Message into a Mail::Box::Mbox::Message,
+no copy is needed.  However, to coerce a Mail::Internet object into
+a Mail::Message, a lot of copying and converting will take place.
+
+Valid MESSAGEs which can be coerced into Mail::Message objects
+are of type
+
+=over 4
+
+=item * Any type of M<Mail::Box::Message>
+
+=item * M<MIME::Entity>'s, using M<Mail::Message::Convert::MimeEntity>
+
+=item * M<Mail::Internet>'s, using M<Mail::Message::Convert::MailInternet>
+
+=back
+
+M<Mail::Message::Part>'s, which are extensions of C<Mail::Message>'s,
+can also be coerced directly from a M<Mail::Message::Body>.
+
+=examples
+
+ my $folder  = Mail::Box::Mbox->new;
+ my $message = Mail::Message->build(...);
+
+ my $coerced = Mail::Box::Mbox::Message->coerce($message);
+ $folder->addMessage($coerced);
+
+Simpler replacement for the previous two lines:
+
+ my $coerced = $folder->addMessage($message);
+
+=cut
+
+my $mail_internet_converter;
+my $mime_entity_converter;
+
+sub coerce($@)
+{   my ($class, $message) = @_;
+
+    return bless $message, $class
+        if $message->isa(__PACKAGE__);
+
+    if($message->isa('MIME::Entity'))
+    {   unless($mime_entity_converter)
+        {   eval {require Mail::Message::Convert::MimeEntity};
+                confess "Install MIME::Entity" if $@;
+
+            $mime_entity_converter = Mail::Message::Convert::MimeEntity->new;
+        }
+
+        $message = $mime_entity_converter->from($message)
+            or return;
+    }
+
+    elsif($message->isa('Mail::Internet'))
+    {   unless($mail_internet_converter)
+        {   eval {require Mail::Message::Convert::MailInternet};
+            confess "Install Mail::Internet" if $@;
+
+           $mail_internet_converter = Mail::Message::Convert::MailInternet->new;
+        }
+
+        $message = $mail_internet_converter->from($message)
+            or return;
+    }
+
+    else
+    {   my $what = ref $message ? 'a'.ref($message).' object' : 'text';
+        confess "Cannot coerce $what into a ". __PACKAGE__." object.\n";
+    }
+
+    $message->{MM_modified}  ||= 0;
+    bless $message, $class;
+}
+
+#------------------------------------------
+
+=method clonedFrom
+Returns the MESSAGE which is the source of this message, which was
+created by a M<clone()> operation.
+=cut
+
+sub clonedFrom() { shift->{MM_cloned} }
+
+#------------------------------------------
 # All next routines try to create compatibility with release < 2.0
 sub isParsed()   { not shift->isDelayed }
 sub headIsRead() { not shift->head->isa('Mail::Message::Delayed') }
@@ -1397,7 +1440,7 @@ sub readBody($$;$$)
     $body->read
       ( $parser, $head, $getbodytype,
       , $size, (defined $lines ? int $lines->body : undef)
-      ) or return;
+      );
 }
 
 #------------------------------------------

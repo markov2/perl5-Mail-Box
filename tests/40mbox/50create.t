@@ -180,11 +180,11 @@ ok(defined $folder.                           'open folder =f4');
 die unless defined $folder;
 
 ok(-f File::Spec->catfile($top, "f4"),        'folder-file found');
-$folder->delete;                             # remove folder contents
-$folder->close;
+$folder->delete(recurse=>1);                  # remove folder contents
+$folder->close if defined $folder;
 
 ok(! -f File::Spec->catfile($top, "f4"),      'empty folder clean-up'); 
-ok(! -d File::Spec->catfile($top, "f4.d"),    'empty subfolder clean-up'); 
+ok(! -d File::Spec->catfile($top, "f4.d"),    'subfolder dir clean-up'); 
 
 #
 # Write a folder, but at the same place is a subdir.  The subdir should

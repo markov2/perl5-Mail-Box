@@ -25,6 +25,10 @@ as for all M<Mail::Box::Dir> folder types.
 
 =chapter METHODS
 
+=cut
+
+#-------------------------------------------
+
 =method seqnr [INTEGER]
 
 The order of this message in the folder, counted from zero.  Do not
@@ -33,6 +37,12 @@ change the number (unless you understand the implications).
 WARNING:  This sequence number has nothing to do with the message's
 filename, which in case of MH folders are also numbers!  If you need
 that one, use the M<File::Basename::basename()> of the filename.
+
+=cut
+
+# Purpose of doc is only the warning... no new implementation required.
+
+#-------------------------------------------
 
 =chapter DETAILS
 

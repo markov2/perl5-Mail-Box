@@ -229,6 +229,7 @@ sub unpack_mbox2maildir($$)
 
 sub compare_lists($$)
 {   my ($first, $second) = @_;
+#warn "[@$first]==[@$second]\n";
     return 0 unless @$first == @$second;
     for(my $i=0; $i<@$first; $i++)
     {   return 0 unless $first->[$i] eq $second->[$i];
