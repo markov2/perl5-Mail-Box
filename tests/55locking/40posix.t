@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 #
 # Test the locking methods.
 #
@@ -26,6 +26,7 @@ my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 my $lockfile  = File::Spec->catfile('folders', 'lockfiletest');
 unlink $lockfile;
 open OUT, '>', $lockfile;
+close OUT;
 
 my $locker = Mail::Box::Locker->new
  ( method  => 'POSIX'

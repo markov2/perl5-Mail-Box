@@ -1,5 +1,8 @@
 #!/usr/bin/perl -T
 
+use strict;
+use warnings;
+
 use Tools;
 use Test::More tests => 7;
 

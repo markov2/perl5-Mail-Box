@@ -4,6 +4,7 @@ package Tools;
 
 use base 'Exporter';
 use File::Copy 'copy';
+use List::Util 'first';
 
 our @EXPORT =
   qw/clean_dir copy_dir
@@ -282,12 +283,23 @@ sub start_pop3_server($;$)
 {  my $popbox  = shift;
    my $setting = shift || '';
 
-   $^X =~ m/(.*)/;
-   my $perl = $1;
-
    my $serverscript = File::Spec->catfile('43pop3', 'server');
 
+   # Some complications to find-out $perl, which must be absolute and
+   # untainted for perl5.6.1, but not for the other Perl's.
+   my $perl   = $^X;
+   unless(File::Spec->file_name_is_absolute($perl))
+   {   my @path = split /\:/, $ENV{PATH};
+       $perl    = first { -x $_ }
+                      map { File::Spec->catfile($_, $^X) }
+                           @path;
+   }
+
+   $perl =~ m/(.*)/;
+   $perl = $1;
+
    %ENV = ();
+
    open(my $server, "$perl $serverscript $popbox $setting|")
        or die "Could not start POP3 server\n";
 

@@ -1,5 +1,8 @@
 #!/usr/bin/perl -T
 
+use warnings;
+use strict;
+
 use Tools;
 
 use Test::More tests => 14;
@@ -52,7 +55,7 @@ my @id = $receiver->ids;
 cmp_ok(scalar(@id), '==', scalar(@message), "Number of messages doesn't match");
 is(join('',@id), join('',@message), "ID's don't match filenames");
 
-$error = '';
+my $error = '';
 foreach(@id)
 {   my ($reported, $real) = ($receiver->messageSize($_),-s);
     $error .= "size $_ is not right: expected $real, got $reported\n"

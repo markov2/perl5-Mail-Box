@@ -5,8 +5,6 @@ use Tools    qw/$windows/;
 
 sub name     {"Mail::Box::Maildir; maildir folders"}
 sub critical { 0 }
-sub requires { () }
-
 sub skip()
 {
       $windows

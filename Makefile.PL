@@ -6,8 +6,15 @@ require 5.006_001;
 
 my @optional =
 ( 
+  [ Mail::Box::Parser::C => '3.001'
+  , reason => <<'REASON', warning => <<'WARN' ]
+Speeds-up reading mail folders, though most time is consumed by
+Perl's administration of the processed data.
+REASON
+This module contains XS code, so you need a C compiler.
+WARN
 
-  [ Encode => '1.86', requires => sub { $] >= 5.007_003 }
+, [ Encode => '1.86', requires => sub { $] >= 5.007_003 }
   , reason  => <<'REASON', warning => <<'WARN' ]
 Conversions between character sets are done by Encode.  Many
 other Perl modules use Encode too.
@@ -109,11 +116,51 @@ print <<'INTRO';
 *
 **** Installing MailBox
 *
-* First, let me ask you whether you want some optional modules to be
+INTRO
+
+print <<'REQUIRED';
+
+* First, I will check the sanity of all required modules... sometimes
+* they do not load, for instance if you have installed a new release
+* of Perl without upgrading the libraries.
+
+REQUIRED
+
+my @errors;
+while(my ($module, $version) = each %prereq)
+{   eval "require $module";
+    if($@ && $@ =~ m/^Can't locate /)
+    {   print "    $module is not yet installed\n" }
+    elsif($@)
+    {   print "    $module produced an error:\n$@";
+        push @errors, $module;
+    }
+    elsif($module->VERSION < $version)
+    {   print "    $module version ",$module->VERSION
+            , " is outdated; requires $version\n";
+    }
+    else
+    {   print "    $module version ",$module->VERSION
+            , " is ok (required is $version)\n";
+    }
+}
+
+if($errors)
+{   die <<'FIX';
+*** ERROR! You have to install @errors manually,
+*** before you can retry to install MailBox.
+FIX
+    exit 1;
+}
+
+print <<'OPTIONAL';
+
+* Now, let me ask you whether you want some optional modules to be
 * installed as well.  You can always install these modules later, by
 * hand, without a need to re-install MailBox.
 *
-INTRO
+OPTIONAL
+
 foreach my $optional (@optional)
 {   my ($module, $version, %args) = @$optional;
     my $requirements = $args{requires} || sub {1};
@@ -156,7 +203,7 @@ foreach my $optional (@optional)
     {   $install = $key eq 'y' ? 'y' : 'n';
     }
 
-    return 0 unless $install eq 'y';
+    next unless $install eq 'y';
 
     my $distr = $args{distr} || $module;
 

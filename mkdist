@@ -45,7 +45,7 @@ tar -czf $EXAMPLE_OODOC README.oodoc mkdist mkdoc html || exit $?
   make >/dev/null       || exit $?
   make test             || exit $?
   make dist >/dev/null  || exit $?
-)
+) || exit $?
 
 #
 # Publish PRODUCED distribution on the private website

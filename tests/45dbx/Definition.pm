@@ -7,7 +7,7 @@ sub critical {0}
 sub skip
 {
     eval "require Mail::Transport::Dbx";
-    return "Mail::Transport::Dbx is not installed or gives errors.";
+    return "Mail::Transport::Dbx is not installed or gives errors." if $@;
 
     undef;
 }

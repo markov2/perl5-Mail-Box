@@ -39,13 +39,13 @@ sub name() {'POSIX'}
 
 sub _try_lock($)
 {   my ($self, $file) = @_;
-    $? = fcntl($file->fileno, F_SETLK, pack('s @256', F_WRLCK)) || 0;
+    $? = fcntl($file, F_SETLK, pack('s @256', F_WRLCK)) || 0;
     $?==0;
 }
 
 sub _unlock($)
 {   my ($self, $file) = @_;
-    fcntl($file->fileno, F_SETLK, pack('s @256', F_UNLCK));
+    fcntl($file, F_SETLK, pack('s @256', F_UNLCK));
     delete $self->{MBL_has_lock};
     $self;
 }

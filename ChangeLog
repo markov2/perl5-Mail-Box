@@ -11,7 +11,7 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
-version 2.047:
+version 2.047: Thu Aug  7 23:59:53 CEST 2003
 
 	Fixes:
 
@@ -27,7 +27,14 @@ version 2.047:
 	- [Joe Junkin] reported a problem to send messages where the
 	  body is not in a temporary file via SMTP.
 
+	- [Kees Dekker] with Solaris and perl5.8.1 showed me that
+	  Mail::Box::Locker::POSIX was so broken that its tests worked
+	  on other versions :(
+
 	Improvements:
+
+	- Moved all questions about optional modules from test.pl to
+	  Makefile.PL.  Hope for a cleaner installation.
 
 	- On request by [Jason Woodward], POP3 received messages will
 	  get their Status and X-Status fields processed.  POP3 has no
@@ -43,9 +50,14 @@ version 2.047:
 	  which ignores message lines starting with 'From ' as
 	  separators in broken MBOX folders (like mutt produces).
 
+	- Added Mail::box::Parser::C to the list of optional modules.
+
 	- Refolding and Mail::Message::Field::AddrGroup will produce
 	  the address strings in alphabetic order, to get a reproduceable
 	  result (required for 5.8.1)
+
+	- Disabled detection of folder "changed during access", until
+	  all folder types support 'update()'.
 
 version 2.046: Thu Jul 31 12:25:47 CEST 2003
 

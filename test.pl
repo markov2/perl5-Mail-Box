@@ -15,6 +15,7 @@ use POSIX 'getcwd';
 use Tools;             # test tools
 use IO::Dir;
 
+my $skip_tests = -f 'skiptests';
 chdir 'tests'    ##### CHANGE DIR TO tests
    or die "Cannot go to test scripts directory: $!\n";
 
@@ -36,13 +37,13 @@ sub run_in_harness(@);
 sub report();
 sub dl_format($@);
 
-warn <<'WARN';
+warn <<'WARN' unless $select_tests;
 
 *
 * Testing MailBox
-WARN;
+WARN
 
-if(-f "skiptests")
+if($skip_tests)
 {   warn <<'WARN';
 * Tests are disabled, because you said so when the Makefile was created.
 * remove the file "skiptests" if you want to run them.
@@ -97,7 +98,7 @@ foreach my $set (@sets)
 
     if(my $reason = $package->skip)
     {   $skipped{$set} = $reason;
-        printf "%-15s --- %s\n", $set, $reason;
+        printf "%-15s -- %s\n", $set, $reason;
         next;
     }
 
@@ -106,12 +107,12 @@ foreach my $set (@sets)
        if defined $select_tests;
 
     if(@tests)
-    {   printf "%-15.15s -- run %2d %s %s\n", $set, scalar @tests,
+    {   printf "%-15.15s -- %d %s %s\n", $set, scalar @tests,
            (@tests==1 ? "script; " : "scripts;"), $package->name;
     }
     elsif(defined $select_tests)  { ; }  # silence
     else
-    {   printf "%-15.15s -- skip all tests; %s\n", $set, $package->name;
+    {   printf "%-15.15s -- skip all tests for %s\n", $set, $package->name;
     }
 
     next unless @tests;
