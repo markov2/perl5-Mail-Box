@@ -120,7 +120,9 @@ C<pop3> protocol implementation can be found in C<::POP3>.
 
 sub new(@)
 {   my $class = shift;
-    return $class->SUPER::new(@_) unless $class eq __PACKAGE__;
+
+    return $class->SUPER::new(@_)
+        unless $class eq __PACKAGE__ || $class eq "Mail::Transport::Send";
 
     #
     # auto restart by creating the right transporter.
@@ -146,6 +148,7 @@ sub init($)
     $self->{MT_hostname}
        = defined $args->{hostname} ? $args->{hostname} : 'localhost';
 
+    $self->{MT_port}     = $args->{port};
     $self->{MT_username} = $args->{username};
     $self->{MT_password} = $args->{password};
     $self->{MT_interval} = $args->{interval} || 30;

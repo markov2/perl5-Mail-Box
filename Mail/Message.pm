@@ -451,11 +451,11 @@ my $default_mailer;
 sub send(@)
 {   my $self   = shift;
 
-    require Mail::Transport;
+    require Mail::Transport::Send;
 
     my $mailer
        = ref $_[0] && $_[0]->isa('Mail::Transport::Send') ? shift
-       : defined $default_mailer ? $default_mailer
+       : defined $default_mailer  ? $default_mailer
        : ($default_mailer = Mail::Transport->new(@_));
 
     $self->log(ERROR => "No mailer found"), return
@@ -639,13 +639,13 @@ sub sender()
 {   my $self   = shift;
     my $sender = ($self->head->get('Sender'))[0];
 
-    $sender = ($self->head->get('From'))[0]
+    $sender = ($self->head->get('From'))[0]  # first from line
         unless defined $sender;
 
     return undef
         unless defined $sender;
 
-    ($sender->addresses)[0];
+    ($sender->addresses)[0];                 # first specified address
 }
 
 #-------------------------------------------

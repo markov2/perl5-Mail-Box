@@ -7,12 +7,50 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-version 2.026:
+version 2.026: Mon Oct  7 23:39:07 CEST 2002
+
+	Fixes:
+
+	- Default package for $msg->send was broken.  Reported by
+	 [Jeremy Banks]
 
 	Improvements:
 
 	- Mail::Message::Field::wellformedName() produces better results,
 	  thanks to [Emmet Cailfield]
+
+	- Many more tests are succeeding under Windows, since
+	  [Greg Matheson] sent me the output of the tests based
+	  on Test::More.  Thanks Greg!
+
+	- Mail::Transport::SMTP warns when send(To => $to) is used where
+	  send(to => $to) is needed.  [Jeremy Banks]
+
+	- Mail::Message::Head::ResentGroup::set(field)       added
+	  Mail::Message::Head::ResentGroup::createReceived() added
+	  Mail::Message::Head::ResentGroup::destinations()   added
+
+	- Mail::Message::Construct::bounce() now adds Resent-* lines
+	  to the first Received line, if available.
+
+	- Mail::Message::Head::ResentGroup::new() creates a received
+	  field if not defined.
+
+	- Mail::Message::Head::Clone uses $head->addNoRealize i.s.o add(),
+	  and thereby does not re-fold the headers anymore.
+
+	- Deleting or resetting a non-existing field in the header will
+	  not flag the message to be 'modified'.
+
+	- Implemented Mail::Box::Search::SpamAssassin, a spam filter
+
+	- Implemented Mail::Message::Wrapper::SpamAssassin, a wrapper
+	  used in the new spam filter.
+
+	- Implemented authorization for SMTP, based in work by
+	  [Michael de Beer]
+
+	- X-Spam-* headers are not disclosed for transmission.
 
 version 2.025: Mon Sep 23 13:11:57 CEST 2002
 
@@ -20,7 +58,7 @@ version 2.025: Mon Sep 23 13:11:57 CEST 2002
 
 	- Accidentally left debug-printstatements in Mail::Transport::SMTP
 
-	- Fixed from address in Mail::Transport::SMTP
+	- Fixed "from" address used in Mail::Transport::SMTP.
 
 	Improvements:
 

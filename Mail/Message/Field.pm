@@ -607,6 +607,7 @@ sub toDisclose()
 {   shift->name !~ m!^(?: (?:x-)?status
                       |   (?:resent-)?bcc
                       |   Content-Length
+                      |   x-spam-
                       ) $!x;
 }
 
@@ -729,6 +730,8 @@ sub fold($$;$)
     my $name = shift;
     my $line = shift;
     my $wrap = shift || $default_wrap_length;
+
+    $line    =~ s/\ns*/ /gms;            # Remove accidental folding
 
     my @folded;
     while(1)

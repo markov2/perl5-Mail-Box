@@ -7,6 +7,8 @@ use base 'Mail::Reporter';
 use Scalar::Util 'weaken';
 use Mail::Message::Field::Fast;
 
+use Sys::Hostname;
+
 =head1 NAME
 
 Mail::Message::Head::ResentGroup - a group of header fields about resending
@@ -112,20 +114,11 @@ sub init($$)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
 
-    my @fields = @{$args->{fields}};
-    foreach my $name (grep m!^[A-Z]!, keys %$args)
-    {   my $fn = $name =~ m!^(received|return\-path|resent\-\w*)$!i ? $name
-               : "Resent-$name";
+    $self->set($_)                     # add specified object fields
+        foreach @{$args->{fields}};
 
-        push @fields, Mail::Message::Field::Fast->new($fn, $args->{$name});
-    }
-
-    foreach my $field (@fields)
-    {   my $name = $field->name;
-        $name =~ s/^resent\-//;
-        $name =~ s/\-/_/g;
-        $self->{ "MMHR_$name" } = $field;
-    }
+    $self->set($_, $args->{$_})        # add key-value paired fields
+        foreach grep m/^[A-Z]/, keys %$args;
 
     my $head = $self->{MMHR_head} = $args->{head};
     $self->log(INTERNAL => "Message header required for ResentGroup")
@@ -133,21 +126,7 @@ sub init($$)
 
     weaken( $self->{MMHR_head} );
 
-    $self->log(ERROR => "No `Received' field specified."), return
-       unless defined $self->{MMHR_received};
-
-    my $mf = 'Mail::Message::Field';
-
-    $self->{MMHR_date}       ||= $mf->new('Resent-Date' => $mf->toDate);
-
-    # Be sure the message-id is good
-    my $msgid = defined $self->{MMHR_message_id}
-              ? "$self->{MMHR_message_id}"
-              : $head->createMessageId;
-
-    $msgid = "<$msgid>" unless $msgid =~ m!^\<.*\>$!;
-    $self->{MMHR_message_id} = $mf->new('Resent-Message-ID' => $msgid);
-
+    $self->createReceived unless defined $self->{MMHR_received};
     $self;
 }
 
@@ -181,6 +160,50 @@ sub delete()
 =head2 Access to the Header
 
 =cut
+
+#------------------------------------------
+
+=method set (FIELD =E<gt> VALUE) | OBJECT
+
+Set a FIELD to a (new) VALUE.  The FIELD names which do not start with
+'Resent-*' but need it will have that added.  It is also an option to
+specify a fully prepared message field OBJECT.  In any case, a field
+OBJECT is returned.
+See also Mail::Message::Head::resent() and
+Mail::Message::Construct::bounce().
+
+=examples
+
+ my @rgs  = $msg->head->resentGroups;
+ my $this = $rgs[0];
+ $this->set(To => 'fish@tux.aq');
+ $msg->send;
+
+ $msg->head->resent(To => 'fish@tux.aq');   # the same
+ $msg->send;
+
+ $msg->bounce(To => 'fish@tux.aq')->send;   # the same
+
+=cut
+
+sub set($$)
+{   my $self  = shift;
+
+    my ($field, $name, $value);
+    if(@_==1) { $field = shift }
+    else
+    {   my ($fn, $value) = @_;
+        $name  = $fn =~ m!^(received|return\-path|resent\-\w*)$!i ? $fn
+               : "Resent-$fn";
+
+        $field = Mail::Message::Field::Fast->new($name, $value);
+    }
+
+    $name = $field->name;
+    $name =~ s/^resent\-//;
+    $name =~ s/\-/_/g;
+    $self->{ "MMHR_$name" } = $field;
+}
 
 #------------------------------------------
 
@@ -319,6 +342,20 @@ sub bcc()
 
 #------------------------------------------
 
+=method destinations
+
+Returns a list of all addresses specified in the C<Resent-To>, C<-Cc>, and
+C<-Bcc> fields of this resent group.
+
+=cut
+
+sub destinations()
+{   my $self = shift;
+    ($self->to, $self->cc, $self->bcc);
+}
+
+#------------------------------------------
+
 =method messageId
 
 Returns the message-ID used for this group of resent lines.
@@ -347,6 +384,48 @@ first.  Only fields mentioned in the RFC are returned.
 sub orderedFields()
 {   my $self   = shift;
     map { $self->{ "MMHR_$_" } || () } @ordered_field_names;
+}
+
+#-------------------------------------------
+
+=method print [FILEHANDLE]
+
+=cut
+
+sub print(;$)
+{   my $self = shift;
+    my $fh   = shift || select;
+    $_->print($fh) foreach $self->orderedFields;
+}
+
+#-------------------------------------------
+
+=method createReceived
+
+Create a recieved field for this resent group.  This is automatically
+called if none was specified during creation of this resent group object.
+
+The content of this field is described in RFC2821 section 4.4.  It could use
+some improvement.
+
+=cut
+
+my $unique_received_id = 'rc'.time;
+
+sub createReceived()
+{   my $self   = shift;
+    my $head   = $self->{MMHR_head};
+    my $sender = $head->message->sender;
+
+    my $received
+      = 'from ' . $sender->format
+      . ' by '  . hostname
+      . ' with SMTP'
+      . ' id '  . $unique_received_id++
+      . ' for ' . $head->get('To')  # may be wrong
+      . '; '. Mail::Message::Field->toDate;
+
+    $self->set(Received => $received);
 }
 
 #-------------------------------------------

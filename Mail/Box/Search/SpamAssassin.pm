@@ -5,13 +5,14 @@ use base 'Mail::Box::Search';
 use strict;
 use warnings;
 
-use Carp;
+use Mail::SpamAssassin;
+use Mail::Message::Wrapper::SpamAssassin;
 
 #-------------------------------------------
 
 =head1 NAME
 
-Mail::Box::Search::SpamAssassin - select messages with Mail::SpamAssassin
+Mail::Box::Search::SpamAssassin - select spam messages with Mail::SpamAssassin
 
 =head1 SYNOPSIS
 
@@ -19,15 +20,31 @@ Mail::Box::Search::SpamAssassin - select messages with Mail::SpamAssassin
  my $mgr    = Mail::Box::Manager->new;
  my $folder = $mgr->open('Inbox');
 
- my $filter = Mail::Box::Search::SpamAssassin->new
-    ( label => 'spam'
-    , in    => 'BODY'
-    );
+ my $spam = Mail::Box::Search::SpamAssassin->new;
+ if($spam->search($message)) {...}
 
  my @msgs   = $filter->search($folder);
- if($filter->search($message)) {...}
+ foreach my $msg ($folder->messages)
+ {   $msg->delete if $msg->label('spam');
+ }
+
+ my $spam2 = Mail::Box::Search::SpamAssassin->new(deliver => 'DELETE');
+ $spam2->search($folder);
+ $mgr->moveMessages($folder->messages('spam'), $spamfolder);
 
 =head1 DESCRIPTION
+
+I<Spam> means "unsollicited e-mail", and is as name derived from a
+Monty Python scatch.  Although Monty Python is fun, spam is a pain:
+it needlessly spoils minutes of time from most people: telephone
+bills, overful mailboxes which block honest e-mail, and accidentally
+removal of honest e-mail which looks like spam.  Spam is the pest
+of Internet.
+
+Happily, Mail::Box can be used as spam filter, in combination with
+the useful Mail::SpamAssassin module (which must be installed separately).
+Each message which is searched is wrapped in a
+Mail::Message::Wrapper::SpamAssassin object.
 
 =head1 METHODS
 
@@ -43,9 +60,38 @@ Mail::Box::Search::SpamAssassin - select messages with Mail::SpamAssassin
 
 =method new OPTIONS
 
-Create a spam filter.
+Create a spam filter.  Internally, a Mail::SpamAssassin object is
+maintained.
 
-=default in MESSAGE
+=default in    'MESSAGE'
+
+Only the whole message can be searched; this is a limitation of
+the Mail::SpamAssassin module.
+
+=option  label STRING|undef
+=default label 'spam'
+
+Mark all selected selected message with the specified STRING.  If this
+option is explicitly set to C<undef>, the label will not be set.
+
+=option  rewrite_mail BOOLEAN
+=default rewrite_mail <true>
+
+Add lines to the message header describing the results of the spam
+scan. See Mail::SpamAssassin::PerMessageStatus::rewrite_mail().
+
+=option  spam_assassin OBJECT
+=default spam_assassin undef
+
+Provide a Mail::SpamAssassin object to be used for searching spam.  If
+none is specified, one is created internally.  The object can be
+retreived with assassinator().
+
+=option  sa_options     HASH_REF
+=default sa_options     {}
+
+Options to create the internal Mail::SpamAssassin object; see its
+manual page for the available options.
 
 =examples
 
@@ -59,19 +105,31 @@ Create a spam filter.
 sub init($)
 {   my ($self, $args) = @_;
 
-    $args->{in}    ||= 'MESSAGE';
-    $args->{found} ||= 'spam';
+    $args->{in}  ||= 'MESSAGE';
+    $args->{label} = 'spam' unless exists $args->{label};
 
     $self->SUPER::init($args);
 
-    my $found = $args->{found};
-    $self->{MBSS_action}
-       = ref $found         ? $found
-       : $found eq 'DELETE' ? sub { $_[0]->delete }
-       :                      sub { $_[0]->label($found => 1) };
+    $self->{MBSS_rewrite_mail}
+       = defined $args->{rewrite_mail} ? $args->{rewrite_mail} : 1;
+
+    $self->{MBSS_sa}
+       = defined $args->{spamassassin} ? $args->{spamassassin}
+       : Mail::SpamAssassin->new($args->{sa_options} || {});
 
     $self;
 }
+
+#-------------------------------------------
+
+=method assassinator
+
+Returns the internally maintained assassinator object.  You may want
+to reach this object for complex configuration.
+
+=cut
+
+sub assassinator() { shift->{MBSS_sa} }
 
 #-------------------------------------------
 
@@ -81,44 +139,32 @@ sub init($)
 
 #-------------------------------------------
 
-sub search(@)
-{   my ($self, $object, %args) = @_;
-    $self->SUPER::search($object, %args);
-}
+sub searchPart($)
+{   my ($self, $message) = @_;
 
-#-------------------------------------------
+    my @details = (message => $message);
+   
+    my $sa      = Mail::Message::Wrapper::SpamAssassin->new($message);
+    my $status  = $self->assassinator->check($sa);
 
-sub inHead(@)
-{   my ($self, $part, $head, $args) = @_;
+    my $is_spam = $status->is_spam;
+    $status->rewrite_mail if $self->{MBSS_rewrite_mail};
 
-    0;
-}
-
-
-#-------------------------------------------
-
-sub inBody(@)
-{   my ($self, $part, $body, $args) = @_;
-
-    my @details = (message => $part->toplevel, part => $part);
-    my ($field_check, $match_check, $deliver)
-      = @$self{ qw/MBSG_field_check MBSG_match_check MBSG_deliver/ };
-
-    my $matched = 0;
-    my $linenr  = 0;
-
-  LINES:
-    foreach my $line ($body->lines)
-    {   $linenr++;
-        next unless $match_check->($body, $line);
-
-        $matched++;
-        last LINES unless $deliver;  # no deliver: only one match needed
-        $deliver->( {@details, linenr => $linenr, line => $line} );
+    if($is_spam)
+    {   my $deliver = $self->{MBS_deliver};
+        $deliver->( {@details, status => $status} ) if defined $deliver;
     }
 
-    $matched;
+    $is_spam;
 }
+
+#-------------------------------------------
+
+sub inHead(@) {shift->notImplemented}
+
+#-------------------------------------------
+
+sub inBody(@) {shift->notImplemented}
 
 #-------------------------------------------
 

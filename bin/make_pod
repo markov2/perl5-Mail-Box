@@ -312,6 +312,7 @@ sub cleanup_package_relations($)
     if(my $isa = $isa[0])
     {   $pkg->{extends} = $isa;
         push @{$pkgs{$isa}{extended_by}}, $package;
+        $pkgs{$isa}{pods} ||= [];    # require for newly created, external pkgs
     }
 
     my @real = unique map { defined $_->{realize} ? ($_->{realize}) : () }
@@ -333,7 +334,9 @@ sub extract_methods($$$);
 sub build_method_index()
 {   %methods = ();
 
-    foreach my $pod (map { @{$pkgs{$_}{pods}} } keys %pkgs)
+    my @pods = map { @{$pkgs{$_}{pods}} } keys %pkgs;
+
+    foreach my $pod (@pods)
     {   my $manual = $pod->{manual};
         print "extraction methods from $manual.\n"
             if $verbose;
@@ -693,7 +696,7 @@ foreach my $filename (manifest)
 
 #dump_pkg_structure;
 
-foreach my $package (keys %pkgs)
+foreach my $package (sort keys %pkgs)
 {   cleanup_package_relations $package;
 }
 

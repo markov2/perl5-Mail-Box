@@ -410,9 +410,11 @@ produce a nice warning if the sub-classes cannot resolve a method.
 sub AUTOLOAD(@)
 {   my $self  = shift;
     our $AUTOLOAD;
+    my $class = ref $self;
+    (my $method = $AUTOLOAD) =~ s/^$class\:\://;
 
     $Carp::MaxArgLen=20;
-    confess "Method `$AUTOLOAD' is not defined for a ". (ref $self) . ".\n";
+    confess "Method $method() is not defined for a $class.\n";
 }
 
 #-------------------------------------------

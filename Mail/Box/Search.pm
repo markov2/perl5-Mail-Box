@@ -71,7 +71,7 @@ Decode the messages before the search takes place.  Even plain text messages
 can be encoded, for instance as C<quoted-printable>, which may disturb the
 results.  However, decoding will slow-down the search.
 
-=option  deliver undef|CODE|'DELETE'|LABEL
+=option  deliver undef|CODE|'DELETE'
 =default deliver undef
 
 The exact functionality of this parameter differs per search method, so

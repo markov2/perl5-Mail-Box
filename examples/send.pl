@@ -25,12 +25,12 @@ my $email = shift @ARGV;
 #
 
 my $message = Mail::Message->build
- ( From    => 'me@localhost.com'
- , To      => $email
- , Subject => 'A sunny day'
- , Cc      => 'NINJA <ninja>, Mark Overmeer <markov>'
+  ( From    => 'me@localhost.com'
+  , To      => $email
+  , Subject => 'A sunny day'
+# , Cc      => 'NINJA <ninja>, Mark Overmeer <markov>'
 
- , data => <<'TEXT'
+  , data => <<'TEXT'
 This is an automatically generated message.
 I hope you have a nice day.
 TEXT
@@ -42,6 +42,6 @@ TEXT
 #
 
 warn "Sending returned error $!\n"
-   unless $message->send(via => 'smtp', trace => 'NOTICE', debug => 1);
+   unless $message->send;
 
-#$message->send(via => 'sendmail');
+#$message->send(via => 'sendmail', trace => 'NOTICE', debug => 1);

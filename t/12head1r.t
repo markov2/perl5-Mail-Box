@@ -9,7 +9,7 @@ use warnings;
 
 use lib qw(. t);
 
-BEGIN {plan tests => 33}
+BEGIN {plan tests => 23}
 
 use Mail::Message::Head::ResentGroup;
 use Mail::Message::Head::Complete;
@@ -38,22 +38,6 @@ isa_ok($rg, 'Mail::Message::Head::ResentGroup');
   is($from->name, 'resent-from');
 }
 
-{  my $date = $rg->date;
-   ok(ref $date);
-   isa_ok($date, 'Mail::Message::Field');
-   is($date->name, 'resent-date');
-   is($date->Name, 'Resent-Date');
-}
-
-{  my $msgid = $rg->messageId;
-   ok(ref $msgid);
-   isa_ok($msgid, 'Mail::Message::Field');
-   is($msgid->name, 'resent-message-id');
-   is($msgid->Name, 'Resent-Message-ID');
-   like($msgid, qr!^\<!);
-   like($msgid, qr!\>$!);
-}
-
 #
 # Interaction with a header
 #
@@ -68,16 +52,11 @@ $h->addResentGroup($rg);
    $h->print($fh);
    $fh->close;
 
-   # Cannot check the whole output: some lines are generated...
-   $output =~ s/(Date|ID)\: .*/$1: [removed]/gm;
-
    is($output, <<'EXPECTED');
 From: me
 To: you
 Received: obligatory field
-Resent-Date: [removed]
 Resent-From: the.rg.group@example.com
-Resent-Message-ID: [removed]
 
 EXPECTED
 
@@ -88,7 +67,7 @@ my $rg2 = $h->addResentGroup
  , Cc            => 'cc to everyone'
  , Bcc           => 'undisclosed'
  , 'Return-Path' => 'Appears before everything else'
- , 'Message-ID'  => 'my own id'
+ , 'Message-ID'  => '<my own id>'
  , Sender        => 'do not believe it'
  , From          => 'should be added'
  , To            => 'just to check every single field'
@@ -103,16 +82,11 @@ isa_ok($rg2, 'Mail::Message::Head::ResentGroup');
    $h->print($fh);
    $fh->close;
 
-   # Cannot check the whole output: some lines are generated...
-   $output =~ s/Date\: .*/Date: [removed]/gm;
-   $output =~ s/ID\: .*?\d.*/ID: [removed]/gm;
-
    is($output, <<'EXPECTED');
 From: me
 To: you
 Return-Path: Appears before everything else
 Received: now or never
-Resent-Date: [removed]
 Resent-From: should be added
 Resent-Sender: do not believe it
 Resent-To: just to check every single field
@@ -120,9 +94,7 @@ Resent-Cc: cc to everyone
 Resent-Bcc: undisclosed
 Resent-Message-ID: <my own id>
 Received: obligatory field
-Resent-Date: [removed]
 Resent-From: the.rg.group@example.com
-Resent-Message-ID: [removed]
 
 EXPECTED
 }
@@ -141,10 +113,10 @@ isa_ok($h2, 'Mail::Message::Head::Complete');
    is($rg1->messageId, '<my own id>');
 
    my @of  = $rg1->orderedFields;
-   cmp_ok(@of, '==', 9);
+   cmp_ok(@of, '==', 8);
 
    @of     = $rgs[1]->orderedFields;
-   cmp_ok(@of, '==', 4);
+   cmp_ok(@of, '==', 2);
 
 # Now delete, and close scope to avoid accidental reference to
 # fields which should get cleaned-up.
@@ -156,23 +128,18 @@ isa_ok($h2, 'Mail::Message::Head::Complete');
    cmp_ok(@rgs, '==', 1);
 
    my @of  = $rgs[0]->orderedFields;
-   cmp_ok(@of, '==', 4);
+   cmp_ok(@of, '==', 2);
 
    my $output;
    my $fh = IO::Scalar->new(\$output);
    $h2->print($fh);
    $fh->close;
 
-   # Cannot check the whole output: some lines are generated...
-   $output =~ s/(Date|ID)\: .*/$1: [removed]/gm;
-
    is($output, <<'EXPECTED');
 From: me
 To: you
 Received: obligatory field
-Resent-Date: [removed]
 Resent-From: the.rg.group@example.com
-Resent-Message-ID: [removed]
 
 EXPECTED
 

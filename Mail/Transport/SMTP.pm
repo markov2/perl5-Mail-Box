@@ -38,8 +38,9 @@ C<sendmail>, C<mail>, or other programs on the local host.
 =method new OPTIONS
 
 =default hostname <from Net::Config>
-=default proxy <from Net::Config>
-=default via 'smtp'
+=default proxy    <from Net::Config>
+=default via      'smtp'
+=default port     25
 
 =option  debug BOOLEAN
 =default debug <false>
@@ -62,6 +63,20 @@ C<From> line of the message is assumed.
 The number of seconds to wait for a valid response from the server before
 failing.
 
+=option  username STRING
+=default username undef
+
+Use SASL authentication to contact the remote SMTP server (RFC2554).  This
+username in combination with new(password) is passed as arguments to
+Net::SMTP::auth().  Other forms of authentication are not supported by
+Net::SMTP.  The C<username> can also be specified as an Authen::SASL object.
+
+=option  password STRING
+=default password undef
+
+The password to be used with the new(username) to log in to the remote
+server.
+
 =cut
 
 sub init($)
@@ -75,7 +90,8 @@ sub init($)
         $args->{hostname} = $hosts;
     }
 
-    $args->{via} = 'smtp';
+    $args->{via}  ||= 'smtp';
+    $args->{port} ||= '25';
 
     $self->SUPER::init($args);
 
@@ -132,14 +148,14 @@ sub trySend($@)
 
     # From whom is this message.
     my $from = $args{from} || $message->sender;
-    $from = ($from->address)[0] if ref $from;
+    $from = $from->address if $from->isa('Mail::Address');
 
     # Who are the destinations.
-    my $to   = $args{to}   || [$message->destinations];
-    my @to   = ref $to eq 'ARRAY' ? @$to : ($to);
-    foreach (@to)
-    {   $_ = $_->address if ref $_ && $_->isa('Mail::Address');
-    }
+    $self->log(ERROR =>
+        "Use option `to' to overrule the destination: `To' would refer to a field")
+            if defined $args{To};
+
+    my @to = map {$_->address} $self->destinations($message, $args{to});
 
     # Prepare the header
     my @header;
@@ -179,15 +195,12 @@ sub trySend($@)
                 $server->code);
     }
 
-warn "#1\n";
     # in SCALAR context
     my $server;
     return 0 unless $server = $self->contactAnyServer;
 
-warn "#2 $server\n";
     $server->quit, return 0
         unless $server->mail($from);
-warn "#3\n";
 
     foreach (@to)
     {     next if $server->to($_);
@@ -221,19 +234,30 @@ L<IO::Socket::INET> object is returned.
 sub contactAnyServer()
 {   my $self = shift;
 
-    my ($interval, $count, $timeout) = $self->retry;
-    my ($host, $username, $password) = $self->remoteHost;
+    my ($enterval, $count, $timeout) = $self->retry;
+    my ($host, $port, $username, $password) = $self->remoteHost;
     my @hosts = ref $host ? @$host : $host;
 
     foreach my $host (@hosts)
     {   my $server = $self->tryConnectTo
-         ( $host
+         ( $host, Port => $port,
          , %{$self->{MTS_net_smtp_opts}}, Timeout => $timeout
          );
 
         defined $server or next;
 
         $self->log(PROGRESS => "Opened SMTP connection to $host.\n");
+
+        if(defined $username)
+        {   if($server->auth($username, $password))
+            {    $self->log(PROGRESS => "$host: Authentication succeeded.\n");
+            }
+            else
+            {    $self->log(ERROR => "Authentication failed.\n");
+                 return undef;
+            }
+        }
+
         return $server;
     }
 
@@ -252,6 +276,44 @@ OPTIONS are passed to the C<new> method of L<Net::SMTP>.
 sub tryConnectTo($@)
 {   my ($self, $host) = (shift, shift);
     Net::SMTP->new($host, @_);
+}
+
+#------------------------------------------
+
+=method destinations MESSAGE, [ADDRESS|ARRAY-OF-ADDRESSES]
+
+Determine the destination for this message.  If a valid ADDRESS is defined,
+this is used to overrule the addresses within the message.  If the ADDRESS
+is C<undef> it is ignored.
+
+If no ADDRESS is specified, the message is scanned for resent groups (see
+Mail::Message::Head::resentGroups()).  The addresses found in the first
+(is latest added) group are used.  If no resent groups are found, the
+normal C<To>, C<Cc>, and C<Bcc> lines are taken.
+
+=cut
+
+sub destinations($;$)
+{   my ($self, $message, $overrule) = @_;
+    my @to;
+
+    if(defined $overrule)      # Destinations overruled by user.
+    {   my @addr = ref $overrule eq 'ARRAY' ? @$overrule : ($overrule);
+        @to = map { ref $_ && $_->isa('Mail::Address') ? ($_)
+                    : Mail::Address->parse($_) } @addr;
+    }
+    elsif(my @rgs = $message->head->resentGroups)
+    {   @to = $rgs[0]->destinations;
+        $self->log(ERROR => "Resent group does not defined destinations"), return ()
+            unless @to;
+    }
+    else
+    {   @to = $message->destinations;
+        $self->log(ERROR => "Message has no destinations"), return ()
+            unless @to;
+    }
+
+    @to;
 }
 
 #------------------------------------------

@@ -1062,24 +1062,31 @@ sub buildFromBody(@)
 
 #------------------------------------------
 
-=method bounce RG-OBJECT|OPTIONS
+=method bounce [RG-OBJECT|OPTIONS]
 
-Creates a new message object, which has a resent-group added.  The
-program calling this considers itself as an intermediate step in the
-message delivery process.
+The program calling this method considers itself as an intermediate step
+in the message delivery process; it therefore leaves a resent group
+of header fields as trace.
 
-The resent-group is created by instantiating a
-Mail::Message::Head::ResentGroup object (RG), which you may also
-pass yourself.  See Mail::Message::Head::ResentGroup::new() for the
-available OPTIONS.
+When a message is received, the Mail Transfer Agent (MTA) adds a
+C<Received> field to the header.  As OPTIONS, you may specify lines
+which are added to the resent group of that received field.  C<Resent->
+is prepended before the field-names automatically, unless already present.
+
+You may also specify an instantiated Mail::Message::Head::ResentGroup (RG)
+object.  See Mail::Message::Head::ResentGroup::new() for the available
+options.  This is required if you want to add a new resent group: create
+a new C<Received> line in the header as well.
 
 =examples
 
  my $bounce = $folder->message(3)->bounce(To => 'you', Bcc => 'everyone');
+
  $bounce->send;
  $outbox->addMessage($bounce);
 
- my $rg     = Mail::Message::Head::ResentGroup->new(To => 'you');
+ my $rg     = Mail::Message::Head::ResentGroup->new(To => 'you',
+    Received => 'from ... by ...');
  $msg->bounce($rg)->send;
 
 =cut
@@ -1087,7 +1094,40 @@ available OPTIONS.
 sub bounce(@)
 {   my $self   = shift;
     my $bounce = $self->clone;
-    $bounce->head->addResentGroup(@_);
+    my $head   = $bounce->head;
+
+    if(@_==1 && ref $_[0] && $_[0]->isa('Mail::Message::Head::ResentGroup' ))
+    {    $head->addResentGroup(shift);
+         return $bounce;
+    }
+
+    my @rgs    = $head->resentGroups;  # No groups yet, then require Received
+    my $rg     = $rgs[0];
+
+    if(defined $rg)
+    {   $rg->delete;     # Remove group to re-add it later: others field order
+        while(@_)        #  in header would be disturbed.
+        {   my $field = shift;
+            ref $field ? $rg->set($field) : $rg->set($field, shift);
+        }
+    }
+    else
+    {   $rg = Mail::Message::Head::ResentGroup->new(@_, head => $head);
+    }
+ 
+    #
+    # Add some nice extra fields.
+    #
+
+    $rg->set(Date => Mail::Message::Field->toDate)
+        unless defined $rg->date;
+
+    unless(defined $rg->messageId)
+    {   my $msgid = $head->createMessageId;
+        $rg->set('Message-ID' => "<$msgid>");
+    }
+
+    $head->addResentGroup($rg);
     $bounce;
 }
 

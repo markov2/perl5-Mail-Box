@@ -17,7 +17,7 @@ BEGIN {
    eval 'require HTML::FormatPS';
 
    if($@)
-   {   plan skipp_all => "requires HTML::FormatPS.\n";
+   {   plan skip_all => "requires HTML::FormatPS.\n";
        exit 0;
    }
 

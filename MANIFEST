@@ -74,6 +74,7 @@ Mail/Message/TransferEnc/Binary.pm
 Mail/Message/TransferEnc/EightBit.pm
 Mail/Message/TransferEnc/QuotedPrint.pm
 Mail/Message/TransferEnc/SevenBit.pm
+Mail/Message/Wrapper/SpamAssassin.pm
 Mail/Reporter.pm
 Mail/Transport.pm
 Mail/Transport/Mailx.pm

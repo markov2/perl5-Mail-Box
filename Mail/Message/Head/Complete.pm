@@ -69,7 +69,8 @@ sub clone(;@)
 {   my $self   = shift;
     my $copy   = ref($self)->new($self->logSettings);
 
-    $copy->add($_->clone) foreach $self->orderedFields;
+    $copy->addNoRealize($_->clone) foreach $self->orderedFields;
+    $copy->modified(1);
     $copy;
 }
 
@@ -208,13 +209,14 @@ the remembered position.  This is equivalent to the delete() method.
 sub reset($@)
 {   my ($self, $name) = (shift, lc shift);
 
-    $self->{MMH_modified}++;
     my $known = $self->{MMH_fields};
 
     if(@_==0)
-    {   delete $known->{$name};
+    {   $self->{MMH_modified}++ if delete $known->{$name};
         return ();
     }
+
+    $self->{MMH_modified}++;
 
     # Cloning required, otherwise double registrations will not be
     # removed from the ordered list: that's controled by 'weaken'
@@ -558,7 +560,8 @@ sub resentGroups()
 
 Add a RESENT-GROUP (a Mail::Message::Head::ResentGroup object) to
 the header.  If you specify DATA, that is used to create such group
-first.
+first.  If no C<Received> line is specified, it will be created
+for you.
 
 These header lines have nothing to do with the user's sense
 of C<reply> or C<forward> actions: these lines trace the e-mail

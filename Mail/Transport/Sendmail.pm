@@ -67,7 +67,7 @@ sub trySend($@)
 
     my $program = $self->{MTS_program};
     if(open(MAILER, '|-')==0)
-    {   { exec $program, '-t'; }
+    {   { exec $program, '-t'; }  # {} to avoid warning
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
         return 0;
     }
