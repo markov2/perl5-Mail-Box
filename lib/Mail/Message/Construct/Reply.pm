@@ -130,9 +130,9 @@ matter, as long as it is present.  See M<Mail::Message::Body::Multipart>.
 =default To <sender in current>
 
 The destination of your message.  By default taken from the C<Reply-To>
-field in the source message.  If that field is not present, the C<Sender>
-field is taken.  If that field is not present as well, the C<From> line
-is scanned.  If they all fail, C<undef> is returned.
+field in the source message.  If that field is not present as well, the
+C<From> line is scanned.  If they all fail, C<undef> is returned by this
+method: no reply message produced.
 
 =option  From ADDRESSES
 =default From <'to' in current>
@@ -257,7 +257,13 @@ sub reply(@)
     {   my $reply = $mainhead->get('reply-to');
         $to       = [ $reply->addresses ] if defined $reply;
     }
-    $to  ||= $self->sender || return;
+
+    unless(defined $to)
+    {   my @from  = $self->from;
+        $to     ||= \@from if @from;
+    }
+
+    defined $to or return;
 
     # Add Cc
     my $cc = $args{Cc};

@@ -79,6 +79,10 @@ REASON
      The tree builder is used by the HTML::Format* packages.
      Version 3.12 is wrong, so you should install a newer version
      if you want smart html conversions.
+
+, [ Time::HiRes => '1.51', reason => <<'REASON' ]
+     When installed, unique message-ids will be created using gettimeofday.
+     Otherwise, generated message-ids will not be thread/fork safe.
 REASON
 
 , [ HTML::FormatText => '2.01', distr => 'HTML::Format', reason => <<'REASON' ]

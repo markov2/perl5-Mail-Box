@@ -254,13 +254,6 @@ sub listSubFolders(@)
 
 #-------------------------------------------
 
-sub nameOfSubFolder($@)
-{   my ($self, $name) = (shift, shift);
-    $self->directory . '/' . $name;
-}
-
-#-------------------------------------------
-
 sub openSubFolder($)
 {   my ($self, $name) = @_;
 

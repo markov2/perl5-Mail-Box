@@ -4,14 +4,16 @@ use warnings;
 package Mail::Message::Field::Full;
 use base 'Mail::Message::Field';
 
-use Mail::Message::Field::Attribute;
-
 use utf8;
 use Encode ();
 use MIME::QuotedPrint ();
 use Storable 'dclone';
 
-use Carp;
+use Mail::Message::Field::Structured;
+use Mail::Message::Field::Unstructured;
+use Mail::Message::Field::Addresses;
+use Mail::Message::Field::URIs;
+
 my $atext = q[a-zA-Z0-9!#\$%&'*+\-\/=?^_`{|}~];  # from RFC
 
 =chapter NAME
@@ -20,11 +22,9 @@ Mail::Message::Field::Full - construct one smart line in a message header
 
 =chapter SYNOPSIS
 
- !!
  !! UNDER CONSTRUCTION
  !! The details of this module are NOT FINISHED yet
- !! Some parts are already usable, however.  With care!
- !!
+ !! Most parts are already usable, however.  With care!
 
  # Getting to understand the complexity of a header field ...
 
@@ -149,6 +149,8 @@ BEGIN {
    $implementation{$_} = 'URIs' foreach
       qw/list-help list-post list-subscribe list-unsubscribe list-archive
          list-owner/;
+   $implementation{$_} = 'Structured' foreach
+      qw/content-disposition content-type/;
 #  $implementation{$_} = 'Date' foreach
 #     qw/date resent-date/;
 }
@@ -172,9 +174,6 @@ sub new($;$$@)
     my $myclass = 'Mail::Message::Field::'
                 . ($implementation{lc $name} || 'Unstructured');
 
-    eval "require $myclass";
-    return if $@;
-
     $myclass->SUPER::new(%args, name => $name, body => $body);
 }
 
@@ -197,13 +196,6 @@ sub init($)
 #------------------------------------------
 
 sub clone() { dclone(shift) }
-
-#------------------------------------------
-
-sub length()
-{   my $self = shift;
-    croak;
-}
 
 #------------------------------------------
 
@@ -587,7 +579,7 @@ sub decode($@)
 
 Get the detailed information from the STRING, and store the data found
 in the field object.  The accepted input is very field type dependent.
-Unstructured fields even do no parsing whatsoever.
+Unstructured fields do no parsing whatsoever.
 
 =cut
 
@@ -685,6 +677,21 @@ sub consumeDotAtom($)
 
     ($atom, $string, $comment);
 }
+
+#------------------------------------------
+
+=method produceBody
+Produce the text for the field, based on the information stored within the
+field object.
+
+Usually, you wish the exact same line as was found in the input source
+of a message.  But when you have created a field yourself, it should get
+formatted.  You may call M<beautify()> on a preformatted field to enforce
+a call to this method when the field is needed later.
+
+=cut
+                                                                                
+sub produceBody() { die }
 
 #------------------------------------------
 

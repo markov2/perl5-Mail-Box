@@ -7,6 +7,7 @@ use base 'Mail::Box::Net';
 
 use Mail::Box::IMAP4::Message;
 use Mail::Box::IMAP4::Head;
+use Mail::Box::IMAP4::Fetch;
 use Mail::Transport::IMAP4;
 
 use Mail::Box::Parser::Perl;
@@ -26,18 +27,6 @@ Mail::Box::IMAP4 - handle IMAP4 folders as client
 
 =chapter DESCRIPTION
 
-UNDER DEVELOPMENT!!!! LIMITATIONS:
-=over 4
-=item * this implementation is close to NOT TESTED!
-Of course, some testing has been done, but this is far from complete. Please
-contribute with ideas are problem reports.
-
-=item * messages are all treated as separte items
-Performance can be improved combining request for multiple subjects. For
-instance, a preloadFields() or a preloadEnvelope() would speed-up most
-applications
-=back
-
 Maintain a folder which has its messages stored on a remote server.  The
 communication between the client application and the server is implemented
 using the IMAP4 protocol.
@@ -47,10 +36,14 @@ information, and focusses solely on the correct handling of messages
 within a IMAP4 folder.  More than one IMAP4 folder can be handled by
 one single IMAP4 connection.
 
+Helper class M<Mail::Box::IMAP4::Fetch> simplifies writing IMAP servers
+and clients by supplying code to handle the IMAP protocol's C<FETCH>
+command.  It is not complete, currently focussing on server side
+protocol handling.
+
 =chapter METHODS
 
 =c_method new OPTIONS
-
 The C<new> can have many OPTIONS.  Not only the ones listed here below,
 but also all the OPTIONS for M<Mail::Transport::IMAP4::new()> can be
 passed.

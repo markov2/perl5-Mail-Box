@@ -626,6 +626,7 @@ sub disposition(;$)
     return $self->{MMB_disposition} if !@_ && $self->{MMB_disposition};
 
     my $disp = defined $_[0] ? shift : 'none';
+
     $self->{MMB_disposition} = ref $disp ? $disp->clone
        : Mail::Message::Field->new('Content-Disposition' => $disp);
 }

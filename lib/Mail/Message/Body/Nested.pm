@@ -81,7 +81,7 @@ sub isNested() {1}
 
 #------------------------------------------
 
-sub isBinary() {shift->nested->body->isBinary}
+sub isBinary() { shift->nested->body->isBinary }
 
 #------------------------------------------
 

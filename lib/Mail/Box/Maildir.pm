@@ -165,13 +165,6 @@ sub listSubFolders(@)
 
 #-------------------------------------------
 
-sub nameOfSubFolder($)
-{   my ($self, $name) = @_;
-    $self->directory.'/'.$name;
-}
-
-#-------------------------------------------
-
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
     $self->createDirs($self->nameOfSubFolder($name));

@@ -35,16 +35,19 @@ At the moment, this object is extended by
 =over 4
 
 =item * M<Mail::Box::MH>
-
 MH folders, which are represented by a directory containing files which
 are sequentially numbered.
 
 =item * M<Mail::Box::Maildir>
-
 Maildir folders, which are located in a directory which has sub-directories
 named C<tmp>, C<new>, and C<cur>.  Each of these directories may contain
 files with names which are a combination of a numeric timestamp and some
 status flags.
+
+=item * Mail::Box::Netzwert
+This folder type was especially developed for Netzwert AG, optimized to
+run on a cluster of servers with folders on NFS.  The code is not publicly
+available (yet).
 
 =back
 
@@ -120,6 +123,13 @@ Returns the directory related to this folder.
 =cut
 
 sub directory() { shift->{MBD_directory} }
+
+#-------------------------------------------
+                                                                                
+sub nameOfSubFolder($)
+{   my ($self, $name) = @_;
+    $self->directory.'/'.$name;
+}
 
 #-------------------------------------------
 

@@ -26,7 +26,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 28;
+   {   plan tests => 30;
    }
 }
 
@@ -88,16 +88,14 @@ is($cl[1], " line\n",                   "Folded c line 2");
 
 my $d = $mmfu->new("d", "a\x{E4}b", charset => 'iso-8859-1');
 ok(defined $d,                          "Created d with included stranger");
-isa_ok($c, $mmfu);
+isa_ok($d, $mmfu);
 is($d->name, 'd',                       "Name of d");
 
-# encoding/decoding work in progress
-# is($d->unfoldedBody, '=?iso-8859-1?q?a=E4b?=', "Unfolded body d");
+is($d->unfoldedBody, '=?iso-8859-1?q?a=E4b?=', "Unfolded body d");
 
 my @dl = $d->foldedBody;
 cmp_ok(@dl, '==', 1,                    "Folded body of d");
 
-# encoding/decoding work in progress
-# is($dl[0], " =?iso-8859-1?q?a=E4b?=\n", "Folded d line 0");
+is($dl[0], " =?iso-8859-1?q?a=E4b?=\n", "Folded d line 0");
 
 is($d->decodedBody, "a\x{E4}b");

@@ -48,7 +48,6 @@ kind of field, you will be warned.
 
 =c_method new
 
-=default extra <ignored>
 =default attributes <ignored>
 
 =cut
@@ -217,25 +216,7 @@ sub addAttribute($;@)
 
 #------------------------------------------
 
-=method addExtra ...
-
-Extras are not permitted in address fields.
-
-=error No extras in address fields.
-
-It is not permitted to have free-format text parts in address fields.
-
-=cut
-
-sub addExtra($@)
-{   my $self = shift;
-    $self->log(ERROR => 'No extras in address fields.');
-    $self;
-}
-
-#------------------------------------------
-
-=section Internals
+=section Parsing
 
 =cut
 
@@ -303,13 +284,6 @@ sub parse($)
 }
 
 #------------------------------------------
-
-=method produceBody
-
-Produce the text for the field.  This will start with the single addresses,
-and end in the groups.
-
-=cut
 
 sub produceBody()
 {  my @groups = sort {$a->name cmp $b->name} shift->groups;

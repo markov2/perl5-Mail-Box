@@ -207,7 +207,8 @@ sub log(;$@)
         my $prio  = $levelprio{$level}
             or croak "Unknown log-level $level";
 
-        return $thing->{MR_log} = $prio unless @_;
+        return $thing->{MR_log} = $prio
+            unless @_;
 
         my $text    = join '', @_;
         $text      .= "\n" unless (substr $text, -1) eq "\n";

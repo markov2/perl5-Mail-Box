@@ -311,7 +311,8 @@ sub cleanup() { shift }
 =cut
 
 BEGIN
-{ *Mail::Header::new =
+{   no warnings 'redefined';
+    *Mail::Header::new =
      sub { my $class = shift;
            Mail::Message::Replace::MailHeader->new(@_);
          }

@@ -542,7 +542,7 @@ sub head(;$)
         return undef;
     }
 
-    $self->log(INTERNAL => "wrong type of head for $self")
+    $self->log(INTERNAL => "wrong type of head for message $self")
         unless ref $head && $head->isa('Mail::Message::Head');
 
     $head->message($self);
@@ -617,13 +617,14 @@ sub study($)
 
 =method from
 
-Returns the address of the sender.  It is possible to have more than
-one address specified in the C<From> field of the message. Therefore a
-list of M<Mail::Address> objects is returned, which usually has
-length 1.
+Returns the addresses from the senders.  It is possible to have more than
+one address specified in the C<From> field of the message, according
+to the specification. Therefore a list of M<Mail::Address> objects is
+returned, which usually has length 1.
 
-If you need one address of a sender, for instance to create a reply to,
-then use M<sender()>.
+If you need only one address from a sender, for instance to create a
+"original message by" line in constructed forwarded message body, then use
+M<sender()>.
 
 =example using from() to get all sender addresses
 
@@ -631,7 +632,10 @@ then use M<sender()>.
 
 =cut
 
-sub from() { map {$_->addresses} shift->head->get('From') }
+sub from()
+{  my $from = shift->head->get('From') or return ();
+   map {$_->addresses} $from;
+}
 
 #-------------------------------------------
 
@@ -780,8 +784,8 @@ unreal dates to influence their location in the displayed folder.
 
 To start, the received headers are tried for a date (see
 M<Mail::Message::Head::Complete::recvstamp()>) and only then the C<Date>
-field.  When no date was found, C<undef> will be returned.  This may be
-very usual, because MailBox message constructors add a Date automatically.
+field.  In very rare cases, only with some locally produced messages,
+no stamp can be found.
 
 =cut
 
@@ -857,7 +861,7 @@ sub body(;$@)
         return $body;
     }
 
-    $self->log(INTERNAL => "wrong type of body for $rawbody")
+    $self->log(INTERNAL => "wrong type of body for message $rawbody")
         unless ref $rawbody && $rawbody->isa('Mail::Message::Body');
 
     # Bodies of real messages must be encoded for safe transmission.
@@ -1383,6 +1387,7 @@ sub readBody($$;$$)
         , checked           => $self->{MM_trusted}
         , $self->logSettings
         );
+
         $body->contentInfoFrom($head);
     }
 
@@ -1482,17 +1487,15 @@ sub shortSize(;$)
 
 =method shortString
 
-Convert the message header to a short string, representing the most
-important facts (for debugging purposes only).
+Convert the message header to a short string (without trailing newline),
+representing the most important facts (for debugging purposes only).  For
+now, it only reports size and subject.
 
 =cut
 
 sub shortString()
 {   my $self    = shift;
-    my $subject = $self->head->get('subject') || '';
-    chomp $subject;
-
-    sprintf "%4s(%2d) %-30.30s", $self->shortSize, $subject;
+    sprintf "%4s %-30.30s", $self->shortSize, $self->subject;
 }
 
 #------------------------------------------
@@ -1708,6 +1711,11 @@ The message was already in the folder when it was opened the last time,
 so was not recently added to the folder.  This flag will never automatically
 be set by MailBox, because it would probably conflict with the user's
 idea of what is old.
+
+=item * passed
+
+Not often used or kept, this flag indicates that the message was bounced
+or forwarded to someone else.
 
 =item * replied
 

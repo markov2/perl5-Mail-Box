@@ -1,11 +1,11 @@
 
+use strict;
+use warnings;
+
 package Mail::Box::Maildir::Message;
 use base 'Mail::Box::Dir::Message';
 
-use strict;
 use File::Copy;
-use Carp;
-use warnings;
 
 =chapter NAME
 
@@ -55,11 +55,13 @@ sub filename(;$)
      , replied => ($flags{R} || 0)
      , seen    => ($flags{S} || 0)
      , deleted => ($flags{T} || 0)
+
+     , passed  => ($flags{P} || 0)   # uncommon
      );
 
-    if(defined $oldname)
-    {   move $oldname, $newname
-           or confess "Cannot move $oldname to $newname: $!";
+    if(defined $oldname && ! move $oldname, $newname)
+    {   $self->log(ERROR => "Cannot move $oldname to $newname: $!");
+        return undef;
     }
 
     $self->SUPER::filename($newname);
@@ -121,6 +123,7 @@ sub labelsToFilename()
     my $newflags    # alphabeticly ordered!
       = ($labels->{draft}   ? 'D' : '')
       . ($labels->{flagged} ? 'F' : '')
+      . ($labels->{passed}  ? 'P' : '')
       . ($labels->{replied} ? 'R' : '')
       . ($labels->{seen}    ? 'S' : '')
       . ($labels->{deleted} ? 'T' : '');
@@ -135,7 +138,7 @@ sub labelsToFilename()
 
     if($new ne $old)
     {   unless(move $old, $new)
-        {   warn "Cannot rename $old to $new: $!";
+        {   $self->log(ERROR => "Cannot rename $old to $new: $!");
             return;
         }
         $self->log(PROGRESS => "Moved $old to $new.");
@@ -185,7 +188,7 @@ The filename must match:
  my ($time, $unique, $hostname, $info)
     = $filename =~ m!^(\d+)\.(.*)\.(\w+)(\:.*)?$!;
  my ($semantics, $flags)
-    = $info =~ m!([12])\,([RSTDF]+)$!;
+    = $info =~ m!([12])\,([DFPRST]*)$!;
  my @flags = split //, $flags;
 
 When an application opens the folder, there may be messages in C<new>
@@ -214,6 +217,9 @@ be in alphabetic order) mean
  R      => replied  (answered)
  S      => seen
  T      => deleted  (tagged for deletion)
+
+Some maildir clients support
+ P      => passed   (resent/forwarded/bounced to someone else)
 
 The flags will immediately change when M<label()> or M<delete()> is used,
 which differs from other message implementations: maildir is stateless,

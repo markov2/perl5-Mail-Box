@@ -1,4 +1,3 @@
-use strict;
 use warnings;
 
 package Mail::Message::Field::URIs;
@@ -37,7 +36,6 @@ time.  This class can maintain these fields.
 
 =c_method new DATA
 
-=default extra <ignored>
 =default attributes <ignored>
 
 =examples
@@ -149,24 +147,6 @@ by the RFCs.
 sub addAttribute($;@)
 {   my $self = shift;
     $self->log(ERROR => 'No attributes for URI fields.');
-    $self;
-}
-
-#------------------------------------------
-
-=method addExtra ...
-
-Extras are not permitted in URI fields.
-
-=error No extras in URI fields.
-
-It is not permitted to have free-format text parts in URI fields.
-
-=cut
-
-sub addExtra($@)
-{   my $self = shift;
-    $self->log(ERROR => 'No extras in URI fields.');
     $self;
 }
 

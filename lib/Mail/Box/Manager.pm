@@ -79,7 +79,7 @@ M<registerType()> and the M<new(folder_types)> option.
 =option  folderdir DIRECTORY
 =default folderdir C<[ '.' ]>
 The default directory, or directories, where folders are
-located.  C<Mail::Box::Manager> can autodetect the existing folder-types.
+located. The C<Mail::Box::Manager> can autodetect the existing folder-types.
 There may be different kinds of folders opened at the same time, and
 messages can be moved between those types, although that may result in
 a loss of information depending on the folder types.
@@ -519,7 +519,7 @@ END {map {defined $_ && $_->closeAllFolders} @managers}
 
 #-------------------------------------------
 
-=method delete FOLDERNAME [,OPTIONS]
+=method delete FOLDERNAME, OPTIONS
 
 Remove the named folder, including all its sub-folders.  The OPTIONS
 are the same as those for M<open()>.

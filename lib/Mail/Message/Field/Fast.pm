@@ -4,8 +4,6 @@ use warnings;
 package Mail::Message::Field::Fast;
 use base 'Mail::Message::Field';
 
-use Carp;
-
 =chapter NAME
 
 Mail::Message::Field::Fast - one line of a message header

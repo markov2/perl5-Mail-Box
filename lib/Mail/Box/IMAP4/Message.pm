@@ -120,12 +120,13 @@ sub label(@)
 	return $labels->{$label}
 	   if exists $labels->{$label} || exists $labels->{seen};
 
-	my %flags = $imap->getFlags($id);
+	my $flags = $imap->getFlags($id);
         if($self->{MBIM_cache_labels})
-	{   @{$labels}{keys %flags} = values %flags;
+	{   # the program may have added own labels
+            @{$labels}{keys %$flags} = values %$flags;
             delete $self->{MBIM_labels_changed};
 	}
-	return $flags{$label};
+	return $flags->{$label};
     }
 
     my @private;

@@ -10,8 +10,98 @@ NOTE: The number of changes and fixes for each release seem large, but
 wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
-gebruik Return-Path voor reply()
 flock() op flock(): zelfde process op AIX en Solaris
+References/mozilla-flags
+
+version 2.056: Sat Jul 31 13:28:29 CEST 2004
+
+	Interface change:
+
+	- [Wiggins d Anconia] explained that combining MailBox with forks
+	  may cause non-unique message-ids to be created.  To solve this,
+	  the $head->messageIdPrefix() had to be rewritten.  MessageIDs will
+	  look differently now.  [No problems expected for existing programs]
+
+	Fixes:
+
+	- [Jeff Squyres] silenced warnings by guessTimestamp() and
+	  recvstamp() when no Date nor Received fields are present.
+
+	- [August] Mail::Box->new(lock_wait) option not correctly passed
+	  to Locker object.
+
+	- [Mime Mimic] noticed that a message reply used "sender", not
+          "From" addresses when no "Reply-To" field is present. This is
+          not according RFC2822.  Sender should never be used.
+
+	- [Jason Woodward] found a $_ localization error in POP3, which
+	  could result in "Can't call method "xxx" without a package or
+	  object reference" errors.
+
+	- [Carlos Perez] SpamAssasin's message wrapper method get_header()
+	  should return all field bodies with a certain name in list context.
+
+	- [Jason Woodward] $msg->shortString was broken.
+
+	- [Todd Richmond] discovered that un-quoted attribute values
+	  consumed the semi-colon separator in Mail::Message::Field.
+
+	- Content-Transfer-Encoding and Content-Disposition fields were
+	  ignored when specified with Mail::Message->build().  Now they
+	  will be applied to the create body AFTER the body is constructed
+	  based on default rules.
+
+	- [Todd Richmond] discovered that Base64 decoding should not be
+	  done on per line basis, because some lines may not have mod4
+	  number of characters (especially in virusses).  The RFC is not
+	  clear about it, so... Mail::Message::TransferEnc::Base64 is
+	  changed (again)
+
+	Improvements:
+
+	- [Rich Caller] suggested to change blanks in ill-formated
+	  message-ids into blanks.  Apparently, some applications are
+	  doing that.
+
+	- Mail::Message::Field::Unstructured now supportss character-set
+	  encodings, by request of [Mike Mimic]
+
+	- [Mike Mimic] made an unexpected abuse of $head->build().  It is
+	  now supported that ready field objects can be passed.  A warning
+	  is produced when you accidentally pass  field_name => $field_object
+	  (which should be: field_name => field_content  or simply
+	  $field_object.
+
+	- [Mike Mimic] Some link errors in the front HTML documentation page.
+
+	- Added $head->printSelected(FILE, patterns) as simple way to
+	  produce field subsets.
+
+	- Added support for label 'passed', which means that the message
+	  was used for forward/bounce/resend.
+
+	- Added Maildir message flag P='passed' (uncommon)
+
+	- Changed flag handling implementation in Mail::Transport::IMAP4.
+	  Tests are in tests/44imap/30flags.t
+
+	- $body->dispositionFilename can be used without directory name.
+
+	- Attachments auto-discompose as 'inline' for texts and `attachement'
+	  for binaries.
+
+	- Added Mail::Box::IMAP4::Fetch with tests in tests/44imap/40fetch.t
+	  which provides body/bodystructure/envelope syntax conversions.
+
+	- New $field->attributes (to list fields of all attributes) for
+	  Mail::Message::Field.
+
+	- Added description of differences between MIME::Entity::build()
+	  and Mail::Message::build().
+
+	- Mail::Message::Field::Structured can now be used for general
+	  structured fields with attributes, like Content-Type and
+	  Content-Description.
 
 version 2.055: Sun May 16 15:41:59 CEST 2004
 

@@ -17,7 +17,7 @@ Mail::Message::Replace::MailInternet - fake Mail::Internet
 
 =chapter SYNOPSIS
 
- !!! VERY ALPHA CODE !!!
+ !!! BETA !!!
 
  # change
  use Mail::Internet;
@@ -646,11 +646,13 @@ sub as_mbox_string()
 
 =cut
 
-BEGIN { *Mail::Internet::new =
-          sub { my $class = shift;
-                Mail::Message::Replace::MailInternet->new(@_);
-              }
-      }
+BEGIN {
+ no warnings 'redefined';
+ *Mail::Internet::new =
+    sub { my $class = shift;
+          Mail::Message::Replace::MailInternet->new(@_);
+        }
+}
 
 =ci_method isa CLASS
 Of course, the C<isa()> class inheritance check should not see our

@@ -14,8 +14,6 @@ Mail::Message::Field::Structured - one line of a structured message header
 
  my $f = Mail::Message::Field::Full
             ->new('Content-Type' => 'text/html');
- # $f is now a Mail::Message::Field::Structured
- # NOT READY YET!!!
 
  my @encode = (charset => 'jp', use_continuations => 1);
  $f->attribute('filename=passwd');
@@ -50,6 +48,17 @@ constructor of the field: the types which are accepted may differ.
 The optional ATTRIBUTE list contains M<Mail::Message::Field::Attribute>
 objects.  Finally, there are some OPTIONS.
 
+=option  datum STRING
+=default datum C<undef>
+The method name I<body> is very confusing, even in the RFC.  In MailBox,
+for historical reasons, M<body()> returns the past of the field contents
+before the first semi-colon.  M<foldedBody()> and M<unfoldedBody()>
+address the whole field.
+
+There is no common name for the piece of data before the parameters
+(attributes) in the field-content mentioned in the RFCs, so let's call
+it B<datum>.
+
 =option  attributes ATTRS
 =default attributes C<[]>
 
@@ -57,11 +66,6 @@ There are various ways to specify these attributes: pass a reference
 to an array which list of key-value pairs representing attributes,
 or reference to a hash containing these pairs, or an array with
 M<Mail::Message::Field::Attribute> objects.
-
-=option  extra STRING
-=default extra undef
-
-Text which is appended after the line (preceded by a semicolon).
 
 =example of a structured field
  my @attrs   = (Mail::Message::Field::Attribute->new(...), ...);
@@ -72,11 +76,12 @@ Text which is appended after the line (preceded by a semicolon).
 
 sub init($)
 {   my ($self, $args) = @_;
+    $self->{MMFS_attrs} = {};
 
     $self->SUPER::init($args);
 
-    $self->addExtra($args->{extra})
-        if exists $args->{extra};
+    $self->datum($args->{datum})
+        if defined $args->{datum};
 
     my $attr = $args->{attributes} || [];
     $attr    = [ %$attr ] if ref $attr eq 'HASH';
@@ -87,8 +92,6 @@ sub init($)
         else          { $self->attribute($name, shift @$attr) }
     }
 
-    $self->{MMFS_attrs} = {};
-    $self->{MMFS_extra} = ();
     $self;
 }
 
@@ -170,5 +173,64 @@ sub attributes() { values %{shift->{MMFS_attrs}} }
 sub beautify() { delete shift->{MMFF_body} }
 
 #------------------------------------------
+
+=section Parsing
+
+=cut
+
+sub parse($)
+{   my ($self, $string) = @_;
+    my $datum = '';
+    while(length $string && substr($string, 0, 1) ne ';')
+    {   (undef, $string)  = $self->consumeComment($string);
+        $datum .= $1 if $string =~ s/^([^;(]+)//;
+    }
+    $self->datum($datum);
+
+    my $found = '';
+    until($string eq '')
+    {   if($string =~ s/^\;\s*// && length $found)
+        {   my $attr = Mail::Message::Field::Attribute->new($found);
+            $self->attribute($attr);
+            $found = '';
+        }
+
+        (undef, $string) = $self->consumeComment($string);
+        $string =~ s/^\n//;
+        (my $text, $string) = $self->consumePhrase($string);
+        $found .= $text if defined $text;
+    }
+
+    if(length $found)
+    {   my $attr = Mail::Message::Field::Attribute->new($found);
+        $self->attribute($attr);
+    }
+
+    1;
+}
+
+#------------------------------------------
+
+sub produceBody()
+{   my $self  = shift;
+    my $attrs = $self->{MMFS_attrs};
+    my $datum = $self->datum;
+
+    join '; '
+       , (defined $datum ? $datum : '')
+       , map {$_->string} @{$attrs}{sort keys %$attrs};
+}
+
+#------------------------------------------
+
+=method datum [VALUE]
+Equivalent to M<body()>, but maybe less confusing.
+=cut
+
+sub datum(;$)
+{   my $self = shift;
+    @_ ? ($self->{MMFS_datum} = shift) : $self->{MMFS_datum};
+}
+*body = \&datum;
 
 1;

@@ -17,7 +17,7 @@ Mail::Message::Field::Attribute - one attribute of a full field
 
  my $field    = $msg->head->get('Content-Disposition') or return;
  my $full     = $field->study;   # full understanding in unicode
- my $filename = $full->attribute(filename)             or return;
+ my $filename = $full->attribute('filename')           or return;
 
  print ref $filename;     # this class name
  print $filename;         # the attributes content in utf-8
@@ -103,10 +103,10 @@ or risk applications to corrupt or ignore the message.
 
 sub new($$@)
 {   my ($class, $attr) = (shift, shift);
-    my $value = @_ % 1 == 1 ? shift : undef;
+    my $value = @_ % 2 == 1 ? shift : undef;
     my %args  = @_;
 
-    my $name  = $attr =~ m/^(.*?)(?:\*\d+)?\*?\=/ ? $1 : $attr;
+    my $name  = ($attr =~ m/^(.*?)(?:\*\d+)?\*?\=/ ? $1 : $attr);
     $class->log(WARNING => "Illegal character in parameter name '$name'.\n")
         if $name !~ m/^[!#-'*+\-.0-9A-Z^-~]+$/;
 
@@ -167,9 +167,7 @@ what is coming in if you can.
 
 =example
 
- my $param = Mail::Message::Field::Attribute
-               ->new('Content-Type');
-
+ my $param = Mail::Message::Field::Attribute->new;
  $param->addComponent("filename*=iso10646'nl-BE'%Re\47u");
 
 =cut

@@ -138,19 +138,23 @@ sub init($)
 
 #------------------------------------------
 
-=method build FIELDS
+=method build [PAIR|FIELD]-LIST
 
 A fast way to construct a header with many lines.
-The FIELDS are (name, content) pairs of the header.   A
+The PAIRs are C<(name, content)> pairs of the header, but it is also possible
+to pass M<Mail::Message::Field> objects.   A
 M<Mail::Message::Head::Complete> header is created by simply calling
 M<Mail::Message::Head::Complete::build()>, and then each field
 is added.  Double field names are permitted.
 
 =examples
 
+ my $subject = Mail::Message::Full->new(Subject => 'xyz');
+
  my $head = Mail::Message::Head->build
   ( From     => 'me@example.com'
   , To       => 'you@anywhere.aq'
+  , $subject
   , Received => 'one'
   , Received => 'two'
   );

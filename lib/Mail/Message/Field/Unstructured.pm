@@ -49,6 +49,10 @@ returned.
 sub init($)
 {   my ($self, $args) = @_;
 
+    if($args->{body} && ($args->{encoding} || $args->{charset}))
+    {   $args->{body} = $self->encode($args->{body}, %$args);
+    }
+
     $self->SUPER::init($args) or return;
 
     $self->log(WARNING=>"Attributes are not supported for unstructured fields")

@@ -11,7 +11,7 @@ use warnings;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 68;
+use Test::More tests => 72;
 
 use Mail::Message::Field::Fast;
 use Mail::Address;
@@ -142,6 +142,12 @@ is($p->comment, 'charset="us-ascii"; format="newform"');
 is($p->attribute(newfield => 'bull'), 'bull');
 is($p->attribute('newfield'), 'bull');
 is($p->comment, 'charset="us-ascii"; format="newform"; newfield="bull"');
+
+my %attrs = $p->attributes;
+cmp_ok(keys %attrs, '==', 3, "list of attributes");
+is($attrs{charset}, 'us-ascii');
+is($attrs{format}, 'newform');
+is($attrs{newfield}, 'bull');
 
 my $q = Mail::Message::Field::Fast->new('Content-Type: text/plain');
 is($q->toString, "Content-Type: text/plain\n");

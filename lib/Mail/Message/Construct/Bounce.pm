@@ -95,6 +95,13 @@ sub bounce(@)
     }
 
     $head->addResentGroup($rg);
+
+    #
+    # Flag action to original message
+    #
+
+    $self->label(passed => 1);    # used by some maildir clients
+
     $bounce;
 }
 

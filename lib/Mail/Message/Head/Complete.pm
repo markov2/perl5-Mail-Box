@@ -52,10 +52,31 @@ sub clone(;@)
 
 #------------------------------------------
 
+=method build [PAIR|FIELD]-LIST
+=warning field objects have an implied name ($name)
+=cut
+
 sub build(@)
 {   my $self = shift;
     my $head = $self->new;
-    $head->add(shift, shift) while @_;
+    while(@_)
+    {   my $name = shift;
+
+        if($name->isa('Mail::Message::Field'))
+        {   $head->add($name);
+            next;
+        }
+
+        my $content = shift;
+        if(ref $content && $content->isa('Mail::Message::Field'))
+        {   $self->log(WARNING => "field objects have an implied name ($name)");
+            $head->add($content);
+            next;
+        }
+
+        $head->add($name, $content);
+    }
+
     $head;
 }
 
@@ -541,6 +562,42 @@ sub printUndisclosed($)
 
 #------------------------------------------
 
+=method printSelected FILEHANDLE, (STRING|REGEXP)s
+                                                                                
+Like the usual M<print()>, the header lines are printed to the specified
+FILEHANDLE.  In this case, however, only the fields with names as specified by
+STRING (case insensative) or REGEXP are printed.  They will stay the in-order
+of the source header.
+
+=example printing only a subset of the fields
+ $head->printSelected(STDOUT, qw/Subject From To/, qr/^x\-(spam|xyz)\-/i)
+
+=cut
+                                                                                
+sub printSelected($@)
+{   my ($self, $fh) = (shift, shift);
+
+    foreach my $field ($self->orderedFields)
+    {   my $Name = $field->Name;
+        my $name = $field->name;
+
+        my $found;
+        foreach my $pattern (@_)
+        {   $found = ref $pattern?($Name =~ $pattern):($name eq lc $pattern);
+            last if $found;
+        }
+
+           if(!$found)           { ; }
+        elsif(ref $fh eq 'GLOB') { print $fh "\n" }
+        else                     { $fh->print("\n") }
+    }
+                                                                                
+    $self;
+}
+
+
+#------------------------------------------
+
 =method string
 
 Returns the whole header as one scalar (in scalar context) or list
@@ -811,7 +868,7 @@ sub recvstamp()
 
     my $stamp = Mail::Message::Field->dateToTimestamp($recvd->comment);
 
-    $self->{MMH_recvstamp} = $stamp > 0 ? $stamp : undef;
+    $self->{MMH_recvstamp} = defined $stamp && $stamp > 0 ? $stamp : undef;
 }
 
 #------------------------------------------
@@ -844,7 +901,7 @@ sub guessTimestamp()
         }
     }
 
-    $self->{MMH_timestamp} = $stamp > 0 ? $stamp : undef;
+    $self->{MMH_timestamp} = defined $stamp && $stamp > 0 ? $stamp : undef;
 }
 
 #------------------------------------------
@@ -894,39 +951,79 @@ message-threads.  See M<messageIdPrefix()>.
 
 =cut
 
-my $unique_id     = time;
-my $hostname;
+my $msgid_creator;
 
 sub createMessageId()
-{   my $mid = shift->messageIdPrefix . '-' . $unique_id++;
+{   $msgid_creator ||= $_[0]->messageIdPrefix;
+    $msgid_creator->(@_);
+}
 
+#------------------------------------------
+
+=ci_method messageIdPrefix [PREFIX, [HOSTNAME]|CODE]
+
+When options are provided, it sets a new way to create message-ids,
+as used by M<createMessageId()>.  You have two choices: either by
+providing a PREFIX and optionally a HOSTNAME, or a CODE reference.
+
+The CODE reference will be called with the header as first argument.
+You must ensure yourself that the returned value is RFC compliant.
+
+The PREFIX defaults to C<mailbox-$$>, the HOSTNAME defaults to the
+return of L<Sys::Hostname>'s method C<hostname()>.  Inbetween the
+two, a nano-second time provided by L<Time::Hires> is used.  If that
+module is not available, C<time> is called at the start of the program,
+and incremented for each newly created id.
+
+In any case, a subroutine will be created to be used.  A reference
+to that will be returned.  When the method is called without arguments,
+but no subroutine is defined yet, one will be created.
+
+=examples setting a message prefix
+  $head->messageIdPrefix('prefix');
+  Mail::Message::Head::Complete->messageIdPrefix('prefix');
+  my $code = $head->messageIdPrefix('mailbox', 'nohost');
+
+  sub new_msgid()
+  {   my $head = shift;
+      "myid-$$-${(rand 10000)}@example.com";
+  }
+
+  $many_msg->messageIdPrefix(\&new_msgid);
+  Mail::Message::Head::Complete->messageIdPrefix(&new_msgid);
+ 
+=cut
+
+sub messageIdPrefix(;$$)
+{   my $thing = shift;
+    return $msgid_creator
+       unless @_ || !defined $msgid_creator;
+
+    return $msgid_creator = shift
+       if @_==1 && ref $_[0] eq 'CODE';
+
+    my $prefix   = shift || "mailbox-$$";
+
+    my $hostname = shift;
     unless(defined $hostname)
     {   require Sys::Hostname;
         $hostname = Sys::Hostname::hostname() || 'localhost';
     }
 
-    $mid . '@' . $hostname;
+    eval {require Time::HiRes};
+    if(Time::HiRes->can('gettimeofday'))
+    {
+        return $msgid_creator
+          = sub { my ($sec, $micro) = Time::HiRes::gettimeofday();
+                  "$prefix-$sec-$micro\@$hostname";
+                };
+    }
+
+    my $unique_id = time;
+    $msgid_creator
+      = sub { $unique_id++;
+              "$prefix-$unique_id\@$hostname";
+            };
 }
-
-#------------------------------------------
-
-=method messageIdPrefix [STRING]
-
-Sets/returns the message-id start.  The rest of the message-id is an
-integer which is derived from the current time and the local host.
-See M<createMessageId()>.
-
-=cut
-
-our $unique_prefix;
-
-sub messageIdPrefix(;$)
-{   my $self = shift;
-    return $unique_prefix if !@_ && defined $unique_prefix;
-
-    $unique_prefix = shift || "mailbox-$$";
-}
-
-#------------------------------------------
 
 1;

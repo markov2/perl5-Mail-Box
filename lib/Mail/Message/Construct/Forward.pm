@@ -61,8 +61,7 @@ Their default behavior is usually C<INLINE>.
 
 It is only possible to inline textual messages, therefore binary or
 multi-part messages will always be enclosed as attachment.
-Read the details about this choice in section L</Creating a forward>
-subsection L</Including the original message>.
+Read the details in section L</Creating a forward>..
 
 =requires To ADDRESSES
 
@@ -222,6 +221,7 @@ sub forwardNo(@)
 
     # Ready
 
+    $self->label(passed => 1);
     $self->log(PROGRESS => "Forward created from $origid");
     $forward;
 }
@@ -500,8 +500,6 @@ sub forwardPostlude()
 
 =section Creating a forward
 
-=subsection Including the original message
-
 The main difference between M<bounce()> and M<forward()> is the reason
 for message processing.  The I<bounce> has no intention to modify the
 content of message: the same information is passed-on to someplace else.
@@ -515,16 +513,21 @@ but to someone else.
 
 So: some information comes in, is modified, and than forwarded to someone
 else.  Currently, there are four ways to get the original information
-included:
+included, which are explained in the next sections.
 
-=over 4
-=item * specify a body
+After the creation of the forward, you may want to M<rebuild()> the
+message to remove unnecessary complexities.  Of course, that is not
+required.
+
+=subsection forward, specify a body
+
 When you specify M<forward(body)>, you have created your own body object to
 be used as content of the forwarded message.  This implies that
 M<forward(include)> is C<'NO'>: no automatic generation of the forwarded
 body.
 
-=item * inline the original
+=subsection forward, inline the original
+
 The M<forward(include)> is set to C<'INLINE'> (the default)
 This is the most complicated situation, but most often used by MUAs:
 the original message is inserted textually in the new body.  You can
@@ -539,7 +542,8 @@ manual intervention after the message is created and before it is sent.
 When a binary message is encountered, inlining is impossible.  In that
 case, the message is treated as if C<'ENCAPSULATE'> was requested.
 
-=item * attach the original
+=subsection forward, attach the original
+
 When M<forward(include)> is explicitly set to C<'ATTACH'> the result
 will be a multipart which contains two parts.  The first part will
 be your message, and the second the body of the original message.
@@ -565,7 +569,8 @@ As example of the structural transformation:
      text/plain: content in raw text
      text/html: content as html
 
-=item * encapsulate the original
+=subsection forward, encapsulate the original
+
 When M<forward(include)> is explicitly set to C<'ENCAPSULATE'>, then
 the original message is left in-tact as good as possible.  The lines
 of the original message are used in the main message header but also
@@ -591,12 +596,6 @@ C<message/rfc822>.  As example of the structural transformation:
 The message structure is much more complex, but no information is lost.
 This is probably the reason why many MUAs use this when the forward
 an original message as attachment.
-
-=back
-
-After the creation of the forward, you may want to M<rebuild()> the
-message to remove unnecessary complexities.  Of course, that is not
-required.
 
 =cut
 

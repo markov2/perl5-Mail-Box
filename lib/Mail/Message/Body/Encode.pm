@@ -303,10 +303,11 @@ sub isText() { not shift->isBinary }
 
 #------------------------------------------
 
-=method dispositionFilename DIRECTORY
+=method dispositionFilename [DIRECTORY]
 Returns the name which can be used as filename to store the information
 in the indicated DIRECTORY. To get a filename, various fields are searched
-for C<filename> and C<name> attributes.
+for C<filename> and C<name> attributes.  Without DIRECTORY, the name found
+will be returned.
 
 Only the basename of the found name will be used, for security reasons:
 otherwise, it may be possible to access other directories than the
@@ -315,8 +316,8 @@ then an unique name is generated.
 
 =cut
 
-sub dispositionFilename($)
-{   my ($self, $dir) = @_;
+sub dispositionFilename(;$)
+{   my $self = shift;
     my $raw;
 
     my $field;
@@ -332,6 +333,9 @@ sub dispositionFilename($)
              || $field->attribute('name');
     }
 
+    return $raw unless @_;
+
+    my $dir      = shift;
     my $filename = '';
     if(defined $raw)
     {   $filename = basename $raw;
@@ -348,6 +352,7 @@ sub dispositionFilename($)
         }
         $filename = "$unique.$ext";
     }
+
     File::Spec->catfile($dir, $filename);
 }
 

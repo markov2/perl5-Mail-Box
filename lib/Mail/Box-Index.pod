@@ -120,16 +120,14 @@ Only the HTML version of this manual page will list the sections.
 <li><strong><a name="process">Message processing</a></strong>
   <ul>
   <li>Reading a message (M<Mail::Message::Construct::Read>)
-  <li>Building a message (M<Mail::Message::Construct::Build>)
+  <li>L<Mail::Message::Construct::Build/Building a message>
+      (M<Mail::Message::Construct::Build>)
   <li>Reply to a message (M<Mail::Message::Construct::Reply>)
   <li>L<Mail::Message::Construct::Forward/Creating a forward>
+      (M<Mail::Message::Construct::Forward>)
   <li>Bounce a message (M<Mail::Message::Construct::Bounce>)
-  <li>L<Mail::Message::Construct::Rebuild/Rebuilding a message> (M<Mail::Message::Construct::Rebuild>)
-      <ul>
-      <li>L<Mail::Message::Construct::Rebuild/General rules>
-      <li>L<Mail::Message::Construct::Rebuild/Conversion rules>
-      <li>L<Mail::Message::Construct::Rebuild/Adding your own rules>
-      </ul>
+  <li>L<Mail::Message::Construct::Rebuild/Rebuilding a message>
+      (M<Mail::Message::Construct::Rebuild>)
   <li>Convert messages
       <ul>
       <li>To and from M<Mail::Internet> objects (M<Mail::Message::Convert::MailInternet>)
@@ -242,6 +240,7 @@ Only the HTML version of this manual page will list the sections.
       <li>L<Mail::Message::Head::Partial/Reducing the header size>
           (M<Mail::Message::Head::Partial>)
       <li>
+      </ul>
   <li>Destructing messages (M<Mail::Box::Message::Destructed>)
   </ul>
 <li><strong>Additional modules</strong>

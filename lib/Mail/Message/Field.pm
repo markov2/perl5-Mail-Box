@@ -136,11 +136,12 @@ Create a copy of this field object.
 =section The field
 
 =method length
-
 Returns the total length of the field in characters, which includes the
 field's name, body and folding characters.
 
 =cut
+
+sub length { length shift->folded }
 
 #------------------------------------------
 
@@ -166,7 +167,7 @@ BEGIN {
      Resent-Date Resent-From Resent-Sender Resent-To Return-Path
      List-Help List-Post List-Unsubscribe Mailing-List
      Received References Message-ID In-Reply-To
-     Content-Length Content-Type
+     Content-Length Content-Type Content-Disposition
      Delivered-To
      Lines
      MIME-Version
@@ -249,12 +250,12 @@ sub nrLines() { my @l = shift->foldedBody; scalar @l }
 #------------------------------------------
 
 =method size
-
-Returns the number of bytes needed to display this header-line.
+Returns the number of bytes needed to display this header-line, Same
+as M<length()>.
 
 =cut
 
-sub size() {length shift->toString}
+*size = \&length;
 
 #------------------------------------------
 
@@ -339,7 +340,7 @@ cultural heritage, and should be avoided.
 
 Returns the body of the field.  When this field is structured, it will
 be B<stripped> from everything what is behind the first semi-color (C<;>).
-In aby case, the string is unfolded.  
+In any case, the string is unfolded.  
 Whether the field is structured is defined by M<isStructured()>.
 
 =cut
@@ -416,7 +417,7 @@ sub stripCFWS($)
     while(@s)
     {   my $s = shift @s;
 
-           if(length $r && substr($r, -1) eq "\\") { $r .= $s } # esc'd special
+           if(CORE::length($r)&& substr($r, -1) eq "\\")  { $r .= $s }
         elsif($s eq '"')   { $in_dquotes = not $in_dquotes; $r .= $s }
         elsif($s eq '(' && !$in_dquotes) { $open_paren++ }
         elsif($s eq ')' && !$in_dquotes) { $open_paren-- }
@@ -459,7 +460,7 @@ sub comment(;$)
     if(@_)
     {   my $comment = shift;
         $body    =~ s/\s*\;.*//;
-        $body   .= "; $comment" if defined $comment && length $comment;
+        $body   .= "; $comment" if defined $comment && CORE::length($comment);
         $self->unfoldedBody($body);
         return $comment;
     }
@@ -478,7 +479,7 @@ sub content() { shift->unfoldedBody }  # Compatibility
 Get the value of an attribute, optionally after setting it to a new value.
 Attributes are part of some header lines, and hide themselves in the
 comment field.  If the attribute does not exist, then C<undef> is
-returned.
+returned.  The attribute is still encoded.
 
 =examples
 
@@ -508,7 +509,7 @@ sub attribute($;$)
            $body =~ m/\b$attr\s*\=\s*
                        ( "( (?: [^"]|\\" )* )"
                        | '( (?: [^']|\\' )* )'
-                       | (\S*)
+                       | ([^;\s]*)
                        )
                   /xi ? $+ : undef;
     }
@@ -518,7 +519,7 @@ sub attribute($;$)
     {   for($body)
         {      s/\b$attr\s*=\s*'([^']|\\')*'//i
             or s/\b$attr\s*=\s*"([^"]|\\")*"//i
-            or s/\b$attr\s*=\s*\S*//i;
+            or s/\b$attr\s*=\s*[;\s]*//i;
         }
         $self->unfoldedBody($body);
         return undef;
@@ -528,12 +529,37 @@ sub attribute($;$)
     for($body)
     {       s/\b$attr\s*=\s*'([^']|\\')*'/$attr="$quoted"/i
          or s/\b$attr\s*=\s*"([^"]|\\")*"/$attr="$quoted"/i
-         or s/\b$attr\s*=\s*\S+/$attr="$quoted"/i
+         or s/\b$attr\s*=\s*[^;\s]+/$attr="$quoted"/i
          or do { $_ .= qq(; $attr="$quoted") }
     }
 
     $self->unfoldedBody($body);
     $value;
+}
+
+#------------------------------------------
+
+=method attributes
+Returns a list of key-value pairs, where the values are not yet decoded.
+=example
+ my %attributes = $head->get('Content-Disposition')->attributes;
+=cut
+
+sub attributes()
+{   my $self  = shift;
+    my $body  = $self->unfoldedBody;
+
+    my @attrs;
+    while($body =~ m/\b(\w+)\s*\=\s*
+                       ( "( (?: [^"]|\\" )* )"
+                       | '( (?: [^']|\\' )* )'
+                       | ([^;\s]*)
+                       )
+                    /xig)
+    {   push @attrs, $1 => $+;
+    }
+
+    @attrs;
 }
 
 #------------------------------------------
@@ -832,13 +858,13 @@ sub fold($$;$)
     my $wrap  = shift || $default_wrap_length;
 
     $line    =~ s/\n\s/ /gms;            # Remove accidental folding
-    return " \n" unless length $line;    # empty field
+    return " \n" unless CORE::length($line);  # empty field
 
     my @folded;
     while(1)
-    {  my $max = $wrap - (@folded ? 1 : length($name) + 2);
+    {  my $max = $wrap - (@folded ? 1 : CORE::length($name) + 2);
        my $min = $max >> 2;
-       last if length $line < $max;
+       last if CORE::length($line) < $max;
 
           $line =~ s/^ ( .{$min,$max}   # $max to 30 chars
                         [;,]            # followed at a ; or ,
@@ -855,7 +881,7 @@ sub fold($$;$)
        push @folded, " $1\n";
     }
 
-    push @folded, " $line\n" if length $line;
+    push @folded, " $line\n" if CORE::length($line);
     wantarray ? @folded : join('', @folded);
 }
 

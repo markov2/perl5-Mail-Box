@@ -44,7 +44,7 @@ my $p1 = Mail::Message->new(head => $h1);
 cmp_ok($p1->body($b1) , "==",  $b1);
 is($p1->get('Content-Type'), 'text/html');
 is($p1->get('Content-Transfer-Encoding'), '8bit');
-ok(!defined $p1->get('Content-Disposition'));
+ok(! defined $p1->get('Content-Disposition'));
 
 my $h2 = Mail::Message::Head::Complete->new;
 

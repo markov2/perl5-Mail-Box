@@ -424,7 +424,7 @@ sub sendList($$)
     return unless OK($response);
 
     my @list;
-    local $_; # make sure we don't spoil it for the outside world
+    local $_; # make sure we don't spoil $_ for the outside world
     while(<$socket>)
     {   last if m#^\.\r?\n#s;
         s#^\.##;
@@ -503,7 +503,7 @@ sub login(;$)
 
 # Check if we can make a TCP/IP connection
 
-    local $_; # make sure we don't spoil it for the outside world
+    local $_; # make sure we don't spoil $_ for the outside world
     my ($interval, $retries, $timeout) = $self->retry;
     my ($host, $port, $username, $password) = $self->remoteHost;
     unless($username && $password)
@@ -602,11 +602,14 @@ sub status($;$)
     if(OK($uidl))
     {   my @n2uidl;
         $n2uidl[$self->{MTP_messages}] = undef; # optimization, sets right size
+
+        local $_;    # protect global $_
         while(<$socket>)
         {   last if substr($_, 0, 1) eq '.';
-            s#\r?\n$##; m#^(\d+) (.+)#;
-            $n2uidl[$1] = $2;
+            s#\r?\n$##;
+            $n2uidl[$1] = $2 if m#^(\d+) (.+)#;
         }
+
         shift @n2uidl; # make message 1 into index 0
         $self->{MTP_n2uidl} = \@n2uidl;
         delete $self->{MTP_n2length};

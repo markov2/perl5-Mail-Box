@@ -222,4 +222,3 @@ while(@ex_b64)
     my $utf8_to = decode('iso-8859-1', $to);
     is($d->decode($from), $utf8_to);
 }
-
