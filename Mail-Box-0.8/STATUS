@@ -1,0 +1,51 @@
+
+STATUS
+
+This program was written in December 2000.  This is quite recent, so
+please check for a new version: new programs often get many changes
+in their first months.
+
+The release status is   ***** ALPHA *****
+as long as not all methods are tested intensively.
+Other folder-types will be implemented only when the beta phase is
+reached: when the Mbox and MH implementation seem complete and stable.
+
+Tested
+======
+
+In the `t' directory, there are quite a number of tests, but they only
+test some parts of the program.  Other parts have been written, but are
+not tested.  Everything you read in the manual-pages should be there.
+
+Mbox-folders:
+   2mbox1r.t          reading
+   2mbox2w.t          writing
+   2mbox3d.t          delay loading
+   2mbox4a.t          appending to opened and unopened folders
+   2mbox6t.t          test threads
+
+MH-folders:
+   3mh1r.t            reading
+   3mh2w.t            writing
+   3mh3a.t            appending to opened and unopened folders
+   2mh6t.t            test threads
+
+Folder manager:
+   7mgr.t             locating/opening/closing folders.
+
+Ties:
+   8tie.t             accessing folder as array.
+
+Locking:
+   9lock.t            dotlock mechanism
+
+
+NOT Tested  (but implemented)
+==========
+
+creating/removing of folders
+listing of folders
+sub-folders (emulated in mbox)
+MH index-file
+MH sequences
+labels

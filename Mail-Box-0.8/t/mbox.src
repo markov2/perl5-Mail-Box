@@ -1299,8 +1299,7 @@ Received: from unca-don.wizards.dupont.com ([204.183.81.133])
 Received: (from majordomo@localhost)
 	by unca-don.wizards.dupont.com (8.9.3/8.9.3) id TAA05326
 	for magick-outgoing; Thu, 30 Mar 2000 19:16:20 -0500 (EST)
- <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess
- .com>
+ <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess .com>
  <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess
  .com>
 X-Authentication-Warning: unca-don.wizards.dupont.com: majordomo set sender to owner-magick@wizards.dupont.com using -f
@@ -1308,13 +1307,11 @@ Mime-Version: 1.0
 X-Sender: leonardr@mail1.netreach.net
 Message-Id: <a04310102b5099e5b4e3f@[207.29.200.50]>
 In-Reply-To: 
- <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess
- .com>
+ <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess.com>
 References: 
- <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess
- .com>
+ <10F4E7B8292FD311B34400A0C978B70532A61B@a254.117.208.207.ded23.interaccess.com>
 Date: Thu, 30 Mar 2000 19:15:48 -0500
-To: Joseph Korabelnikov <jkorabelnikov@coolemail.com>,
+To: Joseph Korabelnikov <jkorabelnikov@coolemail.com>
         magick@wizards.dupont.com
 From: Leonard Rosenthol <leonardr@lazerware.com>
 Subject: Re: Convert HTM, HTML files to the .jpg format

@@ -7,7 +7,7 @@ use Mail::Box;
 use Mail::Box::Index;
 
 our @ISA     = qw/Mail::Box Mail::Box::Index/;
-our $VERSION = v0.7;
+our $VERSION = v0.8;
 
 use Mail::Box;
 
@@ -211,6 +211,9 @@ see below, but first the full list.
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  take_headers      Mail::Box          'DELAY'
+ thread_body       Mail::Box::Threads 0
+ thread_timespan   Mail::Box::Threads '3 days'
+ thread_window     Mail::Box::Threads 10
  <none>            Mail::Box::Tie
 
 MH specific options:
@@ -721,17 +724,18 @@ its header.  The headers are read from back to front in the folder.
 
 sub messageID($;$)
 {   my ($self, $msgid, $message) = @_;
-    $self->Mail::Box::messageID($msgid, $message) if $message;
+    if($message)
+    {   # Define loaded message.
+        $self->Mail::Box::messageID($msgid, $message);
+    }
+    else
+    {   # Trigger autoload until the message-id appears.
+        $self->message($self->{MB_last_untouched}--)->head
+            while $self->{MB_last_untouched} >= 0
+               && !exists $self->{MB_msgid}{$msgid};
+    }
 
-use Carp;
-confess join(';', %$self), "\n" unless defined $self->{MB_last_untouched};
-
-    # Trigger autoload until the message-id appears.
-    $self->message($self->{MB_last_untouched}--)->head
-       while $self->{MB_last_untouched} >= 0
-          && !exists $self->{MB_msgid}{$msgid};
-
-    return $self->{MB_msgid}{$msgid};
+    $self->{MB_msgid}{$msgid};
 }
 
 #-------------------------------------------
@@ -1098,9 +1102,12 @@ sub init($)
 my $unreg_msgid = time;
 
 sub head_init()
-{   my $self = shift;
-    my $msgid = $self->head->get('message-id') || 'mh-'.$unreg_msgid++;
-    $self->{MBM_messageID} = $msgid;
+{   my $self  = shift;
+    my $msgid = $self->head->get('message-id');
+
+    if($msgid && $msgid =~ m/<.*?>/) { $self->{MBM_messageID} = $& }
+    else { $self->{MBM_messageID} = 'mh-'.$unreg_msgid++ }
+
     $self;
 }
 

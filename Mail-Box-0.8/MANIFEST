@@ -3,9 +3,11 @@ t/2mbox1r.t
 t/2mbox2w.t
 t/2mbox3d.t
 t/2mbox4a.t
+t/2mbox6t.t
 t/3mh1r.t
 t/3mh2w.t
 t/3mh3a.t
+t/3mh6t.t
 t/7mgr.t
 t/8tie.t
 t/9lock.t
@@ -23,4 +25,5 @@ ChangeLog
 Makefile.PL
 MANIFEST
 README
+STATUS
 TODO

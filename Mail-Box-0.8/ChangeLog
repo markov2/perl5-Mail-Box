@@ -98,3 +98,16 @@ Mark Overmeer <mark@overmeer.net>
 	  to trigger the header to be read.
 		Mail/Box/MH.pm
 
+
+version 0.8: Sat Jan 13 01:05:49 CET 2001
+
+Mark Overmeer <mark@overmeer.net>
+	* Removed in_reply_to() and references() from Mail::Box::Messages,
+	  because they had only use in Mail::Box::Threads.
+
+	* Implemented and tested thread detection.  See the test-files
+	  on the results.
+		Mail/Box/Threads.pm
+		Mail/t/2mbox6t.t
+		Mail/t/3mh6t.t
+

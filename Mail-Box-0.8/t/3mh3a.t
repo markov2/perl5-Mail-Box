@@ -62,8 +62,8 @@ ok(not $added->headIsRead);
 $message3->head;
 ok(not $message3->deleted);
 $added->head;
-ok($message3->deleted);
-ok(not $added->deleted);
+ok($added->deleted);
+ok(not $message3->deleted);
 
 #
 # Create an MIME::Entity and add this to the open folder.

@@ -10,11 +10,17 @@ The most important manual-pages are Mail::Box::Manager, Mail::Box,
 and Mail::Box::Message.  They explain parts of the features in
 more detail than in this document.
 
-===== Features
+
+===== Status
 
 Although the implementation of Mail::Box is young, it has already
 a large number of features.  BE WARNED: NOT EVERYTHING WHAT IS
 IMPLEMENTED HAS BEEN TESTED!!!!  PLEASE HELP TESTING!
+
+See the fil STATUS to see what is tested and what isn't.
+
+
+===== Features
 
 = AUTOLOAD messages.
 
@@ -50,12 +56,7 @@ Currently supported:
 * MH folders, see Mail::Box::MH
   One directory per folder, each message in a seperate file.
 
-On the wishlist:
-* Maildir folders
-  If anyone can tell me how they work exactly
-* Emaul folders
-  To be compatible with Mail::Folder.
-* and so on.
+See STATUS for my wishlist.
 
 = Support for message thread-discovery
 

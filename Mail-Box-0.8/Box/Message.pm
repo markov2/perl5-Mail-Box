@@ -242,6 +242,10 @@ sub init($)
     $self->{MBM_size}      = $args->{size}      || 0;
     $self->{MBM_deleted}   = $args->{deleted}   || 0;
     $self->{MBM_modified}  = $args->{modified}  || 0;
+    $self->{MBM_messageID} = $args->{messageID}
+        if exists $args->{messageID};
+
+    $self->{MBM_labels}    = {};
     $self->folder($args->{folder}) if $args->{folder};
 
     unless($self->isDummy)
@@ -368,7 +372,7 @@ Examples:
 =cut
 
 sub deleted(;$)
-{   my Mail::Box::Message $self    = shift;
+{   my $self = shift;
     return $self->{MBM_deleted} unless @_;
 
     my $delete = shift;
@@ -494,40 +498,6 @@ sub createXStatus()
 
 #-------------------------------------------
 
-=back
-
-=head2 Thread management
-
-=over 4
-
-=item references
-
-=item in-reply-to
-
-Retreive what the message says is the discussion thread it is in.  This
-is an ordered list of message-ids.
-
-Examples:
-   my @ref_ids = $message->references;
-   my $nesting = $message->references;
-   my @replies = $message->in_reply_to;
-
-=cut
-
-sub references()
-{   my Mail::Box::Message $self    = shift;
-    my $refs = $self->head->get('references') || return ();
-    $refs =~ m/\<(.*?)\>/g;
-}
-
-sub in_reply_to()
-{   my Mail::Box::Message $self = shift;
-    my $reply = $self->head->get('in-reply-to') || return;
-    ($reply =~ m/\<(.*?)\>/)[0];
-}
-
-#-------------------------------------------
-
 =item shortString
 
 Convert the message header to a short string, representing the most
@@ -535,9 +505,10 @@ important facts (for debugging purposes only).
 
 =cut
 
-sub shortSize($)
+sub shortSize(;$)
 {   my $self = shift;
-    my $size = shift;
+    my $size = shift || $self->{MBM_size};
+
       !defined $size     ? '?'
     : $size < 1_000      ? "$size "
     : $size < 10_000     ? sprintf "%3.1fK", $size/1024
@@ -552,8 +523,7 @@ sub shortString()
     my $subject = $self->head->get('subject') || '';
     chomp $subject;
 
-    sprintf "%4s(%2d) %-30.30s"
-          , $self->shortSize($self->{MBM_size})
+    sprintf "%4s(%2d) %-30.30s", $self->shortSize
           , scalar $self->followUps, $subject;
 }
 
@@ -817,12 +787,12 @@ which are found in a reference-list, but not (yet) in the folder.
 
 #-------------------------------------------
 
-=item new MESSAGE-ID
+=item new
 
 (Class method)  Create a new dummy message.
 
 Examples:
-    my $message = Mail::Box::Message::Dummy->new($id);
+    my $message = Mail::Box::Message::Dummy->new($msgid);
     if($message->isDummy) {...}
 
 =cut
@@ -1141,7 +1111,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.7
+This code is alpha, version 0.8
 
 =cut
 

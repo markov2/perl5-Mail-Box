@@ -2,7 +2,7 @@
 package Mail::Box;
 use 5.006;
 
-$VERSION = '0.7';
+$VERSION = '0.8';
 use strict;
 
 use Mail::Box::Message;
@@ -107,6 +107,9 @@ manual-pages)
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  take_headers      Mail::Box          <specify everything you need>
+ thread_body       Mail::Box::Threads 0
+ thread_timespan   Mail::Box::Threads '3 days'
+ thread_window     Mail::Box::Threads 10
  <none>            Mail::Box::Tie
 
 The options added by Mail::Box
@@ -586,9 +589,8 @@ sub close(@)
 Write the messages to disk, and then read it back again.  This will create
 a new folder structure, so you have to catch the result.
 
-Examples:
+Example:
     $folder = $folder->synchronize;
-    $folder = $folder->synchronize->lintThreads;
 
 =cut
 
@@ -744,17 +746,15 @@ sub messageID($;$)
     # Define message.
     my $message = shift;
 
-    # If the message-id was already found in a dummy, then the information
-    # from the dummy has to be copied into the real message.
+    # Auto-delete doubles.
+    if(my $double = $self->{MB_msgid}{$msgid})
+    {   $message->delete unless $double->isa('Mail::Box::Dummy');
+        return $self;
+    }
 
-    my $found = $self->{MB_msgid}{$msgid};
-    if($found && $found->isDummy)
-    {   # Copy information from dummy message into the real message.
-        $message->addFollowUps($found->followUps);
-    }
-    elsif($found && $found ne $message)
-    {   $found->delete(1);
-    }
+    # Register the message to be threaded.  It may never be used, when
+    # threads are not used.
+    push @{$self->{MB_to_be_threaded}}, $message;
 
     # Store the message in the message-id index.
     $self->{MB_msgid}{$msgid} = $message;
@@ -878,6 +878,26 @@ sub addMessages(@)
 {   my Mail::Box $self = shift;
     $self->addMessage($_) foreach @_;
     $self;
+}
+
+#-------------------------------------------
+
+=item thread MESSAGE
+
+Based on a message, and facts from previously detected threads, try
+to build solid knowledge about the thread where this message is in.
+
+=cut
+
+sub thread($)
+{   my ($self, $message) = @_;
+
+    if(exists $self->{MB_to_be_threaded})
+    {   $self->inThread($_) foreach $message, @{$self->{MB_to_be_threaded}};
+        delete $self->{MB_to_be_threaded};
+    }
+
+    $self->Mail::Box::Threads::thread($message);
 }
 
 #-------------------------------------------
@@ -1178,7 +1198,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.7
+This code is alpha, version 0.8
 
 =cut
 

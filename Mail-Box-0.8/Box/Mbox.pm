@@ -4,7 +4,7 @@ use 5.006;
 
 package Mail::Box::Mbox;
 our @ISA     = 'Mail::Box';
-our $VERSION = v0.7;
+our $VERSION = v0.8;
 
 use Mail::Box;
 
@@ -120,6 +120,9 @@ description of Mbox specific options.
  save_on_exit      Mail::Box          1
  subfolder_extention Mail::Box::Mbox  '.d'
  take_headers      Mail::Box          <specify everything you need>
+ thread_body       Mail::Box::Threads 0
+ thread_timespan   Mail::Box::Threads '3 days'
+ thread_window     Mail::Box::Threads 10
  <none>            Mail::Box::Tie
 
 Mbox specific options:
@@ -738,7 +741,7 @@ sub init($)
 
     unless(exists $args->{messageID})
     {   my $msgid = $self->head->get('message-id');
-        $args->{messageID} = $1 if $msgid && $msgid =~ m/\<(.*?)\>/;
+        $args->{messageID} = $& if $msgid && $msgid =~ m/\<.*?\>/;
     }
     $self->{MBM_messageID} = $args->{messageID} || 'mbox-'.$unreg_msgid++;
 
@@ -964,7 +967,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.7
+This code is alpha, version 0.8
 
 =cut
 
