@@ -588,6 +588,11 @@ Fields which are used to administer and log mailing list activity.  Mailing
 list software has to play trics with the original message to be able to
 get the reply on that message back to the mailing list.  Usually a large
 number of lines are added.
+
+=item * M<Mail::Message::Head::SpamGroup>
+A set of fields which contains header fields which are produced by
+spam detection software.  You may want to remove these fields when
+you store a message for a longer period of time.
 =back
 
 =cut

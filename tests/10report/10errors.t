@@ -11,7 +11,7 @@ use warnings;
 use Mail::Reporter;
 use Tools;
 
-BEGIN {plan tests => 55}
+BEGIN {plan tests => 85}
 
 #
 # Dualvar logPriority
@@ -120,3 +120,43 @@ is($reps[1][2], "a test\n");
 
 cmp_ok($rep->errors, '==', 1,             'Check errors() short-cut');
 cmp_ok($rep->warnings, '==', 1,           'Check warnings() short-cut');
+
+#
+# Check merging reports
+#
+
+my $r2 = Mail::Reporter->new(trace => 'NONE', log => 'DEBUG');
+ok(defined $r2,                           'Another traceable object');
+isa_ok($r2, 'Mail::Reporter');
+ok($r2->log(WARNING => 'I warn you!'));
+ok($r2->log(ERROR => 'You are in error'));
+ok($r2->log(ERROR => 'I am sure!!'));
+ok($r2->log(NOTICE => 'Don\'t notice me'));
+$rep->addReport($r2);
+
+@reps = $rep->reportAll;
+cmp_ok(@{$reps[0]}, '==', 3);
+is($reps[0][0], $rep,                     'Checking reportAll()');
+is($reps[0][1], 'NOTICE');
+is($reps[0][2], "Don't notice me\n");
+cmp_ok(@{$reps[1]}, '==', 3);
+is($reps[1][0], $rep);
+is($reps[1][1], 'WARNING');
+is($reps[1][2], "filter\n");
+cmp_ok(@{$reps[2]}, '==', 3);
+is($reps[2][0], $rep);
+is($reps[2][1], 'WARNING');
+is($reps[2][2], "I warn you!\n");
+cmp_ok(@{$reps[3]}, '==', 3);
+is($reps[3][0], $rep);
+is($reps[3][1], 'ERROR');
+is($reps[3][2], "a test\n");
+cmp_ok(@{$reps[4]}, '==', 3);
+is($reps[4][0], $rep);
+is($reps[4][1], 'ERROR');
+is($reps[4][2], "You are in error\n");
+cmp_ok(@{$reps[5]}, '==', 3);
+is($reps[5][0], $rep);
+is($reps[5][1], 'ERROR');
+is($reps[5][2], "I am sure!!\n");
+

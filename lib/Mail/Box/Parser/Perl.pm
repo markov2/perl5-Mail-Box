@@ -51,7 +51,6 @@ sub init(@)
     $self;
 }
 
-
 #------------------------------------------
 
 sub pushSeparator($)
@@ -193,7 +192,6 @@ sub readSeparator()
     ();
 }
 
-
 #------------------------------------------
 
 sub _read_stripped_lines(;$$)
@@ -303,7 +301,6 @@ sub bodyAsString(;$$)
     my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
     return ($begin, $end, join('', @$lines));
 }
-
 
 #------------------------------------------
 

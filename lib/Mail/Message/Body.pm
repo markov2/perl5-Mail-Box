@@ -11,9 +11,9 @@ use Mail::Message::Body::File;
 use Carp;
 use Scalar::Util 'weaken';
 
-
 use MIME::Types;
 my $mime_types = MIME::Types->new;
+my $mime_plain = $mime_types->type('text/plain');
 
 =chapter NAME
 
@@ -205,7 +205,7 @@ field is case-insensitive but case preserving.  The default mime-type
 is C<text/plain>,
 
 =option  transfer_encoding STRING|FIELD
-=default transfer_encoding C<'NONE'>
+=default transfer_encoding C<'none'>
 
 The encoding that the data has.  If the data is to be encoded, than you
 will have to call M<encode()> after the body is created.  That will
@@ -223,7 +223,7 @@ Whether the body is flagged modified, directly from its creation.
     mime_type => 'text/html; charset="ISO-8859-1"');
 
  my $body = Mail::Message::Body::Lines->new(data => ['first', $second],
-    charset => 'ISO-10646', transfer_encoding => 'NONE');
+    charset => 'ISO-10646', transfer_encoding => 'none');
 
  my $body = Mail::Message::Body::Lines->new(data => \@lines,
     transfer_encoding => 'base64');
@@ -292,54 +292,48 @@ sub init($)
 
     # Set the content info
 
-    my ($mime, $transfer, $disp);
-    if($args->{disposition}) {$disp = $args->{disposition} }
-    elsif(defined $filename)
-    {   $disp = Mail::Message::Field->new
-          ( 'Content-Disposition' => (-T $filename ? 'inline' : 'attachment'));
-        (my $abbrev = $filename) =~ s!.*[/\\]!!;
-        $disp->attribute(filename => $abbrev);
-    }
+    my ($mime, $transfer, $disp)
+      = @$args{ qw/mime_type transfer_encoding disposition/ };
 
-    if(defined $args->{mime_type}) {$mime = $args->{mime_type} }
-    elsif(defined $filename)
-    {   $mime = $mime_types->mimeTypeOf($filename);
-        $mime = -T $filename ? 'text/plain' : 'application/octet-stream'
-            unless defined $mime;
+    if(defined $filename)
+    {   unless(defined $disp)
+        {   $disp = Mail::Message::Field->new
+              ('Content-Disposition' => (-T $filename ? 'inline':'attachment'));
+            (my $abbrev = $filename) =~ s!.*[/\\]!!;
+            $disp->attribute(filename => $abbrev);
+        }
+
+        unless(defined $mime)
+        {   $mime = $mime_types->mimeTypeOf($filename);
+            $mime = -T $filename ? 'text/plain' : 'application/octet-stream'
+                unless defined $mime;
+        }
     }
 
     $mime = $mime->type if ref $mime && $mime->isa('MIME::Type');
 
     if(defined(my $based = $args->{based_on}))
-    {   $mime     = $based->type        unless defined $mime;
-        $transfer = $args->{transfer_encoding} || $based->transferEncoding;
-        $disp     = $based->disposition unless defined $disp;
+    {   $mime     = $based->type             unless defined $mime;
+        $transfer = $based->transferEncoding unless defined $transfer;
+        $disp     = $based->disposition      unless defined $disp;
 
-        $self->{MMB_checked} = defined $args->{checked}
-           ? $args->{checked} : $based->checked;
+        $self->{MMB_checked}
+               = defined $args->{checked} ? $args->{checked} : $based->checked;
     }
     else
-    {   $transfer = $args->{transfer_encoding} || 'none';
-        $disp     = 'none'              unless defined $disp;
+    {   $transfer = $args->{transfer_encoding};
         $self->{MMB_checked} = $args->{checked}|| 0;
     }
 
-    $mime = 'text/plain' unless defined $mime;
-
-    unless(ref $mime)
-    {   $mime = Mail::Message::Field->new('Content-Type' => lc $mime);
+    if(defined $mime)
+    {   $mime = $self->type($mime);
         $mime->attribute(charset => $args->{charset} || 'us-ascii')
             if $mime =~ m!^text/!;
     }
 
-    $transfer = Mail::Message::Field->new('Content-Transfer-Encoding' =>
-        lc $transfer) unless ref $transfer;
+    $self->transferEncoding($transfer) if defined $transfer;
+    $self->disposition($disp)          if defined $disp;
 
-    $disp     = Mail::Message::Field->new('Content-Disposition' => $disp)
-        unless ref $disp;
-
-    @$self{ qw/MMB_type MMB_transfer MMB_disposition/ }
-        = ($mime, $transfer, $disp);
     $self->{MMB_eol}   = $args->{eol} || 'NATIVE';
 
     # Set message where the body belongs to.
@@ -378,7 +372,7 @@ body of any type.
 is equivalent with
 
  my $dec = $body->encode(mime_type => 'text/plain', charset => 'us-ascii',
-    transfer_encoding => 'NONE');
+    transfer_encoding => 'none');
 
 The C<$dec> which is returned is a body.  Ask with the M<mimeType()> method
 what is produced.  This C<$dec> body is B<not related to a header>.
@@ -495,15 +489,15 @@ sub isNested() {0}
 
 =section About the payload
 
-=method type
+=method type [STRING|FIELD]
 
-Returns the type of information the body contains.  The type is taken from
-the header field C<Content-Type>, but may have changed during encoding
---or decoding-- of the body (see the C<encode> method).
+Returns the type of information the body contains as
+M<Mail::Message::Field> object.  The type is taken from the header
+field C<Content-Type>. If the header did not contain that field,
+then you will get a default field containing C<text/plain>.
 
-The returned is a reference to a M<Mail::Message::Field> object, where
-you can ask for the C<body> (main content of the field) and the comment
-(after a semicolon).  To get to the body, you can better use M<mimeType()>.
+You usually can better use M<mimeType()>, because that will return a
+clever object with type information.
 
 =examples
 
@@ -525,12 +519,21 @@ you can ask for the C<body> (main content of the field) and the comment
 
 =cut
 
-sub type() { shift->{MMB_type} }
+sub type(;$)
+{   my $self = shift;
+    return $self->{MMB_type} if !@_ && defined $self->{MMB_type};
+
+    delete $self->{MMB_mime};
+    my $type = defined $_[0] ? shift : 'text/plain';
+
+    $self->{MMB_type}
+      = ref $type ? $type->clone
+      : Mail::Message::Field->new('Content-Type' => $type);
+}
 
 #------------------------------------------
 
 =method mimeType
-
 Returns a M<MIME::Type> object which is related to this body's type.  This
 differs from the C<type> method, which results in a M<Mail::Message::Field>.
 
@@ -542,13 +545,16 @@ differs from the C<type> method, which results in a M<Mail::Message::Field>.
 =cut
 
 sub mimeType()
-{   my $self = shift;
+{   my $self  = shift;
     return $self->{MMB_mime} if exists $self->{MMB_mime};
 
-    my $type = $self->{MMB_type}->body;
-
+    my $field = $self->{MMB_type};
     $self->{MMB_mime}
-       = $mime_types->type($type) || MIME::Type->new(type => $type);
+      = defined $field
+      ? (   $mime_types->type($field->body)
+         || MIME::Type->new(type => $field->body)
+        )
+      : $mime_plain;
 }
 
 #------------------------------------------
@@ -566,8 +572,10 @@ sub charset() { shift->type->attribute('charset') }
 
 =method transferEncoding [STRING|FIELD]
 
-Returns the transfer-encoding of the data within this body.  If it
+Returns the transfer-encoding of the data within this body as
+M<Mail::Message::Field> (which stringifies to its content).  If it
 needs to be changed, call the M<encode()> or M<decoded()> method.
+When no encoding is present, the field contains the text C<none>.
 
 The optional STRING or FIELD enforces a new encoding to be set, without the
 actual required translations.
@@ -575,17 +583,19 @@ actual required translations.
 =examples
 
  my $transfer = $msg->decoded->transferEncoding;
- $transfer->print;
-    # --> Content-Encoding: base64
+ $transfer->print;   # --> Content-Encoding: base64
+ print $transfer;    # --> base64
+
+ if($msg->body->transferEncoding eq 'none') {...}
 
 =cut
 
 sub transferEncoding(;$)
 {   my $self = shift;
-    return $self->{MMB_transfer} unless @_;
+    return $self->{MMB_transfer} if !@_ && defined $self->{MMB_transfer};
 
-    my $set = shift;
-    $self->{MMB_transfer} = ref $set ? $set
+    my $set = defined $_[0] ? shift : 'none';
+    $self->{MMB_transfer} = ref $set ? $set->clone
        : Mail::Message::Field->new('Content-Transfer-Encoding' => $set);
 }
 
@@ -593,23 +603,24 @@ sub transferEncoding(;$)
 
 =method disposition [STRING|FIELD]
 
-Returns (optionally after setting) how the message can be disposed (unpacked).
+Returns (optionally after setting) how the message can be disposed
+(unpacked).  The related header field is C<Content-Disposition>.
+A M<Mail::Message::Field> object is returned (which stringifies into
+the field content).  The field content will be C<none> if no disposition
+was specified.
+
 The argument can be a STRING (which is converted into a field), or a
-fully prepared header field.  The related header field is
-C<Content-Disposition>.
+fully prepared header field.
 
 =cut
 
 sub disposition(;$)
 {   my $self = shift;
+    return $self->{MMB_disposition} if !@_ && $self->{MMB_disposition};
 
-    if(@_)
-    {   my $disp = shift;
-        $self->{MMB_disposition} = ref $disp ? $disp
-          : Mail::Message::Field->new('Content-Disposition' => $disp);
-    }
-
-    $self->{MMB_disposition};
+    my $disp = defined $_[0] ? shift : 'none';
+    $self->{MMB_disposition} = ref $disp ? $disp->clone
+       : Mail::Message::Field->new('Content-Disposition' => $disp);
 }
 
 #------------------------------------------
@@ -623,7 +634,7 @@ after setting the flag to a new value).
 
 sub checked(;$)
 {   my $self = shift;
-    @_ ? $self->{MMB_checked} = shift : $self->{MMB_checked};
+    @_ ? ($self->{MMB_checked} = shift) : $self->{MMB_checked};
 }
 
 #------------------------------------------
@@ -773,6 +784,50 @@ of the header.
 
 sub read(@) {shift->notImplemented}
 
+#------------------------------------------
+
+=method contentInfoTo HEAD
+Copy the content information (the C<Content-*> fields) into the specified
+HEAD.  The body was created from raw data without the required information,
+which must be added.  See also M<contentInfoFrom()>.
+
+=cut
+
+sub contentInfoTo($)
+{   my ($self, $head) = @_;
+    return unless defined $head;
+
+    my $lines  = $self->nrLines;
+    my $size   = $self->size;
+    $size     += $lines if $Mail::Message::crlf_platform;
+
+    $head->set($self->type);
+    $head->set('Content-Length' => $size);
+    $head->set(Lines            => $lines);
+
+    $head->set($self->transferEncoding);
+    $head->set($self->disposition);
+    $self;
+}
+
+#------------------------------------------
+
+=method contentInfoFrom HEAD
+Transfer the body related info from the header into this body.
+
+=cut
+
+sub contentInfoFrom($)
+{   my ($self, $head) = @_;
+
+    $self->type($head->get('Content-Type'));
+    $self->transferEncoding($head->get('Content-Transfer-Encoding'));
+    $self->disposition($head->get('Content-Disposition'));
+
+    delete $self->{MMB_mime};
+    $self;
+
+}
 #------------------------------------------
 
 =method modified [BOOLEAN]

@@ -1,15 +1,11 @@
 
 package Mail::Message::Head::ListGroup;
-use base 'Mail::Reporter';
+use base 'Mail::Message::Head::FieldGroup';
 
 use strict;
 use warnings;
 
-use Mail::Message::Field::Fast;
-
-use Scalar::Util 'weaken';
-use List::Util   'first';
-use Sys::Hostname;
+use List::Util 'first';
 
 =chapter NAME
 
@@ -27,8 +23,7 @@ Mail::Message::Head::ListGroup - mailinglist related header fields
 =chapter DESCRIPTION
 
 A I<list group> is a set of header fields which are added by mailing-list
-managing software.  This class contains various kinds of knowledge about
-that software.
+managing software.  This class knowns various details about that software.
 
 The knowledge and test messages which are used to initially implement
 this module is taken from M<Mail::ListDetector>, written by
@@ -41,27 +36,7 @@ add flexibility and use the powerful MailBox features.
 
 =c_method new FIELDS, OPTIONS
 
-Construct an object which maintains one set of mailing list headers.  The
-FIELDS may be specified as C<Mail::Message::Field> objects or as key-value
-pairs.  The OPTIONS and FIELDS (as key-value pair) can be mixed: they are
-distinguished by their name, where the fields always start with a capital.
-The field objects must aways lead the OPTIONS.
-
-=option  head HEAD
-=default head C<undef>
-
-The header HEAD object is used to store the list fields in.  If no header
-is specified, a M<Mail::Message::Head::Partial> is created for you.  If
-you wish to scan the existing fields in a header, then use the M<from()>
-method.
-
-=option  version STRING
-=default version C<undef>
-Version number for the mailing list software.
-
-=option  software STRING
-=default software C<undef>
-Name of the software which maintains the mailing list.
+Construct an object which maintains one set of mailing list headers
 
 =option  rfc 'rfc2918'|'rfc2369'
 =default rfc C<undef>
@@ -77,11 +52,6 @@ Address of the mailing list, which may be specified as STRING
 or e-mail containing object (a M<Mail::Address> or M<Mail::Identity>.
 In any case, the data is converted into a M<Mail::Identity>.
 
-=option  type STRING
-=default type C<undef>
-Group name for the mailing list software.  Often the same, or close
-to the same STRING, as the C<software> option contains.
-
 =error Cannot convert "$string" into an address object
 The M<new(address)> is coerced into a M<Mail::Message::Field::Address>,
 which fails.  Have a look at M<Mail::Message::Field::Address::coerce()>
@@ -89,27 +59,9 @@ to see what valid arguments are.
 
 =cut
 
-sub new(@)
-{   my $class = shift;
-
-    my @fields;
-    push @fields, shift while ref $_[0];
-
-    $class->SUPER::new(@_, fields => \@fields);
-}
-
 sub init($$)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
-
-    my $head = $self->{MMHL_head}
-      = $args->{head} || Mail::Message::Head::Partial->new;
-
-    $self->add($_)                     # add specified object fields
-        foreach @{$args->{fields}};
-
-    $self->add($_, $args->{$_})        # add key-value paired fields
-        foreach grep m/^[A-Z]/, keys %$args;
 
     my $address = $args->{address};
        if(!defined $address) { ; }
@@ -126,11 +78,7 @@ sub init($$)
     $self->{MMHL_address}  = $address          if defined $args->{address};
 
     $self->{MMHL_listname} = $args->{listname} if defined $args->{listname};
-    $self->{MMHL_version}  = $args->{version}  if defined $args->{version};
-    $self->{MMHL_software} = $args->{software} if defined $args->{software};
     $self->{MMHL_rfc}      = $args->{rfc}      if defined $args->{rfc};
-    $self->{MMHL_type}     = $args->{type}     if defined $args->{type};
-
     $self->{MMHL_fns}      = [];
     $self;
 }
@@ -145,164 +93,62 @@ or message HEAD.
 =cut
 
 sub from($)
-{  my ($class, $from) = @_;
-   my $head = $from->isa('Mail::Message::Head') ? $from : $from->head;
-   my $self = $class->new(head => $head);
+{   my ($class, $from) = @_;
+    my $head = $from->isa('Mail::Message::Head') ? $from : $from->head;
+    my $self = $class->new(head => $head);
 
-   return () unless $self->findListFields;
-   $self;
-}
+    return () unless $self->collectFields;
 
-#------------------------------------------
+    my ($type, $software, $version, $field);
+    if(my $commpro = $head->get('X-ListServer'))  
+    {   ($software, $version) = $commpro =~ m/^(.*)\s+LIST\s*([\d.]+)\s*$/;
+        $type    = 'CommuniGate';
+    }
+    elsif(my $mailman = $head->get('X-Mailman-Version'))
+    {   $version = "$mailman";
+        $type    = 'Mailman';
+    }
+    elsif(my $majordomo = $head->get('X-Majordomo-Version'))
+    {   $version = "$majordomo";
+        $type    = 'Majordomo';
+    }
+    elsif(my $ecartis = $head->get('X-Ecartis-Version'))
+    {   ($software, $version) = $ecartis =~ m/^(.*)\s+(v[\d.]+)/;
+        $type    = 'Ecartis';
+    }
+    elsif(my $listar = $head->get('X-Listar-Version'))
+    {   ($software, $version) = $listar =~ m/^(.*?)\s+(v[\w.]+)/;
+        $type    = 'Listar';
+    }
+    elsif(defined($field = $head->get('List-Software'))
+          && $field =~ m/listbox/i)
+    {   ($software, $version) = $field =~ m/^(\S*)\s*(v[\d.]+)\s*$/;
+        $type    = 'Listbox';
+    }
+    elsif(defined($field = $head->get('X-Mailing-List'))
+          && $field =~ m[archive/latest])
+    {   $type    = 'Smartlist' }
+    elsif(defined($field = $head->get('Mailing-List')) && $field =~ m/yahoo/i )
+    {   $type    = 'YahooGroups' }
+    elsif(defined($field) && $field =~ m/(ezmlm)/i )
+    {   $type    = 'Ezmlm' }
+    elsif(my $fml = $head->get('X-MLServer'))
+    {   ($software, $version) = $fml =~ m/^\s*(\S+)\s*\[\S*\s*([^\]]*?)\s*\]/;
+        $type    = 'FML';
+    }
+    elsif(defined($field = $head->get('List-Subscribe')
+                        || $head->get('List-Unsubscribe'))
+          && $field =~ m/sympa/i)
+    {   $type    = 'Sympa' }
+    elsif(first { m/majordom/i } $head->get('Received'))
+    {   # Majordomo is hard to recognize
+        $type    = "Majordomo";
+    }
+    elsif($field = $head->get('List-ID') && $field =~ m/listbox\.com/i)
+    {   $type    = "Listbox" }
 
-=method clone
-
-Make a copy of this object.  The collected fieldnames are copied and the
-list type information.  No deep copy is made for the header: this is
-only copied as reference.
-
-=cut
-
-sub clone()
-{   my $self = shift;
-    my $clone = bless %$self, ref $self;
-    $clone->{MMHL_fns} = [ @{$self->{MMHL_fns}} ];
-    $clone;
-}
-
-#------------------------------------------
-
-=section The header
-
-=method head
-
-Returns the header object, which includes these fields.
-
-=cut
-
-sub head() { shift->{MMHL_head} }
-
-#------------------------------------------
-
-=method attach HEAD
-
-Add a list group to a message HEAD.  The fields will be cloned(!)
-into the header, so that the list group object can be used again.
-
-=example attaching a list group to a message
-
- my $lg = Mail::Message::Head::ListGroup->new(...);
- $lg->attach($msg->head);
- $msg->head->addListGroup($lg);   # same
-
-=example copying list information
-
- if(my $lg = $listmsg->head->listGroup)
- {   $msg->head->addListGroup($lg);
- }
-
-=cut
-
-sub attach($)
-{   my ($self, $head) = @_;
-    my $lg = ref($self)->clone;
-    $self->{MMHL_head} = $head;
-
-    $head->add($_->clone) for $self->fields;
-    $lg;
-}
-
-#------------------------------------------
-
-=method delete
-
-Remove all the header lines which are combined in this list group
-from the header.
-
-=cut
-
-sub delete()
-{   my $self   = shift;
-    my $head   = $self->head;
-    $head->removeField($_) foreach $self->fields;
+    $self->detected($type, $software, $version);
     $self;
-}
-
-#------------------------------------------
-
-=section Access to the header
-
-=method add (FIELD, VALUE) | OBJECT
-
-Add a field to the header, using the list group.  When the list group
-is already attached to a real message header, it will appear in that
-one as well as being registed in this set.
-
-=example adding a field to a detached list group
-
- my $this = Mail::Message::Head::ListGroup->new(...);
- $this->add('List-Id' => 'mailbox');
- $msg->addListGroup($this);
- $msg->send;
-
-=example adding a field to an attached list group
-
- my $lg = Mail::Message::Head::ListGroup->from($msg);
- $lg->add('List-Id' => 'mailbox');
-
-=cut
-
-sub add(@)
-{   my $self = shift;
-    my $field = $self->head->add(@_) or return ();
-    push @{$self->{MMHL_fns}}, $field->name;
-    $self;
-}
-
-#------------------------------------------
-
-=method fields
-
-Return the fields which are defined for this list group.
-
-=cut
-
-sub fields()
-{   my $self = shift;
-    my $head = $self->head;
-    map { $head->get($_) } @{$self->{MMHL_fns}};
-}
-
-#------------------------------------------
-
-=method version 
-
-Returns the version number of the software used by the mailing list
-software.  This is ofthen not known, in which case C<undef> will be
-returned.
-
-=cut
-
-sub version()
-{  my $self = shift;
-   $self->type;
-   $self->{MMHL_version};
-}
-
-#------------------------------------------
-
-=method software
-
-Returns the name of the software as is defined in the headers.  The may
-be slightly different from the return value of M<type()>, but usually
-not too different.
-
-=cut
-
-sub software()
-{  my $self = shift;
-   $self->type;
-   $self->{MMHL_software};
 }
 
 #------------------------------------------
@@ -410,76 +256,7 @@ sub listname()
 
 #------------------------------------------
 
-=method type
-
-Returns an abstract name for the list group; which mailing software is
-controling it.  C<undef> is returned in case the type is not known, and
-the other names are listed in L</Detected lists>.
-
-=cut
-
-sub type()
-{   my $self = shift;
-    return $self->{MMHL_type} if exists $self->{MMHL_type};
-
-    my $head = $self->head;
-    my ($type, $software, $version, $field);
-
-    if(my $commpro = $head->get('X-ListServer'))  
-    {   ($software, $version) = $commpro =~ m/^(.*)\s+LIST\s*([\d.]+)\s*$/;
-        $type    = 'CommuniGate';
-    }
-    elsif(my $mailman = $head->get('X-Mailman-Version'))
-    {   $version = "$mailman";
-        $type    = 'Mailman';
-    }
-    elsif(my $majordomo = $head->get('X-Majordomo-Version'))
-    {   $version = "$majordomo";
-        $type    = 'Majordomo';
-    }
-    elsif(my $ecartis = $head->get('X-Ecartis-Version'))
-    {   ($software, $version) = $ecartis =~ m/^(.*)\s+(v[\d.]+)/;
-        $type    = 'Ecartis';
-    }
-    elsif(my $listar = $head->get('X-Listar-Version'))
-    {   ($software, $version) = $listar =~ m/^(.*?)\s+(v[\w.]+)/;
-        $type    = 'Listar';
-    }
-    elsif(defined($field = $head->get('List-Software'))
-          && $field =~ m/listbox/i)
-    {   ($software, $version) = $field =~ m/^(\S*)\s*(v[\d.]+)\s*$/;
-        $type    = 'Listbox';
-    }
-    elsif(defined($field = $head->get('X-Mailing-List'))
-          && $field =~ m[archive/latest])
-    {   $type    = 'Smartlist' }
-    elsif(defined($field = $head->get('Mailing-List')) && $field =~ m/yahoo/i )
-    {   $type    = 'YahooGroups' }
-    elsif(defined($field) && $field =~ m/(ezmlm)/i )
-    {   $type    = 'Ezmlm' }
-    elsif(my $fml = $head->get('X-MLServer'))
-    {   ($software, $version) = $fml =~ m/^\s*(\S+)\s*\[\S*\s*([^\]]*?)\s*\]/;
-        $type    = 'FML';
-    }
-    elsif(defined($field = $head->get('List-Subscribe')
-                        || $head->get('List-Unsubscribe'))
-          && $field =~ m/sympa/i)
-    {   $type    = 'Sympa' }
-    elsif(first { m/majordom/i } $head->get('Received'))
-    {   # Majordomo is hard to recognize
-        $type    = "Majordomo";
-    }
-    elsif($field = $head->get('List-ID') && $field =~ m/listbox\.com/i)
-    {   $type    = "Listbox" }
-
-    $self->{MMHL_version}  = $version  if defined $version;
-    $self->{MMHL_software} = $software if defined $software;
-    $self->{MMHL_type}     = $type;
-}
-
-#------------------------------------------
-
-=method findListFields
+=method collectFields
 
 Scan the header for fields which are usually contained in mailing list
 software.  This method is automatically called when a list group is
@@ -494,7 +271,7 @@ or too many fields are included.
 
 =cut
 
-our $list_field_names
+my $list_field_names
   = qr/ ^ (?: List|X-Envelope|X-Original ) - 
       | ^ (?: Precedence|Mailing-List ) $
       | ^ X-(?: Loop|BeenThere|Sequence|List|Sender|MLServer ) $
@@ -503,32 +280,23 @@ our $list_field_names
       | ^ (?: Mail-Followup|Delivered|Errors|X-Apperently ) -To $
       /xi;
 
-sub findListFields()
+sub collectFields()
 {   my $self = shift;
     my @names = map { $_->name } $self->head->grepNames($list_field_names);
-    $self->{MMHL_fns} = \@names;
+    $self->addFields(@names);
     @names;
 }
 
 #------------------------------------------
 
-=section Error handling
-
-=method print [FILEHANDLE]
-
-Print the group to the specified FILEHANDLE or GLOB.  This is probably only
-useful for debugging purposed.  The output defaults to the selected file
-handle.
-
+=ci_method isListGroupFieldName NAME
 =cut
 
-sub print(;$)
-{   my $self = shift;
-    my $out  = shift || select;
-    $self->print($out) foreach $self->fields;
-}
+sub isListGroupFieldName($) { $_[1] =~ $list_field_names }
 
 #------------------------------------------
+
+=section Error handling
 
 =method details
 

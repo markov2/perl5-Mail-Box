@@ -73,7 +73,7 @@ ok(!defined $lg,                     "no listgroup in empty header");
 #
 
 my $fn = 'mlfolder';
-$fn = File::Spec->catfile('12head', $fn) unless -f $fn;
+$fn = File::Spec->catfile('31fgroups', $fn) unless -f $fn;
 $fn = File::Spec->catfile('tests', $fn)  unless -f $fn;
 die "Cannot find file with mailinglist examples ($fn)" unless -f $fn;
 

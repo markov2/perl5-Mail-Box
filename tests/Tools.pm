@@ -10,7 +10,7 @@ our @EXPORT =
   qw/clean_dir copy_dir
      unpack_mbox2mh unpack_mbox2maildir
      compare_lists listdir
-     compare_message_prints
+     compare_message_prints reproducable_text
      compare_thread_dumps
      start_pop3_server start_pop3_client
 
@@ -231,7 +231,7 @@ sub compare_lists($$)
 }
 
 #
-# Compare the text two messages.
+# Compare the text of two messages, rather strict.
 # On CRLF platforms, the Content-Length may be different.
 #
 
@@ -244,6 +244,21 @@ sub compare_message_prints($$$)
     }
 
     is($first, $second, $label);
+}
+
+#
+# Strip message text down the the things which are the same on all
+# platforms and all situations.
+#
+
+sub reproducable_text($)
+{   my $text  = shift;
+    my @lines = split /^/m, $text;
+    foreach (@lines)
+    {   s/((?:references|message-id|date|content-length)\: ).*/$1<removed>/i;
+        s/boundary-\d+/boundary-<removed>/g;
+    }
+    join '', @lines;
 }
 
 #

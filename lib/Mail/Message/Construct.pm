@@ -40,23 +40,32 @@ the requested method.
 
 our %locations =
 (
-  bounce => 'Bounce'
-, build => 'Build'
-, buildFromBody => 'Build'
-, rebuild => 'Build'
-, forward => 'Forward'
-, forwardSubject => 'Forward'
-, forwardPrelude => 'Forward'
-, forwardPostlude => 'Forward'
-, read => 'Read'
-, rebuild => 'Rebuild'
-, reply => 'Reply'
-, replySubject => 'Reply'
-, replyPrelude => 'Reply'
-, string => 'Text'
-, lines => 'Text'
-, file => 'Text'
-, printStructure => 'Text'
+  bounce             => 'Bounce'
+
+, build              => 'Build'
+, buildFromBody      => 'Build'
+
+, forward            => 'Forward'
+, forwardNo          => 'Forward'
+, forwardInline      => 'Forward'
+, forwardAttach      => 'Forward'
+, forwardEncapsulate => 'Forward'
+, forwardSubject     => 'Forward'
+, forwardPrelude     => 'Forward'
+, forwardPostlude    => 'Forward'
+
+, read               => 'Read'
+
+, rebuild            => 'Rebuild'
+
+, reply              => 'Reply'
+, replySubject       => 'Reply'
+, replyPrelude       => 'Reply'
+
+, string             => 'Text'
+, lines              => 'Text'
+, file               => 'Text'
+, printStructure     => 'Text'
 );
 
 sub AUTOLOAD(@)

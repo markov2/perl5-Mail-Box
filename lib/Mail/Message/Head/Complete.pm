@@ -5,7 +5,7 @@ package Mail::Message::Head::Complete;
 use base 'Mail::Message::Head';
 
 use Mail::Box::Parser;
-require Mail::Message::Head::Partial;
+use Mail::Message::Head::Partial;
 
 use Scalar::Util 'weaken';
 use List::Util   'sum';
@@ -108,7 +108,7 @@ field constructor is called for you.
 LINE or BODY specifications which are terminated by a new-line are considered 
 to be correctly folded.  Lines which are not terminated by a new-line will
 be folded when needed: new-lines will be added where required.  It is strongly
-adviced to let Mail::Box do the folding for you.
+adviced to let MailBox do the folding for you.
 
 The return value of this method is the M<Mail::Message::Field> object
 which is created (or was specified).
@@ -272,10 +272,13 @@ Replace the values in the header fields named by NAME with the values
 specified in the list of FIELDS. A single name can correspond to multiple
 repeated fields.
 
-For C<Received> fields, you should take a look at I<resent groups>, as
-implemented in M<Mail::Message::Head::ResentGroup>.  Removing those
-lines without their related lines is not a smart idea.  Read the
-details M<Mail::Message::Head::ResentGroup::delete()>.
+Removing fields which are part of one of the predefined field groups is
+not a smart idea.  You can better remove these fields as group, all
+together.  For instance, the C<'Received'> lines are part of resent
+groups, C<'X-Spam'> is past of a spam group, and C<List-Post> belongs
+to a list group.  You can delete a whole group with
+M<Mail::Message::Head::FieldGroup::delete()>, or with methods which
+are provided by M<Mail::Message::Head::Partial>.
 
 If FIELDS is empty, the corresponding NAME fields will
 be removed. The location of removed fields in the header order will be
@@ -354,8 +357,7 @@ in warnings: those methods check the existence of the field first.
 
 sub removeField($)
 {   my ($self, $field) = @_;
-    my $name = $field->name;
-
+    my $name  = $field->name;
     my $known = $self->{MMH_fields};
 
     if(!defined $known->{$name})
@@ -408,6 +410,16 @@ sub removeFieldsExcept(@)
 
 #------------------------------------------
 
+=method removeContentInfo
+Remove all body related fields from the header.  The header will become
+partial.
+
+=cut
+
+sub removeContentInfo() { shift->removeFields(qr/^Content-/, 'Lines') }
+
+#------------------------------------------
+
 =method removeResentGroups
 
 Removes all resent groups at once.  The header object is turned into
@@ -434,7 +446,23 @@ M<Mail::Message::Head::Partial::removeListGroup()>.
 
 sub removeListGroup(@)
 {   my $self = shift;
-    (bless $self, 'Mail::Message::Head::Partial')->removeListGroups(@_);
+    (bless $self, 'Mail::Message::Head::Partial')->removeListGroup(@_);
+}
+
+#------------------------------------------
+
+=method removeSpamGroups
+
+Removes all fields which were added by various spam detection software
+at once.  The header object is turned into a M<Mail::Message::Head::Partial>
+object.  Read about the implications and the possibilities in
+M<Mail::Message::Head::Partial::removeSpamGroups()>.
+
+=cut
+
+sub removeSpamGroups(@)
+{   my $self = shift;
+    (bless $self, 'Mail::Message::Head::Partial')->removeSpamGroups(@_);
 }
 
 #------------------------------------------
@@ -527,32 +555,8 @@ C<Received> field.
 
 sub resentGroups()
 {   my $self = shift;
-    my (@groups, $return_path, $delivered_to, @fields);
     require Mail::Message::Head::ResentGroup;
-
-    foreach my $field ($self->orderedFields)
-    {   my $name = $field->name;
-        if($name eq 'return-path')              { $return_path = $field }
-        elsif($name eq 'delivered-to')          { $delivered_to = $field }
-        elsif(substr($name, 0, 7) eq 'resent-') { push @fields, $field }
-        elsif($name eq 'received')
-        {   push @groups, Mail::Message::Head::ResentGroup->new
-               (@fields, head => $self)
-                   if @fields;
-
-            @fields = $field;
-            unshift @fields, $delivered_to if defined $delivered_to;
-            undef $delivered_to;
-
-            unshift @fields, $return_path  if defined $return_path;
-            undef $return_path;
-        }
-    }
-
-    push @groups, Mail::Message::Head::ResentGroup->new(@fields, head => $self)
-          if @fields;
-
-    @groups;
+    Mail::Message::Head::ResentGroup->from($self);
 }
 
 #------------------------------------------
@@ -581,32 +585,38 @@ sub addResentGroup(@)
 {   my $self  = shift;
 
     require Mail::Message::Head::ResentGroup;
-    my $rg = @_==1 ? (shift)
-      : Mail::Message::Head::ResentGroup->new(@_, head => $self);
+    my $rg = @_==1 ? (shift) : Mail::Message::Head::ResentGroup->new(@_);
 
     my @fields = $rg->orderedFields;
     my $order  = $self->{MMH_order};
 
+    # Look for the first line which relates to resent groups
     my $i;
     for($i=0; $i < @$order; $i++)
     {   next unless defined $order->[$i];
-        last if $order->[$i]->name =~ m!^(?:received|return-path|resent-)!;
+        last if $rg->isResentGroupFieldName($order->[$i]->name);
     }
 
     my $known = $self->{MMH_fields};
     while(@fields)
     {   my $f    = pop @fields;
+
+        # Add to the order of fields
         splice @$order, $i, 0, $f;
         weaken( $order->[$i] );
         my $name = $f->name;
 
-        # Adds *before* in the list.
+        # Adds *before* in the list for get().
            if(!defined $known->{$name})      {$known->{$name} = $f}
         elsif(ref $known->{$name} eq 'ARRAY'){unshift @{$known->{$name}},$f}
         else                       {$known->{$name} = [$f, $known->{$name}]}
     }
 
+    $rg->messageHead($self);
+
+    # Oh, the header has changed!
     $self->modified(1);
+
     $rg;
 }
 
@@ -658,6 +668,61 @@ return, because the same group can be used for multiple messages.
 sub addListGroup($)
 {   my ($self, $lg) = @_;
     $lg->attach($self);
+}
+
+#------------------------------------------
+
+=method spamGroups [NAMES]
+
+Returns a list of M<Mail::Message::Head::SpamGroup> objects, each collecting
+some lines which contain spam fighting information.  When any NAMES are
+given, then only these groups are returned.
+See also M<addSpamGroup()> and M<removeSpamGroups()>.
+
+In scalar context, with exactly one NAME specified, that group will be
+returned.  With more NAMES or without NAMES, a list will be returned
+(which defaults to the length of the list in scalar context).
+
+=example use of listGroup()
+
+ my @sg = $msg->head->spamGroups;
+ $sg[0]->print(\*STDERR);
+ $sg[-1]->delete;
+
+ my $sg = $msg->head->spamGroups('SpamAssassin');
+
+=cut
+
+sub spamGroups(@)
+{   my $self = shift;
+    require Mail::Message::Head::SpamGroup;
+    my @types = @_ ? (types => \@_) : ();
+    my @sgs   = Mail::Message::Head::SpamGroup->from($self, @types);
+    wantarray || @_ != 1 ? @sgs : $sgs[0];
+}
+
+#------------------------------------------
+
+=method addSpamGroup OBJECT
+
+A I<spam fighting group> is a set of header fields which contains data
+which is used to fight spam.  See M<Mail::Message::Head::SpamGroup>
+for details about the implementation of the OBJECT.
+
+When you have a spam group prepared, you can add it later using this
+method.  You will get your private copy of the spam group data in
+return, because the same group can be used for multiple messages.
+
+=example of adding a spam group to a header
+
+ my $sg = M<Mail::Message::Head::SpamGroup>->new(...);
+ my $own_sg = $msg->head->addSpamGroup($sg);
+
+=cut
+
+sub addSpamGroup($)
+{   my ($self, $sg) = @_;
+    $sg->attach($self);
 }
 
 #------------------------------------------

@@ -63,7 +63,6 @@ sub lines()
 #------------------------------------------
 
 =method file
-
 Returns the message as file-handle.
 
 =cut
@@ -73,7 +72,7 @@ sub file()
     my @lines;
     my $file = IO::Lines->new(\@lines);
     $self->print($file);
-    $file->setpos(0,0);
+    $file->seek(0,0);
     $file;
 }
 

@@ -814,21 +814,17 @@ can be connected to a different message.
 
 =cut
   
-my @bodydata_in_header = qw/Content-Type Content-Transfer-Encoding
-    Content-Length Content-Disposition Lines/;
-
 sub body(;$@)
 {   my $self = shift;
     return $self->{MM_body} unless @_;
+
+    my $head = $self->head;
+    $head->removeContentInfo if defined $head;
 
     my ($rawbody, %args) = @_;
     unless(defined $rawbody)
     {   # Disconnect body from message.
         my $body = delete $self->{MM_body};
-        if(defined(my $head = $self->head))
-        {   $head->reset($_) foreach @bodydata_in_header;
-        }
-
         $body->message(undef) if defined $body;
         return $body;
     }
@@ -840,28 +836,10 @@ sub body(;$@)
     # Message parts will get encoded on the moment the whole multipart
     # is transformed into a real message.
     my $body = $self->isPart ? $rawbody : $rawbody->encoded;
+    $body->contentInfoTo($self->head);
 
     my $oldbody = $self->{MM_body};
     return $body if defined $oldbody && $body==$oldbody;
-
-    # Update the header fields to the data of the body message.
-
-    my $head = $self->head;
-    confess unless defined $head;
-
-    $head->set($body->type);
-
-    my $body_lines = $body->nrLines;
-    my $body_size  = $body->size;
-    $body_size    += $body_lines if $crlf_platform;
-
-    $head->set('Content-Length' => $body_size);
-    $head->set(Lines            => $body_lines);
-
-    $head->set($body->transferEncoding);
-    $head->set($body->disposition);
-
-    # Finally, add the body to the message.
 
     $body->message($self);
     $body->modified(1) if defined $oldbody;
@@ -1296,25 +1274,20 @@ sub readBody($$;$$)
     }
     else
     {   my $ct   = $head->get('Content-Type');
-        my $type = defined $ct ? lc $ct->body : 'text/plain';
+        my $type = defined $ct ? lc($ct->body) : 'text/plain';
 
-        # Be sure you have acceptable bodies for multipars and nested.
+        # Be sure you have acceptable bodies for multiparts and nested.
         if(substr($type, 0, 10) eq 'multipart/' && !$bodytype->isMultipart)
         {   $bodytype = $mpbody }
         elsif($type eq 'message/rfc822' && !$bodytype->isNested)
         {   $bodytype = $nbody  }
 
-        my $cte = $head->get('Content-Transfer-Encoding');
-        my $cd  = $head->get('Content-Disposition');
-
         $body = $bodytype->new
         ( message           => $self
-        , mime_type         => (defined $ct  ? $ct->clone  : $type)
-        , transfer_encoding => (defined $cte ? $cte->clone : undef)
-        , disposition       => (defined $cd  ? $cd->clone  : undef)
         , checked           => $self->{MM_trusted}
         , $self->logSettings
         );
+        $body->contentInfoFrom($head);
     }
 
     my $lines   = $head->get('Lines');
@@ -1330,7 +1303,7 @@ sub readBody($$;$$)
 
 =method storeBody BODY
 
-Where the body() method can be used to set and get a body, with all
+Where the M<body()> method can be used to set and get a body, with all
 the necessary checks, this method is bluntly adding the specified body
 to the message.  No conversions, not checking.
 

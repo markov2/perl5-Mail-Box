@@ -304,7 +304,7 @@ sub readMessageFilenames
     opendir DIR, $dirname or return ();
 
     # unsorted list of untainted filenames.
-    my @files = map { /^(\d[\w.:,\-]+)$/
+    my @files = map { /^(\d[\w.:,=\-]+)$/
                       && -f File::Spec->catfile($dirname, $1) ? $1 : () }
                    readdir DIR;
     closedir DIR;

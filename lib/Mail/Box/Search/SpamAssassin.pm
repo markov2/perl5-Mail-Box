@@ -31,7 +31,7 @@ Mail::Box::Search::SpamAssassin - select spam messages with Mail::SpamAssassin
  my $spam2 = Mail::Box::Search::SpamAssassin
                ->new(deliver => 'DELETE');
  $spam2->search($folder);
- $mgr->moveMessages($folder->messages('spam'), $spamfolder);
+ $mgr->moveMessages($spamfolder, $folder->messages('spam'));
 
 =chapter DESCRIPTION
 
@@ -86,7 +86,9 @@ retreived with assassinator().
 =default sa_options     C<{ }>
 
 Options to create the internal M<Mail::SpamAssassin> object; see its
-manual page for the available options.
+manual page for the available options.  Other setting may be provided
+via SpamAssassins configuration file mechanism, which is explained in
+L<Mail::SpamAssassin::Conf>.
 
 =examples
 

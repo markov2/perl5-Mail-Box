@@ -5,7 +5,7 @@ package Mail::Message::Wrapper::SpamAssassin;
 use base 'Mail::SpamAssassin::Message';
 
 use Carp;
-use Mail::Message::Body::Lines;
+use Mail::Message::Body;
 
 #------------------------------------------
 
@@ -36,20 +36,21 @@ interface to the spam checking software of M<Mail::SpamAssassin>.
 =chapter METHODS
 
 =c_method new MESSAGE, OPTIONS
-
-Creates a wrapper around the MESSAGE.
+Creates a wrapper around the MESSAGE.  The already present fields
+from a previous run of Spam::Assassin (or probably fake lines) are
+removed first.
 
 =cut
 
-sub new(@)
+sub new(@)    # fix missing infra-structure of base element
 {   my ($class, $message, %args) = @_;
+
+    $_->delete for $message->head->spamGroups('SpamAssassin');
+
     $class->SUPER::new($message)->init(\%args);
 }
 
-sub init($)
-{   my ($self, $args) = @_;
-    $self;
-}
+sub init($) { shift }
 
 #------------------------------------------
 
@@ -67,11 +68,21 @@ sub get_header($)
 
 #------------------------------------------
 
+sub get_pristine_header($)
+{   my ($self, $name) = @_;
+    my $field = $self->get_mail_object->head->get($name);
+    defined $field ? $field->foldedBody : undef;
+}
+
+#------------------------------------------
+
 sub put_header($$)
 {   my ($self, $name, $value) = @_;
     my $head = $self->get_mail_object->head;
     $value =~ s/\s{2,}/ /g;
-    return if $value =~ s/^\s*$//;
+    $value =~ s/\s*$//;      # will cause a refold as well
+    return () unless length $value;
+
     $head->add($name => $value);
 }
 
@@ -104,12 +115,21 @@ sub get_body() {shift->get_mail_object->body->lines }
 
 #------------------------------------------
 
+sub get_pristine() { shift->get_mail_object->head->string }
+
+#------------------------------------------
+
 sub replace_body($)
 {   my ($self, $data) = @_;
-    my $body = Mail::Message::Body::Lines->new(data => $data);
+    my $body = Mail::Message::Body->new(data => $data);
     $self->get_mail_object->storeBody($body);
 }
 
 #------------------------------------------
+
+sub replace_original_message($)
+{   my ($self, $lines) = @_;
+    die "We will not replace the message.  Use report_safe = 0\n";
+}
 
 1;

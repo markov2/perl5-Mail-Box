@@ -79,7 +79,7 @@ sub bounce(@)
         }
     }
     else
-    {   $rg = Mail::Message::Head::ResentGroup->new(@_, head => $head);
+    {   $rg = Mail::Message::Head::ResentGroup->new(@_);
     }
  
     #

@@ -293,7 +293,7 @@ and returned.  When a STRING is used, that one is formatted.
 # 'Bcc' headers.
 
 my %wf_lookup
-  = qw/mime MIME  ldap LDAP  soap SOAP
+  = qw/mime MIME  ldap LDAP  soap SOAP  swe SWE
        bcc Bcc  cc Cc/;
 
 sub wellformedName(;$)

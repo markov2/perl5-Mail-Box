@@ -185,18 +185,17 @@ sub attach(@)
 =method stripSignature OPTIONS
 
 Strip the signature from the body.  The body must already be decoded
-otherwise the wrong lines may get stripped.
-
-The signature is added by the sender to tell about him-
-or herself.  It is superfluous in some situations, for instance if you
-want to create a reply to the person's message you do not need to include
-that signature.
-
-C<stripSignature> returns the stripped version body, and in list context
-also the signature, encapsulated in its own body object.  If the body had
-no signature, the original body object is returned, and C<undef> for
-the signature body.  The signature separator is the first line of the
+otherwise the wrong lines may get stripped.  Returned is the stripped
+version body, and in list context also the signature, encapsulated in
+its own body object.  The signature separator is the first line of the
 returned signature body.
+
+The signature is added by the sender to tell about him- or herself.
+It is superfluous in some situations, for instance if you want to create
+a reply to the person's message you do not need to include that signature.
+
+If the body had no signature, the original body object is returned,
+and C<undef> for the signature body.
 
 =option  result_type CLASS
 =default result_type <same as current>

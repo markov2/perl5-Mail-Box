@@ -483,7 +483,7 @@ sub stripSignature(@)
 {   my $self  = shift;
 
     my @allparts = $self->parts;
-    my @parts    = grep {$_->body->mimeType->isSignature} @allparts;
+    my @parts    = grep {! $_->body->mimeType->isSignature} @allparts;
 
     @allparts==@parts ? $self
     : (ref $self)->new(based_on => $self, parts => \@parts);

@@ -17,10 +17,11 @@ Mail::Message::Head::Partial - subset of header information of a message
  $partial->isDelayed                      # false
  $partial->isPartial                      # true
 
- $partial->removeFields( qw/^X-/ );
+ $partial->removeFields( qr/^X-/ );
  $partial->removeFieldsExcept( qw/To From/ );
  $partial->removeResentGroups;
  $partial->removeListGroup;
+ $partial->removeSpamGroups;
 
 =chapter DESCRIPTION
 
@@ -111,18 +112,19 @@ are explained in M<Mail::Message::Head::ResentGroup>.  Returned is the
 number of removed lines.
 
 For removing single groups (for instance because you want to keep the
-last), use M<Mail::Message::Head::ResentGroup::delete()>.
+last), use M<Mail::Message::Head::FieldGroup::delete()>.
 
 =cut
 
 sub removeResentGroups()
 {   my $self = shift;
     require Mail::Message::Head::ResentGroup;
-    
+
     my $known = $self->{MMH_fields};
     my $found = 0;
     foreach my $name (keys %$known)
-    {   next if $name !~ $Mail::Message::Head::ResentGroup::resent_field_names;
+    {   next unless Mail::Message::Head::ResentGroup
+                         ->isResentGroupFieldName($name);
         delete $known->{$name};
         $found++;
     }
@@ -149,7 +151,34 @@ sub removeListGroup()
     my $known = $self->{MMH_fields};
     my $found = 0;
     foreach my $name (keys %$known)
-    {   next unless $name =~ $Mail::Message::Head::ListGroup::list_field_names;
+    {   next unless Mail::Message::Head::ListGroup->isListGroupFieldName($name);
+        delete $known->{$name};
+	$found++;
+    }
+
+    $self->cleanupOrderedFields if $found;
+    $self->modified(1) if $found;
+    $found;
+}
+
+#------------------------------------------
+
+=method removeSpamGroups
+
+Removes all header lines which were produced by spam detection and
+spam-fighting software.  Which fields that are is explained in
+M<Mail::Message::Head::SpamGroup>.  Returned is the number of removed lines.
+
+=cut
+
+sub removeSpamGroups()
+{   my $self = shift;
+    require Mail::Message::Head::SpamGroup;
+
+    my $known = $self->{MMH_fields};
+    my $found = 0;
+    foreach my $name (keys %$known)
+    {   next unless Mail::Message::Head::SpamGroup->isSpamGroupFieldName($name);
         delete $known->{$name};
 	$found++;
     }

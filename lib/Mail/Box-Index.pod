@@ -73,6 +73,7 @@ Only the HTML version of this manual page will list the sections.
       <li>L<Mail::Message::Field/Using study() field>
       <li>L<Mail::Message::Field/Using resent groups> (M<Mail::Message::Head::ResentGroup>)
       <li>L<Mail::Message::Head::ListGroup/Mailing list fields>
+      <li>L<Mail::Message::Head::SpamGroup/Spam fighting fields>
       </ul>
   <li>L<Mail::Message::Field/The field's data>
       <ul>
@@ -118,7 +119,8 @@ Only the HTML version of this manual page will list the sections.
   <li>Reading a message (M<Mail::Message::Construct::Read>)
   <li>Building a message (M<Mail::Message::Construct::Build>)
   <li>Reply to a message (M<Mail::Message::Construct::Reply>)
-  <li>Forward a message (M<Mail::Message::Construct::Forward>)
+  <li>
+  <li>L<Mail::Message::Construct::Forward/Creating a forward>
   <li>Bounce a message (M<Mail::Message::Construct::Bounce>)
   <li>L<Mail::Message::Construct::Rebuild/Rebuilding a message> (M<Mail::Message::Construct::Rebuild>)
       <ul>

@@ -7,7 +7,7 @@ use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 23}
+BEGIN {plan tests => 26}
 
 use Mail::Message::Head::ResentGroup;
 use Mail::Message::Head::Complete;
@@ -30,10 +30,15 @@ my $rg = Mail::Message::Head::ResentGroup->new
 ok(defined $rg);
 isa_ok($rg, 'Mail::Message::Head::ResentGroup');
 
-{ my $from = $rg->from;
-  ok(ref $from);
-  isa_ok($from, 'Mail::Message::Field');
-  is($from->name, 'resent-from');
+my @fn = $rg->fieldNames;
+cmp_ok(scalar(@fn), '==', 2,           "Two fields");
+is($fn[0], 'Received');
+is($fn[1], 'Resent-From');
+
+{  my $from = $rg->from;
+   ok(ref $from);
+   isa_ok($from, 'Mail::Message::Field');
+   is($from->name, 'resent-from');
 }
 
 #
@@ -116,9 +121,8 @@ isa_ok($h2, 'Mail::Message::Head::Complete');
    @of     = $rgs[1]->orderedFields;
    cmp_ok(@of, '==', 2);
 
-# Now delete, and close scope to avoid accidental reference to
-# fields which should get cleaned-up.
-
+   # Now delete, and close scope to avoid accidental reference to
+   # fields which should get cleaned-up.
    $rgs[0]->delete;
 }
 

@@ -315,7 +315,7 @@ sub getHeadAndBody($)
     $parser->stop;
 
     $self->log(PROGRESS => "Loaded message $uidl.");
-    ($head, $body);
+    ($head, $body->contentInfoFrom($head));
 }
 
 #-------------------------------------------

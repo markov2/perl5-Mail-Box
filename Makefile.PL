@@ -70,6 +70,7 @@ my %prereq =
  , MIME::Types    => 1.004
  , Sys::Hostname  => 0.0
  , Test::More     => 0.47
+ , Test::Harness  => 1.38
  , MIME::Base64   => 0.0
  , URI            => 1.23
  , IO::Scalar     => 0.0

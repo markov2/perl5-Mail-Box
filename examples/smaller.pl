@@ -7,7 +7,7 @@
 
 use warnings;
 use strict;
-use lib '..', '.';
+use lib ('../lib', 'lib');
 
 use Mail::Box::Manager;
 use Mail::Message;
@@ -46,14 +46,24 @@ foreach my $msg ($folder->messages)
 my $newsize = $folder->size;
 print "After removal of resent groups, the folder is about ",
     size($newsize), " bytes\n";
+my $resentsize = $size - $newsize;
 
 foreach my $msg ($folder->messages)
 {   $msg->head->removeListGroup;
 }
 
-my $finalsize = $folder->size;
+my $newsize2 = $folder->size;
 print "After removal of list groups, the folder is only ",
+    size($newsize2), " bytes\n";
+my $listsize = $newsize - $newsize2;
+
+foreach my $msg ($folder->messages)
+{   $msg->head->removeSpamGroups;
+}
+my $finalsize = $folder->size;
+print "After removal of spam groups, the folder is only ",
     size($finalsize), " bytes\n";
+my $spamsize = $newsize2 - $finalsize;
 
 # Final statistics
 sub percent($$)
@@ -65,8 +75,9 @@ my $sizeheads = sum map {$_->head->size}
                        map {$_->parts}
 		           $folder->messages;
 
-print '  resent headers were   ', percent($size-$newsize,$size), "\n",
-      '  list headers were     ', percent($newsize-$finalsize,$size), "\n",
+print '  resent headers were   ', percent($resentsize,$size), "\n",
+      '  list headers were     ', percent($listsize,$size), "\n",
+      '  spam headers were     ', percent($spamsize,$size), "\n",
       '  remaining headers are ', percent($sizeheads, $size), "\n",
       '  size of bodies is     ', percent($finalsize-$sizeheads, $size), "\n";
 

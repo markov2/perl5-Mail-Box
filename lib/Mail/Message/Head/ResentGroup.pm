@@ -2,12 +2,13 @@
 use strict;
 
 package Mail::Message::Head::ResentGroup;
-use base 'Mail::Reporter';
+use base 'Mail::Message::Head::FieldGroup';
 
 use Scalar::Util 'weaken';
 use Mail::Message::Field::Fast;
 
-use Sys::Hostname;
+use Sys::Hostname 'hostname';
+use Mail::Address;
 
 =chapter NAME
 
@@ -44,14 +45,20 @@ OPTIONS which start with capitals will be used to construct additional
 fields.  These option names are prepended with C<Resent->, keeping the
 capitization of what is specified.
 
-=requires head OBJECT
+=option  head OBJECT
+=default head <created automatically>
+The header where the data is stored in.  Be dafault a
+M<Mail::Message::Head::Partial> is created for you.
 
-The header where this resent group belongs to.
+=option  message_head HEAD
+=default message_head C<undef>
+The real header of the message where this resent group is part of.  The
+C<head> used in this class is only a container for a subset of fields.
 
-=requires Received STRING
-
+=option  Received STRING
+=default Received <created>
 The C<Received> field is the starting line for a resent group of header
-lines, therefore it is obligatory.
+lines. If it is not defined, one is created using M<createReceived()>.
 
 =option  Date STRING
 =default Date <now>
@@ -98,57 +105,87 @@ organize the correct initiations for you.
 
 =cut
 
-my @ordered_field_names = qw/return_path delivered_to received date from
-  sender to cc bcc message_id/;
+# all lower cased!
+my @ordered_field_names =
+  ( 'return-path', 'delivered-to' , 'received', 'resent-date'
+  , 'resent-from', 'resent-sender', , 'resent-to', 'resent-cc'
+  , 'resent-bcc', 'resent-message-id'
+  );
 
-sub new(@)
-{   my $class = shift;
-
-    my @fields;
-    push @fields, shift while ref $_[0];
-
-    $class->SUPER::new(@_, fields => \@fields);
-}
+my %resent_field_names = map { ($_ => 1) } @ordered_field_names;
 
 sub init($$)
 {   my ($self, $args) = @_;
+
     $self->SUPER::init($args);
 
-    $self->set($_)                     # add specified object fields
-        foreach @{$args->{fields}};
+    $self->{MMHR_real}  = $args->{message_head};
 
-    $self->set($_, $args->{$_})        # add key-value paired fields
-        foreach grep m/^[A-Z]/, keys %$args;
+    $self->set(Received => $self->createReceived)
+        if $self->orderedFields && ! $self->received;
 
-    my $head = $self->{MMHR_head} = $args->{head};
-    $self->log(ERROR => "Message header required for creation of ResentGroup.")
-       unless defined $head;
-
-    weaken( $self->{MMHR_head} );
-
-    $self->createReceived unless defined $self->{MMHR_received};
     $self;
+}
+
+#------------------------------------------
+
+=method from [HEAD|MESSAGE, OPTIONS]
+WARNING: this method has two very different purposes.  For backward
+compatibility reasons, without arguments M<resentFrom()> is called to
+return the C<From> field of this resent group.
+
+With any arguments, a a list of C<Mail::Message::Head::ResentGroup> objects
+is returned, taken from the specified MESSAGE or message HEAD.
+
+=cut
+
+sub from($@)
+{   return $_[0]->resentFrom if @_ == 1;   # backwards compat
+
+    my ($class, $from, %args) = @_;
+    my $head = $from->isa('Mail::Message::Head') ? $from : $from->head;
+
+    my (@groups, $group, $return_path, $delivered_to);
+
+    foreach my $field ($head->orderedFields)
+    {   my $name = $field->name;
+        next unless $resent_field_names{$name};
+
+        if($name eq 'return-path')              { $return_path  = $field }
+        elsif($name eq 'delivered-to')          { $delivered_to = $field }
+        elsif(substr($name, 0, 7) eq 'resent-')
+        {   $group->add($field) if defined $group }
+        elsif($name eq 'received')
+        {
+            $group = Mail::Message::Head::ResentGroup
+                          ->new($field, message_head => $head);
+            push @groups, $group;
+
+            group->add($delivered_to) if defined $delivered_to;
+            undef $delivered_to;
+
+            $group->add($return_path) if defined $return_path;
+            undef $return_path;
+        }
+    }
+
+    @groups;
 }
 
 #------------------------------------------
 
 =section The header
 
-=method delete
-
-Remove all the header lines which are combined in this resent group
-from the header.
+=method messageHead [HEAD]
+Returns (optionally after setting) the real header where this resent group
+belongs to.  This may be undef at creation, and then later filled in
+when M<Mail::Message::Head::Complete::addResentGroup()> is called.
 
 =cut
 
-sub delete()
-{   my $self   = shift;
-    my $head   = $self->{MMHR_head};
-    my @fields = grep {ref $_ && $_->isa('Mail::Message::Field')}
-                     values %$self;
-
-    $head->removeField($_) foreach @fields;
-    $self;
+sub messageHead(;$)
+{   my $self = shift;
+    @_ ? $self->{MMHR_real} = shift : $self->{MMHR_real};
 }
 
 #------------------------------------------
@@ -163,25 +200,11 @@ must come first.  Only fields mentioned in the RFC are returned.
 =cut
 
 sub orderedFields()
-{   my $self   = shift;
-    map { $self->{ "MMHR_$_" } || () } @ordered_field_names;
-}
-
-#-------------------------------------------
-
-=method print [FILEHANDLE]
-
-=cut
-
-sub print(;$)
-{   my $self = shift;
-    my $fh   = shift || select;
-    $_->print($fh) foreach $self->orderedFields;
+{   my $head = shift->head;
+    map { $head->get($_) || () } @ordered_field_names;
 }
 
 #------------------------------------------
-
-=section Access to the header
 
 =method set (FIELD =E<gt> VALUE) | OBJECT
 
@@ -199,31 +222,64 @@ OBJECT is returned.
 
  $msg->bounce(To => 'fish@tux.aq')->send;   # the same
 
+ my $this = Mail::Message::Head::ResentGroup
+     ->new(To => 'fish@tux.aq');
+
 =cut
 
-our $resent_field_names
-   = qr/^(?:received$|return\-path$|delivered\-to$|resent\-)/i;
-
-sub set($$)
+sub set($;$)
 {   my $self  = shift;
+    my $field;
 
-    my ($field, $name, $value);
     if(@_==1) { $field = shift }
     else
     {   my ($fn, $value) = @_;
-        $name  = $fn =~ $resent_field_names ? $fn : "Resent-$fn";
+        my $name  = $resent_field_names{lc $fn} ? $fn : "Resent-$fn";
         $field = Mail::Message::Field::Fast->new($name, $value);
     }
 
-    $name = $field->name;
-    $name =~ s/^resent\-//;
-    $name =~ s/\-/_/g;
-
-    $self->{ "MMHR_$name" } = $field;
+    $self->head->set($field);
     $field;
 }
 
 #------------------------------------------
+
+=method add (FIELD =E<gt> VALUE) | OBJECT
+All fields appear only once, so C<add()> behaves as M<set()>.
+=cut
+
+sub add(@) { shift->set(@_) }
+
+#-------------------------------------------
+
+sub fields() { shift->orderedFields }
+
+#-------------------------------------------
+
+sub fieldNames() { map { $_->Name } shift->orderedFields }
+
+#-------------------------------------------
+
+sub delete()
+{   my $self   = shift;
+    my $head   = $self->messageHead;
+    $head->removeField($_) foreach $self->fields;
+    $self;
+}
+
+#-------------------------------------------
+
+=method addFields [FIELDNAMES]
+Not applicable to resent-groups: the same name can appear in more than
+one group.  Therefore, a FIELDNAME is sufficiently distinctive.
+
+=cut
+
+sub addFields(@) { shift->notImplemented }
+
+#-------------------------------------------
+
+=section Access to the header
 
 =method returnPath
 
@@ -236,34 +292,31 @@ sub returnPath() { shift->{MMHR_return_path} }
 #------------------------------------------
 
 =method deliveredTo
-
 The field which describes the C<Delivered-To> of this resent group.
 
 =cut
 
-sub deliveredTo() { shift->{MMHR_delivered_to} }
+sub deliveredTo() { shift->head->get('Delivered-To') }
 
 #------------------------------------------
 
 =method received
-
 The field which describes the C<Received> data of this resent group.
 
 =cut
 
-sub received() { shift->{MMHR_received} }
+sub received() { shift->head->get('Received') }
 
 #------------------------------------------
 
 =method receivedTimestamp
-
 The timestamp as stored within the C<Received> field converted to
 local system time.
 
 =cut
 
 sub receivedTimestamp()
-{   my $received = shift->{MMHR_received} or return;
+{   my $received = shift->received or return;
     my $comment  = $received->comment or return;
     Mail::Message::Field->dateToTimestamp($comment);
 }
@@ -271,39 +324,40 @@ sub receivedTimestamp()
 #------------------------------------------
 
 =method date
-
 Returns the C<Resent-Date> field, or C<undef> if it was not defined.
 
 =cut
 
-sub date($) { shift->{MMHR_date} }
+sub date($) { shift->head->get('resent-date') }
 
 #------------------------------------------
 
 =method dateTimestamp
-
 The timestamp as stored within the C<Resent-Date> field converted to
 local system time.
 
 =cut
 
 sub dateTimestamp()
-{   my $date = shift->{MMHR_date} or return;
-    Mail::Message::Field->dateToTimestamp($date);
+{   my $date = shift->date or return;
+    Mail::Message::Field->dateToTimestamp($date->unfoldedBody);
 }
 
 #------------------------------------------
 
-=method from
+=method resentFrom
 
 In scalar context, the C<Resent-From> field is returned.  In list
 context, the addresses as specified within the from field are
 returned as M<Mail::Address> objects.
 
+For reasons of backward compatibility and consistency, the M<from()>
+method will return the same as this method.
+
 =cut
 
-sub from()
-{   my $from = shift->{MMHR_from} or return ();
+sub resentFrom()
+{   my $from = shift->head->get('resent-from') or return ();
     wantarray ? $from->addresses : $from;
 }
 
@@ -318,7 +372,7 @@ returned as M<Mail::Address> objects.
 =cut
 
 sub sender()
-{   my $sender = shift->{MMHR_sender} or return ();
+{   my $sender = shift->head->get('resent-sender') or return ();
     wantarray ? $sender->addresses : $sender;
 }
 
@@ -333,7 +387,7 @@ M<Mail::Address> objects.
 =cut
 
 sub to()
-{   my $to = shift->{MMHR_to} or return ();
+{   my $to = shift->head->get('resent-to') or return ();
     wantarray ? $to->addresses : $to;
 }
 
@@ -348,7 +402,7 @@ M<Mail::Address> objects.
 =cut
 
 sub cc()
-{   my $cc = shift->{MMHR_cc} or return ();
+{   my $cc = shift->head->get('resent-cc') or return ();
     wantarray ? $cc->addresses : $cc;
 }
 
@@ -364,7 +418,7 @@ external parties).
 =cut
 
 sub bcc()
-{   my $bcc = shift->{MMHR_bcc} or return ();
+{   my $bcc = shift->head->get('resent-bcc') or return ();
     wantarray ? $bcc->addresses : $bcc;
 }
 
@@ -390,7 +444,14 @@ Returns the message-ID used for this group of resent lines.
 
 =cut
 
-sub messageId() { shift->{MMHR_message_id} }
+sub messageId() { shift->head->get('resent-message-id') }
+
+#------------------------------------------
+
+=ci_method isResentGroupFieldName NAME
+=cut
+
+sub isResentGroupFieldName($) { $resent_field_names{lc $_[1]} }
 
 #------------------------------------------
 
@@ -410,11 +471,10 @@ my $unique_received_id = 'rc'.time;
 
 sub createReceived(;$)
 {   my ($self, $domain) = @_;
-    my $head   = $self->{MMHR_head};
 
     unless(defined $domain)
-    {   my $sender = ($self->sender)[0] || ($self->from)[0];
-        $domain    = $sender->domain if defined $sender;
+    {   my $sender = ($self->sender)[0] || ($self->resentFrom)[0];
+        $domain    = $sender->host if defined $sender;
     }
 
     my $received
@@ -422,10 +482,10 @@ sub createReceived(;$)
       . ' by '  . hostname
       . ' with SMTP'
       . ' id '  . $unique_received_id++
-      . ' for ' . $head->get('To')  # may be wrong
+      . ' for ' . $self->head->get('Resent-To')  # may be wrong
       . '; '. Mail::Message::Field->toDate;
 
-    $self->set(Received => $received);
+    $received;
 }
 
 #-------------------------------------------

@@ -5,13 +5,9 @@ use warnings;
 package Mail::Message::Convert::MimeEntity;
 use base 'Mail::Message::Convert';
 
-use Mail::Message::Head::Complete;
-use Mail::Message::Body::Lines;
-use Mail::Message::Body::Multipart;
-
 use MIME::Entity;
-use MIME::Body;
-use Carp;
+use MIME::Parser;
+use Mail::Message;
 
 =chapter NAME
 
@@ -44,62 +40,48 @@ objects.
 
 =section Converting
 
-=method export MESSAGE, OPTIONS
+=method export MESSAGE, [PARSER]
 
-Returns a new message object based on the information from
-a M<Mail::Message> object.  The MESSAGE specified is an
-instance of a Mail::Message.
+Returns a new L<MIME::Entity> message object based on the
+information from the MESSAGE, which is a M<Mail::Message> object.
+
+You may want to supply your own PARSER, which is a M<MIME::Parser>
+object, to change the parser flags.  Without a PARSER object, one
+is created for you, with all the default settings.
+
+If C<undef> is passed, in place of a MESSAGE, then an empty list is
+returned.  When the parsing failes, then L<MIME::Parser> throws an
+exception.
 
 =examples
 
  my $convert = Mail::Message::Convert::MimeEntity->new;
  my Mail::Message $msg  = M<Mail::Message>->new;
- my M<MIME::Entity>  $copy = $convert->export($msg);
+ my L<MIME::Entity>  $copy = $convert->export($msg);
 
 =cut
 
-sub export($$)
-{   my ($self, $message) = @_;
+sub export($$;$)
+{   my ($self, $message, $parser) = @_;
+    return () unless defined $message;
 
-    croak "Export message must be a Mail::Message, but is a ".ref($message)."."
-        unless $message->isa('Mail::Message');
+    $self->log(ERROR =>
+       "Export message must be a Mail::Message, but is a ".ref($message)."."),
+           return
+              unless $message->isa('Mail::Message');
 
-    my $me   = MIME::Entity->new;
-    my $body = $message->body;
-
-    if($body->isMultipart)
-    {   my $preamble = $body->preamble->lines;
-        $me->preamble($preamble) if $preamble;
-
-        $me->add_part($self->export($_))
-            foreach $body->parts;
-
-        my $epilogue = $body->epilogue->lines;
-        $me->epilogue($epilogue) if $epilogue;
-    }
-    elsif(my $lines = $body->lines)
-    {   $me->bodyhandle(MIME::Body::InCore->new($lines));
-    }
-
-    my $me_head = MIME::Head->new;
-    my $head    = $message->head;
-    foreach my $name ($head->names)
-    {   $me_head->add(undef, $_->string."\n")
-            foreach $head->get($name);
-    }
-
-    $me->head($me_head);
-
-    $me->sync_headers(Length => 'COMPUTE');
-    $me;
+    $parser ||= MIME::Parser->new;
+    $parser->parse($message->file);
 }
 
 #------------------------------------------
 
-=method from OBJECT, [CONTAINER]
+=method from MIME-OBJECT
 
 Returns a new M<Mail::Message> object based on the information from
-an message-type which is foreign to the Mail::Box set of modules.
+the specified L<MIME::Entity>.  If the conversion fails, the C<undef>
+is returned.  If C<undef> is passed in place of an OBJECT, then an
+empty list is returned.
 
 =examples
 
@@ -107,58 +89,18 @@ an message-type which is foreign to the Mail::Box set of modules.
  my MIME::Entity  $msg  = M<MIME::Entity>->new;
  my M<Mail::Message> $copy = $convert->from($msg);
 
+=error Converting from MIME::Entity but got a $type, return
 =cut
 
-sub from($;$)
-{   my ($self, $me, $container) = @_;
+sub from($)
+{   my ($self, $mime_ent) = @_;
+    return () unless defined $mime_ent;
 
-    croak "Converting from MIME::Entity but got a ".ref($me).'.'
-        unless $me->isa('MIME::Entity');
+    $self->log(ERROR =>
+       'Converting from MIME::Entity but got a '.ref($mime_ent).'.'), return
+            unless $mime_ent->isa('MIME::Entity');
 
-    # The order of the headers for MIME::Entity is a mess, so it
-    # is reordered a little.
-
-    my $head    = Mail::Message::Head::Complete->new;
-    my $me_head = $me->head;
-
-    my (%tags, @tags);
-    $tags{$_}++ foreach $me_head->tags;
-    delete $tags{$_} && push @tags, $_
-       foreach qw/From To Subject/;
-
-    foreach my $name (@tags, keys %tags)
-    {   $head->add($name, $_) foreach $me_head->get($name);
-    }
-
-    my $message = defined $container
-      ? Mail::Message::Part->new(head => $head, container => $container)
-      : Mail::Message->new(head => $head);
-
-    if($me->is_multipart)
-    {   my $preamble = $me->preamble;
-        $preamble    = Mail::Message::Body::Lines->new(data => $preamble)
-            if defined $preamble;
-
-        my @parts    = map {$self->from($_, $message)} $me->parts;
-
-        my $epilogue = $me->epilogue;
-        $epilogue    = Mail::Message::Body::Lines->new(data => $epilogue)
-            if defined $epilogue;
-
-        my $body     = Mail::Message::Body::Multipart->new
-          ( preamble => $preamble
-          , parts    => \@parts
-          , epilogue => $epilogue
-          );
-
-        $message->body($body) if defined $body;
-    }
-    else
-    {   my $body = Mail::Message::Body::Lines->new(data => \@{$me->body} );
-        $message->body($body) if defined $body;
-    }
-
-    $message;
+    Mail::Message->read($mime_ent->as_string);
 }
 
 #------------------------------------------

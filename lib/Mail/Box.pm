@@ -423,9 +423,12 @@ type detection then use Mail::Box::Manager.
 USAGE
     }
 
+    my %args = @_;
+    weaken $args{manager};   # otherwise, the manager object may live too long
+
     my $self = $class->SUPER::new
       ( @_
-      , init_options => [ @_ ]  # for clone
+      , init_options => \%args     # for clone
       ) or return;
 
     $self->read or return
@@ -945,7 +948,7 @@ sub close(@)
 
     # Inform manager that the folder is closed.
     $self->{MB_manager}->close($self)
-        if exists $self->{MB_manager} && !$args{close_by_manager};
+        if defined $self->{MB_manager} && !$args{close_by_manager};
 
     delete $self->{MB_manager};
 
@@ -1109,9 +1112,12 @@ sub modified(;$)
 #-------------------------------------------
 
 =method isModified
-Checks if the folder is modified.  A folder is modified when any of the
-messages is to be deleted, any of the messages has changed, or messages
-are added after the folder was read from file.
+Checks if the folder, as stored in memory, is modified.  A true value is
+returned when any of the messages is to be deleted, has changed, or messages
+were added after the folder was read from file.
+
+WARNING: this flag is not related to an external change to the folder
+structure on disk.  Have a look at M<update()> for that.
 
 =cut
 
@@ -1540,7 +1546,7 @@ is called upon.
 
 sub openRelatedFolder(@)
 {   my $self    = shift;
-    my @options = (@{$self->{MB_init_options}}, @_);
+    my @options = (%{$self->{MB_init_options}}, @_);
 
     $self->{MB_manager}
     ?  $self->{MB_manager}->open(@options)

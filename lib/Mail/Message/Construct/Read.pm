@@ -114,14 +114,18 @@ sub read($@)
                      : 1;
 
     require Mail::Box::Parser::Perl;  # not parseable by C parser
+
     my $parser = Mail::Box::Parser::Perl->new
-     ( filename  => $filename
+     ( %args
+     , filename  => $filename
      , file      => $file
      , trusted   => 1
      );
 
     my $self = $class->new(%args);
     $self->readFromParser($parser);
+    $self->addReport($parser);
+
     $parser->stop;
 
     my $head = $self->head;

@@ -283,6 +283,26 @@ sub report(;$)
 
 #-------------------------------------------
 
+=method addReport OBJECT
+Add the report from other OBJECT to the report of this object. This is
+useful when complex actions use temporary objects which are not returned
+to the main application but where the main application would like to know
+about any problems.
+=cut
+
+sub addReport($)
+{   my ($self, $other) = @_;
+    my $reports = $other->{MR_report} || return ();
+
+    for(my $prio = 1; $prio < @$reports; $prio++)
+    {   push @{$self->{MR_report}[$prio]}, @{$reports->[$prio]}
+            if exists $reports->[$prio];
+    }
+    $self;
+}
+    
+#-------------------------------------------
+
 =method reportAll [LEVEL]
 
 Report all messages which were produced by this object and all the objects

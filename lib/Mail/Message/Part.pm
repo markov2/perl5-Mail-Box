@@ -182,7 +182,7 @@ sub readFromParser($;$)
             || Mail::Message::Body::Lines->new(data => []);
 
     $self->head($head);
-    $self->storeBody($body);
+    $self->storeBody($body->contentInfoFrom($head));
     $self;
 }
 

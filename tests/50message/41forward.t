@@ -15,7 +15,7 @@ use Mail::Message::Construct::Forward;
 use Test::More;
 use Mail::Address;
 
-BEGIN {plan tests => 16}
+BEGIN {plan tests => 22}
 
 #
 # First produce a message to forward to.
@@ -68,7 +68,7 @@ my $forward = $msg->forward
   , To              => 'dest@example.com (New someone)'
   );
 
-ok(defined $forward);
+ok(defined $forward,                     'created simple forward');
 isa_ok($forward, 'Mail::Message');
 my @f = $forward->body->string;
 my @g = $msg->body->string;
@@ -135,3 +135,127 @@ From me!
 added to the end
 two lines
 EXPECT
+
+#
+# Try forwardAttach
+#
+
+$msg = Mail::Message->build(To => 'you',
+   'X-Loop' => 'yes', data => "greetings!\n");
+my $preamble = Mail::Message::Body->new(data => "just checking\n");
+my $fwd = $msg->forwardAttach(preamble => $preamble, To => 'us');
+
+ok(defined $fwd,                        "create forwardAttach");
+is(reproducable_text($fwd->string), <<ATTACH);
+From: you
+To: us
+Subject: Forwarded
+References: <removed>
+Content-Type: multipart/mixed; boundary="boundary-<removed>"
+Content-Length: <removed>
+Lines: 17
+Message-Id: <removed>
+Date: <removed>
+MIME-Version: 1.0
+
+--boundary-<removed>
+Content-Type: text/plain
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: 8bit
+
+just checking
+--boundary-<removed>
+Content-Type: text/plain; charset="us-ascii"
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: 8bit
+
+greetings!
+--boundary-<removed>--
+ATTACH
+
+#
+# Try forwardEncapsulate
+#
+
+my $fwd2 = $msg->forwardEncapsulate(preamble => $preamble, To => 'us');
+ok(defined $fwd2,                        "create forwardEncapsulate");
+is(reproducable_text($fwd2->string), <<ENCAPS);
+From: you
+To: us
+Subject: Forwarded
+References: <removed>
+Content-Type: multipart/mixed; boundary="boundary-<removed>"
+Content-Length: <removed>
+Lines: 26
+Message-Id: <removed>
+Date: <removed>
+MIME-Version: 1.0
+
+--boundary-<removed>
+Content-Type: text/plain; charset="us-ascii"
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: 8bit
+
+just checking
+--boundary-<removed>
+Content-Type: message/rfc822
+Content-Length: <removed>
+Lines: 11
+
+To: you
+X-Loop: yes
+Message-Id: <removed>
+Date: <removed>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: 8bit
+
+greetings!
+--boundary-<removed>--
+ENCAPS
+
+#
+# Try complex attach
+#
+
+my $one = Mail::Message::Body->new(data => "this is the first\n");
+my $two = Mail::Message::Body->new(data => "this is the second\n",
+   mime_type => 'application/pgp-signature');
+my $multi = Mail::Message::Body::Multipart->new(parts => [ $one, $two ]);
+$msg    = Mail::Message->buildFromBody($multi, To => 'you');
+ok(defined $msg,                    'created complex multipart');
+my $fwd3 = $msg->forwardAttach(preamble => $preamble, To => 'us');
+
+is(reproducable_text($fwd3->string), <<ATTACH);
+From: you
+To: us
+Subject: Forwarded
+References: <removed>
+Content-Type: multipart/mixed; boundary="boundary-<removed>"
+Content-Length: <removed>
+Lines: 17
+Message-Id: <removed>
+Date: <removed>
+MIME-Version: 1.0
+
+--boundary-<removed>
+Content-Type: text/plain; charset="us-ascii"
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: 8bit
+
+just checking
+--boundary-<removed>
+Content-Type: text/plain; charset="us-ascii"
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: 8bit
+
+this is the first
+--boundary-<removed>--
+ATTACH

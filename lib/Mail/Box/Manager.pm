@@ -288,6 +288,8 @@ to explicitly state the type of your folder with the C<type> option.
 There will probable be another warning or error message which is related
 to this report, and provides more details.
 
+=error Don't know which folder I should open: no name
+
 =cut
 
 sub open(@)
@@ -298,6 +300,11 @@ sub open(@)
     $name    = defined $args{folder} ? $args{folder} : $ENV{MAIL}
         unless defined $name;
 
+    unless(defined $name)
+    {   $self->log(ERROR => "Don't know which folder I should open: no name.");
+        return undef;
+    }
+      
     if($name =~ m/^(\w+)\:/ && grep { $_ eq $1 } $self->folderTypes)
     {   # Complicated folder URL
         my %decoded = $self->decodeFolderURL($name);

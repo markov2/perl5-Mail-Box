@@ -11,21 +11,96 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
-version 2.047: Thu Aug  7 23:59:53 CEST 2003
+version 2.048: Tue Aug 26 19:50:06 CEST 2003
 
 	Fixes:
 
 	- [Jason Woodward] reported that reply on multiparts (with only
-	  one part) failed.
+	  one part) failed.  For this release, forward() has been rewritten.
+	  reply() may be the victim for the next release.
+
+	- [Joe Junkin] reported a problem to send messages where the
+	  body is not in a temporary file via SMTP.
+
+	- Added required Mail::Message::Wrapper::SpamAssassin method
+	  get_pristine_header()
+
+	- [Simon Cozens] demonstrated that converting MIME::Entity objects
+	  into Mail::Message's lost content related headers.  This required
+	  a small redesign on when data is copied from header to body and
+	  vice versa.
+
+	- Mail::Message::Body::Multipart;;stripSignature stripped all
+	  but signatures :(
+
+	- requires Test::Harness which defines _run_test_scripts, so
+	  increased the required VERSION. [Liz Mattijsen]
+
+	- [Steven Benson] found-out that manager objects where kept
+	  alive too long.
+
+	- [Rob Holland] reports that a '=' is valid in a Maildir filename,
+	  and supplied a patch.
+
+	- [Joe Junkin] found another spot where <$body> was used on a
+	  non-GLOB.  In Mail::Transport::SMTP, this time.
+
+	Improvements:
+
+	- Added Mail::Message::Head::FieldGroup as base class for
+	  Mail::Message::Head::(List|Spam|Resent)Group.
+
+	- Reimplemented Mail::Message::Head::ResentGroup to be based on
+	  a MMH::FieldGroup.
+
+	- Added Mail::Message::Head::SpamGroup to detect/produce/remove
+	  sets of header fields which relate to spam detection software.
+	  Tests in tests/31fgroups/30spam.t
+
+	- Moved detection of mailinglist type in Mail::Message::Head::Listgroup
+	  from method type() to from().
+
+	- Added examples for a procmail set-up with MailBox
+
+	- Added Mail::Report::addReport, to merge reports from one object
+	  into an other, require by [Matthew Lockner]
+
+	- [Matthew Lockner] wished to able to get parser errors back on
+	  Mail::Message->read.  These errors are now copied from the parser
+	  object into the message.
+
+        - Added Habeas-SWE (Sender Warranted E-mail) as abbreviation in field
+          names which is always in caps, on request by [Ronnie Paskin]
+
+	- Moved 20resent.t and 40list.t from tests/12head to tests/31fgroups.
+
+	- New methods Mail::Message::Head::Complete::removeContentInfo(),
+	  Mail::Message::Body::contentInfoFrom(head) and ...To(head)
+
+	- As result of an extended discussion with [Simon Cozens], it
+	  seems that object-by-object conversion between MIME::Entity
+	  and Mail::Message objects will keep on producing problems.
+	  Therefore a stringify-reparse strategy is used from now on.
+	  Mail::Message::Convert::MimeEntity is very straight-forward
+	  now, but a less efficient.
+
+	- [Jason Woodward] convinced me to implement
+	  Mail::Message::forward(include => 'ENCAPSULATE'), which adds
+	  the source message as message/rfc822.  The whole forward
+	  implementation has been re-implemented and re-documented.
+
+	- [Kees Dekker] was (understandably) confused by the explanation
+	  of $folder->isModified()  This has been improved.
+
+version 2.047: Thu Aug  7 23:59:53 CEST 2003
+
+	Fixes:
 
 	- For MBOX and POP3, delayed header will be read before labels()
 	  or label() return the values, because only reading will cause
 	  the [X-]Status fields to be parsed into labels.
 
 	- Tests are now suitable for perl5.8.1
-
-	- [Joe Junkin] reported a problem to send messages where the
-	  body is not in a temporary file via SMTP.
 
 	- [Kees Dekker] with Solaris and perl5.8.1 showed me that
 	  Mail::Box::Locker::POSIX was so broken that its tests worked

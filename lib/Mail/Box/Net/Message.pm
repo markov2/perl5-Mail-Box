@@ -131,7 +131,7 @@ sub loadBody()
     }
 
     $self->log(PROGRESS => 'Loaded delayed body.');
-    $self->storeBody($newbody);
+    $self->storeBody($newbody->contentInfoFrom($head));
 }
 
 #-------------------------------------------

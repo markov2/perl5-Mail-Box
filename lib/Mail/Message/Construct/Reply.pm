@@ -204,8 +204,8 @@ sub reply(@)
         unless(defined $body)
         {   # text attachment
             $body = $self->body;
-            $body = $body->part(0) if $body->isMultipart && $body->parts==1;
-            $body = $body->nested  if $body->isNested;
+            $body = $body->part(0)->body if $body->isMultipart && $body->parts==1;
+            $body = $body->nested->body  if $body->isNested;
 
             $body
              = $strip && ! $body->isMultipart && !$body->isBinary
