@@ -1,0 +1,72 @@
+CHANGELOG of Mail::Box
+
+All changes were made by Mark Overmeer <mark@overmeer.net>, unless
+specified differently.
+
+version 2.00_17: Sat Dec  8 23:10:06 CET 2001
+
+	- Moved scripts/web/* to scripts/
+
+	- Header line options in Mail::Message::Construct::reply start
+	  with capitals too.
+
+	- Added Mail::Message::Body::Multipart::stripSignature
+
+	- Simplified Mail::Message::Construct::reply a little
+
+	- Fixed problem with the resulting body-types where delayed bodies
+	  where used to be encoded and decoded.
+
+	- Extra checks for From-line in mbox folders, to help incorrectly
+	  formatted folders.
+
+	- [Tassilo v Parsival] discovered the problematic recovery for
+	  erroneous headers.  Some recovery is tried.
+
+version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
+
+	First beta of Mail::Box version 2
+
+        Most import changes:
+
+	* Replaced all use of MIME::Parser, Mail::Internet, and MIME::Entity,
+	  althought the foreign message types are still useable in some
+	  places.
+
+	* All code has been changed.  Simple things, like opening a folder,
+	  reading messages and such are the same.  However handling of
+	  messages is really different from the MIME::Entity/Mail::Internet
+	  implementation.  Your message handling must be body-oriented ;)
+	  tranforming a body into a new body, into a new body, and
+	  finally create a new message from it.  See Mail::Box-Cookbook.
+
+	* Moved code to use 5.6.0 features, so no support for 5.005
+	  anymore.  This is required for Inline::C and Unicode support.
+	  Mail::Box releases below 2 will be supported for some time
+	  for people with `old' perl.
+
+	* Parsing in Inline::C or plain Perl
+
+	* folder->open(take_headers) removed
+	  folder->open(extract) replaces folder->open(lazy_extract) to
+	  avoid double negation in your program.
+	  listFolders became listSubFolders
+          allMessages became messages(); so $folder->messages always
+	  returns all.
+
+	* Unfolding of headers considered stupid: headers which are
+	  structured (check Mail::Message::Field::isStructured) may always
+	  be multi-lined. Just specify the right options when you scan
+	  through the line with regular expressions.
+
+	* All packages is separate files.
+
+	* Many more test, a few example files, Mail::Box-Overview and
+	  Mail::Box-Cookbook.
+
+Before this, we had Mail::Box-1.xyz which also has a Changelog.  Most of
+that information is not really useful because version >=2.0 is a really,
+really major change, although there is strike for compibility.
+
+However, some of the bugfixes contributed for Mail::Box v1 are
+still present in Mail::Box v2.
