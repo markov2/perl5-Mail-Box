@@ -87,7 +87,7 @@ sub export($$)
     my $me   = MIME::Entity->new;
     my $body = $message->body;
 
-    if($message->isMultipart)
+    if($body->isMultipart)
     {   my $preamble = $body->preamble->lines;
         $me->preamble($preamble) if $preamble;
 

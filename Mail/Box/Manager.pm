@@ -673,7 +673,7 @@ sub copyMessage(@)
     my @coerced
      = ref $folder
      ? map {$_->copyTo($folder)} @messages
-     :  $self->appendMessages(@messages, %options, folder => $folder);
+     : $self->appendMessages(@messages, %options, folder => $folder);
 
     # hidden option, do not use it: it's designed to optimize moveMessage
     if($options{_delete})

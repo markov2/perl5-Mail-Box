@@ -21,6 +21,10 @@ Implements mail transport using the external C<'Sendmail'> program.
 When instantiated, the mailer will look for the binary in specific system
 directories, and the first version found is taken.
 
+Some people use Postfix as MTA.  Postfix can be installed as replacement
+for Sendmail: is provides a program with the same name and options.  So,
+this module supports postfix as well.
+
 =head1 METHODS
 
 =cut

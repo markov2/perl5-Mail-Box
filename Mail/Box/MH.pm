@@ -404,9 +404,10 @@ sub readMessages(@)
         $head     ||= $args{head_delayed_type}->new(@log);
 
         my $message = $args{message_type}->new
-         ( head      => $head
-         , filename  => $msgfile
-         , folder    => $self
+         ( head       => $head
+         , filename   => $msgfile
+         , folder     => $self
+         , fix_header => $self->{MB_fix_headers}
          );
 
         my $labref  = $labels ? $labels->get($msgnr) : ();

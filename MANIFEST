@@ -63,6 +63,9 @@ Mail/Message/Convert/MimeEntity.pm
 Mail/Message/Convert/TextAutoformat.pm
 Mail/Message/Dummy.pm
 Mail/Message/Field.pm
+Mail/Message/Field/Address.pm
+Mail/Message/Field/Addresses.pm
+Mail/Message/Field/AddrGroup.pm
 Mail/Message/Field/Attribute.pm
 Mail/Message/Field/Fast.pm
 Mail/Message/Field/Flex.pm
@@ -117,8 +120,6 @@ tests/10report/Definition.pm
 tests/11field/10cfws.t
 tests/11field/20fast.t
 tests/11field/30flex.t
-tests/11field/40full.t
-tests/11field/41attr.t
 tests/11field/Definition.pm
 tests/12head/10create.t
 tests/12head/20resent.t
@@ -128,6 +129,12 @@ tests/13body/20lines.t
 tests/13body/30file.t
 tests/13body/40multip.t
 tests/13body/Definition.pm
+tests/14fieldu/10full.t
+tests/14fieldu/20attr.t
+tests/14fieldu/30unstr.t
+tests/14fieldu/40parse.t
+tests/14fieldu/50addr.t
+tests/14fieldu/Definition.pm
 tests/20pparser/10field.t
 tests/20pparser/20head.t
 tests/20pparser/30bodys.t

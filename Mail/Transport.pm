@@ -54,6 +54,7 @@ my %mailers =
  , mailx    => '::Mailx'
  , pop      => '::POP3'
  , pop3     => '::POP3'
+ , postfix  => '::Sendmail'
  , qmail    => '::Qmail'
  , sendmail => '::Sendmail'
  , smtp     => '::SMTP'
@@ -114,7 +115,7 @@ Some protocols require a user to login.
 
 Which CLASS (extending Mail::Transport) will transport the data.  Some
 predefined NAMEs avoid long class names: C<mail> and C<mailx> are handled
-by the Mail::Transport::Mailx module, C<sendmail> belongs to
+by the Mail::Transport::Mailx module, C<sendmail> and C<postfix> belong to
 C<::Sendmail>, and C<smtp> is implemented in C<::SMTP>.  The C<pop> or
 C<pop3> protocol implementation can be found in C<::POP3>.
 

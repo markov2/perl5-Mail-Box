@@ -11,6 +11,7 @@ use Encode ();
 use MIME::QuotedPrint ();
 
 use Carp;
+my $atext = q[a-zA-Z0-9!#\$%&'*+\-\/=?^_`{|}~];  # from RFC
 
 =head1 NAME
 
@@ -346,48 +347,67 @@ sub attributes() { values %{shift->{MMFF_attrs}} }
 
 #------------------------------------------
 
-=method addComment STRING, OPTIONS
+=method createComment STRING, OPTIONS
 
-Add a comment to the field.  Comments are automatically included within
-parenthesis.  Matching pairs of parenthesis are permitted within the STRING.
-When a non-matching parenthesis are used, it is only permitted with an escape
-(a backslash) in front of them.  These backslashes will be added automatically
-if needed (don't worry!).  Backslashes will stay, except at the end, where it
-will be doubled.
+(Class or Instance method)
+Create a comment to become part in a field.  Comments are automatically
+included within parenthesis.  Matching pairs of parenthesis are
+permitted within the STRING.  When a non-matching parenthesis are used,
+it is only permitted with an escape (a backslash) in front of them.
+These backslashes will be added automatically if needed (don't worry!).
+Backslashes will stay, except at the end, where it will be doubled.
 
 The OPTIONS are C<charset>, C<language>, and C<encoding> as always.
+See addComment().  The created comment is returned.
+
+=cut
+
+sub createComment($@)
+{   my ($thing, $comment) = (shift, shift);
+
+    $comment = $thing->encode($comment, @_)
+        if @_; # encoding required...
+
+    # Correct dangling parenthesis
+    local $_ = $comment;               # work with a copy
+    s#\\[()]#xx#g;                     # remove escaped parens
+    s#[^()]#x#g;                       # remove other chars
+    while( s#\(([^()]*)\)#x$1x# ) {;}  # remove pairs of parens
+
+    substr($comment, CORE::length($_), 0, '\\')
+        while s#[()][^()]*$##;         # add escape before remaining parens
+
+    $comment =~ s#\\+$##;              # backslash at end confuses
+    "($comment)";
+}
+
+#------------------------------------------
+
+=method addComment COMMENT, OPTIONS
+
+Creates a comment (see createComment()) and adds it immediately to
+this field.  Empty or undefined COMMENTs are ignored.  The created comment
+is returned.
 
 =cut
 
 sub addComment($@)
-{   my ($self, $comment) = (shift, shift);
+{   my $self = shift;
 
     unless($self->{MMFF_structured})
     {   $self->log(ERROR
             => "You can not add comment to an unstructured field:\n  "
-               . "Field: ".$self->Name. " Comment: ".$comment);
+               . "Field: ".$self->Name. " Comment: @_");
         return;
     }
 
-    if(@_)  # has encoding info?
-    {   # encoding required... simple case...
-        $comment = $self->encode($comment, @_);
-    }
-    else
-    {   # Correct dangling parenthesis
-        local $_ = $comment;
-        s#\\[()]#xx#g;                     # remove escaped parens
-        s#[^()]#x#g;                       # remove other chars
-        while( s#\(([^()]*)\)#x$1x# ) {;}  # remove pairs of parens
-
-        substr($comment, CORE::length($_), 0, '\\')
-            while s#[()][^()]*$##;         # add escape before remaining parens
-
-        $comment =~ s#\\+$##;              # backslash at end confuses
-    }
-
-    push @{$self->{MMFF_parts}}, "($comment)";
+    return undef
+       if ! defined $_[0] || ! CORE::length($_[0]);
+ 
+    my $comment = $self->createComment(@_);
+    push @{$self->{MMFF_parts}}, $comment;
     delete $self->{MMFF_body};
+
     $comment;
 }
 
@@ -416,6 +436,59 @@ sub addExtra($)
     }
 
     $self;
+}
+
+#------------------------------------------
+
+=method createPhrase STRING, OPTIONS
+
+(Class or instance method)
+A phrase is a text which plays a well defined role.  This is the main difference
+with comments, which have do specified meaning.  Some special characters
+in the phrase will cause it to be surrounded with double quotes: do not specify
+them yourself.
+
+The OPTIONS are C<charset>, C<language>, and C<encoding> as always.
+See addPhrase().
+
+=cut
+
+sub createPhrase($)
+{   my $self = shift;
+    local $_ = shift;
+    $_ =  $self->encode($_, @_)
+        if @_;  # encoding required...
+
+    if( m/[^$atext]/ )
+    {   s#\\#\\\\#g;
+        s#"#\\"#g;
+        $_ = qq["$_"];
+    }
+
+    $_;
+}
+
+#------------------------------------------
+
+=method addPhrase STRING, OPTIONS
+
+Create a phrase (see createPhrase()) and immediately add it to this field.
+Empty or undefined values of STRING are ignored.  The created phrase is
+returned.
+
+=cut
+
+sub addPhrase($)
+{   my ($self, $string) = (shift, shift);
+
+    return undef
+         unless defined $string && CORE::length($string);
+
+    my $phrase = $self->createPhrase($string);
+
+    push @{$self->{MMFF_parts}}, $phrase;
+    delete $self->{MMFF_body};
+    $phrase;
 }
 
 #------------------------------------------
@@ -674,12 +747,108 @@ sub decode($@)
 
     if(defined $args{is_text} ? $args{is_text} : 1)
     {  # in text, blanks between encoding must be removed, but otherwise kept :(
-       # dirty trick to get this done.
+       # dirty trick to get this done: add an explicit blank.
        $encoded =~ s/\?\=\s(?!\s*\=\?|$)/_?= /gs;
     }
     $encoded =~ s/\=\?([^?\s]*)\?([^?\s]*)\?([^?\s]*)\?\=\s*/_decoder($1,$2,$3)/gse;
 
     $encoded;
+}
+
+#------------------------------------------
+
+=method consumePhrase STRING
+
+(Class or Instance method)
+Take the STRING, and try to strip-off a valid phrase.  In the obsolete
+phrase syntax, any sequence of words is accepted as phrase (as long as
+certain special characters are not used).  RFC2882 is stricter: only
+one word or a quoted string is allowed.  As always, the obsolete
+syntax is accepted, and the new syntax is produced.
+
+This method returns two elements: the phrase (or undef) followed
+by the resulting string.  The phrase will be removed from the optional
+quotes.  Be warned that C<""> will return an empty, valid phrase.
+
+=example
+
+ my ($phrase, $rest) = $field->consumePhrase( q["hi!" <sales@example.com>] );
+
+=cut
+
+sub consumePhrase($)
+{   my ($thing, $string) = @_;
+
+    if($string =~ s/^\s*\"((?:[^"\\]*|\\.)*)\"// )
+    {   (my $phrase = $1) =~ s/\\\"/"/g;
+        return ($phrase, $string);
+    }
+
+    if($string =~ s/^\s*([$atext\ \t.]+)//o )
+    {   (my $phrase = $1) =~ s/\s+$//;
+        $phrase =~ s/\s+$//g;
+        return CORE::length($phrase) ? ($phrase, $string) : (undef, $_[1]);
+    }
+
+    (undef, $string);
+}
+
+#------------------------------------------
+
+=method consumeComment STRING
+
+(Class or Instance method)
+Try to read a comment from the STRING.  When successful, the comment
+without encapsulation parenthesis is returned, together with the rest
+of the string.
+
+=cut
+
+sub consumeComment($)
+{   my ($thing, $string) = @_;
+
+    return (undef, $string)
+        unless $string =~ s/^\s*\(((?:[^)\\]+|\\.)*)\)//;
+
+    my $comment = $1;
+    while(1)
+    {   (my $count = $comment) =~ s/\\./xx/g;
+
+        last if $count =~ tr/(//  ==  $count =~ tr/)//;
+
+        return (undef, $_[1])
+            unless $string =~ s/^((?:[^)\\]+|\\.)*)\)//;
+
+        $comment .= ')'.$1;
+    }
+
+    $comment =~ s/\\([()])/$1/g;
+    ($comment, $string);
+}
+
+#------------------------------------------
+
+=method consumeDotAtom STRING
+
+Returns three elemens: the atom-text, the rest string, and the
+concatenated comments.  Both atom and comments can be undef.
+
+=cut
+
+sub consumeDotAtom($)
+{   my ($self, $string) = @_;
+    my ($atom, $comment);
+
+    while(1)
+    {   (my $c, $string) = $self->consumeComment($string);
+        if(defined $c) { $comment .= $c; next }
+
+        last unless $string =~ s/(\s*[$atext]+(?:\.[$atext]+)*)//o;
+
+        $atom .= $1;
+    }
+
+    ($atom, $string, $comment);
 }
 
 #------------------------------------------

@@ -6,6 +6,7 @@ use strict;
 use lib qw/. .. tests/;
 use File::Spec;
 use File::Basename;
+use POSIX 'getcwd';
 
 use Tools;             # test tools
 use IO::Dir;
@@ -81,9 +82,9 @@ foreach my $set (@sets)
 
     next unless @tests;
 
-    foreach (@requires)
-    {   update_requirement $_;
-        check_requirement $_;    # do not always believe CPAN install
+    foreach my $req (@requires)
+    {   update_requirement $req;
+        check_requirement $req;    # do not always believe CPAN install
     }
 
     $success{$set} = run_in_harness @tests;
@@ -253,6 +254,7 @@ sub update_requirement($)
         }
 
         print "    do you want to install $package? yes/no/all [$install] ";
+        local $_;
         eval "require Term::ReadKey";
 
         my $key;
@@ -294,8 +296,14 @@ sub update_requirement($)
 
 sub install_package($)
 {   my $package = shift;
+    local $_;
 
     print "    installing $package\n";
+    my $pwd = getcwd;
+
     require CPAN;
     eval { CPAN::install($package) };
+
+    chdir $pwd
+       or warn "Cannot return to $pwd: $!n";
 }

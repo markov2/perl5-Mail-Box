@@ -35,7 +35,8 @@ without C<via> options to get a message transported.
 =item * Mail::Transport::Sendmail
 
 Use sendmail to process and deliver the mail.  This requires the
-C<sendmail> program to be installed on your system.
+C<sendmail> program to be installed on your system.  Whether this
+is an original sendmail, or a replacement from Postfix does matter.
 
 =item * Mail::Transport::Exim
 

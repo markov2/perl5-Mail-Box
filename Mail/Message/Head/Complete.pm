@@ -92,6 +92,11 @@ will be added.  Another possibility is to specify a raw header LINE, or a
 header line nicely split-up in NAME and BODY, in which case the
 field constructor is called for you.
 
+LINE or BODY specifications which are terminated by a new-line are considered 
+to be correctly folded.  Lines which are not terminated by a new-line will
+be folded when needed: new-lines will be added where required.  It is strongly
+adviced to let Mail::Box do the folding for you.
+
 The return value of this method is the Mail::Message::Field object
 which is created (or was specified).
 
@@ -655,15 +660,26 @@ message-threads.
 =cut
 
 my $unique_id     = time;
+my $hostname;
 
-sub createMessageId() { shift->messageIdPrefix . '-' . $unique_id++ }
+sub createMessageId()
+{   my $mid = shift->messageIdPrefix . '-' . $unique_id++;
+
+    unless(defined $hostname)
+    {   require Sys::Hostname;
+        $hostname = Sys::Hostname::hostname() || 'localhost';
+    }
+
+    $mid . '@' . $hostname;
+}
 
 #------------------------------------------
 
 =method messagIdPrefix [STRING]
 
 Sets/returns the message-id start.  The rest of the message-id is an
-integer which is derived from the current time.  See createMessageId().
+integer which is derived from the current time and the local host.
+See createMessageId().
 
 =cut
 
@@ -673,13 +689,7 @@ sub messageIdPrefix(;$)
 {   my $self = shift;
     return $unique_prefix if !@_ && defined $unique_prefix;
 
-    my $prefix = shift;
-    unless(defined $prefix)
-    {   require Sys::Hostname;
-        $prefix = 'mailbox-'.Sys::Hostname::hostname().'-'.$$;
-    }
-
-    $unique_prefix = $prefix;
+    $unique_prefix = shift || "mailbox-$$";
 }
 
 #------------------------------------------

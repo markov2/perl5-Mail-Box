@@ -315,6 +315,7 @@ sub getHead($)
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
      ( filename  => "$pop"
      , file      => IO::ScalarArray->new($lines)
+     , fix_headers => $self->{MB_fix_headers}
      );
 
     $self->lazyPermitted(1);

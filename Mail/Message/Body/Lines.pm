@@ -127,7 +127,7 @@ sub string() { join '', @{shift->{MMBL_array}} }
 
 #------------------------------------------
 
-sub lines()  { wantarray ? @{shift->{MMBL_array}} : \@{shift->{MMBL_array}} }
+sub lines()  { wantarray ? @{shift->{MMBL_array}} : shift->{MMBL_array} }
 
 #------------------------------------------
 

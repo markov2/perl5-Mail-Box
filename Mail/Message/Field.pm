@@ -130,7 +130,8 @@ As user of the object, there is not visible difference.
 
 =method new DATA
 
-See Mail::Message::Field::Fast::new() or Mail::Message::Field::Flex::new().
+See Mail::Message::Field::Fast::new(), Mail::Message::Field::Flex::new(),
+and Mail::Message::Field::Full::new().
 By default, a C<Fast> field is produced.
 
 =cut
@@ -539,7 +540,7 @@ sub stripCFWS($)
     while(@s)
     {   my $s = shift @s;
 
-           if(length $r && substr($r, -1) eq "\\") { $r .= $s } # escaped special
+           if(length $r && substr($r, -1) eq "\\") { $r .= $s } # esc'd special
         elsif($s eq '"')   { $in_dquotes = not $in_dquotes; $r .= $s }
         elsif($s eq '(' && !$in_dquotes) { $open_paren++ }
         elsif($s eq ')' && !$in_dquotes) { $open_paren-- }
@@ -701,8 +702,8 @@ Force the wrapping of this field to the specified LENGTH characters. The
 wrapping is performed with fold() and the results stored within
 the field object.
 
-Even without LENGTH this method is useful: the default wrap length will
-be enforced (re-folding will take place).
+Without LENGTH, the message will be folded, unless it is already folded.
+Pre-folded lines are detected on a trailing new-line character.
 
 =examples
 
@@ -713,7 +714,11 @@ be enforced (re-folding will take place).
 
 sub setWrapLength(;$)
 {   my $self = shift;
-    $self->[1] = $self->fold($self->[0],$self->unfoldedBody, @_);
+
+    $self->[1] = $self->fold($self->[0],$self->unfoldedBody, @_)
+        if @_ || $self->[1] !~ m/\n$/;
+
+    $self;
 }
 
 #------------------------------------------
@@ -751,7 +756,7 @@ sub fold($$;$)
     my $line = shift;
     my $wrap = shift || $default_wrap_length;
 
-    $line    =~ s/\ns*/ /gms;            # Remove accidental folding
+    $line    =~ s/\n\s/ /gms;            # Remove accidental folding
     return " \n" unless length $line;    # empty field
 
     my @folded;
@@ -761,7 +766,7 @@ sub fold($$;$)
        last if length $line < $max;
 
           $line =~ s/^ ( .{$min,$max}   # $max to 30 chars
-                        [;,]            # followed by a; or ,
+                        [;,]            # followed at a ; or ,
                        )[ \t]           # and then a WSP
                     //x
        || $line =~ s/^ ( .{$min,$max} ) # $max to 30 chars

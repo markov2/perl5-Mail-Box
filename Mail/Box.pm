@@ -387,6 +387,14 @@ What kind of message-objects are stored in this type of folder.  The
 default is Mail::Box::Message (which is a sub-class of Mail::Message).
 The class you offer must be an extension of Mail::Box::Message.
 
+=option  fix_headers BOOLEAN
+=default fix_headers <false>
+
+Broken MIME headers usually stop the parser: all lines not parsed are
+added to the body of the message.  With this flag set, the erroneous line
+is added to the previous header field and parsing is continued.
+See Mail::Box::Parser::Perl(fix_header_errors).
+
 =cut
 
 sub new(@)
@@ -407,7 +415,7 @@ USAGE
       , init_options => [ @_ ]  # for clone
       ) or return;
 
-    $self->read if $self->{MB_access} =~ /r/;
+    $self->read if $self->{MB_access} =~ /r|a/;
     $self;
 }
 
@@ -438,6 +446,7 @@ sub init($)
     $self->{MB_organization} = $args->{organization}      || 'FILE';
     $self->{MB_linesep}      = "\n";
     $self->{MB_keep_dups}    = !$self->writable || $args->{keep_dups};
+    $self->{MB_fix_headers}  = $args->{fix_headers};
 
     my $folderdir = $self->folderdir($args->{folderdir});
     $self->{MB_trusted}      = exists $args->{trusted} ? $args->{trusted}
@@ -1669,7 +1678,7 @@ sub lineSeparator(;$)
 =method coerce MESSAGE
 
 Coerce the MESSAGE to be of the correct type to be placed in the
-folder.  You are not may specify Mail::Internet and MIME::Entity
+folder.  You can specify Mail::Internet and MIME::Entity objects
 here: they will be translated into Mail::Message messages first.
 
 =cut

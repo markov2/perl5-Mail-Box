@@ -634,7 +634,7 @@ sub version_pod($)
 
 This code is beta, version $version.
 
-Copyright (c) 2001-2002 by the authors. All rights reserved.
+Copyright (c) 2001-2003 by the authors. All rights reserved.
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 VERSION

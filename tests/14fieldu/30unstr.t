@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+#
+# Test processing of unstructured fields
+#
+
+use Test::More;
+use strict;
+use warnings;
+
+use lib qw(. t);
+
+package Mail::Message::Field::Full;   # define package name
+package main;
+
+BEGIN {
+   if($] < 5.007003)
+   {   plan skip_all => "Requires module Encode which requires Perl 5.7.3";
+       exit 0;
+   }
+
+   eval 'require Mail::Message::Field::Unstructured';
+   if($@)
+   {
+warn $@;
+       plan skip_all => 'Extended attributes not available (install Encode?)';
+       exit 0;
+   }
+   else
+   {   plan tests => 30;
+   }
+}
+
+use Tools;
+
+my $mmff = 'Mail::Message::Field::Full';
+my $mmfu = 'Mail::Message::Field::Unstructured';
+
+#
+# Test construction with simple body
+#
+
+my $a = $mmfu->new('a', 'new');
+ok(defined $a,                          "Created simplest version");
+isa_ok($a, $mmfu);
+isa_ok($a, $mmff);
+is($a->name, 'a',                       "Name of a");
+
+is($a->unfoldedBody, 'new',             "Unfolded body a");
+my @al = $a->foldedBody;
+cmp_ok(@al, '==', 1,                    "Folded body of a");
+is($al[0], " new\n");
+
+my $b = $mmfu->new('b');
+ok(!defined $b,                         "No body specified");
+
+#
+# LINE without new lines (no folds)
+#
+
+$b = $mmfu->new('b: new');
+ok(defined $b,                          "Created b with body split");
+isa_ok($b, $mmfu);
+isa_ok($b, $mmff);
+is($b->name, 'b',                       "Name of b");
+
+is($b->unfoldedBody, 'new',             "Unfolded body b");
+my @bl = $b->foldedBody;
+cmp_ok(@bl, '==', 1,                    "Folded body of b");
+is($bl[0], " new\n");
+
+#
+# LINE with new-lines (folds)
+#
+
+my $c = $mmfu->new("c: new\n line\n");
+ok(defined $c,                          "Created c with body split");
+isa_ok($c, $mmfu);
+isa_ok($c, $mmff);
+is($c->name, 'c',                       "Name of c");
+
+is($c->unfoldedBody, 'new line',        "Unfolded body c");
+my @cl = $c->foldedBody;
+cmp_ok(@cl, '==', 2,                    "Folded body of c");
+is($cl[0], " new\n",                    "Folded c line 1");
+is($cl[1], " line\n",                   "Folded c line 2");
+
+#
+# Test encoding of line with separate body
+#
+
+my $d = $mmfu->new("d", "a\x{E4}b", charset => 'iso-8859-1');
+ok(defined $d,                          "Created d with included stranger");
+isa_ok($c, $mmfu);
+is($d->name, 'd',                       "Name of d");
+is($d->unfoldedBody, '=?iso-8859-1?q?a=E4b?=', "Unfolded body d");
+my @dl = $d->foldedBody;
+cmp_ok(@dl, '==', 1,                    "Folded body of d");
+is($dl[0], " =?iso-8859-1?q?a=E4b?=\n", "Folded d line 0");
+is($d->decodedBody, "a\x{E4}b");

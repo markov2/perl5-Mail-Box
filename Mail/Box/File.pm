@@ -299,6 +299,7 @@ sub parser()
         ( filename  => $source
         , mode      => $mode
         , trusted   => $self->{MB_trusted}
+        , fix_header_errors => $self->{MB_fix_headers}
         , $self->logSettings
         ) or return;
 
@@ -564,7 +565,7 @@ sub appendMessages(@)
       : exists $args{messages} ? @{$args{messages}}
       :                          return ();
 
-    my $folder   = $class->new(lock_type => 'NONE', @_, access => 'a')
+    my $folder   = $class->new(lock_type => 'NONE', @_, access => 'w+')
        or return ();
  
     my $filename = $folder->filename;

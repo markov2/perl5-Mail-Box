@@ -366,6 +366,7 @@ sub updateMessages($)
          ( head     => $head
          , filename => $msgpath
          , folder   => $self
+         , fix_header => $self->{MB_fix_headers}
          , @log
          );
 

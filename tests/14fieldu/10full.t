@@ -27,7 +27,7 @@ warn $@;
        exit 0;
    }
    else
-   {   plan tests => 64;
+   {   plan tests => 69;
        Encode->import('encode', 'decode');
    }
 }
@@ -79,9 +79,24 @@ my @p =
 
 while(@p)
 {  my ($f, $t) = (shift @p, shift @p);
-   my $b = $mmff->new('b', '', is_structured => 1);
-   $b->addComment($f);
-   is($b->unfoldedBody, "($t)");
+   is($mmff->createComment($f), "($t)",       "from $f");
+}
+
+#
+# Test adding phrases
+#
+
+@p =
+ ( 'a'         => 'a'
+ , 'a b c'     => '"a b c"'
+ , 'a \b c'    => '"a \\\\b c"'     # even within ', you have to use \\
+ , 'a "b c'    => '"a \"b c"'
+ , 'a \\"b c'   => '"a \\\\\"b c"'
+ );
+
+while(@p)
+{  my ($f, $t) = (shift @p, shift @p);
+   is($mmff->createPhrase($f), $t,  "from $f");
 }
 
 #

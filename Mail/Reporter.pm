@@ -123,7 +123,7 @@ the second the default trace level.
  my ($loglevel, $tracelevel) = Mail::Reporter->defaultTrace;
  Mail::Reporter->defaultTrace('NOTICES');
 
- my $(l, $t) = Mail::Reporter->defaultTrace('WARNINGS', 'DEBUG');
+ my ($l, $t) = Mail::Reporter->defaultTrace('WARNINGS', 'DEBUG');
  print $l;     # prints "WARNING"  (no S!)
  print $l+0;   # prints "4"
 
@@ -333,7 +333,9 @@ sub reportAll(;$)
 
 =method errors
 
-Equivalent to C<< $folder->report('ERRORS') >>
+Equivalent to
+
+ $folder->report('ERRORS')
 
 =cut
 
@@ -343,7 +345,9 @@ sub errors(@)   {shift->report('ERRORS')}
 
 =method warnings
 
-Equivalent to C<< $folder->report('WARNINGS') >>
+Equivalent to
+
+ $folder->report('WARNINGS')
 
 =cut
 

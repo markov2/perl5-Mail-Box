@@ -7,6 +7,51 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+wat als appendMessage faalt?
+
+version 2.036: Thu Feb 13 18:18:29 CET 2003
+
+	Fixes:
+
+	- More attempts to protect $_ against eval's which apparently
+	  change it in ./test.pl.  Hope the installation is smooth now.
+
+	- CPAN::install can come back to a different file-system location
+	  when installation is completed.  Try to restore that in test.pl.
+	  
+	- [Tom Allison] discovered that a folder opened for 'a' does
+	  not work with addMessage(): the messages where not read.
+
+	- [Simon Cozens] found two problems in $msg->parts($coderef) and
+	  $msg->parts('ACTIVE'|'DELETED') on non-folder messages.
+
+	- [James Sanford] found that conversion to MIME::Entity did not
+	  work for nested multiparts.  Mail::Message::Construct::lines()
+	  was not context sensitive (now returns ref-array in scalar context),
+	  and detection of multipart was wrong in case of nested multiparts.
+
+	- [Karen Craven], [Tom Allison] and [Michael D Richards] where right
+	  with their explanation why message-ids were created incorrectly.
+
+	Improvements:
+
+	- Mail::Transport now also supports 'postfix' as alias for
+	  'sendmail', thanks to a question by [Tom Allison].
+
+	- Tests for unicode fields are moved to their own directory,
+	  tests/14fieldu, which is not considered critical on failure.
+
+	- Copyright set to 2001-2003
+
+	- [Todd Richmond] requested to keep the folding of fields when they
+	  are added to a header.  Field::setWrapLength() has been changed not
+	  to re-fold already folded fields.
+
+	- As explained by [Eric Wheeler], spam and virus filters do not like
+	  the message parser to stop on broken headers.  Therefore, a new
+	  option Mail::Box::new(fix_headers) is created.  This option progresses
+	  into a few other classes, and should be usable with all folder types.
+
 version 2.035: Fri Jan 24 20:41:23 CET 2003
 
 	Fixes:

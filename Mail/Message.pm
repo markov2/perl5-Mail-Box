@@ -984,7 +984,7 @@ you have to test yourself.
 
 'ACTIVE' and 'DELETED' check for the deleted flag on messages and
 message parts.  The FILTER is a code reference, which is called for
-each message and message part (implies RECURSE).
+each part of the messagei; each part as C<RECURSE> would return.
 
 =examples
 
@@ -1002,7 +1002,7 @@ sub parts(;$)
     my $what    = shift || 'ACTIVE';
 
     my $body    = $self->body;
-    my $recurse = $what eq 'RECURSE';
+    my $recurse = $what eq 'RECURSE' || ref $what;
 
     my @parts
      = $body->isNested     ? $body->nested->parts($what)
@@ -1016,6 +1016,7 @@ sub parts(;$)
     : $recurse            ? @parts
     : confess "Select parts via $what?";
 }
+sub deleted() {0} # needed for parts('ACTIVE'|'DELETED') on non-folder messages.
 
 #------------------------------------------
 

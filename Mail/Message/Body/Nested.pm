@@ -104,12 +104,11 @@ sub isBinary() {shift->nested->body->isBinary}
 sub clone()
 {   my $self     = shift;
 
-    my $body     = ref($self)->new
+    ref($self)->new
      ( $self->logSettings
      , based_on => $self
      , nested   => $self->nested->clone
      );
-
 }
 
 #------------------------------------------
@@ -153,7 +152,8 @@ sub string()
 
 sub lines()
 {    my $nested = shift->nested;
-     defined $nested ? $nested->lines : ();
+warn "Nested = ",ref $nested;
+     defined $nested ? ($nested->lines) : ();
 }
 
 #------------------------------------------

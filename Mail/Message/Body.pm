@@ -755,7 +755,7 @@ which is usually much more efficient.
 
 BE WARNED: For some types of bodies the reference will refer to the
 original data. You must not change the referenced data! If you do some of
-the internal values maintained by the C<Mail::Message::Body> may not be
+the internal values maintained by the Mail::Message::Body may not be
 updated.   Use the data() method instead.
 
 =examples

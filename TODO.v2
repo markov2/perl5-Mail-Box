@@ -1,16 +1,14 @@
 
-This file lists the things to do before v2.100 beta can come out.
+This file lists the things to do
 
 Obligatory:
 
-  test of scripts/
-  test $msg->body(undef);
-
   Processing folders with non-platform-native line separators.
-
   appendMessage opens folder, but not needed.
 
 Optional:
+
+  fix_header_errors option for Mail::Box::Parser::C
 
   Body::* _data_from_*() may use $. in some cases.  This would speed-up
   body creation.
@@ -32,11 +30,6 @@ Optional:
   Mail::Message::Body::Scalar can get nrLines from read()
 
   fromBody with nested multiparts at once.
-
-  Mail::Message::Field
-  - Parameter value continuations (RFC 2231 section 3)
-  - Parameter Value Character Set and Language Information (RFC 2231 section 4)
-  - Language specification in Encoded Words (RFC 2231 section 5)
 
   updateMessages for Mail::Box::Mbox
   updateMessages for Mail::Box::MH

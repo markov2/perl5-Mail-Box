@@ -60,6 +60,11 @@ Create a messages in a directory organized folder.
 
 The file where the message is stored in.
 
+=option  fix_header BOOLEAN
+=default fix_header C<false>
+
+See Mail::Box::new(fix_headers).
+
 =cut
 
 sub init($)
@@ -69,6 +74,7 @@ sub init($)
     $self->filename($args->{filename})
         if $args->{filename};
 
+    $self->{MBDM_fix_header} = $args->{fix_header};
     $self;
 }
 
@@ -164,8 +170,9 @@ sub parser()
 {   my $self   = shift;
 
     my $parser = Mail::Box::Parser->new
-      ( filename  => $self->{MBDM_filename}
-      , mode      => 'r'
+      ( filename => $self->{MBDM_filename}
+      , mode     => 'r'
+      , fix_header_errors => $self->{MBDM_fix_header}
       , $self->logSettings
       );
 

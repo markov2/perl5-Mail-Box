@@ -40,6 +40,14 @@ work on platforms where no C compiler is available.
 Is the input from the file to be trusted, or does it require extra
 tests.  Related to Mail::Box::new(trusted).
 
+=option  fix_header_errors BOOLEAN
+=default fix_header_errors <false>
+
+When header errors are detected, the parsing of the header will
+be stopped.  Other header lines will become part of the body of
+the message.  Set this flag to have the erroneous line added to
+the previous header line.
+
 =cut
 
 sub init(@)
@@ -48,6 +56,7 @@ sub init(@)
     $self->SUPER::init($args) or return;
 
     $self->{MBPP_trusted} = $args->{trusted};
+    $self->{MBPP_fix}     = $args->{fix_header_errors};
     $self;
 }
 
@@ -62,6 +71,26 @@ sub init(@)
 =head2 Parsing
 
 =cut
+
+#------------------------------------------
+
+=method fixHeaderErrors [BOOLEAN]
+
+If set to C<true>, parsing of a header will not stop on an error, but
+attempt to add the erroneous this line to previous field.  Without BOOLEAN,
+the current setting is returned.
+
+=example
+
+ $folder->parser->fixHeaderErrors(1);
+ my $folder = $mgr->open('folder', fix_header_errors => 1);
+
+=cut
+
+sub fixHeaderErrors(;$)
+{   my $self = shift;
+    @_ ? ($self->{MBPP_fix} = shift) : $self->{MBPP_fix};
+}
 
 #------------------------------------------
 
@@ -109,8 +138,15 @@ LINE:
         {   $self->log(WARNING =>
                 "Unexpected end of header in ".$self->filename.":\n $line");
 
-            $file->seek(-length $line, 1);
-            last LINE;
+            if(@ret && $self->fixHeaderErrors)
+            {   $ret[-1][1] .= ' '.$line;  # glue erroneous line to previous field
+                $line = $file->getline;
+                next LINE;
+            }
+            else
+            {   $file->seek(-length $line, 1);
+                last LINE;
+            }
         }
 
         $body = "\n" unless length $body;

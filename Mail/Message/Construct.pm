@@ -1176,7 +1176,9 @@ sub string()
 
 =method lines
 
-Returns the whole message as set of lines.
+Returns the whole message as set of lines.  In LIST context, copies of the
+lines are returned.  In SCALAR context, a reference to an array of lines
+is returned.
 
 =cut
 
@@ -1185,7 +1187,7 @@ sub lines()
     my @lines;
     my $file = IO::Lines->new(\@lines);
     $self->print($file);
-    @lines;
+    wantarray ? @lines : \@lines;
 }
 
 #------------------------------------------
