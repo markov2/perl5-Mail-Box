@@ -23,7 +23,7 @@ Mail::Message::Convert::HtmlFormatPS - Convert HTML into PostScript
 =head1 DESCRIPTION
 
 Translate an HTML/XHTML message body into a postscript body
-using the L<HTML::FormatPS> package.
+using HTML::FormatPS.
 
 =head1 METHODS
 

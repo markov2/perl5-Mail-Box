@@ -320,7 +320,7 @@ sub threadStart($)
         }
 
         foreach ($self->folders)
-        {   last unless defined $_->scanForMessages
+        {   last unless $_->scanForMessages
               ( $thread->messageId
               , $parent->messageId
               , $thread->message->timestamp - $self->{MBTM_timespan}
@@ -350,10 +350,7 @@ because is will enforce parsing of message-bodies.
 
 sub all()
 {   my $self = shift;
-
-    $_->scanForMessages(undef, 'not-existing', 'EVER', 'ALL')
-        foreach $self->folders;
-
+    $_->find('not-existing') for $self->folders;
     $self->known;
 }
 
@@ -367,10 +364,7 @@ Returns all() the threads by default, but sorted on timestamp.
 
 sub sortedAll(@)
 {   my $self = shift;
-
-    $_->scanForMessages(undef, 'not-existing', 'EVER', 'ALL')
-        foreach $self->folders;
-
+    $_->find('not-existing') for $self->folders;
     $self->sortedKnown(@_);
 }
 

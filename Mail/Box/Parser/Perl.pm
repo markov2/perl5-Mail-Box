@@ -49,7 +49,7 @@ sub init(@)
 #   binmode $file, ':raw';
 
     $self->{MBPP_file}       = $file;
-    $self->{MBPP_filename}   = $filename;
+    $self->{MBPP_filename}   = $filename          || ref $file;
     $self->{MBPP_separator}  = $args->{separator} || undef;
     $self->{MBPP_separators} = [];
     $self->{MBPP_trusted}    = $args->{trusted};
@@ -155,7 +155,9 @@ LINE:
         my ($name, $body) = split /\s*\:\s*/, $line, 2;
 
         unless(defined $body)
-        {   $self->log(WARNING => "Unexpected end of header:\n $line");
+        {   $self->log(WARNING =>
+                "Unexpected end of header in $self->{MBPP_filename}:\n $line");
+
             $file->seek(-length $line, 1);
             last LINE;
         }
@@ -189,6 +191,7 @@ sub _is_good_end($)
     my $line = $file->getline;
     $line    = $file->getline while defined $line && $line =~ $empty;
 
+    # Check completed, return to old spot.
     $file->seek($here, 0);
     return 1 unless defined $line;
 
@@ -208,7 +211,11 @@ sub readSeparator()
     my $start = $file->tell;
 
     my $line  = $file->getline;
-    $line     = $file->getline while defined $line && $line =~ $empty;
+    while(defined $line && $line =~ $empty)
+    {   $start   = $file->tell;
+        $line    = $file->getline;
+    }
+
     return () unless defined $line;
 
     $line     =~ s/[\012\015\s]+$/\n/g;
@@ -266,14 +273,24 @@ sub _read_stripped_lines(;$$)
         @lines = $file->getlines;
     }
 
+    my $end = $file->tell;
     if($exp_lines > 0 )
-         { pop @lines while @lines > $exp_lines && $lines[-1] =~ $empty }
-    else { pop @lines    if @lines              && $lines[-1] =~ $empty }
+    {    while(@lines > $exp_lines && $lines[-1] =~ $empty)
+         {   $end -= length $lines[-1];
+             pop @lines;
+         }
+    }
+    else
+    {    if(@lines && $lines[-1] =~ $empty)
+         {   $end -= length $lines[-1];
+             pop @lines;
+         }
+    }
 
     map { s/^\>(\>*From\s)/$1/ } @lines
         if $self->{MBPP_strip_gt};
 
-    \@lines;
+    $end, \@lines;
 }
 
 #------------------------------------------
@@ -303,12 +320,12 @@ sub bodyAsString(;$$)
         if($self->_is_good_end($end))
         {   my $body = $self->_take_scalar($begin, $end);
             $body =~ s/^\>(\>*From\s)/$1/gm if $self->{MBPP_strip_gt};
-            return ($begin, $file->tell, $self->_take_scalar($begin, $end))
+            return ($begin, $file->tell, $body);
         }
     }
 
-    my $lines = $self->_read_stripped_lines($exp_chars, $exp_lines);
-    return ($begin, $file->tell, join('', @$lines));
+    my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
+    return ($begin, $end, join('', @$lines));
 }
 
 
@@ -319,8 +336,8 @@ sub bodyAsList(;$$)
     my $file  = $self->{MBPP_file};
     my $begin = $file->tell;
 
-    my $lines = $self->_read_stripped_lines($exp_chars, $exp_lines);
-    ($begin, $file->tell, @$lines);
+    my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
+    ($begin, $end, @$lines);
 }
 
 #------------------------------------------
@@ -330,10 +347,10 @@ sub bodyAsFile($;$$)
     my $file  = $self->{MBPP_file};
     my $begin = $file->tell;
 
-    my $lines = $self->_read_stripped_lines($exp_chars, $exp_lines);
+    my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
 
     $out->print($_) foreach @$lines;
-    ($begin, $file->tell, scalar @$lines);
+    ($begin, $end, scalar @$lines);
 }
 
 #------------------------------------------
@@ -352,9 +369,9 @@ sub bodyDelayed(;$$)
         }
     }
 
-    my $lines = $self->_read_stripped_lines($exp_chars, $exp_lines);
+    my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
     my $chars = sum(map {length} @$lines);
-    ($begin, $file->tell, $chars, scalar @$lines);
+    ($begin, $end, $chars, scalar @$lines);
 }
 
 #------------------------------------------

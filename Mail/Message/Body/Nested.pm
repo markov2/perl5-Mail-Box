@@ -187,13 +187,20 @@ sub forNested($)
 
     return $self if $new_body == $body;
 
-    my $new_nested  = Mail::Message->new(head => $nested->head->clone);
+    my $new_nested  = Mail::Message::Part->new
+       ( head   => $nested->head->clone
+       , parent => undef
+       );
+
     $new_nested->body($new_body);
 
-    (ref $self)->new
+    my $created = (ref $self)->new
       ( based_on => $self
       , nested   => $new_nested
       );
+
+    $new_nested->parent($created);
+    $created;
 }
 
 #------------------------------------------
@@ -237,6 +244,9 @@ sub read($$$$)
     $self;
 }
 
+#-------------------------------------------
+
+sub fileLocation(;$$) { shift->{MMBN_nested}->fileLocation(@_) }
 
 #-------------------------------------------
 

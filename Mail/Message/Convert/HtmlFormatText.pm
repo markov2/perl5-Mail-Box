@@ -23,7 +23,7 @@ Mail::Message::Convert::HtmlFormatText - Convert HTML into Text
 =head1 DESCRIPTION
 
 Convert HTML/XHTML message body objects into plain text bodies
-using L<HTML::FormatText>.
+using HTML::FormatText.
 
 =head1 METHODS
 

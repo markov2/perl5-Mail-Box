@@ -184,7 +184,7 @@ sub folded_body($)
     if(@_==2) { $self->[1] = $body }
     else      { $body = $self->[1] }
      
-    wantarray ? split(m!(?<=\n)!, $body) : $body;
+    wantarray ? (split m/^/, $body) : $body;
 }
 
 #------------------------------------------

@@ -310,6 +310,12 @@ sub shortString()
 
 #-------------------------------------------
 
+=head2 Reading and Writing [internals]
+
+=cut
+
+#-------------------------------------------
+
 =method readBody PARSER, HEAD [, BODYTYPE]
 
 Read the body of one message.  The PARSER gives access to the folder file.

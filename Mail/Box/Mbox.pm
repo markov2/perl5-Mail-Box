@@ -51,6 +51,10 @@ what you can do with the Mbox folder object Mail::Box::Mbox.
 
 #-------------------------------------------
 
+sub type() {'mbox'}
+
+#-------------------------------------------
+
 =head2 Reading and Writing [internals]
 
 =cut

@@ -5,8 +5,9 @@ use warnings;
 package Mail::Box::Dir::Message;
 use base 'Mail::Box::Message';
 
-use File::Copy;
 use Carp;
+use IO::File;
+use File::Copy qw/move/;
 
 =head1 NAME
 
@@ -88,8 +89,12 @@ sub print(;$)
 
     my $filename = $self->filename;
     if($filename && -r $filename)
-    {   copy($filename, $out);
-        return $self;
+    {   if(my $in = IO::File->new($filename, "r"))
+        {    local $_;
+             $out->print($_) while <$in>;
+             $in->close;
+             return $self;
+        }
     }
 
     $self->SUPER::print($out);

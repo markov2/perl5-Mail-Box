@@ -12,10 +12,11 @@ my %external_modules = map { ($_ => 1) }
     Mail::Internet MIME::Entity Text::Autoformat HTML::FormatText
     HTML::FormatPS Mail::Address
     IO::File IO::Handle Tie::Array IO::Socket::INET
-    Inline::C Mail::Folder
+    Mail::Folder Marek::Pod::HTML
     MIME::Type MIME::Types Object::Realize::Later
     Mail::Box::Parser::C Mail::Box::File Mail::Message::Body::External
-    Mail::Message::Body::External Mail::Box::Search::Spam/;
+    Mail::SpamAssassin Mail::SpamAssassin::PerMessageStatus
+    Mail::SpamAssassin::Message Authen::SASL Digest::MD5/;
 
 my %index;
 sub read_index($)
@@ -89,20 +90,12 @@ while(<HTML>)                # Header
      print;
 }
 
-my $insert_pre = 0;
 while(<HTML>)                # Body
 {
      chomp;
      s#^\<li .*\<p\>(.*?)\</p\>.*#<li class=POD_ITEM>$1#;
      s#^\<dt .*?"\>\<b\>(.*?)\</a\>#<dt class=POD_ITEM><b>$1#;
      s#1"\>\</a\>#"></a>#;
-
-     $insert_pre = 1 if s#^\<pre class#<p class#;
- 
-     if( $insert_pre && m!^\s*$! )  # bug in mpod2html: pre too early
-     {    $_ = "<pre class=POD_VERBATIM>";
-          $insert_pre = 0;
-     }
 
      my $in_example = m/^\s/;
 

@@ -54,7 +54,11 @@ manual page lists the transfer encodings which are supported.
 
 =item * mime-type translation
 
+NOT IMPLEMENTED YET
+
 =item * charset conversion
+
+NOT IMPLEMENTED YET
 
 =back
 
@@ -73,7 +77,7 @@ manual page lists the transfer encodings which are supported.
 =method isBinary
 
 Returns true when the un-encoded message is binary data.  This information
-is retrieved from knowledge provided by L<MIME::Types>.
+is retrieved from knowledge provided by MIME::Types.
 
 =cut
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=2.026
+VERSION=2.027
 
 umask 022
 
@@ -24,6 +24,7 @@ open_up()
 }
 
 echo ">>> Producing version $VERSION"
+[ -d "$TMP/tests" ]   || mkdir "$TMP/tests";
 
 echo ">>> Create pod"
 $BIN/make_pod $TMP $VERSION || exit $?
@@ -34,7 +35,7 @@ sort -u MANIFEST >x && mv x MANIFEST
 
 echo ">>> Run tests"
 perl Makefile.PL      || exit $?
-chmod a+x t/*.t
+chmod a+x test.pl tests/*/*.t
 make test             || exit $?
 
 echo ">>> Creating HTML with mpod2html"
@@ -103,7 +104,7 @@ make dist >/dev/null
 
 [ -d $SITE/source ] || mkdir $SITE/source
 cp $TMP/$DIST $SITE/source/
-ln -sf $DIST $SITE/source/html-current.tar.gz
+ln -sf $DIST $SITE/source/source-current.tar.gz
 open_up $SITE/source
 
 echo ">>> Make raw"

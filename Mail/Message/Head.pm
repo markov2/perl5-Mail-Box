@@ -6,7 +6,6 @@ use base 'Mail::Reporter';
 
 use Mail::Message::Head::Complete;
 use Mail::Message::Field::Fast;
-use Mail::Box::Parser;
 
 use Carp;
 use Scalar::Util 'weaken';

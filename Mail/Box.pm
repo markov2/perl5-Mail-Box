@@ -349,8 +349,8 @@ C<'DotLock'>, C<'File'>, C<'MULTI'>, C<'NFS'>, C<'POSIX'>, or C<'NONE'>.
 =option  locker OBJECT
 =default locker undef
 
-An OBJECT which extends Mail::Box::Locker, and will handle
-folder locking replacing the default lock behavior.
+An OBJECT which extends Mail::Box::Locker, and will handle folder locking
+replacing the default lock behavior.
 
 =option  lock_file FILENAME
 =default lock_file undef
@@ -421,8 +421,8 @@ sub init($)
 
     $self->{MB_foldername}   = $foldername;
     $self->{MB_init_options} = $args->{init_options};
-    $self->{MB_coerce_opts}  = $args->{coerce_options}    || [];
-    $self->{MB_access}       = $args->{access}            || 'r';
+    $self->{MB_coerce_opts}  = $args->{coerce_options} || [];
+    $self->{MB_access}       = $args->{access}         || 'r';
     $self->{MB_remove_empty}
          = defined $args->{remove_when_empty} ? $args->{remove_when_empty} : 1;
 
@@ -430,6 +430,7 @@ sub init($)
          = defined $args->{save_on_exit} ? $args->{save_on_exit} : 1;
 
     $self->{MB_messages}     = [];
+    $self->{MB_msgid}        = {};
     $self->{MB_organization} = $args->{organization}      || 'FILE';
     $self->{MB_linesep}      = "\n";
     $self->{MB_keep_dups}    = !$self->writable || $args->{keep_dups};
@@ -474,18 +475,16 @@ sub init($)
     # Create a locker.
     #
 
-    my $locker;
-    if($locker = $args->{locker}) {;}
-    else
-    {   $locker = Mail::Box::Locker->new
-            ( folder   => $self
-            , method   => $args->{lock_type}
-            , timeout  => $args->{lock_timeout}
-            , wait     => $args->{lock_wait}
-            , file     => $args->{lockfile} || $args->{lock_file}
-            );
-    }
-    $self->{MB_locker} = $locker;
+    $self->{MB_locker}
+      = $args->{locker}
+      || Mail::Box::Locker->new
+          ( folder   => $self
+          , method   => $args->{lock_type}
+          , timeout  => $args->{lock_timeout}
+          , wait     => $args->{lock_wait}
+          , file     => $args->{lockfile} || $args->{lock_file}
+          );
+
     $self;
 }
 
@@ -605,6 +604,38 @@ the actual type of mailbox used.
 =cut
 
 sub name() {shift->{MB_foldername}}
+
+#-------------------------------------------
+
+=method type
+
+Returns a name for the type of mail box.  This can be C<mbox>, C<mh>,
+C<maildir>, or C<pop3>.
+
+=cut
+
+sub type() {shift->notImplemented}
+
+#-------------------------------------------
+
+=method url
+
+Represent the folder as a URL (Universal Resource Locator) string.  You may
+pass such a URL as folder name to Mail::Box::Manager::open().
+
+=example
+
+ print $folder->url;
+ # may result in
+ #   mbox:/var/mail/markov   or
+ #   pop3://user:password@pop.aol.com:101
+
+=cut
+
+sub url()
+{   my $self = shift;
+    $self->type . ':' . $self->name;
+}
 
 #-------------------------------------------
 
@@ -1098,7 +1129,7 @@ is found.  The folder will be scanned back to front.
 
 =cut
 
-sub find
+sub find($)
 {   my ($self, $msgid) = (shift, shift);
     my $msgids = $self->{MB_msgid};
 
@@ -1107,8 +1138,9 @@ sub find
         $msgid =~ s/\s//gs;
     }
 
-    return $msgids->{$msgid} if exists $msgids->{$msgid};
-    $self->scanForMessages(undef, $msgid, 'EVER', 'ALL');
+    $self->scanForMessages(undef, $msgid, 'EVER', 'ALL')
+        unless exists $msgids->{$msgid};
+
     $msgids->{$msgid};
 }
 
@@ -1241,16 +1273,28 @@ sub current(;$)
 =method scanForMessages MESSAGE, MESSAGE-IDS, TIMESTAMP, WINDOW
 
 The MESSAGE which is known contains references to messages before
-it which are not found yet.  But those messages can be in the same
-folder.  Scan back in this folder for the MESSAGE-IDS (which may be
+it in the message thread, but which are not found yet because of the
+lazy extraction if messages from file.  The folder is Scanned from
+back to front, in search for the MESSAGE-IDS (which may be
 one string or a reference to an array of strings).  The TIMESTAMP
-and WINDOW (see options in new()) limit the search.
+and WINDOW (see option descriptions in new()) may limit the search.
+
+This method returns the message-ids which were not found during the
+scan.  Be warned that a message-id could already be known and therefore
+not found: check that first.
 
 =cut
 
 sub scanForMessages($$$$)
 {   my ($self, $startid, $msgids, $moment, $window) = @_;
-    return $self unless $self->messages;  # empty folder.
+
+    # Set-up msgid-list
+    my %search = map {($_, 1)} ref $msgids ? @$msgids : $msgids;
+    return () unless keys %search;
+
+    # do not run on empty folder
+    my $nr_messages = $self->messages
+        or return keys %search; 
 
     # Set-up window-bound.
     my $bound;
@@ -1259,25 +1303,22 @@ sub scanForMessages($$$$)
     }
     elsif(defined $startid)
     {   my $startmsg = $self->messageId($startid);
-        $bound = $startmsg->nr - $window if $startmsg;
+        $bound = $startmsg->seqnr - $window if $startmsg;
         $bound = 0 if $bound < 0;
     }
 
-    my $last = ($self->{MBM_last} || $self->messages) -1;
-    return $self if $bound >= $last;
+    my $last = ($self->{MBM_last} || $nr_messages) -1;
+    return keys %search if defined $bound && $bound > $last;
 
     # Set-up time-bound
     my $after = $moment eq 'EVER' ? 0 : $moment;
 
-    # Set-up msgid-list
-    my %search = map {($_, 1)} ref $msgids ? @$msgids : $msgids;
-
     while(!defined $bound || $last >= $bound)
     {   my $message = $self->message($last);
-        my $msgid   = $message->messageId;  # triggers load of head
+        my $msgid   = $message->messageId; # triggers load
 
-        if(delete $search{$msgid})
-        {   last unless keys %search;
+        if(delete $search{$msgid})  # where we looking for this one?
+        {    last unless keys %search;
         }
 
         last if $message->timestamp < $after;

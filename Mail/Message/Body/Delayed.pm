@@ -56,6 +56,7 @@ sub init($)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
 
+    $self->{MMB_seqnr}    = -1;  # for overloaded body comparison
     $self->{MMBD_message} = $args->{message}
         or croak "A message must be specified to a delayed body.";
 

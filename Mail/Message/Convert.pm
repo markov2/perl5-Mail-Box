@@ -36,12 +36,12 @@ Plays tricks with HTML/XMHTML without help of external modules.
 =item * Mail::Message::Convert::HtmlFormatText
 
 Converts HTML body objects to plain text objects using the
-L<HTML::FormatText> module.
+HTML::FormatText module.
 
 =item * Mail::Message::Convert::HtmlFormatPS
 
 Converts HTML body objects to Postscript objects using the
-L<HTML::FormatPS> module.
+HTML::FormatPS module.
 
 =item * Mail::Message::Convert::MailInternet
 

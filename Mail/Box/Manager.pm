@@ -219,7 +219,11 @@ sub decodeFolderURL($)
                       !x;
 
     $username ||= $ENV{USER} || $ENV{LOGNAME};
-    $password ||= '';
+
+    $password ||= '';        # decode password from url
+    $password =~ s/\+/ /g;
+    $password =~ s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
+
     $hostname ||= 'localhost';
     $path     ||= '=';
 
@@ -259,7 +263,8 @@ The URL format is composed as
 Like real URLs, all fields are optional and have smart defaults, as long
 as the string starts with a known folder type.  Far
 from all folder types support all these options, but at least they are
-all split-out.
+always split-out.  Be warned that special characters in the password should
+be properly url-encoded.
 
 When you specify anything which does not match the URL format, it is
 passed directly to the C<new> method of the folder which is opened.

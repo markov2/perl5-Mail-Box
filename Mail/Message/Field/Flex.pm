@@ -162,7 +162,7 @@ sub folded_body($)
     if(@_==2) { $self->{MMF_body} = $body }
     else      { $body = $self->{MMF_body} }
 
-    wantarray ? split(m!(?<=\n)!, $body) : $body;
+    wantarray ? (split /^/, $body) : $body;
 }
 
 #------------------------------------------

@@ -56,11 +56,14 @@ At the moment, this object is extended by
 =method new OPTIONS
 
 =default body_type 'Mail::Message::Body::Lines'
-=default lock_type <not used>
+
+=default lock_type 'NONE'
 =default lock_file <not used>
 =default lock_timeout <not used>
 =default lock_wait <not used>
 =default remove_when_empty <false>
+
+=default folder <username@server_name>
 
 =option  server_name HOSTNAME
 =default server_name undef
@@ -85,9 +88,11 @@ Port number in use by the server application.
 =cut
 
 sub init($)
-{   my ($self, $args)    = @_;
+{   my ($self, $args)     = @_;
 
-    $args->{body_type} ||= 'Mail::Message::Body::Lines';
+    $args->{lock_type}  ||= 'NONE';
+    $args->{body_type}  ||= 'Mail::Message::Body::Lines';
+    $args->{folder}     ||= '/';
 
     $self->SUPER::init($args);
 
@@ -108,6 +113,32 @@ sub init($)
 #-------------------------------------------
 
 sub organization() { 'REMOTE' }
+
+#-------------------------------------------
+
+sub url()
+{   my $self = shift;
+
+    my ($user, $pass, $host, $port)
+       = @$self{ qw/MBN_username MBN_password MBN_hostname MBN_port/ };
+
+    my $perm = '';
+    $perm    = $user if defined $user;
+    if(defined $pass)
+    {   $pass  =~ s/(\W)/sprintf "%%%02X", ord $1/ge;
+        $perm .= ':'.$pass;
+    }
+
+    $perm   .= '@'       if length $perm;
+
+    my $loc  = $host;
+    $loc    .= ':'.$port if length $port;
+
+    my $name = $self->name;
+    $loc    .= '/'.$name if $name ne '/';
+    
+    $self->type . '://' . $perm . $loc;
+}
 
 #-------------------------------------------
 

@@ -125,13 +125,7 @@ sub nrLines()
 
 #------------------------------------------
 
-sub size()
-{   my $self = shift;
-
-    for($self->{MMBS_scalar})
-    {   return (length) + ( $self->eol eq 'CRLF' ? tr/\n/\n/ : 0);
-    }
-}
+sub size() { length shift->{MMBS_scalar} }
 
 #------------------------------------------
 
@@ -146,7 +140,7 @@ sub string() { shift->{MMBS_scalar} }
 #------------------------------------------
 
 sub lines()
-{   my @lines = split /(?<=\n)/, shift->{MMBS_scalar};
+{   my @lines = split /^/, shift->{MMBS_scalar};
     wantarray ? @lines : \@lines;
 }
 

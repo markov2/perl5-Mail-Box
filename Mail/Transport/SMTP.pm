@@ -53,7 +53,7 @@ screen.
 
 The fully qualified name of the sender's host (your system) which
 is used for the greeting message to the receiver.  If not specified,
-L<Net::Config> or else L<Net::Domain> are questioned to find it.
+Net::Config or else Net::Domain are questioned to find it.
 When even these do not supply a valid name, the name of the domain in the
 C<From> line of the message is assumed.
 
@@ -227,7 +227,7 @@ sub trySend($@)
 
 Creates the connection to the SMTP server.  When more than one hostname
 was specified, the first which accepts a connection is taken.  An
-L<IO::Socket::INET> object is returned.
+IO::Socket::INET object is returned.
 
 =cut
 
@@ -269,7 +269,7 @@ sub contactAnyServer()
 =method tryConnectTo HOST, OPTIONS
 
 Try to establish a connection to deliver SMTP to the specified HOST.  The
-OPTIONS are passed to the C<new> method of L<Net::SMTP>.
+OPTIONS are passed to the C<new> method of Net::SMTP.
 
 =cut
 

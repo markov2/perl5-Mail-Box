@@ -16,6 +16,8 @@ my ($workdir, $version) = @ARGV;
 
 my $verbose = 0;
 my $markov  = 'L<mark@overmeer.net|mailto:mark@overmeer.net>';
+my $liz     = 'L<liz@dijkmat.nl|mailto:liz@dijkmat.nl>';
+
 my $website = 'L<http://perl.overmeer.net/mailbox/>';
 my $index   = "$workdir/method-index";
 
@@ -97,6 +99,8 @@ my @method_sections =
  , 'Server Connection'
  , 'Sending Mail'
  , 'Receiving Mail'
+ , 'Exchanging Information'
+ , 'Protocol [internals]'
 
    # Mail::Box::Search
  , 'Searching'
@@ -599,38 +603,51 @@ website at $website.
 SEE_ALSO
 }
 
-sub author_pod()
-{   print <<AUTHOR;
+sub author_pod($)
+{   my $package = shift;
+
+    my $mark = "Mark Overmeer ($markov)";
+    my $liz  = "Liz Mattijsen ($liz)";
+
+    my $by
+      = $package =~ m!POP! ? "$liz and $mark"
+      :                      $mark;
+
+    print <<AUTHOR;
 
 =head1 AUTHOR
 
-Mark Overmeer ($markov) with the help of many.
+Written by $by
+with the help of many.  See the ChangeLog for details.
 AUTHOR
 }
 
-sub version_pod()
-{   print <<VERSION;
+sub version_pod($)
+{   my $self = shift;
+
+    print <<VERSION;
 
 =head1 VERSION
 
 This code is beta, version $version.
 
-Copyright (c) 2001-2002 Mark Overmeer. All rights reserved.
+Copyright (c) 2001-2002 by the authors. All rights reserved.
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 VERSION
 }
 
 sub manual_to_pod($)
-{   my $pod = shift;
+{   my $pod      = shift;
     my $filename = $pod->{podfile};
+    my $package  = $pod->{package};
 
     my $file = IO::File->new($filename, "w")
        or die "Cannot write pod to file $filename: $!\n";
 
-    my $oldout = select $file;
+    my $oldout   = select $file;
 
-    my %chapter = map { ($_->{title} => $_) } @{$pod->{chapters}};
+    my %chapter  = map { ($_->{title} => $_) } @{$pod->{chapters}};
 
     make_chapter_pod   delete $chapter{NAME};
     inheritance_to_pod $pod->{package};
@@ -641,8 +658,8 @@ sub manual_to_pod($)
        if defined $chapter{IMPLEMENTATION};
 
     see_also_pod;
-    author_pod;
-    version_pod;
+    author_pod  $package;
+    version_pod $package;
 
     select $oldout;
 
@@ -668,7 +685,7 @@ foreach my $filename (manifest)
     die "Cannot create $outdir: $!"
         unless -d $outdir || mkdir $outdir;
 
-    if($filename =~ m/\.pm$/ && $filename !~ m!^t/!)    # PM file
+    if($filename =~ m/\.pm$/ && $filename !~ m!^tests/!)    # PM file
     {   strip_pod $filename, $becomes;
         my $pod        = absorb_pod $filename;
         my $package    = $pod->{package};

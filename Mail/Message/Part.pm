@@ -60,9 +60,10 @@ sub init($)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
 
-    $self->{MMP_parent} = $args->{parent}
-        or confess "No parent specified for part.\n";
+    confess "No parent specified for part.\n"
+        unless exists $args->{parent};
 
+    $self->{MMP_parent} = $args->{parent};
     $self;
 }
 
@@ -170,7 +171,10 @@ sub deleted(;$)
 
 #------------------------------------------
 
-sub parent() { shift->{MMP_parent} }
+sub parent(;$)
+{   my $self = shift;
+    @_ ? $self->{MMP_parent} = shift : $self->{MMP_parent};
+}
 
 #------------------------------------------
 

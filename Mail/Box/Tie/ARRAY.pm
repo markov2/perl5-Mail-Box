@@ -208,7 +208,7 @@ This module implements C<TIEARRAY>, C<FETCH>, C<STORE>, C<FETCHSIZE>,
 C<STORESIZE>, C<DELETE>, C<PUSH>, and C<DESTROY>.
 
 This module does not implement all other methods as described in
-the L<Tie::Array> documentation, because the real array of messages
+the Tie::Array documentation, because the real array of messages
 is not permitted to shrink or be mutilated.
 
 =cut

@@ -24,15 +24,11 @@ Mail::Box::POP3 - handle POP3 folders as client
 
 =head1 DESCRIPTION
 
-WARNING: THE POP3 IMPLEMENTATION IS UNDER CONSTRUCTION: IT WILL *NOT*
-WORK AT ALL!!!!
-
-This documentation describes how POP3 mailboxes work, and what you
-can do with the POP3 folder object C<Mail::Box::POP3>.
-Please read C<Mail::Box-Overview> and C<Mail::Box> first.
-
-L<The internal organization and details|/"IMPLEMENTATION"> are found
-at the bottom of this manual-page.
+Maintain a folder which has its messages stored on a remote server.  The
+communication between the client application and the server is implemented
+using the POP3 protocol.  This class uses Mail::Transport::POP3 to
+hide the transport of information, and focusses solely on the correct
+handling of messages within a POP3 folder.
 
 =head1 METHODS
 
@@ -56,19 +52,20 @@ pop-server and server-port.
 =default server_port  110
 =default message_type 'Mail::Box::POP3::Message'
 
-=option  authenticate 'LOGIN'|'APOP'
-=default authenticate 'LOGIN'
+=option  authenticate 'LOGIN'|'APOP'|'AUTO'
+=default authenticate 'AUTO'
 
 POP3 can use two methods of authentication: the old LOGIN protocol, which
 transmits a username and password in plain text, and the newer APOP
 protocol which uses MD5 encryption.  APOP is therefore much better, however
-not always supported by the server.
+not always supported by the server.  With AUTO, first APOP is tried and
+if that fails LOGIN.
 
 =option  pop_client OBJECT
 =default pop_client undef
 
 You may want to specify your own pop-client object.  The object
-which is passed must extend C<Mail::Transport::POP3>.
+which is passed must extend Mail::Transport::POP3.
 
 =examples
 
@@ -85,13 +82,10 @@ sub init($)
     $args->{trusted}     ||= 0;
     $args->{server_port} ||= 110;
 
-    my $client             = $args->{pop_client};
-    $args->{foldername}  ||= defined $client ? $client->url : undef;
-
     $self->SUPER::init($args);
 
-    $self->{MBP_client}    = $client;
-    $self->{MBP_auth}      = $args->{authenticate} || 'LOGIN';
+    $self->{MBP_client}    = $args->{pop_client}; 
+    $self->{MBP_auth}      = $args->{authenticate} || 'AUTO';
 
     $self;
 }
@@ -120,6 +114,16 @@ sub foundIn(@)
 
 #-------------------------------------------
 
+=head2 On open folders
+
+=cut
+
+#-------------------------------------------
+
+sub type() {'pop3'}
+
+#-------------------------------------------
+
 =head2 Sub-folders
 
 =cut
@@ -131,6 +135,17 @@ sub listSubFolders(@) { () }     # no
 #-------------------------------------------
 
 sub openSubFolder($@) { undef }  # fails
+
+#-------------------------------------------
+
+sub close()
+{   my $self = shift;
+
+    my $pop  = $self->popClient;
+    $pop->disconnect if defined $pop;
+
+    $self->SUPER::close;
+}
 
 #-------------------------------------------
 
@@ -149,18 +164,22 @@ Returns the pop client object.  This does not establish the connection.
 sub popClient()
 {   my $self = shift;
 
-    return $self->{MBP_client} if exists $self->{MBP_client};
+    return $self->{MBP_client}
+        if defined $self->{MBP_client};
 
     my $auth = $self->{auth};
 
     require Mail::Transport::POP3;
     my $client  = Mail::Transport::POP3->new
-     ( username     => $self->{MBN_username}
-     , password     => $self->{MBN_password}
-     , hostname     => $self->{MBN_hostname}
-     , port         => $self->{MBN_port}
-     , authenticate => $self->{MBP_auth}
-     );
+      ( username     => $self->{MBN_username}
+      , password     => $self->{MBN_password}
+      , hostname     => $self->{MBN_hostname}
+      , port         => $self->{MBN_port}
+      , authenticate => $self->{MBP_auth}
+      );
+
+    $self->log(ERROR => "Cannot create POP3 client ".$self->url)
+       unless defined $client;
 
     $self->{MBP_client} = $client;
 }
@@ -170,23 +189,16 @@ sub popClient()
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
-    my $directory = $self->directory;
-    return unless -d $directory;
+    my $pop   = $self->popClient;
+    my @log   = $self->logSettings;
+    my $seqnr = 0;
 
-    my @msgnrs = $self->readMessageFilenames($directory);
-
-    my @log    = $self->logSettings;
-    foreach my $msgnr (@msgnrs)
-    {
-        my $msgfile = File::Spec->catfile($directory, $msgnr);
-
-        my $head;
-        $head     ||= $args{head_delayed_type}->new(@log);
-
-        my $message = $args{message_type}->new
-         ( head      => $head
-         , filename  => $msgfile
+    foreach my $id ($pop->ids)
+    {   my $message = $args{message_type}->new
+         ( head      => $args{head_delayed_type}->new(@log)
+         , unique    => $id
          , folder    => $self
+         , seqnr     => $seqnr++
          );
 
         my $body    = $args{body_delayed_type}->new(@log, message => $message);
@@ -210,8 +222,8 @@ sub getHead($)
 {   my ($self, $message) = @_;
     my $pop   = $self->popClient or return;
 
-    my $uidl  = $message->uidl;
-    my $lines = $pop->top($uidl, 0);
+    my $uidl  = $message->unique;
+    my $lines = $pop->header($uidl);
 
     unless(defined $lines)
     {   $lines = [];
@@ -223,10 +235,14 @@ sub getHead($)
      , file      => IO::ScalarArray->new($lines)
      );
 
-    my $head     = $self->readHead($parser);
+    $self->lazyPermitted(1);
+
+    my $head     = $message->readHead($parser);
     $parser->stop;
 
-    $self->log(PROGRESS => "Loaded head $uidl.");
+    $self->lazyPermitted(0);
+
+    $self->log(PROGRESS => "Loaded head of $uidl.");
     $head;
 }
 
@@ -242,8 +258,8 @@ sub getHeadAndBody($)
 {   my ($self, $message) = @_;
     my $pop   = $self->popClient or return;
 
-    my $uidl  = $message->uidl;
-    my $lines = $pop->top($uidl);
+    my $uidl  = $message->unique;
+    my $lines = $pop->message($uidl);
 
     unless(defined $lines)
     {   $lines = [];
@@ -255,12 +271,23 @@ sub getHeadAndBody($)
      , file      => IO::ScalarArray->new($lines)
      );
 
-    my $head     = $message->readHead($parser);
-    my $body     = $message->readBody($parser, $head);
+    my $head = $message->readHead($parser);
+    unless(defined $head)
+    {   $self->log(WARNING => "Cannot find head back for $uidl");
+        $parser->stop;
+        return undef;
+    }
+
+    my $body = $message->readBody($parser, $head);
+    unless(defined $body)
+    {   $self->log(ERROR => "Cannot read body for $uidl");
+        $parser->stop;
+        return undef;
+    }
 
     $parser->stop;
 
-    $self->log(PROGRESS => "Loaded head $uidl.");
+    $self->log(PROGRESS => "Loaded message $uidl.");
     ($head, $body);
 }
 

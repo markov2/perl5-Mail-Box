@@ -73,7 +73,7 @@ sub _data_from_glob(@)
 
 sub _data_from_lines(@)
 {   my ($self, $lines)  = @_;
-    $lines = [ split /(?<=\n)/, $lines->[0] ] # body passed in one string.
+    $lines = [ split /^/, $lines->[0] ]    # body passed in one string.
         if @$lines==1;
 
     $self->{MMBL_array} = $lines;
@@ -112,7 +112,6 @@ sub size()
 
     my $size = 0;
     $size += length $_ foreach @{$self->{MMBL_array}};
-    $size += @{$self->{MMBL_array}} if $self->eol eq 'CRLF';
     $self->{MMBL_size} = $size;
 }
 

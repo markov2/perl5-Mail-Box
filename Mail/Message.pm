@@ -846,10 +846,10 @@ sub body(;$@)
     $self->log(INTERNAL => "wrong type of body for $rawbody")
         unless ref $rawbody && $rawbody->isa('Mail::Message::Body');
 
-    # Convert the body to something what is acceptable in transmitted
-    # and saved messages.
-
-    my $body = $rawbody->encoded;
+    # Bodies of real messages must be encoded for safe transmission.
+    # Message parts will get encoded on the moment the whole multipart
+    # is transformed into a real message.
+    my $body = $self->isPart ? $rawbody : $rawbody->encoded;
 
     my $oldbody = $self->{MM_body};
     return $body if defined $oldbody && $body==$oldbody;
@@ -1079,7 +1079,7 @@ sub AUTOLOAD(@)
     no strict 'refs';
     return $self->$call(@_) if $self->can($call);
 
-    our @ISA;
+    our @ISA;                    # produce error via Mail::Reporter
     $call = "${ISA[0]}::$call";
     $self->$call(@_);
 }
@@ -1253,8 +1253,10 @@ sub takeMessageId(;$)
         $msgid =~ s/\s//gs;
     }
  
-    $self->{MM_message_id} =
-      (length $msgid ? $msgid : $self->head->createMessageId);
+    $msgid = $self->head->createMessageId
+        unless length $msgid;
+
+    $self->{MM_message_id} = $msgid;
 }
 
 #------------------------------------------

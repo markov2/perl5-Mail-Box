@@ -189,7 +189,6 @@ sub nrLines()
 sub size()
 {   my $self   = shift;
     my $bbytes = length($self->boundary) +3;
-    $bbytes++ if $self->eol eq 'CRLF';
 
     my $bytes  = 0;
     if(my $preamble = $self->preamble) { $bytes += $preamble->size }
@@ -314,17 +313,21 @@ sub foreachComponent($)
     my @new_parts;
     foreach (@new_bodies)
     {   my ($part, $body) = @$_;
-        my $new_part  = Mail::Message->new(head => $part->head->clone);
+        my $new_part = Mail::Message::Part->new(head => $part->head->clone,
+            parent => undef);
         $new_part->body($body);
         push @new_parts, $new_part;
     }
 
-    (ref $self)->new
+    my $encoded = (ref $self)->new
       ( preamble => $new_preamble
       , parts    => \@new_parts
       , epilogue => $new_epilogue
       , based_on => $self
       );
+
+    $_->parent($encoded) foreach @new_parts;
+    $encoded;
 }
 
 #------------------------------------------
@@ -531,6 +534,7 @@ sub read($$$$)
 
     # Get the parts.
 
+    my @parts;
     while(my $sep = $parser->readSeparator)
     {   last if $sep eq "--$boundary--\n";
 
@@ -540,17 +544,24 @@ sub read($$$$)
          );
 
         last unless $part->readFromParser($parser, $bodytype);
-        push @{$self->{MMBM_parts}}, $part;
+        push @parts, $part;
     }
+    $self->{MMBM_parts} = \@parts;
 
     # Get epilogue
 
     $parser->popSeparator;
     my $epilogue = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
-      ->read($parser, $head);
+        ->read($parser, $head);
 
     $self->{MMBM_epilogue} = $epilogue if defined $epilogue;
-    $self->fileLocation($begin, $parser->filePosition);
+
+    my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
+            : @parts            ? ($parts[-1]->fileLocation)[1]
+            : defined $preamble ? ($preamble->fileLocation)[1]
+            :                      $begin;
+
+    $self->fileLocation($begin, $end);
 
     $self;
 }

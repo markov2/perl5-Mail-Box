@@ -274,9 +274,10 @@ in practice multiparts, encodings, and mime-types complicate things.
 
 =item Mail::Box::Parser
 
-Describes the interface to the two current folder parsers: the parser
-implemented with C<Inline::C>, and the parser fully in written in Perl.
-The first is faster --but not functional yet-- the second more portable.
+The parser reads messages, and transforms them into data-structures such
+that the content of header and body can be used within the program.  The
+first parser is implemented in pure Perl.  A second parser is under development,
+and will written in C, to gain speed.
 
 =item Mail::Box::Tie
 

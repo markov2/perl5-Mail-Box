@@ -7,6 +7,56 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.027: Sat Oct 26 08:52:32 CEST 2002
+
+	Fixes:
+
+	- Lazy Mail::Box::Dir::Message::print() (mbox and mh messages)
+	  used File::Copy's copy(), which cannot handle IO::Lines file
+	  objects as destination.  Replaced by own implementation.
+	  [Tiny Bowden] reported this problem, and fix my patch as well.
+
+	- Mail::Box::find() was not able to get the id of the first
+	  lazy-loaded message.
+
+	- The empty line which preceeds a separator in mbox folders
+	  was accidenitally included in the body of the message before
+	  it (this was quite hard to fix) [Albert Schueller]
+
+	- Mail::Message::Body::Multipart::foreachComponent(), used by many
+	  multipart methods, created Mail::Message i.s.o. Mail::Message::Part
+	  objects.  This is not right: especially encode() and decode()
+	  where frustrated by it.   Same for nested messages.  Signalled by
+	  [Mike Cudmore]
+
+	Improvement:
+
+	- Mail::Transfer::POP3 implemented by [Liz Matthijsen].
+
+	- [Shagren] found the first reason to modify Mail::Transfer::POP3
+	  a little.
+
+	- Mail::Box::POP3 and Mail::Box::POP3::Message should be working
+	  now.  Mo Tests are included.
+
+	- Reorganized the tests.  This is needed, because the number of
+	  testscripts grew too long for Windows!  Besides, I need more
+	  control over installation of optional packages.
+
+	- All folder-types now have a type() method.
+
+	- All folder-types now have a url() method, which result van be
+	  used to specify a complex folder name to the Mail::Box::Manager.
+
+	- [David Favor] asked to show the filename when an illegal header
+	  is detected by the parser.
+
+	- Rewrote Mail::Box::scanForMessage() in search of a bug reported
+	  by [Shargren] concerning Mail::Box::find()  But it was not the
+	  cause.  Still, the method has improved.
+
+	- Changed  split /(?<=\n)/  into  split /^/  everywhere.
+
 version 2.026: Mon Oct  7 23:39:07 CEST 2002
 
 	Fixes:

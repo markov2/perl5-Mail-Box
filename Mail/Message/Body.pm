@@ -8,15 +8,14 @@ use Mail::Message::Field;
 use Mail::Message::Body::Lines;
 use Mail::Message::Body::File;
 
+use Carp;
+use Scalar::Util 'weaken';
+
 use overload bool  => sub {1}   # $body->print if $body
            , '""'  => 'string_unless_carp'
            , '@{}' => 'lines'
            , '=='  => sub {$_[0]->{MMB_seqnr}==$_[1]->{MMB_seqnr}}
            , '!='  => sub {$_[0]->{MMB_seqnr}!=$_[1]->{MMB_seqnr}};
-
-use Carp;
-use Scalar::Util 'weaken';
-use FileHandle;
 
 use MIME::Types;
 my $mime_types = MIME::Types->new;
@@ -309,7 +308,7 @@ sub init($)
     elsif(defined(my $data = $args->{data}))
     {
         if(!ref $data)
-        {   $self->_data_from_lines( [split /(?<=\n)/, $data] ) }
+        {   $self->_data_from_lines( [split /^/, $data] ) }
         elsif(ref $data eq 'ARRAY')
         {   $self->_data_from_lines($data) or return }
         else
@@ -654,7 +653,8 @@ sub checked(;$)
 =method eol ['CR'|'LF'|'CRLF'|'NATIVE']
 
 Returns the character (or characters) which are used to separate lines
-within this body.
+within this body.  When a kind of separator is specified, the body
+is translated to contain the specified line endings.
 
 =cut
 
@@ -702,9 +702,10 @@ sub nrLines(@)  {shift->notImplemented}
 
 =method size
 
-The estimate total number of bytes in the message body.  Message bodies
-are always simple ASCII.  The decoded message, however, may contain UTF8
-characters.  See Mail::Message::decode().
+The total number of bytes in the message body. The size of the body
+is computed in the shape it is in. For example, if this is a base64
+encoded message, the size of the encoded data is returned; you may
+want to call Mail::Message::decode() first.
 
 =cut
 
