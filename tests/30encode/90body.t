@@ -6,8 +6,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 use Mail::Message;
 use Mail::Message::Body::Lines;
 use Mail::Message::TransferEnc::Base64;

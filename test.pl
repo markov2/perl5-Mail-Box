@@ -3,7 +3,11 @@
 use warnings;
 use strict;
 
-use lib qw/. .. tests/;
+use lib qw(./lib ../lib tests);
+
+use lib qw(/home/markov/shared/perl/UserIdentity/lib);
+use lib qw(/home/markov/shared/perl/MimeTypes/lib);
+
 use File::Spec;
 use File::Basename;
 use POSIX 'getcwd';
@@ -19,10 +23,10 @@ if(@ARGV && $ARGV[0] eq '-v')
     shift @ARGV;
 }
 
-my $select_tests = qr/^/;
+my $select_tests;
 if(@ARGV)
 {   my $pat = join '|', map { "\Q$_" } @ARGV;
-    $select_tests = qr/$pat/o;
+    $select_tests   = qr/$pat/o;
 }
 
 sub package_of($);
@@ -34,7 +38,63 @@ sub check_requirement($);
 sub update_requirement($);
 sub install_package($);
 
+my $has_readkey;
+BEGIN
+{   eval "require Term::ReadKey";
+    $has_readkey = not length $@;
+}
+
+sub ask($$)
+{   my ($text, $default) = @_;
+    print $text, " [$default] ";
+    my $key;
+
+    if($has_readkey)
+    {   Term::ReadKey->import;
+        ReadMode(3);   # cbreak mode
+        $key = ReadKey(0) until defined($key);
+        ReadMode(1);
+
+        $key = $default if $key =~ m/\n/;
+        print "$key\n";
+    }
+    else
+    {   # No Term::ReadKey
+        flush STDOUT;
+        my $line = <STDIN>;
+        $line    =~ m/(\S)/;
+        $key     = $1 || $default;
+    }
+
+    $key;
+}
+
 my $default_install_answer = -t STDIN ? 'y' : 'n';
+
+warn <<'WARN' unless $select_tests;
+
+*
+* Testing MailBox
+*
+* During the test phase (even if you do not run any tests), you will
+* be asked to install optional modules.  You can always install those
+* modules later without re-installing MailBox.
+*
+* Sometimes installing MailBox breaks because of the huge size
+* of the whole package. Simply restarting the installation is in
+* most cases enough to solve the problems.  You may require a new
+* version of ExtUtils::MakeMaker.
+*
+* On *Windows* you will get a large number of failing tests, but they
+* are usually harmless.  Please help me to get rit of them.
+*
+
+WARN
+
+unless(defined $select_tests)
+{   my $run = ask("Do you want to run the (large set of) tests?", "yes");
+    $select_tests = "skip" unless $run =~ m/^y/i;
+}
 
 #
 # Get all the test-sets.
@@ -53,6 +113,7 @@ $setdir->close;
 
 my @inc = map { "-I$_" } @INC;
 my (%success, %skipped);
+my $tests_run = 0;
 
 foreach my $set (@sets)
 {
@@ -61,6 +122,7 @@ foreach my $set (@sets)
     eval "require '$script'";
     if($@)
     {   warn "Errors while requiring $script:\n$@";
+        warn "why am i here??? ",getcwd;
         next;
     }
 
@@ -72,10 +134,18 @@ foreach my $set (@sets)
         next;
     }
 
-    my @tests   = grep { $_ =~ $select_tests } testnames $set;
+    my @tests = testnames $set;
+    @tests    = grep { $_ =~ $select_tests } @tests
+       if defined $select_tests;
 
-    printf "%-15s --- %2d %s %s\n", $set, scalar @tests,
-       (@tests==1 ? "script; " : "scripts;"), $package->name;
+    if(@tests)
+    {   printf "%-15.15s -- run %2d %s %s\n", $set, scalar @tests,
+           (@tests==1 ? "script; " : "scripts;"), $package->name;
+    }
+    elsif(defined $select_tests)  { ; }  # silence
+    else
+    {   printf "%-15.15s -- skip all tests; %s\n", $set, $package->name;
+    }
 
     my @requires = $package->requires;
     check_requirement $_ foreach @requires;
@@ -88,9 +158,10 @@ foreach my $set (@sets)
     next unless @tests;
 
     $success{$set} = run_in_harness @tests;
+    $tests_run += @tests;
 }
 
-my $critical = report;
+my $critical = $tests_run ? report : 0;
 exit $critical;
 
 #
@@ -119,7 +190,7 @@ sub testnames($)
 
 #
 # RUN_IN_HARNESS @files
-# Run the specified test files in a harness, but then the Mail::Box
+# Run the specified test files in a harness, but then the MailBox
 # way doin things.
 #
 
@@ -253,28 +324,7 @@ sub update_requirement($)
             print $reason;
         }
 
-        print "    do you want to install $package? yes/no/all [$install] ";
-        local $_;
-        eval "require Term::ReadKey";
-
-        my $key;
-        if($@)
-        {    # No Term::ReadKey
-             flush STDOUT;
-             my $line = <STDIN>;
-             $line    =~ m/(\S)/;
-             $key     = $1 || $install;
-        }
-        else
-        {    # Has Term::ReadKey
-             Term::ReadKey->import;
-             ReadMode(3);   # cbreak mode
-             $key = ReadKey(0) until defined($key);
-             ReadMode(1);
-
-             $key = $install if $key =~ m/\n/;
-             print "$key\n";
-        }
+        my $key = ask("    do you want to install $package? yes/no/all", $install);
 
         if($key eq 'a')
         {   $default_install_answer = 'a';

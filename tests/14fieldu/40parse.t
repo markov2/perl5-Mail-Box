@@ -7,8 +7,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 package Mail::Message::Field::Full;   # define package name
 package main;
 

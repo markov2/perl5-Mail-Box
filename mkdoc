@@ -6,25 +6,31 @@
 use warnings;
 use strict;
 
-use lib '../OODoc';   # use my latest version of OODoc
-use lib 'tests';
+use lib 'lib';                  # latest version of MailBox
+use lib '../OODoc/lib';         # use my latest version of OODoc
+use lib qw/. tests/;            # use my own current version
+use lib '../UserIdentity/lib';  # latest version of User::Identity
+use lib '../MimeTypes/lib';     # latest version of MIME::Types
+use lib '../Realize/Later';     # latest version of Object::Realize::Later
+
 use OODoc;
 
 my $verbose      = $ARGV[0] || 0;
 
 ##### Synchronize these constants with the mkdist script.
-my $distribution = '/tmp/MailBox';
+my $workdir      = '/tmp/MailBox';
+
+-d $workdir
+|| mkdir $workdir
+|| die "Cannot create $workdir: $!\n";
 
 ##### Other constants
-my $module       = 'Mail::Box';
-my $name         = 'E-mail handling with Mail::Box';
-my $version      = '2.043';         # Change this for each release!!!
+my $distribution = 'Mail::Box';
+my $name         = 'E-mail handling with MailBox';
 
 my $pod_format   = 'pod2';
 #my $pod_format  = 'pod';
 my $html_format  = 'html';
-
-print "*** Producing $module version $version\n" if $verbose;
 
 my $web          = 'public_html';
 my $website      = 'http://perl.overmeer.net/mailbox/';
@@ -38,10 +44,13 @@ my $css          = "$html_root/mailbox.css";
 #
 
 my $doc  = OODoc->new
- ( module     => $name
- , version    => $version
- , verbose    => $verbose
+ ( distribution => $distribution
+ , project      => $name
+ , verbose      => $verbose
  );
+
+my $version = $doc->version;
+print "*** Producing $distribution version $version\n" if $verbose;
 
 #
 # Reading all the manual pages
@@ -49,12 +58,37 @@ my $doc  = OODoc->new
 # manual pages in different formats.
 #
 
-print "* Processing files\n" if $verbose;
+print "* Processing Mail::Box files\n" if $verbose;
+
 $doc->processFiles
- ( workdir => $distribution
- , select  => qr/^Mail.*\.(pod|pm)$/
+ ( workdir => $workdir
+ , select  => qr[^ lib/ .*? \.(pod|pm) $ ]x
  );
 
+print "* Processing User::Identity files\n" if $verbose;
+
+$doc->processFiles
+ ( workdir => undef
+ , source  => '../UserIdentity'
+ , select  => qr[^ lib/ .*? \.(pod|pm) $ ]x
+
+ , distribution => 'User::Identity'
+ );
+
+print "* Processing MIME::Types files\n" if $verbose;
+
+$doc->processFiles
+ ( workdir => undef
+ , source  => '../MimeTypes'
+ , select  => qr[^ lib/ .*? \.(pod|pm) $ ]x
+
+ , distribution => 'MIME::Types'
+ );
+
+#
+# Prepare the collected information
+# Expanding the inheritance relations and such, to simplify the
+# production of manual pages in their different formats.
 #
 # Prepare the collected information
 # Expanding the inheritance relations and such, to simplify the
@@ -73,16 +107,17 @@ print "* Creating POD\n" if $verbose;
 
 $doc->create
   ( $pod_format
-  , workdir => $distribution
+  , workdir => $workdir
+  , select  => sub {my $manual = shift; $manual->distribution eq $distribution}
   , append => <<TEXT);
 
 =head1 REFERENCES
 
-See the $module website at L<$website> for more details.
+See the MailBox website at L<$website> for more details.
 
 =head1 COPYRIGHTS
 
-Module version $version.
+Distribution version $version.
 Written by Mark Overmeer (mark\@overmeer.net).  See the ChangeLog for
 other contributors.
 

@@ -8,8 +8,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 BEGIN {plan tests => 25}
 
 use Mail::Message::Head::Complete;

@@ -11,6 +11,81 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.044: Tue Jul 29 13:52:32 CEST 2003
+
+	Interface changes!!
+
+	- Mail::Message::rebuild() tags where inconsequently named.  Now
+	  remove_html_alternative_to_text => removeHtmlAlternativeToText
+	  text_alternative_for_html => textAlternativeForHtml
+
+	- [Anthony D. Urso] hinted that opening a Maildir folder should
+	  not automatically move messages from 'new' to 'cur'.  Added a
+	  label 'accepted' to control this.
+          See Maildir::new(accept_new) which must be set to get the
+	  same behavior as before.
+
+	- Mail::Box::Maildir::updateMessages was incorrect: inconsistent
+	  behavior with other updateMessages().  Removed for now.
+
+	Fixes:
+
+	- Some print()s did not distriguish between GLOBs and IO::Files
+
+	- [Martin Thurn] detected a problem with the call of
+	  Mail::Box::FastScalar in Mail::Box::POP3
+
+	- [Yuval Kojman] fixed Field::toDate() on systems without glibc.
+
+	Improvements:
+
+	- Mail::Message::new(labels) did not work, but was not described
+	  either.
+
+	- Moved all modules to lib/, which removes the need for a nested
+	  Makefile.PL, improperly handled by new gnu-make/ExtUtils::MakeMaker
+	  combinations.
+
+	- added UserIdentity to the HTML documentation tree.
+
+	- added list detector Mail::Message::Head::ListGroup based on
+	  information collected in Mail::ListDetector.
+	  Tests in 12head/40list.t
+
+	- added Mail::Messsage::Head::Complete::listGroup()
+	        Mail::Messsage::Head::Complete::addListGroup()
+	        Mail::Messsage::Head::Complete::removeListGroup()
+	        Mail::Messsage::Head::Partial::removeListGroup()
+
+	- added example 'smaller.pl' to demonstrate how to get rit
+	  of selected headers (and how much you gain by it)
+
+	- added description how to reduce the size of headers by removing
+	  groups of fields.
+
+	- added method $folder->size which estimated a folder size, but
+	  may be slow.
+
+	- debugged and tested Mail::Message::Field::Addresses,
+	  Mail::Message::Field::Address, and Mail::Message::Field::AddrGroup,
+	  with tests in tests/14fieldu/51addr.t
+
+	- Added Mail::Message::Field::URIs with tests in
+	  tests/14fieldu/52uris.
+
+	- MailBox now depends on the URI distribution
+
+	- Move Mail::Box::Message::shortString and ::shortSize to
+	  Mail::Message.
+
+	- Simplified Mail::Message::sender().
+
+	- Rewrote Mail::Message::Head::createReceived to work on headers
+	  which are not inside a message.
+
+	- "make test" will produce some more text, and permits skipping
+	  all tests for fast installation.
+
 version 2.043: Thu Jul 10 10:18:51 CEST 2003
 
 	Fixes:
@@ -45,9 +120,9 @@ version 2.043: Thu Jul 10 10:18:51 CEST 2003
 	- Added Mail::Box-Index, the documentation index.
 
 	- Extended documentation about
-          . various ways to access header field data
-          . message labels (flags)
-          . various class relations
+	  . various ways to access header field data
+	  . message labels (flags)
+	  . various class relations
 
 	- Now requires Object::Realize::Later version 0.12
 
@@ -112,7 +187,7 @@ version 2.041: Thu May  8 14:05:32 CEST 2003
 	  non-existing quotePrelude(), which should have been replyPrelude().
 
 	- [Dimitris Glynos] Mail::Message::Field::Full:_decoder() should
-          decode, not encode :(
+	  decode, not encode :(
 
 	- [Dimitris Glynos] Mail::Message::Construct::reply() did not
 	  use the subject of the sender to create a new answer.
@@ -174,7 +249,7 @@ version 2.040: Mon Apr 14 15:48:54 CEST 2003
 
 	- [Alexander Bauer] reported a very slow Mail::Message->read
 	  for large messages.  This was due to IO::ScalarArray (being
-          extremely slow in seeks), which now is replaced by IO::Scalar.
+	  extremely slow in seeks), which now is replaced by IO::Scalar.
 
 	- Do not use eval{binmode $fh}, but carefully check whether the
 	  the $fh can handle binmode before calling it in the parser.
@@ -1090,22 +1165,22 @@ version 2.017: Fri Jul  5 17:06:08 CEST 2002
 
 	- Mail::Box::messages() accepts
 	     range:       $folder->messages(3, 100)
-             non-deleted: $folder->messages('ACTIVE')
-             deleted:     $folder->messages('DELETED')
-             labeled:     $folder->messages('seen')
-             labeled:     $folder->messages('!seen')
+	     non-deleted: $folder->messages('ACTIVE')
+	     deleted:     $folder->messages('DELETED')
+	     labeled:     $folder->messages('seen')
+	     labeled:     $folder->messages('!seen')
 	     code:        $folder->messages( sub {$_[0]->size > 10000} )
 	  limiting the default result being all messages.
 
 	- Mail::Message::parts() accepts
-             non-deleted: $msg->parts('ACTIVE')
-             deleted:     $msg->parts('DELETED')
+	     non-deleted: $msg->parts('ACTIVE')
+	     deleted:     $msg->parts('DELETED')
 	     nested:      $msg->parts('RECURSE');
 	     code:        $msg->parts( sub {$_[0]->size > 10000)} )
 
 	- Mail::Message::Body::Multipart::parts accepts
-             non-deleted: $body->parts('ACTIVE')
-             deleted:     $body->parts('DELETED')
+	     non-deleted: $body->parts('ACTIVE')
+	     deleted:     $body->parts('DELETED')
 	     nested:      $body->parts('RECURSE');
 	     code:        $body->parts( sub {$_[0]->size > 10000)} )
 
@@ -1119,7 +1194,7 @@ version 2.017: Fri Jul  5 17:06:08 CEST 2002
 	  are not acceptabled for the Windows file-systyem. [Greg Matheson]
 
 	- Added Mail::Box::POP3, Mail::Box::POP3::Message
-          Mail::Box::Net, and Mail::Box::Net::Message as first steps to
+	  Mail::Box::Net, and Mail::Box::Net::Message as first steps to
 	  a POP3 implementation.
 
 version 2.016: Tue Jun 25 16:24:54 CEST 2002
@@ -1153,10 +1228,10 @@ version 2.016: Tue Jun 25 16:24:54 CEST 2002
 	  conversions with Mail::Box::copyTo() with tests in t/66copyto.t
 
 	- Interface change:
-            $mgr->addMessages,   $folder->addMessage,
-            $mgr->appendMessage, $folder->appendMessage,
-            $mgr->moveMessage,   $folder->copyMessage,
-            $message->copyTo
+	    $mgr->addMessages,   $folder->addMessage,
+	    $mgr->appendMessage, $folder->appendMessage,
+	    $mgr->moveMessage,   $folder->copyMessage,
+	    $message->copyTo
 	  now all return the coerced message(s), because that is much
 	  more useful than the message which are passed into the
 	  method call, the folder, or the class.
@@ -1270,8 +1345,8 @@ version 2.014: Tue Jun 11 16:26:13 CEST 2002
 	- Mail::Message::Head::grepNames() now accepts regexes as well.
 
 	- Mail::Message::Field::wellformedName method added which returns
-          preferred capitization of a field's name.  The name() method
-          returns the lower-cased name.  Tests in t/11field1.t
+	  preferred capitization of a field's name.  The name() method
+	  returns the lower-cased name.  Tests in t/11field1.t
 
 	- Mail::Message::Field::content returns both body and comment
 	  part of the message header line.
@@ -1399,7 +1474,7 @@ version 2.010: Sun Mar  3 16:05:16 CET 2002
 	  implications for the MH implementation.  The maildir implementation
 	  is NOT READY yet.
 
-          New class structure:
+	  New class structure:
 
 	    Mail::Box::MH
 	    is a Mail::Box::Dir            <-- new
@@ -1461,13 +1536,13 @@ version 2.008: Mon Feb 18 16:11:52 CET 2002
 	  accepted, so there is no difference when reading a folder.
 
 	- Added 'use Mail::Address' to Mail::Message::Field
-          [Walery Studennikov]
+	  [Walery Studennikov]
 
 	- [Andreas Marcel Riechert] Added -I flag for {net|open}bsd with
-          mailx in Mail::Transport::Mailx
+	  mailx in Mail::Transport::Mailx
 
 	- The parent of a Multipart body after reading accidentally was
-          a body, not a message.  Fixed in Mail::Message::Body::Multipart.
+	  a body, not a message.  Fixed in Mail::Message::Body::Multipart.
 
 	Improvements:
 
@@ -1489,7 +1564,7 @@ version 2.008: Mon Feb 18 16:11:52 CET 2002
 	  hence triggered the parsing of Encode..
 
 	- Mail::Message::Body::eol option NATIVE will be translated into
-          LF, CR or CRLF.
+	  LF, CR or CRLF.
 
 	- Mail::Message::Body::*::size will return the size of the
 	  message as stored in the file, so taking care of \n which
@@ -1505,7 +1580,7 @@ version 2.007: Mon Jan 14 10:07:09 CET 2002
 
 	Fixes:
 
-        - [Alan Kelm] found a mistake in Mail::Box::Locker::DotLock::_try_lock
+	- [Alan Kelm] found a mistake in Mail::Box::Locker::DotLock::_try_lock
 
 	- [Alan Kelm] updated some docs about locking.
 
@@ -1522,7 +1597,7 @@ version 2.007: Mon Jan 14 10:07:09 CET 2002
 	  messageID.  One will get a new number.
 
 	- Start implementing understanding of CRLF / CR and foreign
-          line-endings
+	  line-endings
 
 	- Implemented stricter checks.  When a body is created, it is
 	  not trusted until the data is checked.  This is lazy again ;)
@@ -1715,7 +1790,7 @@ version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
 
 	First beta of Mail::Box version 2
 
-        Most import changes:
+	Most import changes:
 
 	* Replaced all use of MIME::Parser, Mail::Internet, and MIME::Entity,
 	  althought the foreign message types are still useable in some
@@ -1739,7 +1814,7 @@ version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
 	  folder->open(extract) replaces folder->open(lazy_extract) to
 	  avoid double negation in your program.
 	  listFolders became listSubFolders
-          allMessages became messages(); so $folder->messages always
+	  allMessages became messages(); so $folder->messages always
 	  returns all.
 
 	* Unfolding of headers considered stupid: headers which are

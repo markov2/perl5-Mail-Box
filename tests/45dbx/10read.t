@@ -7,11 +7,10 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. .. tests);
-
 use Tools;
 
 use File::Compare;
+use File::Temp qw(tempdir tempfile);
 
 BEGIN
 {
@@ -26,7 +25,7 @@ BEGIN
        exit 0;
    }
 
-   plan tests => 19;
+   plan tests => 21;
 }
 
 my @src = (folderdir => '45dbx/testfolders');
@@ -77,16 +76,37 @@ ok(! $folder->isModified);
 
 #$message->print;
 
-#use Mail::Box::MH;
-#my $out = Mail::Box::MH->new(folder => "/tmp/abc", create => 1,
-#  access => 'w') or die;
+my $test = 'MBOX';
+my $temp = 'dbxtest';
+my $out;
 
-use Mail::Box::Mbox;
-my $out = Mail::Box::Mbox->new(folder => "/tmp/abd", create => 1,
-  access => 'w') or die;
+if($test eq 'MH')
+{   require Mail::Box::MH;
+    $out = Mail::Box::MH->new(folder => $temp, create => 1,
+        access => 'w');
+}
+else
+{   require Mail::Box::Mbox;
+    $out  = Mail::Box::Mbox->new(folder => $temp, create => 1,
+        access => 'w');
+}
+
+die "Cannot create temporary $temp: $!\n" unless defined $out;
 
 $folder->copyTo($out);
+cmp_ok(scalar $out->messages, '==', scalar $folder->messages);
+cmp_ok(scalar $out->messages, '==', 0);
 ok(!$folder->isModified);
 ok(!$comp->isModified);
+$out->close;
+
+#warn `ls -l $temp*`;
+if($test eq 'MH')
+{   clean_dir $temp;
+}
+else
+{   unlink $temp;
+    clean_dir "$temp.d";
+}
 
 exit 0;

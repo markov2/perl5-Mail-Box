@@ -19,11 +19,12 @@ BEGIN {
    {   plan skip_all => 'Filenames not compatible with Windows';
        exit 1;
    }
-   plan tests => 31;
+   plan tests => 45;
 }
 
 my $mdsrc = File::Spec->catfile('folders', 'maildir.src');
 
+clean_dir $mdsrc;
 unpack_mbox2maildir($src, $mdsrc);
 
 my $folder = new Mail::Box::Maildir
@@ -33,6 +34,9 @@ my $folder = new Mail::Box::Maildir
   );
 
 ok(defined $folder);
+
+ok($folder->message(40)->label('accepted'),        "40 accepted");
+ok(!$folder->message(41)->label('accepted'),       "41 not accepted");
 
 #
 # Count files flagged for deletion  (T flag)
@@ -94,5 +98,26 @@ ok(!$msg12->label('replied'));
 like($msg12->filename , qr/:2,$/);
 
 ok(!$msg12->modified);
+
+#
+# Test accepting and unaccepting
+#
+
+# test are only run on unix, so we can simply use '/'s
+is($msg12->filename, 'folders/maildir.src/cur/110000010.l.43:2,');
+ok($msg12->label('accepted'),                      "12 accepted");
+cmp_ok($msg12->label(accepted => 0), '==', 0,      'un-accept a message');
+ok(! $msg12->label('accepted'));
+is($msg12->filename, 'folders/maildir.src/new/110000010.l.43:2,');
+ok(!$msg12->modified);   # message is not modified
+ok($folder->modified);   # ... but the folder is modified
+                         #     (which implies nothing)
+cmp_ok($msg12->label(accepted => 1), '==', 1,      'accept the message');
+ok($msg12->label('accepted'));
+is($msg12->filename, 'folders/maildir.src/cur/110000010.l.43:2,');
+
+ok(! $folder->message(-1)->label('accepted'));
+$folder->message(-1)->accept;
+ok($folder->message(-1)->label('accepted'));
 
 clean_dir $mdsrc;

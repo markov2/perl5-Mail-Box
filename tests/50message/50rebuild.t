@@ -7,8 +7,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 use Tools;
 use Mail::Message;
 use Mail::Message::Construct::Rebuild;
@@ -178,7 +176,7 @@ ok(defined $alt,                 "Succesfully created an alternative");
 $rebuild = $alt->rebuild;
 ok($rebuild==$alt,               "No rule matches by default");
 $rebuild = $alt->rebuild
- ( rules => [ qw/remove_html_alternative_to_text descendMultiparts/ ] );
+ ( rules => [ qw/removeHtmlAlternativeToText descendMultiparts/ ] );
 ok($rebuild!=$alt,               "alt must change");
 ok($rebuild->isMultipart,        "alt still a multipart");
 cmp_ok($rebuild->body->parts, '==', 1,"only one alternative left");
@@ -188,7 +186,7 @@ is($rebuild->body->part(0)->body->mimeType, 'text/plain'
 # now include multipart flattening
 
 $rebuild = $alt->rebuild
- ( rules => [ qw/remove_html_alternative_to_text descendMultiparts
+ ( rules => [ qw/removeHtmlAlternativeToText descendMultiparts
                  flattenMultiparts/ ] );
 ok($rebuild!=$alt,               "flattened alt must change");
 ok(!$rebuild->isMultipart,       "alt is not a multipart anymore");
@@ -210,7 +208,7 @@ HTML
 $message = Mail::Message->buildFromBody($html, To => 'you', Subject => 'hi!');
 ok(defined $message,                  "created html message");
 
-$rebuild = $message->rebuild( rules => [ qw/text_alternative_for_html/ ] );
+$rebuild = $message->rebuild( rules => [ qw/textAlternativeForHtml/ ] );
 
 # even if htmlFromText does not work, something must be returned
 ok(defined $rebuild,                  "rebuild with html->text succesful");

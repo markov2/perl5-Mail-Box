@@ -7,10 +7,9 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
 use utf8;
 
-package Mail::Message::Field::Full;   # define package name
+package Mail::Message::Field::Structured;   # define package name
 package main;
 
 BEGIN {
@@ -19,7 +18,7 @@ BEGIN {
        exit 0;
    }
 
-   eval 'require Mail::Message::Field::Full';
+   eval 'require Mail::Message::Field::Structured';
    if($@)
    {
 warn $@;
@@ -34,14 +33,14 @@ warn $@;
 
 use Tools;
 
-my $mmff = 'Mail::Message::Field::Full';
+my $mmfs = 'Mail::Message::Field::Structured';
 
 #
 # Test construction
 #
 
-my $a = $mmff->new('a', '', is_structured => 1);
-isa_ok($a, $mmff);
+my $a = $mmfs->new('a', '');
+isa_ok($a, $mmfs);
 
 #
 # Test adding comments
@@ -79,7 +78,7 @@ my @p =
 
 while(@p)
 {  my ($f, $t) = (shift @p, shift @p);
-   is($mmff->createComment($f), "($t)",       "from $f");
+   is($mmfs->createComment($f), "($t)",       "from $f");
 }
 
 #
@@ -96,15 +95,15 @@ while(@p)
 
 while(@p)
 {  my ($f, $t) = (shift @p, shift @p);
-   is($mmff->createPhrase($f), $t,  "from $f");
+   is($mmfs->createPhrase($f), $t,  "from $f");
 }
 
 #
 # Test word encoding Quoted-Printable
 #
 
-my $b = $mmff->new('b', '', is_structured => 1);
-isa_ok($b, $mmff);
+my $b = $mmfs->new('b', '');
+isa_ok($b, $mmfs);
 
 is($b->encode('abc'), 'abc');
 is($b->encode('abc', force => 1), '=?us-ascii?q?abc?=');
@@ -141,7 +140,7 @@ is($b->encode($utf8, charset => 'ISO-8859-9'),
 # Test word encoding Base64
 #
 
-my $c = $mmff->new('c', '', is_structured => 1);
+my $c = $mmfs->new('c', '');
 is($c->encode('abc', encoding => 'b'), '=?us-ascii?b?YWJj?=');
 is($c->encode('abc', encoding => 'B'), '=?us-ascii?B?YWJj?=');
 is($c->encode('abc', encoding => 'b', charset => 'iso-8859-1'), '=?iso-8859-1?b?YWJj?=');
@@ -165,7 +164,7 @@ is($c->encode($long, encoding => 'b', charset => 'ISO-8859-9'),
 # Test word decoding Quoted-Printable
 #
 
-my $d = $mmff->new('d', '', is_structured => 1);
+my $d = $mmfs->new('d', '');
 
 no utf8;   # Next list is typed in iso-8859-1  (latin-1)
 my @ex_qp =

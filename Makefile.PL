@@ -6,8 +6,7 @@ require 5.006_001;
 
 WriteMakefile
   ( NAME	 => 'Mail::Box'
-  , VERSION_FROM => 'Mail/Box.pm'
-  , DIR          => [ 'Mail' ]
+  , VERSION_FROM => 'lib/Mail/Box.pm'
   , AUTHOR       => 'Mark Overmeer'
   , ABSTRACT     => 'E-mail handling'
   , PREREQ_PM    =>
@@ -21,6 +20,9 @@ WriteMakefile
     , Sys::Hostname  => 0.0
     , Test::More     => 0.47
     , MIME::Base64   => 0.0
+    , URI            => 1.23
+    , IO::Scalar     => 0.0
+    , Digest::MD5    => 0.0
 
 # Optional
 #   Text::Autoformat

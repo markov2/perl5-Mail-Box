@@ -7,8 +7,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 BEGIN {plan tests => 23}
 
 use Mail::Message::Head::ResentGroup;

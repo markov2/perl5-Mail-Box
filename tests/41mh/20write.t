@@ -5,7 +5,6 @@
 #
 
 use strict;
-use lib qw(. t);
 use Mail::Box::MH;
 use Mail::Box::Mbox;
 use Tools;

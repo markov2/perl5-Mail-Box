@@ -7,8 +7,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. .. tests);
-
 use Mail::Box::Mbox;
 use Tools;
 

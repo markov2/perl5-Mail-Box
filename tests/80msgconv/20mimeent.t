@@ -3,14 +3,12 @@
 # Test conversions between Mail::Message and MIME::Entity
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 use Tools;
 use Mail::Message;
+use Test::More;
 
 BEGIN
 {   eval {require MIME::Entity};

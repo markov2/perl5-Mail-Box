@@ -9,8 +9,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 BEGIN {plan tests => 68}
 
 use Mail::Message::Field::Fast;

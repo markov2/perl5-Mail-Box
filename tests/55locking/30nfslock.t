@@ -4,13 +4,11 @@
 # Test the locking methods.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 use Tools;
+use Test::More;
 use Mail::Box::Locker::NFS;
 
 use File::Spec;

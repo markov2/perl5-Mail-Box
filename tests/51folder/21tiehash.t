@@ -8,7 +8,6 @@ use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
 use Mail::Box::Mbox;
 use Mail::Box::Tie::HASH;
 use Mail::Message::Construct;

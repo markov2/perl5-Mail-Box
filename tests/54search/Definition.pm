@@ -16,9 +16,10 @@ sub requires
       , present => \$sa_exists
 
       , reason  => <<'REASON'
-searching for spam in a mail folder needs the popular Spam Assassin
-module.  BE WARNED: This module is large: installing will take quite
-a while.
+Searching for spam in a mail folder needs the popular spam killer.
+BE WARNED: This module is large: installing will take quite a while. You
+           can install it later.  When your CPAN cache is small, this may
+           break your Mail::Box installing process.
 REASON
       }
     )
