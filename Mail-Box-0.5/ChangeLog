@@ -52,3 +52,7 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/Box/Manager.pm
 		Mail/Box.pm
 
+version 0.5:   Thu Jan  4 11:07:09 CET 2001
+
+Mark Overmeer <mark@overmeer.net>
+	* Installation fix: had to remove `our' before $VERSION.

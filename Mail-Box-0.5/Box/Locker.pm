@@ -3,7 +3,7 @@ package Mail::Box::Locker;
 
 use strict;
 use v5.6.0;
-our $VERSION = v0.4;
+our $VERSION = v0.5;
 
 use Fcntl         qw/:DEFAULT :flock/;
 use IO::File;
@@ -512,7 +512,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.4
+This code is alpha, version 0.5
 
 =cut
 

@@ -7,7 +7,7 @@ use Mail::Box;
 use Mail::Box::Index;
 
 our @ISA     = qw/Mail::Box Mail::Box::Index/;
-our $VERSION = v0.4;
+our $VERSION = v0.5;
 
 use Mail::Box;
 
@@ -1029,6 +1029,8 @@ are remembered.
 
 =head2 PUBLIC INTERFACE
 
+=over 4
+
 =cut
 
 sub init(@)
@@ -1086,7 +1088,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.4
+This code is alpha, version 0.5
 
 =cut
 
