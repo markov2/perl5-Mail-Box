@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.300';
+$VERSION = '1.310';
 
 use Carp;
 use MIME::Parser;
@@ -706,6 +706,17 @@ sub delete()
 
 #-------------------------------------------
 
+sub openSubFolder(@)
+{   my $self    = shift;
+    my @options = (@{$self->{MB_init_options}}, @_);
+
+    $self->{MB_manager}
+    ?  $self->{MB_manager}->open(@options)
+    :  (ref $self)->new(@options);
+}
+
+#-------------------------------------------
+
 =item name
 
 Returns the name of this folder.  What the name represents depends on
@@ -807,6 +818,10 @@ Returns the message in this folder with the specified MESSAGE-ID.  This
 method returns a not-parsed, parsed, or dummy message.  With the second
 MESSAGE argument, the value is first set.
 
+WARNING: when the message-headers are delayed-parsed too, the message
+might be in the folder but not yet detected.  If you really need a
+thorough search, use C<find()> as described below.
+
 =cut
 
 sub messageID($;$)
@@ -829,6 +844,26 @@ sub messageID($;$)
     }
 
     $self->{MB_msgid}{$msgid} = $message;
+}
+
+#-------------------------------------------
+
+=item find MESSAGE-ID
+
+Like the C<messageID()>, as described just above, returns the message-object
+with the specified it.  However, if the message-id is not known,
+because some of the messages in the folder are not parsed yet, it
+will scan from back to front in the folder until the message is found or
+all messages were visited.
+
+=cut
+
+sub find
+{   my ($self, $msgid) = (shift, shift);
+    my $msgids = $self->{MB_msgid};
+    return $msgids->{$msgid} if exists $msgids->{$msgid};
+    $self->scanForMessages(undef, $msgid, 'EVER', 'ALL');
+    $msgids->{$msgid};
 }
 
 #-------------------------------------------
@@ -1431,7 +1466,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

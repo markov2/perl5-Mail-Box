@@ -10,6 +10,9 @@ There are many tests, but it does not cover every situation, yet.
 The first BETA had version 1.0.  The module will go out of BETA if I
 know of any application which succesfully uses Mail::Box.
 
+The script/web/mailbox2html is experimental, and currently best
+contributing by giving an example how to use Mail::Box.
+
 
 Tested
 ======

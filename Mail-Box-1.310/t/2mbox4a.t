@@ -103,6 +103,6 @@ ok($sec->messages==2);
 
 $folder->close;
 $sec->close;
-ok(-s $sec);
+ok(-s $empty);
 
 unlink($empty);

@@ -35,9 +35,11 @@ Box/Threads.pm
 Box/Tie.pm
 Box/Tie/HASH.pm
 Box/Tie/ARRAY.pm
+Message.pm
 ChangeLog
 Makefile.PL
 MANIFEST
 README
 STATUS
 TODO
+scripts/web/mailbox2html

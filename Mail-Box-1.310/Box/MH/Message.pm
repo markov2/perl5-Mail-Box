@@ -86,7 +86,7 @@ sub head_init()
     my $msgid = $self->head->get('message-id');
 
     if($msgid && $msgid =~ m/<.*?>/) { $self->{MBM_messageID} = $& }
-    else { $self->{MBM_messageID} = 'mh-'.$unreg_msgid++ }
+    else { $self->{MBM_messageID} = '<mh-'.$unreg_msgid++.'>' }
 
     $self;
 }
@@ -310,10 +310,13 @@ sub load($;$)
 {   my ($self, $class) = (shift, shift);
 
     my $folder = $self->folder;
+    my $parser = $folder->parser;
     my $new;
 
     if(@_)
-    {   $new = $folder->parser->parse_data(shift);
+    {   $new = eval {$parser->parse_data(shift)};
+        my $error = $@ || $parser->last_error;
+        warn "Error: $error" if $error;
     }
     else
     {   my $filename = $self->filename;
@@ -322,14 +325,16 @@ sub load($;$)
         {   warn "Cannot find folder $folder message $filename anymore.\n";
             return $self;
         }
-        $new  =  $folder->parser->parse(\*FILE);
+        $new = eval {$parser->parse(\*FILE)};
+        my $error = $@ || $parser->last_error;
+        warn "Error: $error" if $error;
         close FILE;
     }
 
     my $args = { message => $new };
-    $folder->{MB_delayed_loads}--;
     (bless $self, $class)->delayedInit($args);
     $folder->toBeThreaded($self);
+    $folder->{MB_delayed_loads}--;
     $self;
 }
 
@@ -505,7 +510,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

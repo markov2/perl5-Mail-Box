@@ -1019,7 +1019,7 @@ sub openSubFolder($@)
         return;
     }
 
-    $self->clone( folder => File::Spec->catfile("$self",$name), @_ );
+    $self->SUPER::openSubFolder(@_, folder => $dir);
 }
 
 =back
@@ -1110,7 +1110,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

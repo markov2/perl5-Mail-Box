@@ -350,15 +350,16 @@ but on UNIX systems will be in seconds since 1 January 1970.
 sub MIME::Entity::timestamp()
 {   my $self = shift;
     my $head = $self->head || return;
+    return $self->{MBM_timestamp} if $self->{MBM_timestamp};
 
     if(my $date = $self->head->get('date'))
     {   my $stamp = str2time($date, 'GMT');
-        return $stamp if $stamp;
+        return $self->{MBM_timestamp} = $stamp if $stamp;
     }
 
     foreach ($self->head->get('received'))
     {   my $stamp = str2time($_, 'GMT');
-        return $stamp if $stamp;
+        return $self->{MBM_timestamp} = $stamp if $stamp;
     }
 
     undef;
@@ -377,6 +378,8 @@ the folder.  Flags about whether a message was read, replied to, or
 =over 4
 
 =item setLabel LIST
+
+The LIST is a set of scalars forming key,value pairs.
 
 =cut
 
@@ -404,7 +407,12 @@ Example:
 
 =cut
 
-sub label(@) { wantarray ? @{shift->labels}{@_} : shift->labels->{$_[0]} }
+sub label(@)
+{  my $self = shift;
+   wantarray
+   ? @{$self->{MBM_labels}}{@_}
+   : $self->{MBM_labels}{(shift)};
+}
 
 #-------------------------------------------
 
@@ -1220,7 +1228,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

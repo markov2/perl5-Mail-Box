@@ -29,7 +29,8 @@ Mail::Box::Manager - Manage a set of folders
 This code is beta, which means that there are no serious applications
 written with it yet.  Please inform the author when you have, so this
 module can go to stable.  Read the STATUS file enclosed in the package for
-more details.
+more details.  You may also want to have a look in the B<examples> which
+come with the module.
 
 The Mail::Box package can be used as back-end to Mail User-Agents
 (MUA's), and has special features to help those agents to get fast
@@ -119,8 +120,8 @@ a loss of information.
 =cut
 
 my @basic_folder_types =
-  ( [ mbox  => 'Mail::Box::Mbox' ]
-  , [ mh    => 'Mail::Box::MH'  ]
+  ( [ mh    => 'Mail::Box::MH'  ]    # try first!
+  , [ mbox  => 'Mail::Box::Mbox' ]
   );
 
 sub new(@)
@@ -306,6 +307,7 @@ sub open(@)
     {   my ($type, $class, @options) = @$_;
         push @options, manager => $self;
         next unless $class->foundIn($name, @find_options);
+
         my $folder = $class->new(@options, %args);
         push @{$self->{MBM_folders}}, $folder if $folder;
         return $folder;
@@ -690,7 +692,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

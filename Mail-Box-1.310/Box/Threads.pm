@@ -985,35 +985,38 @@ three messages.
 
 =cut
 
-sub threadToString(;$$)
-{   my ($self, $first, $other) = (shift, shift || '', shift || '');
+sub threadToString(;$$$)
+{   my $self    = shift;
+    my $code    = shift || sub {shift->head->get('subject')};
+    my ($first, $other) = (shift || '', shift || '');
     my $message = $self->message;
     my @follows = $self->sortedFollowUps;
 
     my @out;
     if($self->folded)
-    {   my $subject = $message->head->get('subject');
-        chomp $subject if $subject;
-        return "    $first [" . $self->nrMessages . '] '. ($subject||'')."\n";
+    {   my $text = $code->($message) || '';
+        chomp $text;
+        return "    $first [" . $self->nrMessages . "] $text\n";
     }
     elsif($message->isDummy)
     {   $first .= $first ? '-*-' : ' *-';
-        return (shift @follows)->threadToString($first, "$other   " )
+        return (shift @follows)->threadToString($code, $first, "$other   " )
             if @follows==1;
 
-        push @out, (shift @follows)->threadToString($first, "$other | " )
+        push @out, (shift @follows)->threadToString($code, $first, "$other | " )
             while @follows > 1;
     }
     else
-    {   my $subject = $message->head->get('subject');
-        my $size    = $message->shortSize;
-        chomp $subject if $subject;
-        @out = "$size$first ". ($subject || ''). "\n";
-        push @out, (shift @follows)->threadToString( "$other |-", "$other | " )
+    {   my $text  = $code->($message) || '';
+        chomp $text;
+        my $size  = $message->shortSize;
+        @out = "$size$first $text\n";
+        push @out, (shift @follows)
+                       ->threadToString($code, "$other |-", "$other | " )
             while @follows > 1;
     }
 
-    push @out, (shift @follows)->threadToString( "$other `-", "$other   " )
+    push @out, (shift @follows)->threadToString($code, "$other `-","$other   " )
         if @follows;
 
     join '', @out;
@@ -1146,7 +1149,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

@@ -81,7 +81,7 @@ sub init($)
     {   my $msgid = $self->head->get('message-id');
         $args->{messageID} = $& if $msgid && $msgid =~ m/\<.*?\>/;
     }
-    $self->{MBM_messageID} = $args->{messageID} || 'mbox-'.$unreg_msgid++;
+    $self->{MBM_messageID} = $args->{messageID} || '<mbox-'.$unreg_msgid++.'>';
 
     delete @$args{ qw/from begin/ };
 
@@ -306,7 +306,11 @@ sub load($)
     my $if       = IO::InnerFile->new($file, $self->{MBM_begin}, $self->size)
                 || return 0;
 
-    my $message = $folder->parser->parse($if);
+    my $parser  = $folder->parser;
+    my $message = eval {$parser->parse($if)};
+    my $error   = $@ || $parser->last_error;
+    warn "Error $error" if $error;
+
     $folder->fileClose unless $was_open;
 
     # A pitty that we have to copy data now...
@@ -412,7 +416,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

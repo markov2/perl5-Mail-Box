@@ -254,6 +254,16 @@ reason.
 
 sub readMessages(@)
 {   my $self = shift;
+
+    my $filename = $self->filename;
+    $self->{MB_source_mtime} = (stat $filename)[9];
+
+    # On a directory, simulate an empty folder with only subfolders.
+    if(-d $filename)
+    {   $self->{MB_delayed_loads} = 0;
+        return $self;
+    }
+
     my $file = $self->fileOpen || return;
 
     # Prepare to scan for headers we want.  To speed things up, we create
@@ -329,10 +339,18 @@ sub readMessages(@)
             # Process all escapped from-lines.
             s/^\>(?=[fF]rom )// foreach @body;
 
-            $message = $self->{MB_message_type}->new
-              ( message => $parser->parse_data( [@header, "\n", @body] )
-              , @options
-              );
+            my $parsed;
+            eval {$parsed = $parser->parse_data( [@header, "\n", @body] ) };
+            my $error = $@ || $parser->last_error;
+            if($error)
+            {   warn "error $error.\n";
+            }
+            else
+            {   $message = $self->{MB_message_type}->new
+                  ( message => $parsed
+                  , @options
+                  );
+            }
         }
         elsif($mode eq 'SOME' || $mode eq 'ALL')
         {   #
@@ -381,7 +399,6 @@ sub readMessages(@)
 
     # Release the folder.
 
-    $self->{MB_source_mtime}  = (stat $file)[9];
     $self->{MB_delayed_loads} = $delayed;
 
     $self->fileClose
@@ -553,7 +570,7 @@ sub close(@)
 {   my $self = $_[0];            # be careful, we want to set the calling
     undef $_[0];                 #    ref to undef, as the SUPER does.
     shift;
-    $self->Mail::Box::close(@_);
+    $self->SUPER::close(@_);
     $self->fileClose;
 }
 
@@ -657,6 +674,11 @@ sub foundIn($@)
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $extention = $args{subfolder_extention} || $default_extention;
     my $filename  = $class->folderToFilename($name, $folderdir, $extention);
+
+    if(-d $filename)      # fake empty folder, with sub-folders
+    {   return 1 unless -f "$filename/1";
+    }
+
     return 0 unless -f $filename;
     return 1 if -z $filename;      # empty folder is ok
 
@@ -810,7 +832,7 @@ Example:
 
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    $self->clone(folder => $self->name . '/' .$name, @_);
+    $self->SUPER::openSubFolder(@_, folder => $self->name . '/' .$name);
 }
 
 #-------------------------------------------
@@ -832,7 +854,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.300
+This code is beta, version 1.310
 
 =cut
 

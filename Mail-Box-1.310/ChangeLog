@@ -3,7 +3,32 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
-version 1.300:
+version 1.310: Sun Jul  1 00:05:25 CEST 2001
+
+	* Mail::Box::Threads::threadToString can be passed a function
+	  to produce a line which should appear in thread-printing.
+
+	* When you open an Mail::Box::Mbox with a foldername which
+	  is a directory, it is considered an empty folder with
+	  only sub-folders.
+
+	* Opening sub-folders respect the Mail::Box::Manager now.
+
+	* Fixed buglet in Mail::Box::Message::label()
+
+	* Toegevoegd: Mail::Box::find(), which scans from back
+	  to start of folder, parsing all headers which were not
+	  known yet, in search of a certain messageID.
+
+	* Experimental version of scripts/web/mailbox2html
+
+	* Tried to catch some of the errors produced by MIME::Parser
+	  a little better, but I got strenghtened in my opinion that
+	  MIME::Parser and friends must be replaced.
+	  Mail::Box version 2.0 will be able to work without it, and
+	  be written in C, so as past as possible.
+
+version 1.300: Tue Jun 26 16:28:06 CEST 2001
 
 	* Split Mail::Box::Tie into Mail::Box::Tie::HASH
 	  and Mail::Box::Tie::ARRAY, without the users noticing it ;)
@@ -13,7 +38,7 @@ version 1.300:
 	Re-implementation of thread-detection.  It is a pitty, but I
 	couldn't maintain the old interface and seperate threads from
 	folders at the same time.  However, a transformation can be
-	done swifty.
+	done swifty.  Read Mail::Box::Threads for details.
 
 version 1.200: Sat Jun 23 23:44:59 CEST 2001
 
