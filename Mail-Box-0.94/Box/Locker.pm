@@ -31,17 +31,17 @@ Mail::Box::Locker - Manage the locking of mail-folders
 
 =head1 DESCRIPTION
 
-Read Mail::Box::Manager first.
+Read L<Mail::Box::Manager> first.
 The locker module contains the various locking functionalities as
 needed when handling folders.
 
-Because Mail::Box inherits from Mail::Box::Locker, this
+Because C<Mail::Box> inherits from Mail::Box::Locker, this
 example works:
 
     my $folder
     $folder->lock;
 
-=head1 PUBLIC INTERFACE
+=head1 METHOD
 
 =over 4
 
@@ -60,13 +60,13 @@ for the locker information:
 
 =over 4
 
-=item lock_method => METHOD
+=item * lock_method =E<gt> METHOD
 
-Which method has to be used for locking.  Supported are
+Which METHOD has to be used for locking.  Supported are
 
 =over 4
 
-=item * 'dotlock'
+=item 'dotlock'
 
 The folder handler creates a file which signals that it is in use.  This
 is a bit problematic, because all mail-handling software should agree on
@@ -75,37 +75,37 @@ the name of the file to be created.
 On various folder-types, the lockfile differs.  See each manual-page
 and special options to change their default behavior.
 
-=item * 'file'
+=item 'file'
 
 For some folder handlers, locking is based on simply file-locking
 mechanism.  However, this does not work on network filesystems, and
 such.  This also doesn't work on directory-type of folders (Mail::Box::Dir
 and derived).
 
-=item * 'nfs'
+=item 'nfs'
 
 A kind of C<dotlock> file-locking mechanism, but adapted to work over
 NFS.  Extra precaution is needed because an C<open O_EXCL> on NFS is
 not an atomic action.
 
-=item * 'NONE'
+=item 'NONE'
 
 Disable locking.
 
 =back
 
-=item lock_timeout => SECONDS
+=item * lock_timeout =E<gt> SECONDS
 
 How long can a lock stand?  When an different e-mail program left a
 lock, then this will be removed automatically after the specified
 seconds.  The default is one hour.
 
-=item lock_wait => SECONDS
+=item * lock_wait =E<gt> SECONDS
 
 How long to wait for receiving the lock.  The lock-request may fail.
 If SECONDS equals 'NOTIMEOUT', then we wait till the lock can be taken.
 
-=item lockfile => FILENAME
+=item * lockfile =E<gt> FILENAME
 
 Name of the file to take the lock on or to represent a lock (depends on
 the kind of lock used).
@@ -160,6 +160,8 @@ sub lockingMethod($$$$)
 
 #-------------------------------------------
 
+=back
+
 =head2 Basic functions
 
 The C<lock>, C<test_lock>, and C<unlock> methods are to be
@@ -175,6 +177,7 @@ specific METHOD.  If you do not specify a FOLDER, it is
 assumed the locking functionality is inherited.
 
 Examples:
+
     $locker->lock($folder);
     $folder->lock;
 
@@ -205,6 +208,7 @@ sub lock(;$$)
 Test if the folder is locked.
 
 Examples:
+
     $locker->isLocked($folder);
     $folder->isLocked;
 
@@ -232,6 +236,7 @@ sub isLocked(;$$)
 Check wheter the folder has the lock.
 
 Examples:
+
     $locker->hasLock($folder);
     $folder->hasLock;
 
@@ -250,6 +255,7 @@ sub hasLock(;$)
 un the lock on a folder.
 
 Examples:
+
     $locker->unlock($folder);
     $folder->unlock;
 
@@ -506,7 +512,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.93
+This code is beta, version 0.94
 
 =cut
 

@@ -3,6 +3,8 @@ package Mail::Box::MH;
 
 use Mail::Box;
 use Mail::Box::Index;
+use Mail::Box::MH::Message;
+
 @ISA = qw/Mail::Box Mail::Box::Index/;
 
 use strict;
@@ -22,159 +24,16 @@ Mail::Box::MH - Handle folders with a file per message.
 
 =head1 DESCRIPTION
 
-Mail::Box::MH extends Mail::Box and Mail::Box::Index to implement
-MH-type folders.  This manual-page describes Mail::Box::MH and
-Mail::Box::MH::* packages.  Read Mail::Box::Manager for the general
-overview, Mail::Box for understanding mailboxes, and Mail::Box::Message
-about how messages are used, first.
+C<Mail::Box::MH> extends L<Mail::Box> and L<Mail::Box::Index> to implement
+MH-type folders.  Read L<Mail::Box::Manager> for the general
+overview, L<Mail::Box> for understanding mailboxes, and
+L<Mail::Box::Message> about how messages are used, first.
 
-The explanation is complicated, but for normal use you should bother
-yourself with all details.  Skip the manual-page to C<PUBLIC INTERFACE>.
+L<The internal organization and details|/"IMPLEMENTATION"> are found
+at the bottom of this manual-page.  The working of MH-messages are
+described in L<Mail::Box::MH::Message>.
 
-=head2 How MH-folders work
-
-MH-type folders use a directory to store the messages of one folder.  Each
-message is stored in a seperate file.  This seems useful, because changes
-in a folder change only a few of these small files, in contrast with
-file-based folders where changes in a folder cause rewrites of huge
-folder-files.
-
-However, MH-based folders perform very bad if you need header-information
-of all messages.  For instance, if you want to have full knowledge about
-all message-threads (see Mail::Box::Threads) in the folder, it requires
-to read all header-lines in all message-files.  And usually, reading in
-threads is desired.
-
-So, each message is written in a seperate file.  The file-names are
-numbers, which count from C<1>.  Next to these message-files, a
-directory may contain a file named C<.mh_sequences>, storing labels which
-relate to the messages.  Furthermore, a folder-directory may contain
-sub-directories, which are seen as sub-folders.
-
-=head2 Implementation
-
-This implementation supports the C<.mh-sequences> file and sub-folders.
-Next to this, considerable effort it made to avoid reading each message-file.
-This should boost performance of the Mail::Box module over other
-Perl-modules which are able to read folders.
-
-Folder-types which store their messages each in one file, together in
-one directory, are bad for performance.  Consider that you want to know
-the subjects of all messages, while browser through a folder with your
-mail-reading client.  This would cause all message-files to be read.
-
-Mail::Box::MH has two ways to try improve performance.  You can use
-an index-file, and use on delay-loading.  The combination performs even
-better.  Both are explained in the next sections.
-
-=head2 An index-file
-
-If you specify C<keep_index> as option to the folder creation method
-C<new()>, then all header-lines of all messages from the folder which
-have been read once, will also be written into one dedicated index-file
-(one file per folder).  The default filename is C<.index>
-
-However, index-files are not supported by any other reader which supports
-MH (as far as I know).  If you read the folders with such I client, it
-will not cause unrecoverable conflicts with this index-file, but at most
-be bad for performance.
-
-If you do not (want to) use an index-file, then delay-loading may
-save your day.
-
-=head2 Delayed loading
-
-The delay-loading mechanism of messages tries to be as lazy as possible.
-When the folder is opened, none of the message-files will be read.  If
-there is an index-file, those headers will be taken.  The labels will
-be read from the <.mh-sequences>.  But from the messages, only the
-filenames are scanned.
-
-Not before any header-line (or any other action on a message) is used,
-the message is read.  This is done using Perl's AUTOLOADing, and is
-transparent to users.  If the first thing you ask for is a header-line,
-then C<lazy_extract> and C<take_headers> determine what how far this
-message is parsed: into a C<Mail::Box::MH::NotParsed> or a
-C<Mail::Box::MH::Message>.
-
-The index-file is farmost best performing, but also in the second case,
-performance can be ok.  When a mail-client opens a huge folder, only a few
-of the messages will be displayed on the screen as folder-list.  Only from
-the visible messages, header-lines like `Subject' are needed, so
-the AUTOLOAD automatically reads those message-files.  Other messages
-will only be read from file when they appear in the viewport.
-
-=head2 Message State Transition
-
-The user of a folder gets his hand on a message-object, and is not bothered
-with the actual data which is stored in the object at that moment.  As
-implementor of a mail-package, you might be.
-
-For trained eyes only:
-
-   read()     !lazy && !DELAY
-   -------> +----------------------------------> Mail::Box::
-            |                                    MH::Message
-            | lazy && !DELAY && !index                ^
-            +--------------.                          |
-            |           \   \    NotParsed    load    |
-            |            \   `-> NotReadHead ------>-'|
-            |        REAL \                           |
-            |              \                          |
-            | index         v    NotParsed    load    |
-            +------------------> MIME::Head ------->-'|
-            |                       ^                 |
-            |                       |                 |
-            |                       |load_head        |
-            |                       |                 |
-            | DELAY && !index    NotParsed    load    |
-            +------------------> <no head> -------->--'
-
-
-         ,-------------------------+---.
-        |                      ALL |   | regexps && taken
-        v                          |   |
-   NotParsed    head()    get()   /   /
-   NotReadHead --------> ------->+---'
-             \          \         \
-              \ other()  \ other() \regexps && !taken
-               \          \         \
-                \          \         \    load    Mail::Box::
-                 `----->----+---------+---------> MH::Message
-
-         ,---------------.
-        |                |
-        v                |
-   NotParsed     head()  |
-   MIME::Head -------->--'
-            \                           Mail::Box::
-             `------------------------> MH::Message
-
-
-                            load_head   NotParsed
-                           ,----------> MIME::Head
-                          /
-   NotParsed    head()   / lazy
-   <no head>  --------->+
-                         \ !lazy
-                          \
-                           `-----------> Mail::Box::
-                             load        MH::Message
-
-Terms: C<lazy> refers to the evaluation of the C<lazy_extract()> option. The
-C<load> and C<load_head> are triggers to the C<AUTOLOAD> mothods.  All
-terms like C<head()> refer to method-calls.  The C<index> is true if there
-is an index-file kept, and the message-header found in there seems still
-valid (see the C<keep_index> option of C<new()>).
-
-Finally, C<ALL>, C<REAL>, C<DELAY> (default), and C<regexps> refer to
-values of the C<take_headers> option of C<new()>.  Notice that
-C<take_headers> on C<DELAY> is more important than C<lazy_extract>.
-
-Hm... not that easy...  Happily, the implementation takes fewer lines than
-the documentation.
-
-=head1 PUBLIC INTERFACE
+=head1 METHODS
 
 =over 4
 
@@ -190,7 +49,7 @@ see below, but first the full list.
 
  access            Mail::Box          'r'
  create            Mail::Box          0
- dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
+ dummy_type        Mail::Box::Threads 'Mail::Box::Thread::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          <no default>
  index_filename    Mail::Box::Index   foldername.'/.index'
@@ -203,8 +62,8 @@ see below, but first the full list.
  lock_wait         Mail::Box::Locker  10      (seconds)
  manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::MH::Message'
- notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
- notread_type      Mail::Box          'Mail::Box::MH::Message::NotParsed'
+ notreadhead_type  Mail::Box          'Mail::Box::MH::NotReadHead'
+ notread_type      Mail::Box          'Mail::Box::MH::NotParsed'
  realhead_type     Mail::Box          'MIME::Head'
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
@@ -218,7 +77,7 @@ MH specific options:
 
 =over 4
 
-=item * labels_filename => FILENAME
+=item * labels_filename =E<gt> FILENAME
 
 In MH-folders, messages can be labeled, for instance based on the
 sender or whether it is read or not.  This status is kept in a
@@ -234,9 +93,7 @@ my $default_folder_dir = exists $ENV{HOME} ?  "$ENV{HOME}/.mh" : '.';
 sub init($)
 {   my ($self, $args) = @_;
 
-    $args->{message_type}     ||= 'Mail::Box::MH::Message';
-    $args->{dummy_type}       ||= 'Mail::Box::Message::Dummy';
-    $args->{notreadhead_type} ||= 'Mail::Box::Message::NotReadHead';
+    $args->{notreadhead_type} ||= 'Mail::Box::NotReadHead';
     $args->{keep_index}       ||= 0;
     $args->{folderdir}        ||= $default_folder_dir;
     $args->{take_headers}     ||= 'DELAY';
@@ -505,11 +362,11 @@ for explanation)
 
 =over 4
 
-=item * keep_deleted => BOOL
+=item * keep_deleted =E<gt> BOOL
 
-=item * save_deleted => BOOL
+=item * save_deleted =E<gt> BOOL
 
-=item * renumber => BOOL
+=item * renumber =E<gt> BOOL
 
 Permit renumbering of message.  Bij default this is true, but for some
 unknown reason, you may be thinking that messages should not be renumbered.
@@ -636,11 +493,11 @@ If the folder does not exist, C<undef> (or FALSE) is returned.
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
-=item * message => MESSAGE
+=item * message =E<gt> MESSAGE
 
-=item * messages => ARRAY-OF-MESSAGES
+=item * messages =E<gt> ARRAY-OF-MESSAGES
 
 =back
 
@@ -987,7 +844,7 @@ For this class, we use (if defined):
 
 =over 4
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 =back
 
@@ -1032,7 +889,7 @@ be left untouched.  As options, you may specify:
 
 =over 4
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 =back
 
@@ -1062,13 +919,13 @@ to list.  As instance method, the sub-folders of that folder are returned.
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
-=item * check => BOOL
+=item * check =E<gt> BOOL
 
-=item * skip_empty => BOOL
+=item * skip_empty =E<gt> BOOL
 
 =back
 
@@ -1166,352 +1023,85 @@ sub openSubFolder($@)
     $self->clone( folder => "$self/$name", @_ );
 }
 
-###
-### Mail::Box::MH::Message::Runtime
-###
-
-package Mail::Box::MH::Message::Runtime;
-use File::Copy;
-
-#-------------------------------------------
-
 =back
 
-=head1 Mail::Box::MH::Message::Runtime
-
-This object contains methods which are part of as well delay-loaded
-(not-parsed) as loaded messages, but not general for all folders.
-
-=head2 PUBLIC INTERFACE
-
-=over 4
-
-=cut
-
-#-------------------------------------------
-
-=item new ARGS
-
-Messages in directory-based folders use the following extra options
-for creation:
-
-=over 4
-
-=item * filename => FILENAME
-
-The file where the message is stored in.
-
-=back
-
-=cut
-
-sub init($)
-{   my ($self, $args) = @_;
-
-    $self->{MBM_filename}  = $args->{filename};
-    $self;
-}
-
-my $unreg_msgid = time;
-
-sub head_init()
-{   my $self  = shift;
-    my $msgid = $self->head->get('message-id');
-
-    if($msgid && $msgid =~ m/<.*?>/) { $self->{MBM_messageID} = $& }
-    else { $self->{MBM_messageID} = 'mh-'.$unreg_msgid++ }
-
-    $self;
-}
-
-#-------------------------------------------
-
-=item print TO
-
-Write one message to a file-handle.  Unmodified messages are taken
-from the folder-file where they were stored in.  Modified messages
-are written as in memory.  Specify a file-handle to write TO
-(defaults to STDOUT).
-
-=cut
-
-sub print()
-{   my $self     = shift;
-    my $out      = shift || \*STDOUT;
-
-    my $folder   = $self->folder;
-    my $filename = $self->filename;
-
-    # Modified messages are printed as they were in memory.  This
-    # may change the order and content of header-lines and (of
-    # course) also the body.  If the message's original file
-    # unexplainably disappeared, we also print the internally
-    # stored message.
-
-    if(!$self->modified && $filename && -r $filename)
-    {   copy($filename, $out);
-    }
-    else
-    {   $self->createStatus->createXStatus;
-        $self->MIME::Entity::print($out);
-    }
-
-    1;
-}
-
-#-------------------------------------------
-
-=item printIndex [FILEHANDLE]
-
-Print the information of this message which is required to maintain
-an index-file.  By default, this prints to STDOUT.
-
-=cut
-
-sub printIndex(;$)
-{   my $self = shift;
-    my $out  = shift || \*STDOUT;
-
-    my $head = $self->head || return $self;
-    $head->add('X-MailBox-Filename', $self->filename);
-    $head->print($out);
-    print $out "\n";
-    $self;
-}
-
-#-------------------------------------------
-
-=item readIndex CLASS [,FILEHANDLE]
-
-Read the headers of one message from the index into a CLASS
-structure.  CLASS is (a sub-class of) a MIME::Head.  If no
-FILEHANDLE is specified, the data is read from STDIN.
-
-=cut
-
-sub readIndex($;$)
-{   my $self  = shift;
-    shift->read(shift, shift || \*STDIN);
-}
-
-#-------------------------------------------
-
-=item filename [FILENAME]
-
-Returns the name of the file in which this message is actually stored.  This
-will return C<undef> when the message is not stored in a file.
-
-=cut
-
-sub filename(;$)
-{   my $self = shift;
-    @_ ? $self->{MBM_filename} = shift : $self->{MBM_filename};
-}
-
-###
-### Mail::Box::MH::Message
-###
-
-package Mail::Box::MH::Message;
-use vars '@ISA';
-@ISA = qw(Mail::Box::MH::Message::Runtime Mail::Box::Message);
-
-#-------------------------------------------
-
-=back
-
-=head1 Mail::Box::MH::Message
-
-This object extends a Mail::Box::Message with extra tools and facts
-on what is special to messages in file-based folders, with respect to
-messages in other types of folders.
-
-=head2 PUBLIC INTERFACE
-
-=over 4
-
-=cut
-
-sub init($)
-{   my ($self, $args) = @_;
-    $self->Mail::Box::Message::init($args);
-    $self->Mail::Box::MH::Message::Runtime::init($args);
-    $self;
-}
-
-#-------------------------------------------
-
-=item coerce FOLDER, MESSAGE [,OPTIONS]
-
-(Class method)
-Coerce a MESSAGE into a Mail::Box::MH::Message, ready to be stored in
-FOLDER.  When any message is offered to be stored in the mailbox, it
-first should have all fields which are specific for MH-folders.
-
-The coerced message is returned on success, else C<undef>.
-
-Example:
-
-   my $mh = Mail::Box::MH->new(...);
-   my $message = Mail::Box::Mbox::Message->new(...);
-   Mail::Box::MH::Message->coerce($mh, $message);
-   # Now $message is ready to be stored in $mh.
-
-However, you can better use
-
-   $mh->coerce($message);
-
-which will call coerce on the right message type for sure.
-
-=cut
-
-sub coerce($$)
-{   my ($class, $folder, $message) = (shift, shift, shift);
-    return $message if $message->isa($class);
-
-    Mail::Box::Message->coerce($folder, $message, @_) or return;
-
-    # When I know more what I can save from other types of messages, later,
-    # that information will be extracted here, and transfered into arguments
-    # for Runtime->init.
-
-    my $msgid = $message->head->get('message-id');
-    $message->{MBM_messageID} = $msgid && $msgid =~ m/<.*?>/ ? $&
-                              : 'mh-'.$unreg_msgid++;
-
-    (bless $message, $class)->Mail::Box::MH::Message::Runtime::init;
-}
-
-#-------------------------------------------
-
-sub diskDelete()
-{   my $self = shift;
-    $self->Mail::Box::Message::diskDelete;
-    unlink $self->filename;
-    $self;
-}
-
-###
-### Mail::Box::MH::Message::NotParsed
-###
-
-package Mail::Box::MH::Message::NotParsed;
-use vars '@ISA';
-@ISA = qw/Mail::Box::MH::Message::Runtime
-          Mail::Box::Message::NotParsed/;
-
-use IO::InnerFile;
-
-#-------------------------------------------
-
-=back
-
-=head1 Mail::Box::MH::Message::NotParsed
-
-Not parsed messages stay in the file until the message is used.  Because
-this folder structure uses many messages in the same file, the byte-locations
-are remembered.
-
-=head2 PUBLIC INTERFACE
-
-=over 4
-
-=cut
-
-sub init(@)
-{   my $self = shift;
-    $self->Mail::Box::Message::NotParsed::init(@_)
-         ->Mail::Box::MH::Message::Runtime::init(@_);
-}
-
-#-------------------------------------------
-
-=item load CLASS [, ARRAY-OF-LINES]
-
-This method is called by the autoloader then the data of the message
-is required.  If you specified C<REAL> for the C<take_headers> option
-for C<new()>, you did have a MIME::Head in your hands, however this
-will be destroyed when the whole message is loaded.
-
-If an array of lines is provided, that is parsed as message.  Otherwise,
-the file of the message is opened and parsed.
-
-=cut
-
-sub load($;$)
-{   my ($self, $class) = (shift, shift);
-
-    my $folder = $self->folder;
-    my $new;
-
-    if(@_)
-    {   $new = $folder->parser->parse_data(shift);
-    }
-    else
-    {   my $filename = $self->filename;
-
-        unless(open FILE, $filename)
-        {   warn "Cannot find folder $folder message $filename anymore.\n";
-            return $self;
-        }
-        $new  =  $folder->parser->parse(\*FILE);
-        close FILE;
-    }
-
-    my $args = { message => $new };
-    $folder->{MB_delayed_loads}--;
-    (bless $self, $class)->delayedInit($args);
-}
-
-#-------------------------------------------
-
-=item head
-
-Get the head of the message.  This may return immediately, because the
-head is already read.  However, when we do not have a header yet, we
-read the message.  At this moment, the C<lazy_extract> option of C<new>
-comes into action: will we read the whole message now, or only the header?
-
-=cut
-
-sub head()
-{   my $self = shift;
-    return $self->{MBM_head} if exists $self->{MBM_head};
-    $self->folder->readMessage($self->seqnr) or return;
-    $self->head;
-}
-
-#-------------------------------------------
-
-=item headIsRead
-
-Checks if the head of the message is read.  This is true for fully
-parsed messages and messages where the header was accessed once.
-
-=cut
-
-sub headIsRead() { exists shift->{MBM_head} }
-
-#-------------------------------------------
-
-=item messageID
-
-Retreive the message's id.  Every message has a unique message-id.  This id
-is used mainly for recognizing discussion threads.
-
-=cut
-
-# This is the only method on a non-parsed object, which implicitly depends
-# on a loaded header.  By checking the head, we know for sure that the
-# header is loaded.
-
-sub messageID(@)
-{   my $self = shift;
-    $self->head unless $self->{MBM_head};
-    $self->Mail::Box::Message::messageID(@_);
-}
-
-=back
+=head1 IMPLEMENTATION
+
+The explanation is complicated, but for normal use you should bother
+yourself with all details.
+
+=head2 How MH-folders work
+
+MH-type folders use a directory to store the messages of one folder.  Each
+message is stored in a seperate file.  This seems useful, because changes
+in a folder change only a few of these small files, in contrast with
+file-based folders where changes in a folder cause rewrites of huge
+folder-files.
+
+However, MH-based folders perform very bad if you need header-information
+of all messages.  For instance, if you want to have full knowledge about
+all message-threads (see Mail::Box::Threads) in the folder, it requires
+to read all header-lines in all message-files.  And usually, reading in
+threads is desired.
+
+So, each message is written in a seperate file.  The file-names are
+numbers, which count from C<1>.  Next to these message-files, a
+directory may contain a file named C<.mh_sequences>, storing labels which
+relate to the messages.  Furthermore, a folder-directory may contain
+sub-directories, which are seen as sub-folders.
+
+=head2 This implementation
+
+This implementation supports the C<.mh-sequences> file and sub-folders.
+Next to this, considerable effort it made to avoid reading each message-file.
+This should boost performance of the Mail::Box module over other
+Perl-modules which are able to read folders.
+
+Folder-types which store their messages each in one file, together in
+one directory, are bad for performance.  Consider that you want to know
+the subjects of all messages, while browser through a folder with your
+mail-reading client.  This would cause all message-files to be read.
+
+Mail::Box::MH has two ways to try improve performance.  You can use
+an index-file, and use on delay-loading.  The combination performs even
+better.  Both are explained in the next sections.
+
+=head2 An index-file
+
+If you specify C<keep_index> as option to the folder creation method
+C<new()>, then all header-lines of all messages from the folder which
+have been read once, will also be written into one dedicated index-file
+(one file per folder).  The default filename is C<.index>
+
+However, index-files are not supported by any other reader which supports
+MH (as far as I know).  If you read the folders with such I client, it
+will not cause unrecoverable conflicts with this index-file, but at most
+be bad for performance.
+
+If you do not (want to) use an index-file, then delay-loading may
+save your day.
+
+=head2 Delayed loading
+
+The delay-loading mechanism of messages tries to be as lazy as possible.
+When the folder is opened, none of the message-files will be read.  If
+there is an index-file, those headers will be taken.  The labels will
+be read from the C<.mh-sequences>.  But from the messages, only the
+filenames are scanned.
+
+Not before any header-line (or any other action on a message) is used,
+the message is read.  This is done using Perl's AUTOLOADing, and is
+transparent to users.  If the first thing you ask for is a header-line,
+then C<lazy_extract> and C<take_headers> determine what how far this
+message is parsed: into a C<Mail::Box::MH::NotParsed> or a
+C<Mail::Box::MH::Message>.
+
+The index-file is farmost best performing, but also in the second case,
+performance can be ok.  When a mail-client opens a huge folder, only a few
+of the messages will be displayed on the screen as folder-list.  Only from
+the visible messages, header-lines like `Subject' are needed, so
+the AUTOLOAD automatically reads those message-files.  Other messages
+will only be read from file when they appear in the viewport.
 
 =head1 AUTHOR
 
@@ -1521,7 +1111,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.6
+This code is beta, version 0.94
 
 =cut
 

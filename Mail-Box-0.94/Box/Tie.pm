@@ -18,11 +18,11 @@ Mail::Box::Tie - Acces an existing message-folder as array
 
 =head1 DESCRIPTION
 
-Read Mail::Box::Manager first.
-Folder certainly look as arrays, so why not just access them as one.  Each
+Read L<Mail::Box::Manager> first.
+Folders certainly look as arrays, so why not just access them as one?  Each
 folder is a sub-class of this class.
 
-=head1 PUBLIC INTERFACE
+=head1 METHODS
 
 Not all operations on arrays are supported.  Actually, most functions which
 would reduce the size of the array are modified to signal messages as
@@ -67,6 +67,7 @@ the constructor of the folder requires some parameters.  Possible PARAMS
 are the parameters of the C<new> constructor of the specified folder-type.
 
 Example:
+
     tie my(@inbox), 'Mail::Box::File', folder => $ENV{MAIL};
     my $inbox = tied @inbox;
 
@@ -75,6 +76,7 @@ type as specified with FOLDERTYPE is only used to find the correct
 TIEARRAY method, usually the result of C<ref FOLDER>.
 
 Example:
+
     my $inbox = Mail::Box::File->new(folder => $ENV{MAIL});
     tie my(@inbox), ref $inbox, $inbox;
 
@@ -109,7 +111,7 @@ sub DELETE($) { shift->activeMessage(shift)->delete }
 
 =back
 
-=head2 IMPLEMENTED METHODS
+=head1 IMPLEMENTED METHODS
 
 This module implements C<TIEARRAY>, C<FETCH>, C<STORE>, C<FETCHSIZE>,
 C<DELETE>, C<PUSH>, and C<DESTROY>.
@@ -125,7 +127,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.93
+This code is beta, version 0.94
 
 =cut
 

@@ -1,5 +1,19 @@
 CHANGELOG of Mail::Box
 
+version 0.94:
+
+Mark Overmeer <mark@overmeer.net>
+
+	* Extracted Mail::Box::Mbox::Message* into a seperate file.
+	* Extracted Mail::Box::MH::Message* into a seperate file.
+	* Extracted Mail::Box::Tread into a seperate file.
+	* The objects Mail::Box::{Mbox::MH}::Message::Runtime are renamed
+	  to the slightly briever Mail::Box::{Mbox::MH}::Runtime.
+	* The objects Mail::Box::{Mbox::MH}::Message::NotParsed are renamed
+	  to the slightly briever Mail::Box::{Mbox::MH}::NotParsed.
+	* Moved around with the text in manuals *a lot* to make access
+	  easier.  Many pod improvements (I hope)
+
 version 0.93: Fri Feb  2 16:16:09 CET 2001
 
 Mark Overmeer <mark@overmeer.net>

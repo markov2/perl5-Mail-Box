@@ -1,9 +1,9 @@
 
 use strict;
-package Mail::Box::Mbox;
-
 use Mail::Box;
+use Mail::Box::Mbox::Message;
 
+package Mail::Box::Mbox;
 use vars qw/@ISA/;
 @ISA     = 'Mail::Box';
 
@@ -33,7 +33,7 @@ like MH).
 
 In file-based folders, each message is preceeded by a line which starts
 with the word C<From >.  Lines inside a message which do accedentally
-start with C<From> are, in the file, preceeded by `>'.  This character is
+start with C<From> are, in the file, preceeded by `E<gt>'.  This character is
 stripped when the message is read.
 
 The name of a folder may be an absolute or relative path.  You can also
@@ -62,67 +62,7 @@ automatically renamed, such that the second situation is reached.
 Because of these simulated sub-folders, the folder-manager does not need to
 distiguish between file- and directory-based folders in this respect.
 
-=head2 Message State Transition
-
-The user of a folder gets his hand on a message-object, and is not bothered
-with the actual data which is stored in the object at that moment.  As
-implementor of a mail-package, you might be.
-
-A message is not a message from the start, but only if you access the
-body from it.  Below is depicted how the internal status of the
-message-object changes based on actions on the object and parameters.
-
-The C<Mail::Box::Mbox::Message> stage, means that the whole message
-is in memory.  It then is a full decendent of a C<MIME::Entity>.
-But at the same time, it consumes a considerable amount of memory,
-and spent quite some processor time.  All the intermediate stati
-are created to avoid full loading, so to be cheap in memory and
-time.  Folder access will be much faster under normal circumstances.
-
-For trained eyes only:
-
-   read()     !lazy
-   -------> +----------------------------------> Mail::Box::
-            |                                  Mbox::Message
-            |                                         ^
-            |                                         |
-            |                    NotParsed    load    |
-            |        ALL ,-----> NotReadHead ------>-'|
-            | lazy      /                             |
-            `--------->+                              |
-                        \        NotParsed    load    |
-                    REAL `-----> MIME::Head ------->-'
-
-
-         ,-------------------------+---.
-        |                      ALL |   | regexps && taken
-        v                          |   |
-   NotParsed    head()    get()   /   /
-   NotReadHead --------> ------->+---'
-             \          \         \
-              \ other()  \ other() \regexps && !taken
-               \          \         \
-                \          \         \    load    Mail::Box::
-                 `----->----+---------+---------> MBox::Message
-
-         ,---------------.
-        |                |
-        v                |
-   NotParsed     head()  |
-   MIME::Head -------->--'
-            \                           Mail::Box::
-             `------------------------> MBox::Message
-
-
-Terms: C<lazy> refers to the evaluation of the C<lazy_extract()> option. The
-C<load> and C<load_head> are triggers to the C<AUTOLOAD> mothods.  All
-terms like C<head()> refer to method-calls.  Finally, C<ALL>, C<REAL>,
-and C<regexps> (default) refer to values of the C<take_headers> option
-of C<new()>.
-
-Hm... not that easy...  but relatively simple compared to MH-folder messages.
-
-=head1 PUBLIC INTERFACE
+=head1 METHODS
 
 =over 4
 
@@ -138,7 +78,7 @@ description of Mbox specific options.
 
  access            Mail::Box          'r'
  create            Mail::Box          0
- dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
+ dummy_type        Mail::Box::Threads 'Mail::Box::Thread::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          $ENV{HOME}.'/Mail'
  lazy_extract      Mail::Box          10kb
@@ -150,7 +90,7 @@ description of Mbox specific options.
  manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::Mbox::Message'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
- notread_type      Mail::Box          'Mail::Box::Mbox::Message::NotParsed'
+ notread_type      Mail::Box          'Mail::Box::Mbox::NotParsed'
  realhead_type     Mail::Box          'MIME::Head'
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
@@ -165,7 +105,7 @@ Mbox specific options:
 
 =over 4
 
-=item * lock_extention => FILENAME|STRING
+=item * lock_extention =E<gt> FILENAME|STRING
 
 When the dotlock locking mechanism is used, the lock is created by
 the creation of a file.  For Mail::Box::Mbox type of folders, this
@@ -180,7 +120,7 @@ are:
     my_own_lockfile.test   # full filename, same dir
     /etc/passwd            # somewhere else
 
-=item * subfolder_extention => STRING
+=item * subfolder_extention =E<gt> STRING
 
 Mail folders which store their messages in files do usually not
 support sub-folders, as known by mail folders which store messages
@@ -200,8 +140,6 @@ my $default_extention  = '.d';
 
 sub init($)
 {   my ($self, $args) = @_;
-    $args->{message_type}     ||= 'Mail::Box::Mbox::Message';
-    $args->{dummy_type}       ||= 'Mail::Box::Message::Dummy';
     $args->{notreadhead_type} ||= 'Mail::Box::Message::NotReadHead';
     $args->{folderdir}        ||= $default_folder_dir;
 
@@ -460,11 +398,11 @@ that file. As options you may specify (see C<Mail::Box> for explanation)
 
 =over 4
 
-=item * keep_deleted => BOOL
+=item * keep_deleted =E<gt> BOOL
 
-=item * save_deleted => BOOL
+=item * save_deleted =E<gt> BOOL
 
-=item * remove_when_empty => BOOL
+=item * remove_when_empty =E<gt> BOOL
 
 =back
 
@@ -548,11 +486,11 @@ If the folder does not exist, C<undef> (or FALSE) is returned.
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
-=item * message => MESSAGE
+=item * message =E<gt> MESSAGE
 
-=item * messages => ARRAY-OF-MESSAGES
+=item * messages =E<gt> ARRAY-OF-MESSAGES
 
 =back
 
@@ -652,9 +590,9 @@ on the request.  For this class, we use (if defined):
 
 =over 4
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
-=item * subfolder_extention => STRING
+=item * subfolder_extention =E<gt> STRING
 
 =back
 
@@ -697,7 +635,7 @@ be left untouched.  As options, you may specify:
 
 =over 4
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 =back
 
@@ -739,15 +677,15 @@ extention is found, then an empty folder is presumed.
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
-=item * check => BOOL
+=item * check =E<gt> BOOL
 
-=item * skip_empty => BOOL
+=item * skip_empty =E<gt> BOOL
 
-=item * subfolder_extention => STRING
+=item * subfolder_extention =E<gt> STRING
 
 =back
 
@@ -829,292 +767,6 @@ sub openSubFolder($@)
     $self->clone(folder => $self->name . '/' .$name, @_);
 }
 
-###
-### Mail::Box::Mbox::Message::Runtime
-###
-
-package Mail::Box::Mbox::Message::Runtime;
-use POSIX ':unistd_h';
-
-#-------------------------------------------
-
-=back
-
-=head1 Mail::Box::Mbox::Message::Runtime
-
-This object contains methods which are part of as well delay-loaded
-(not-parsed) as loaded messages, but not general for all folders.
-
-=head2 PUBLIC INTERFACE
-
-=over 4
-
-=cut
-
-#-------------------------------------------
-
-=item new ARGS
-
-Messages in file-based folders use the following extra options for creation:
-
-=over 4
-
-=item * from LINE
-
-The line which precedes each message in the file.  Some people detest
-this line, but this is just how things were invented...
-
-=back
-
-=cut
-
-my $unreg_msgid = time;
-
-sub init($)
-{   my ($self, $args) = @_;
-    $self->{MBM_from_line} = $args->{from};
-    $self->{MBM_begin}     = $args->{begin};
-
-    unless(exists $args->{messageID})
-    {   my $msgid = $self->head->get('message-id');
-        $args->{messageID} = $& if $msgid && $msgid =~ m/\<.*?\>/;
-    }
-    $self->{MBM_messageID} = $args->{messageID} || 'mbox-'.$unreg_msgid++;
-
-    delete @$args{ qw/from begin/ };
-
-    $self;
-}
-
-#-------------------------------------------
-
-=item fromLine [LINE]
-
-Many people detest file-style folders because they store messages all in
-one file, where a line starting with C<From > leads the header.  If we
-receive a message from a file-based folder, we store that line.  If we write
-to such a file, but there is no such line stored, then we try to produce
-one.
-
-When you pass a LINE, that this is stored.
-
-=cut
-
-sub fromLine(;$)
-{   my $self = shift;
-
-    return $self->{MBM_from_line} = shift if @_;
-
-    return $self->{MBM_from_line} if $self->{MBM_from_line};
-
-    # Create a fake.
-    my $from   = $self->head->get('from') || '';
-    my $sender = $from =~ m/\<.*?\>/ ? $1 : 'unknown';
-    my $date   = $self->head->get('date') || '';
-    $self->{MBM_from_line} = "From $sender $date\n";
-}
-
-#-------------------------------------------
-
-=item print FILEHANDLE
-
-Write one message to a file-handle.  Unmodified messages are taken
-from the folder-file where they were stored in.  Modified messages
-are written as in memory.  Specify a FILEHANDLE to write to
-(defaults to STDOUT).
-
-=cut
-
-sub print()
-{   my $self     = shift;
-    my $out      = shift || \*STDOUT;
-
-    my $folder   = $self->folder;
-    my $was_open = $folder->fileIsOpen;
-    my $file     = $folder->fileOpen;
-
-    if($self->modified)
-    {   # Modified messages are printed as they were in memory.  This
-        # may change the order and content of header-lines and (of
-        # course) also the body.
-
-        $self->createStatus->createXStatus;
-        print $out $self->fromLine;
-        $self->MIME::Entity::print($out);
-        print $out "\n";
-    }
-    else
-    {   # Unmodified messages are copied directly from their folder
-        # file: fast and exact.
-        my $size = $self->size;
-
-        seek $file, $self->{MBM_begin}, SEEK_SET;
-
-        my $msg;
-        unless(defined read($file, $msg, $size))
-        {   warn "Could not read $size bytes for message from $folder.\n";
-            $folder->fileClose unless $was_open;
-            return 0;
-        }
-        print $out $msg;
-    }
-
-    $folder->fileClose unless $was_open;
-    1;
-}
-
-#-------------------------------------------
-
-=item migrate FILEHANDLE
-
-Move the message from the current folder, to a new folder-file.  The old
-location should be not used after this.
-
-=cut
-
-sub migrate($)
-{   my ($self, $out) = @_;
-    my $newbegin = tell $out;
-    $self->print($out);
-    $self->{MBM_begin} = $newbegin;
-    $self;
-}
-
-###
-### Mail::Box::Mbox::Message
-###
-
-package Mail::Box::Mbox::Message;
-use vars qw/@ISA/;
-@ISA = qw(Mail::Box::Mbox::Message::Runtime Mail::Box::Message);
-
-#-------------------------------------------
-
-=back
-
-=head1 Mail::Box::Mbox::Message
-
-This object extends a Mail::Box::Message with extra tools and facts
-on what is special to messages in file-based folders, with respect to
-messages in other types of folders.
-
-=head2 PUBLIC INTERFACE
-
-=over 4
-
-=cut
-
-sub init($)
-{   my ($self, $args) = @_;
-    $self->Mail::Box::Message::init($args);
-    $self->Mail::Box::Mbox::Message::Runtime::init($args);
-    $self;
-}
-
-#-------------------------------------------
-
-=item coerce FOLDER, MESSAGE [,OPTIONS]
-
-(Class method) Coerce a MESSAGE into a Mail::Box::Mbox::Message.  When
-any message is offered to be stored in a mbox FOLDER, it first should have
-all fields which are specific for Mbox-folders.
-
-The coerced message is returned on success, else C<undef>.
-
-Example:
-
-   my $inbox = Mail::Box::Mbox->new(...);
-   my $mh    = Mail::Box::MH::Message->new(...);
-   Mail::Box::Mbox::Message->coerce($inbox, $mh);
-   # Now, the $mh is ready to be included in $inbox.
-
-However, you can better use
-
-   $inbox->coerce($mh);
-
-which will call the right coerce() for sure.
-
-=cut
-
-sub coerce($$)
-{   my ($class, $folder, $message) = (shift, shift, shift);
-    return $message if $message->isa($class);
-
-    Mail::Box::Message->coerce($folder, $message, @_) or return;
-
-    # When I know more what I can save from other types of messages, later,
-    # that information will be extracted here, and transfered into arguments
-    # for Runtime->init.
-
-    (bless $message, $class)->Mail::Box::Mbox::Message::Runtime::init;
-}
-
-###
-### Mail::Box::Mbox::Message::NotParsed
-###
-
-package Mail::Box::Mbox::Message::NotParsed;
-use vars qw/@ISA/;
-@ISA = qw/Mail::Box::Mbox::Message::Runtime
-          Mail::Box::Message::NotParsed/;
-
-use IO::InnerFile;
-
-#-------------------------------------------
-
-=back
-
-=head1 Mail::Box::Mbox::Message::NotParsed
-
-Not parsed messages stay in the file until the message is used.  Because
-this folder structure uses many messages in the same file, the byte-locations
-are remembered.
-
-=head2 PUBLIC INTERFACE
-
-=over 4
-
-=cut
-
-sub init(@)
-{   my $self = shift;
-    $self->Mail::Box::Message::NotParsed::init(@_)
-         ->Mail::Box::Mbox::Message::Runtime::init(@_);
-}
-
-#-------------------------------------------
-
-=item load
-
-This method is called by the autoloader then the data of the message
-is required.  If you specified C<REAL> for the C<take_headers> option
-for C<new()>, you did have a MIME::Head in your hands, however this
-will be destroyed when the whole message is loaded.
-
-=cut
-
-sub load($)
-{   my ($self, $class) = @_;
-
-    my $folder   = $self->folder;
-    my $was_open = $folder->fileIsOpen;
-    my $file     = $folder->fileOpen || return 0;
-    my $if       = IO::InnerFile->new($file, $self->{MBM_begin}, $self->size)
-                || return 0;
-
-    $folder->fileClose unless $was_open;
-    my $message = $folder->parser->parse($if);
-
-    # A pitty that we have to copy data now...
-    @$self{ keys %$message } = values %$message;
-
-    my $args    = { message  => $message };
-
-    $folder->{MB_delayed_loads}--;
-
-    (bless $self, $class)->delayedInit($args);
-}
-
 =back
 
 =head1 AUTHOR
@@ -1125,7 +777,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.93
+This code is beta, version 0.94
 
 =cut
 

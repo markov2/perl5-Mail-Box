@@ -19,10 +19,13 @@ Box/Locker.pm
 Box/Index.pm
 Box/Manager.pm
 Box/Mbox.pm
+Box/Mbox/Message.pm
 Box/Message.pm
 Box/MH.pm
+Box/MH/Message.pm
 Box.pm
 Box/Threads.pm
+Box/Thread.pm
 Box/Tie.pm
 ChangeLog
 Makefile.PL

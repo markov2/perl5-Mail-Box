@@ -30,7 +30,7 @@ removed message-files without updating the index.  If the index is
 not trusted, it will not be used (and so cost performance to the reader
 of the folder).
 
-=head1 PUBLIC INTERFACE
+=head1 METHODS
 
 =over 4
 
@@ -46,7 +46,7 @@ folder.
 
 =over 4
 
-=item * keep_index => BOOL
+=item * keep_index =E<gt> BOOL
 
 Keep an index-file in the specified file, one file per directory.  Using
 an index-file will speed-up things considerably, because it avoids
@@ -55,7 +55,7 @@ folder.  When you open a folder, you need information like the the
 subject of each message, and it is not pleasant to open all thousands
 of messages to read them.
 
-=item * index_filename => FILENAME
+=item * index_filename =E<gt> FILENAME
 
 The FILENAME which is used in each directory to store the headers of
 all mails.  The filename shall not contain a directory path (so: do not
@@ -124,7 +124,7 @@ stored, and therefore not work.
 
 The headers which are read are created into the specified HEADERCLASS,
 which may be different for each folder-type, but by default a
-MIME::Head.
+C<MIME::Head>.
 
 =cut
 
@@ -156,7 +156,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.93
+This code is beta, version 0.94
 
 =cut
 

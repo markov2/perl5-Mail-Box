@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '0.93';
+$VERSION = '0.94';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -76,7 +76,7 @@ MIME::Entity).  It presents message-facts in an application-independent
 way.  Each application needs to extend Mail::Box::Message with their own
 practices.
 
-=head1 PUBLIC INTERFACE
+=head1 METHODS
 
 =over 4
 
@@ -117,14 +117,14 @@ The options added by Mail::Box
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
 Which folder to open (for read or write).  When used for reading (the
 C<access> option set to C<"r">) the mailbox should already
 exist.  When opened for C<"rw">, we do not care, although write-permission
 is checked on opening.
 
-=item * access => MODE
+=item * access =E<gt> MODE
 
 Access-rights to the folder. MODE can be read-only (C<"r">), append (C<"a">),
 and read-write (C<"rw">).  These modes have nothing in common with the modes
@@ -132,32 +132,32 @@ actually used to open the folder-files within this module.
 
 Folders are opened for read-only (C<"r">) by default.
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 Where are folders written by default?  You can specify a folder-name
 preceeded by C<=> to explicitly state that the folder is located below
 this directory.
 
-=item * message_type => CLASS
+=item * message_type =E<gt> CLASS
 
 What kind of message-objects are stored in this type of folder.  The
 default is Mail::Box::Message (which is a sub-class of MIME::Entity).
 The class you offer must be an extention of Mail::Box::Message.
 
-=item * save_on_exit => BOOL
+=item * save_on_exit =E<gt> BOOL
 
 Sets the default on what to do when the folder is closed (see the
 C<close()> method.  When the program is terminated, or any other
 reason when the folder is automatically close, this flag determines
 what to do.  By default, this is TRUE;
 
-=item * remove_when_empty => BOOL
+=item * remove_when_empty =E<gt> BOOL
 
 Remove the folder-file or directory (dependent on the type of folder)
 automatically when the write would result in a folder without sub-folders
 and messages.  This is true by default.
 
-=item * manager => MANAGER
+=item * manager =E<gt> MANAGER
 
 The object which manages this folder.  Typically a (sub-class of)
 Mail::Box::Manager.
@@ -170,23 +170,23 @@ fields will not complain.
 
 =over 4
 
-=item * notread_type => CLASS
+=item * notread_type =E<gt> CLASS
 
-=item * notreadhead_type => CLASS
+=item * notreadhead_type =E<gt> CLASS
 
-=item * realhead_type => CLASS
+=item * realhead_type =E<gt> CLASS
 
 Three classes of objects which are usually hidden for users of this
 module, but especially useful if you plan to extent modules.  These
 classes all contain parts of an incompletely read message.
 
-=item * lazy_extract => INTEGER
+=item * lazy_extract =E<gt> INTEGER
 
-=item * lazy_extract => CODE
+=item * lazy_extract =E<gt> CODE
 
-=item * lazy_extract => METHOD
+=item * lazy_extract =E<gt> METHOD
 
-=item * lazy_extract => 'NEVER'|'ALWAYS'
+=item * lazy_extract =E<gt> 'NEVER'|'ALWAYS'
 
 If you supply a number to this option, bodies of those messages with a
 total size less than that number will be extracted from the folder only
@@ -236,7 +236,7 @@ Examples:
 
 The Mail::Box::Message manual-page has more on this subject.
 
-=item * take_headers => ARRAY-REGEXPS|REGEXP|'ALL'|'REAL'|'DELAY'
+=item * take_headers =E<gt> ARRAY-REGEXPS|REGEXP|'ALL'|'REAL'|'DELAY'
 
 When messages are not parsed (as controlled by the C<lazy_extract> parameter),
 and hence stay in their respective folders, some header-lines are still to be
@@ -278,6 +278,7 @@ sub new(@)
 
 sub init($)
 {   my ($self, $args) = @_;
+    my $class = ref $self;
 
     unless(defined $args->{folder})
     {   warn "No folder specified.\n";
@@ -299,11 +300,11 @@ sub init($)
         if exists $args->{manager};
 
     my $message_type         = $self->{MB_message_type}
-        = $args->{message_type}     || 'Mail::Box::Message';
+        = $args->{message_type}     || $class . '::Message';
     $self->{MB_notreadhead_type}
-        = $args->{notreadhead_type} || $message_type . '::NotReadHead';
+        = $args->{notreadhead_type} || $class . '::NotReadHead';
     $self->{MB_notparsed_type}
-        = $args->{notparsed_type}   || $message_type . '::NotParsed';
+        = $args->{notparsed_type}   || $class . '::NotParsed';
     $self->{MB_realhead_type}
         = $args->{realhead_type}    || 'MIME::Head';
 
@@ -524,17 +525,17 @@ As options you may specify
 
 =over 4
 
-=item * force => BOOL
+=item * force =E<gt> BOOL
 
 Overrule write-protection (if possible, it may still be blocked by the
 operating-system).
 
-=item * keep_deleted => BOOL
+=item * keep_deleted =E<gt> BOOL
 
 Do not remove messages which were flaged to be deleted from the folder,
 but do remove them from disk.
 
-=item * save_deleted => BOOL
+=item * save_deleted =E<gt> BOOL
 
 Save messages which where flagged to be deleted.  The flag is conserved
 (when possible)
@@ -589,14 +590,14 @@ Options specific to C<close> are:
 
 =over 4
 
-=item * write => 'ALWAYS'|'NEVER'|'MODIFIED'
+=item * write =E<gt> 'ALWAYS'|'NEVER'|'MODIFIED'
 
 When must the folder be written.  As could be expected, C<'ALWAYS'> means
 always (even if there are no changes), C<'NEVER'> means that changes to
 the folder will be lost, and C<'MODIFIED'> (which is the default) only
 saves the folder if there are any changes.
 
-=item * force => BOOL
+=item * force =E<gt> BOOL
 
 Overrule the setting of C<access> when the folder was opened.  This only
 contributes to your program when you give it a TRUE value.  However: writing
@@ -939,15 +940,15 @@ C<folderdir>).  Next to these, two parameters shall be specified:
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
 The name of the folder where the messages are to be appended.  When possible,
 the folder-implementation will avoid to open the folder for real, because
 that is resource consuming.
 
-=item * message => MESSAGE
+=item * message =E<gt> MESSAGE
 
-=item * messages => ARRAY-OF-MESSAGES
+=item * messages =E<gt> ARRAY-OF-MESSAGES
 
 One reference to a MESSAGE or a reference to an ARRAY of MESSAGEs, which may
 be of any type.  The messages will first be coerced into the correct
@@ -1147,7 +1148,7 @@ least each type will support
 
 =over 4
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 The location where the folders of this class are stored by default.  If the
 user specifies a name starting with a C<=>, that symbolizes that the
@@ -1171,7 +1172,7 @@ be left untouched.  As options, you may specify:
 
 =over 4
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 When the foldername is preceeded by a C<=>, the C<folderdir> directory
 will be searched for the named folder.
@@ -1199,19 +1200,19 @@ of the various folder-classes to see more options.
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
 The folder of which the sub-folders should be listed.
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
-=item * check => BOOL
+=item * check =E<gt> BOOL
 
 Specifies whether to do a very thorrow job on selecting folders.  Performing
 a check on each file or directory (depends on the type of folder) to see if
 it really contains a folder can be time-consuming, so the default is off.
 
-=item * skip_empty => BOOL
+=item * skip_empty =E<gt> BOOL
 
 Shall empty folders (folders which currently do not contain any messages)
 be included?  Empty folders are not useful to open, but may be useful
@@ -1265,7 +1266,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.93
+This code is beta, version 0.94
 
 =cut
 

@@ -18,9 +18,10 @@ Mail::Box::Manager - Manage a set of folders
 
 =head1 DESCRIPTION
 
-This code is striving for a beta classification, but is not there
-yet.  Please contribute tests and patches.  Read the STATUS file
-for more details.
+This code is beta, which means that there are no serious applications
+written with it yet.  Please inform the author when you have, so this
+module can go to stable.  Read the STATUS file inclosed in the package for
+more details.
 
 The folder manager maintains a set of folders (mail-boxes).  Those
 folders may be of different types.  Most folder-types can be detected
@@ -47,9 +48,10 @@ Overview:
     Mail::Box::Locker
 
 All classes are written to be extendible.  The most complicated work
-is done in MIME::Entity, which is written by Eryq (eryq@zeegee.com)
+is done in MIME::Entity, which is written and maintained by
+Eryq (eryq@zeegee.com).
 
-=head1 PUBLIC INTERFACE
+=head1 METHODS
 
 =over 4
 
@@ -64,9 +66,9 @@ may carry the following options:
 
 =over 4
 
-=item * folder_types => [ NAME => CLASS [,OPTIONS] ]
+=item * folder_types =E<gt> [ NAME =E<gt> CLASS [,OPTIONS] ]
 
-=item * folder_types => [ [ NAME => CLASS [,OPTIONS] ], [...] ]
+=item * folder_types =E<gt> [ [ NAME =E<gt> CLASS [,OPTIONS] ], [...] ]
 
 Add one or more folder_types to the list of known types.  The order is
 important: when you open a file without specifying its type, the
@@ -76,15 +78,15 @@ for the first of that list.
 You may specify folder-specific defaults as OPTIONS.  They overrule
 the settings of the manager.
 
-=item * default_folder_type => NAME|CLASS
+=item * default_folder_type =E<gt> NAME|CLASS
 
 When a new folder is created, it is of this type.  If this option is
 not specified, the most recently registered type is used (see
 C<registerType> and the C<folder_types>-option.
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
-=item * folderdirs => [ DIRECTORY, ... ]
+=item * folderdirs =E<gt> [ DIRECTORY, ... ]
 
 The default directory, respectively directories, where folders are
 located.  Mail::Box::Manager can autodetect the existing folder-types.
@@ -144,7 +146,7 @@ sub init($)
 
 #-------------------------------------------
 
-=item registerType TYPE => CLASS [,OPTIONS]
+=item registerType TYPE =E<gt> CLASS [,OPTIONS]
 
 With C<registerType> you can register one TYPE of folders.  The CLASS
 is compiled immediately, so you do not need to C<use> them in your own
@@ -154,6 +156,7 @@ The added types are put in front of the known types, so are checked first
 when a folder is opened in autodetect mode.
 
 Example:
+
    $manager->registerType(mbox => 'Mail::Box::Mbox',
       save_on_exit => 0, folderdir => '/tmp');
 
@@ -179,6 +182,7 @@ sub registerType($$@)
 The C<folderTypes> returns the list of currently defined types.
 
 Example:
+
    print join("\n", $manager->folderTypes), "\n";
 
 =cut
@@ -205,15 +209,15 @@ The options which are most common to C<open()>:
 
 =over 4
 
-=item * folder => FOLDERNAME
+=item * folder =E<gt> FOLDERNAME
 
 Which folder to open.  The default folder is $ENV{MAIL}.
 
-=item * folderdir => DIRECTORY
+=item * folderdir =E<gt> DIRECTORY
 
 The directory where the folders are usually stored.
 
-=item * type => FOLDERTYPENAME|FOLDERTYPE
+=item * type =E<gt> FOLDERTYPENAME|FOLDERTYPE
 
 Specify that the folder is of a specific type.  When you do not specify this
 and you open the folder for ready, it checks all registered folder-types
@@ -222,10 +226,11 @@ the default will be the most recently registered type (if you add more than
 one type at once, the first of the list is taken).
 
 Examples:
+
    $manager->open(folder => '=jack', type => 'mbox');
    $manager->open(type => 'Mail::Box::Mbox');
 
-=item * create => BOOL
+=item * create =E<gt> BOOL
 
 Create the folder when it does not exist.  By default, this is not done.
 The C<type>-option specifies which type of folder is created.
@@ -316,17 +321,18 @@ sub openFolders() { @{shift->{MBM_open_folders}} }
 
 C<close> removes the specified folder from the list of open folders.
 Indirectly it will update the files on disk if needed (depends on
-the L</save_on_exit> flag of each folder).
+the C<save_on_exit> flag to each seperate folder).
 
 You may also close the folder directly.  The manager will be informed
 about this event.
 
 Examples:
+
     my $inbox = $mgr->open('inbox');
     $mgr->close($inbox);
     $inbox->close;        # alternative
 
-C<closeAllFolders> calls L</close> for each folder managed by
+C<closeAllFolders> calls C<close> for each folder managed by
 this object.
 
 =cut
@@ -379,6 +385,7 @@ The OPTIONS is a list of key-values, which are added to (overruling)
 the default options for the detected folder-type.
 
 Examples:
+
    $mgr->appendMessage('=send', $message, folderdir => '/');
    $mgr->appendMessage('=received', $inbox->messages);
 
@@ -479,7 +486,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.93
+This code is beta, version 0.94
 
 =cut
 
