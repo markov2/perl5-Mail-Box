@@ -64,7 +64,6 @@ sub new($)
     my $user = $self->{MSIL_user}  = $args{user};
     $self->{MSIL_folders} = $args{folders};
     $self->{MSIL_inbox}   = $args{inbox};
-
     $self->{MSIL_delim}   = exists $args{delimiter} ? $args{delimiter} : '/';
     $self;
 }
@@ -88,10 +87,10 @@ CODE reference was specified at initiation.
      wantarray ? ($delim, $root) : $delim;
  }
 
- my $imap = Mail::Server::IMAP4::List->new(delimiter => \&delim, ...);
- print $imap->delimiter('abc/xyz');      # returns a / (slash) and ''
- print $imap->delimiter('#news.feed');   # returns a . (dot)   and $news.
- print $imap->delimiter('');             # returns default delimiter
+ my $list = Mail::Server::IMAP4::List->new(delimiter => \&delim, ...);
+ print $list->delimiter('abc/xyz');      # returns a / (slash) and ''
+ print $list->delimiter('#news.feed');   # returns a . (dot)   and $news.
+ print $list->delimiter('');             # returns default delimiter
  
 =cut
 
@@ -116,7 +115,7 @@ Returns the M<Mail::Box::Identity> of the toplevel folder.
 
 sub folders()
 {   my $self = shift;
-    $self->{MSIL_folders} || $self->user->folders;
+    $self->{MSIL_folders} || $self->user->topfolder;
 }
 
 #------------------------------------------

@@ -149,7 +149,7 @@ sub topfolder() { shift->{MBMU_topfolder} }
 Returns the folder description, a M<Mail::Box::Identity>.
 =cut
 
-sub folder($$)
+sub folder($)
 {   my ($self, $name) = @_;
     my $top  = $self->topfolder or return ();
     my @path = split $self->{MBMU_delim}, $name;
@@ -171,7 +171,7 @@ sub folderCollection($)
 
     my @path = split $self->{MBMU_delim}, $name;
     unless(shift @path eq $top->name)
-    {   $self->log("ERROR: folder name $name not under top.");
+    {   $self->log(ERROR => "Folder name $name not under top.");
         return ();
     }
 

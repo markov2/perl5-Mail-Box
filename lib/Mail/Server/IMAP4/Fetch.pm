@@ -48,7 +48,7 @@ sub new($)
     
     my $type  = $body->type;
 
-    my $self = bless
+    my $self  = bless
       { type        => $type->body
       , typeattr    => [ $type->attributes ]
       , charset     => $body->charset
@@ -130,19 +130,13 @@ sub new($)
 =section Attributes
 
 =method headLocation
+=method bodyLocation
+=method partLocation
 =cut
 
 sub headLocation() { @{ (shift) }{ qw/headbegin bodybegin/ } }
-
-=method bodyLocation
-=cut
-
 sub bodyLocation() { @{ (shift) }{ qw/bodybegin bodyend/ } }
-
-=method messageLocation
-=cut
-
-sub messageLocation() { @{ (shift) }{ qw/headbegin bodyend/ } }
+sub partLocation() { @{ (shift) }{ qw/headbegin bodyend/ } }
 
 #------------------------------------------
 
@@ -278,6 +272,60 @@ sub part(;$)
     }
 
     $self;
+}
+
+#------------------------------------------
+
+=method printStructure [FILEHANDLE|undef, [NUMBER]]
+
+Print the structure of the fetch data to the specified FILEHANDLE or the
+selected filehandle.  When explicitly C<undef> is specified as handle,
+then the output will be returned as string.  
+Only a limited set of the information is displayed.
+
+=examples
+ my $imap = ...;
+ $imap->printStructure(\*OUTPUT);
+ $imap->printStructure;
+ my $struct = $imap->printStructure(undef);
+
+=cut
+
+sub printStructure(;$$)
+{   my $self    = shift;
+
+    my $fh      = @_ ? shift : select;
+    my $number  = @_ ? shift : '';
+
+    my $buffer;   # only filled if filehandle==undef
+    open $fh, '>', \$buffer unless defined $fh;
+
+    my $type    = $self->{type};
+    my $subject = $self->{subject} || '';
+    my $text    = "$number $type: $subject\n";
+
+    my $hbegin  = $self->{headbegin} || 0;
+    my $bbegin  = $self->{bodybegin} || '?';
+    my $bodyend = $self->{bodyend}   || '?';
+    my $size    = defined $self->{bodysize}  ? $self->{bodysize}  : '?';
+    my $lines   = defined $self->{bodylines} ? $self->{bodylines} : '?';
+
+    $text      .= ' ' x (length($number) + 1);
+    $text      .= "@ $hbegin-$bbegin-$bodyend, $size bytes, $lines lines\n";
+
+    ref $fh eq 'GLOB' ? (print $fh $text) : $fh->print($text);
+
+    if($self->{nest})
+    {   $self->{nest}->printStructure($fh, length($number) ? $number.'.1' :'1');
+    }
+    elsif($self->{parts})
+    {   my $count = 1;
+        $number  .= '.' if length $number;
+        $_->printStructure($fh, $number.$count++)
+           foreach @{$self->{parts}};
+    }
+
+    $buffer;
 }
 
 #------------------------------------------

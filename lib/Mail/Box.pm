@@ -361,7 +361,7 @@ is needed, but not before.
 
 The type of the locker object.  This may be the full name of a CLASS
 which extends Mail::Box::Locker, or one of the known locker types
-C<DotLock>, C<File>, C<Multi>, C<NFS>, C<POSIX>, or C<NONE>.  If an
+C<DotLock>, C<Flock>, C<Multi>, C<NFS>, C<POSIX>, or C<NONE>.  If an
 ARRAY is specified, then a Multi locker is built which uses the specified
 list.
 
@@ -1176,13 +1176,16 @@ second argument, the message is first stored in the folder, replacing any
 existing message whose message ID is MESSAGE-ID. (The message ID of MESSAGE
 need not match MESSAGE-ID.)
 
+!!WARNING!!: when the message headers are delay-parsed, the message
+might be in the folder but not yet parsed into memory. In this case, use
+M<find()> instead of C<messageId()> if you really need a thorough search.
+This is especially the case for directory organized folders without
+special indexi, like M<Mail::Box::MH>.
+
 The MESSAGE-ID may still be in angles, which will be stripped.  In that
 case blanks (which origin from header line folding) are removed too.  Other
 info around the angles will be removed too.
 
-WARNING: when the message headers are delay-parsed, the message might be in
-the folder but not yet parsed into memory. In this case, use M<find()>
-instead of C<messageId()> if you really need a thorough search.
 
 =examples
 
@@ -1247,6 +1250,8 @@ sub messageId($;$)
     }
 
     $self->{MB_msgid}{$msgid} = $message;
+    weaken($self->{MB_msgid}{$msgid});
+    $message;
 }
 
 sub messageID(@) {shift->messageId(@_)} # compatibility

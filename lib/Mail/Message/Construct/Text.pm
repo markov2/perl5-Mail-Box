@@ -78,20 +78,25 @@ sub file()
 
 #------------------------------------------
 
-=method printStructure [FILEHANDLE][, INDENT]
+=method printStructure [FILEHANDLE|undef],[INDENT]
 
-Print the structure of a message to the selected filehandle.
+Print the structure of a message to the specified FILEHANDLE or the
+selected filehandle.  When explicitly C<undef> is specified as handle,
+then the output will be returned as string.
+
 The message's subject and the types of all composing parts are
 displayed.
 
-INDENT specifies the initial indentation string: it is added in
-front of each line, and SHALL end with a blank, if specified.
+INDENT specifies the initial indentation string: it is added in front
+of each line. The INDENT must contain at least one white-space.
 
 =examples
-
  my $msg = ...;
  $msg->printStructure(\*OUTPUT);
+
  $msg->printStructure;
+
+ my $struct = $msg->printStructure(undef);
 
  # Possible output for one message:
  multipart/mixed: forwarded message from Pietje Puk (1550 bytes)
@@ -105,8 +110,16 @@ front of each line, and SHALL end with a blank, if specified.
 
 sub printStructure(;$$)
 {   my $self    = shift;
-    my $indent  = @_ && !ref $_[-1] && substr($_[-1], -1, 1) eq ' ' ? pop : '';
+
+    my $indent
+      = @_==2                       ? pop
+      : defined $_[0] && !ref $_[0] ? shift
+      :                               '';
+
     my $fh      = @_ ? shift : select;
+
+    my $buffer;   # only filled if filehandle==undef
+    open $fh, '>', \$buffer unless defined $fh;
 
     my $subject = $self->get('Subject') || '';
     $subject    = ": $subject" if length $subject;
@@ -125,6 +138,7 @@ sub printStructure(;$$)
       :                      ();
 
     $_->printStructure($fh, $indent.'   ') foreach @parts;
+    $buffer;
 }
     
 =section Flags

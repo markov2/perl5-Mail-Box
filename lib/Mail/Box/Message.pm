@@ -241,7 +241,7 @@ sub readBody($$;$)
 
     unless($getbodytype)
     {   my $folder   = $self->{MBM_folder};
-        $getbodytype = sub {$folder->determineBodyType(@_)};
+        $getbodytype = sub {$folder->determineBodyType(@_)} if defined $folder;
     }
 
     $self->SUPER::readBody($parser, $head, $getbodytype);

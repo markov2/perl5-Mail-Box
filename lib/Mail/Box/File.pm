@@ -454,7 +454,7 @@ returned if this failed.
 
 sub moveAwaySubFolder($$)
 {   my ($self, $dir, $extension) = @_;
-    $self->log("ERROR: Cannot move away sub-folder $dir")
+    $self->log(ERROR => "Cannot move away sub-folder $dir")
        unless move $dir, $dir.$extension;
     $self;
 }

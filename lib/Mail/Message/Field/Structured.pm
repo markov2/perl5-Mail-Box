@@ -188,8 +188,8 @@ sub parse($)
     $self->datum($datum);
 
     my $found = '';
-    until($string eq '')
-    {   if($string =~ s/^\;\s*// && length $found)
+    while($string =~ m/\S/)
+    {   if($string =~ s/^\s*\;\s*// && length $found)
         {   my $attr = Mail::Message::Field::Attribute->new($found);
             $self->attribute($attr);
             $found = '';

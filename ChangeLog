@@ -7,11 +7,35 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-wat als appendMessage faalt?
-filehandle als bron folder?
-MH index in append mode niet lezen.
-flock() op flock(): zelfde process op AIX en Solaris
-References/mozilla-flags
+version 2.059: Tue Nov 30 19:50:42 CET 2004
+
+	Interface changes:
+
+	- Mail::Transport::IMAP4::flagsToLabels expects new first argument
+	  'REPLACE', 'SET', or 'CLEAR'.
+
+	Fixes:
+
+	- Installer didn't ask for optional Time::Hires
+
+	- [Anthony D. Urso] fixed an endless loop in study() for
+	  fields ending on blanks.
+
+	- [Russell Mosemann] found a different problem, in about
+	  the same line as the previous fix.
+
+	- Fixed memory leak in administration of messages in folder.
+
+	Improvements:
+
+	- $msg->printStructure is less strict on the format of the
+	  indentation: any white-space in it is sufficient.
+
+	- $msg->printStructure(undef) will return the structure as
+	  string.
+
+	- new method Mail::Server::IMAP4::Fetch::printStructure()
+	  for debugging purposes.
 
 version 2.058: Wed Sep 22 14:44:32 CEST 2004
 
@@ -388,6 +412,10 @@ version 2.054: Fri Feb  6 21:52:54 CET 2004
 
 	- Mail::Transport::Exim takes exim4 binary with preference over
 	  usual exim MTA, on request by [Mike Mimic]
+
+	- [Mitar] Mail::Transport::Sendmail starts sendmail with -ti, not
+	  -it, which helps exim... either the default sendmail as the
+	  specialized Mail::Transport::Exim module will work now with exim.
 
 version 2.053: Thu Dec  4 00:13:50 CET 2003
 

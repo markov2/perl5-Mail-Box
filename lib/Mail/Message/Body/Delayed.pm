@@ -181,7 +181,7 @@ sub read($$;$@)
 
 #------------------------------------------
 
-=method fileLocation BEGIN, END
+=method fileLocation [BEGIN, END]
 
 =cut
 

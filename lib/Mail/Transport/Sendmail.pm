@@ -74,7 +74,7 @@ sub trySend($@)
     my $program = $self->{MTS_program};
     if(open(MAILER, '|-')==0)
     {   my $options = $args{sendmail_options} || [];
-        { exec $program, '-it', @{$self->{MTS_opts}}; }  # {} to avoid warning
+        { exec $program, '-ti', @{$self->{MTS_opts}}; }  # {} to avoid warning
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
         return 0;
     }

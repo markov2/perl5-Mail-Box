@@ -58,11 +58,17 @@ available (yet).
 =default body_type M<Mail::Message::Body::Lines>
 =default lock_file <folder>C</.lock>
 
-=warning Folder directory $directory is write-protected.
+=option  directory DIRECTORY
+=default directory <derived from folder name>
+For rare folder types, the directory name may differ from the folder
+name.
 
+=warning Folder directory $directory is write-protected.
 The folder directory does already exist and is write protected, which may
 interfere with the requested write access.  Change new(access) or the
 permissions on the directory.
+
+=warning No directory $name for folder of $class
 
 =cut
 
@@ -75,12 +81,13 @@ sub init($)
         unless $self->SUPER::init($args);
 
     my $class            = ref $self;
-    my $directory        = $self->directory;
+    my $directory        = $self->{MBD_directory}
+        = $args->{directory} || $self->directory;
 
        if(-d $directory) {;}
     elsif($args->{create} && $class->create($directory, %$args)) {;}
     else
-    {   $self->log(PROGRESS => "$class: No directory $directory.");
+    {   $self->log(NOTICE => "No directory $directory for folder of $class");
         return undef;
     }
 
@@ -97,7 +104,7 @@ sub init($)
     # Check if we can write to the folder, if we need to.
 
     if($self->writable && -e $directory && ! -w $directory)
-    {   $self->log(WARNING => "Folder directory $directory is write-protected.");
+    {   $self->log(WARNING=> "Folder directory $directory is write-protected.");
         $self->{MB_access} = 'r';
     }
 
@@ -129,7 +136,7 @@ sub directory()
 }
 
 #-------------------------------------------
-                                                                                
+
 sub nameOfSubFolder($;$)
 {   my ($thing, $name) = (shift, shift);
     my $parent = @_ ? shift : ref $thing ? $thing->directory : undef;

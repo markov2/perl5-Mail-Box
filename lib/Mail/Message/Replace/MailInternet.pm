@@ -167,14 +167,6 @@ sub processRawData($$$)
     $self;
 }
 
-=c_method coerce MESSAGE
-Coerce (adapt type) of the specified MESSAGE (anything
-M<Mail::Message::coerce()> accepts) into an M<Mail::Internet> simulating
-object.
-=cut
-
-sub coerce() { confess }
-
 =method dup
 Duplicate the message.  The result will again be a L<Mail::Internet>
 compatible object.
@@ -664,6 +656,16 @@ sub isa($)
     return 1 if $class eq 'Mail::Internet';
     $thing->SUPER::isa($class);
 }
+
+=section Internals
+
+=c_method coerce MESSAGE
+Coerce (adapt type) of the specified MESSAGE (anything
+M<Mail::Message::coerce()> accepts) into an M<Mail::Internet> simulating
+object.
+=cut
+
+sub coerce() { confess }
 
 
 1;

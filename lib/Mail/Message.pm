@@ -529,7 +529,8 @@ Is equivalent to:
 =cut
 
 sub get($)
-{   my $field = shift->head->get(shift) || return undef;
+{   my $self  = shift;
+    my $field = $self->head->get(shift) || return undef;
     $field->body;
 }
 

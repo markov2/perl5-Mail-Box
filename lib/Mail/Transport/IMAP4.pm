@@ -428,7 +428,7 @@ while(my ($k, $v) = each %flags2labels)
 sub getFlags($$)
 {   my ($self, $id) = @_;
     my $imap   = $self->imapClient or return ();
-    my $labels = $self->flagsToLabels($imap->flags($id));
+    my $labels = $self->flagsToLabels(SET => $imap->flags($id));
 
     # Add default values for missing flags
     foreach  my $s (values %flags2labels)
@@ -437,6 +437,14 @@ sub getFlags($$)
 
     $labels;
 }
+
+#------------------------------------------
+
+=method listFlags
+Returns all predefined flags as list.
+=cut
+
+sub listFlags() { keys %flags2labels }
 
 #------------------------------------------
 
@@ -504,37 +512,50 @@ sub labelsToFlags(@)
         }
     }
 
-    join " ", @set;
+    join " ", sort @set;
 }
 
 #------------------------------------------
 
-=ci_method flagsToLabels FLAGS
+=ci_method flagsToLabels WHAT|FLAGS
 In SCALAR context, a hash with labels is returned.  In LIST context, pairs
-are returned.  Flags which do not appear in the list will be ignored: their
-value may either by set or cleared.  See M<getFlags()>
+are returned.
+
+The WHAT parameter can be C<'SET'>, C<'CLEAR'>, or C<'REPLACE'>.  With the
+latter, all standard imap flags do not appear in the list will be ignored:
+their value may either by set or cleared.  See M<getFlags()>
 
 Unknown flags in LIST are stripped from their backslash and lower-cased.
 For instance, '\SomeWeirdFlag' will become `someweirdflag => 1'.
 
 =examples translating IMAP4 flags into MailBox flags
  my @flags  = ('\Seen', '\Flagged');
- my $labels = Mail::Transport::IMAP4->flags2labels(@flags);
+ my $labels = Mail::Transport::IMAP4->flags2labels(SET => @flags);
 
 =cut
 
-sub flagsToLabels(@)
-{   my $thing   = shift;
-
-    # Process the list
+sub flagsToLabels($@)
+{   my ($thing, $what) = (shift, shift);
     my %labels;
+
+    my $clear = $what eq 'CLEAR';
+
     foreach my $f (@_)
     {   if(my $lab = $flags2labels{$f})
-        {   $labels{$lab->[0]} = $lab->[1];
+        {   $labels{$lab->[0]} = $clear ? not($lab->[1]) : $lab->[1];
         }
         else
         {   (my $lab = $f) =~ s,^\\,,;
             $labels{$lab}++;
+        }
+    }
+
+    if($what eq 'REPLACE')
+    {   my %found = map { ($_ => 1) } @_;
+        foreach my $f (keys %flags2labels)
+        {   next if $found{$f};
+            my $lab = $flags2labels{$f};
+            $labels{$lab->[0]} = not $lab->[1];
         }
     }
 

@@ -26,7 +26,7 @@ BEGIN
         exit(0);
     }
 
-    plan tests => 43;
+    plan tests => 65;
 }
 
 ###
@@ -99,41 +99,35 @@ sub expect_labels($$$)
 
     my $gotkeys = join " ", %$got;
     my $expkeys = join " ", %$expect;
-    my $errors  = 0;
+# warn "expected '$expkeys' got '$gotkeys'\n";
 
-    foreach my $e (keys %$expect)
-    {      if(!exists $got->{$e})  { $errors++; ok(0, "missing $e") }
-        else { $errors += (($got->{$e}||0) != $expect->{$e});
-               cmp_ok((delete $got->{$e})||0, '==',  $expect->{$e});
-             }
+    # depends on predefined labels
+    cmp_ok(scalar keys %$got, '==', 7, "$text; nr fields");
+
+    foreach my $k (keys %$got)
+    {   cmp_ok($got->{$k}, '==', $expect->{$k}, "got $k");
     }
 
-    if(keys %$got)
-    {   ok(0, "got too much: ".join(" ", keys %$got));
-        $errors++;
-    }
-    else
-    {   ok(1, "exact match");
-    }
-
-    if($errors)
-    {   warn "$errors errors, expected '$expkeys' got '$gotkeys'\n";
+    foreach my $k (keys %$expect)
+    {   cmp_ok($got->{$k}, '==', $expect->{$k}, "expect $k");
     }
 }
 
-my $labels = $mti->flagsToLabels();
-expect_labels($labels, {}, "flagsToLabels: Empty set");
+my $labels = $mti->flagsToLabels('REPLACE');
+expect_labels $labels, {old => 1}, "flagsToLabels: Empty set";
 
-$labels = $mti->flagsToLabels( qw[\Seen \Flagged] );
-expect_labels($labels, {seen => 1, flagged => 1}, "flagsToLabels: Empty set");
+$labels = $mti->flagsToLabels(REPLACE => qw[\Seen \Flagged] );
+expect_labels $labels
+            , {old => 1, seen => 1, flagged => 1}
+            , "flagsToLabels: Empty set";
 
-$labels = $mti->flagsToLabels( qw[\Seen \Answered \Flagged \Deleted
-                                  \Draft \Recent \Spam] );
+$labels = $mti->flagsToLabels(REPLACE =>
+              qw[\Seen \Answered \Flagged \Deleted \Draft \Recent \Spam] );
 
 expect_labels $labels
-              , { seen => 1, replied => 1, flagged => 1, deleted => 1
-                , draft => 1, old => 0, spam => 1
-                }
-              , "show all labels";
+            , { seen => 1, replied => 1, flagged => 1, deleted => 1
+              , draft => 1, spam => 1
+              }
+            , "show all labels";
 
 exit 0;

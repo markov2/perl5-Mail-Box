@@ -460,7 +460,6 @@ sub open(@)
 
     push @defaults, manager => $self;
     my $folder = $class->new(@defaults, %args);
-
     unless(defined $folder)
     {   $self->log(WARNING =>
            "Folder does not exist, failed opening $folder_type folder $name.")
@@ -562,6 +561,8 @@ sub closeAllFolders(@)
 END {map {defined $_ && $_->closeAllFolders} @managers}
 
 #-------------------------------------------
+
+=section Manage existing folders
 
 =method delete FOLDERNAME, OPTIONS
 

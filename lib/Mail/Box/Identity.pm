@@ -448,5 +448,9 @@ sub rename($;$)
     $folder->addSubfolder($away);
 }
 
+=section Error handling
+=cut
+
 1;
+
 

@@ -1,12 +1,22 @@
 
 This file lists the things to do
 
-Obligatory:
+Question marks:
+
+  what if appendMessage fails
+
+  flock() stacked on flock() by same process on AIX and Solaris
+
+Optional:
+
+  References/mozilla-flags
+
+  filehandle as folder source
+
+   no read for MH index in append mode niet lezen.
 
   Processing folders with non-platform-native line separators.
   appendMessage opens folder, but not needed.
-
-Optional:
 
   fix_header_errors option for Mail::Box::Parser::C
 

@@ -897,7 +897,7 @@ Possible leading blanks on the first line are removed as well.
 sub unfold($)
 {   my $string = $_[1];
     for($string)
-    {   s/\n//g;
+    {   s/\r?\n//gm;
         s/^ +//;
     }
     $string;
