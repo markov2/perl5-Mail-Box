@@ -1,0 +1,714 @@
+#!/usr/bin/perl
+# Create a new distribution for Mail::Box
+
+use warnings;
+use strict;
+
+use IO::File;
+use File::Spec;
+use File::Basename;
+use File::Copy;
+
+use lib '.';
+
+die "Usage: $0 tmpdir version" unless @ARGV==2;
+my ($workdir, $version) = @ARGV;
+
+my $verbose = 0;
+my $markov  = 'L<mark@overmeer.net|mailto:mark@overmeer.net>';
+my $website = 'L<http://perl.overmeer.net/mailbox/>';
+my $index   = "$workdir/method-index";
+
+my %pkgs;
+my %methods;
+
+my @method_sections =
+ ( # For all packages
+   'Initiation'
+
+   # Mail::Box
+ , 'Opening folders'
+ , 'On open folders'
+ , 'Closing the folder'
+ , 'The messages'
+ , 'Sub-folders'
+ , 'Message threads [internals]'
+
+   # Mail::Box::Tie
+ , 'Tied Interface'
+
+   # Mail::Message
+ , 'Constructing a Message'
+ , 'The Message'
+ , 'The Header'
+ , 'Header Shortcuts'
+ , 'The Body'
+ , 'Access to the Message'
+ , 'Labels'
+
+   # Mail::Box::Locker
+ , 'The Locker'
+ , 'Locking'
+
+   # Mail::Message::TransferEnc
+ , 'The Encoder'
+ , 'Encoding'
+
+   # Mail::Message::Body
+ , 'The Body'                   # Already defined
+ , 'About the Payload'
+ , 'Access to the Payload'
+ , 'Constructing a Body'
+
+   # Mail::Message::Head
+ , 'The Header                   # Already defined'
+ , 'Constructing a Header'
+ , 'Access to the Header'
+
+   # Mail::Message::Field
+ , 'The Field'
+ , 'Access to the Field'
+
+   # Mail::Box::MH::Index
+ , 'The Index'
+
+   # Mail::Box::MH::Labels
+ , 'The Label Table'
+
+   # Mail::Box::Manager
+ , 'Manage Folders'
+ , 'Move Messages to Folders'
+ , 'Manage Threads'
+
+   # Mail::Box::Thread::Manager
+ , 'Grouping Folders'
+ , 'The Threads'
+ , 'Keeping Thread Information [internals]'
+
+   # Mail::Box::Thread::Node
+ , 'The Thread Node'
+ , 'The Thread Order'
+ , 'Whole Threads'
+
+   # Mail::Message::Convert
+ , 'Converting'
+
+   # Mail::Transport
+ , 'Server Connection'
+ , 'Sending Mail'
+ , 'Receiving Mail'
+
+   # Mail::Box::Search
+ , 'Searching'
+ , 'The Results'
+
+   # Mail::Box::Parser
+ , 'The Parser'
+ , 'Parsing'
+
+   # For all packages
+ , 'Reading and Writing [internals]'
+ , 'Logging and Tracing'
+ , 'Other Methods'
+ );
+
+my %section_order;
+foreach (@method_sections)
+{    $section_order{$_} = keys %section_order
+         unless exists $section_order{$_};
+}
+
+# Read the MANIFEST file
+sub manifest()
+{   my $filename = 'MANIFEST';
+    my $file = IO::File->new($filename, "r")
+       or die "Cannot open $filename: $!\n";
+
+    my @dist = $file->getlines;
+    $file->close;
+
+    chomp foreach @dist;
+    @dist;
+}
+
+sub unique(@) { my %u = map { ($_ => 1) } @_; keys %u }
+
+sub ordered_sections(@)
+{   sort {$section_order{$a} <=> $section_order{$b}} @_;
+}
+
+sub filename_to_package($)
+{   my $package = shift;
+    $package =~ s#/#::#g;
+    $package =~ s/\.pm$//g;
+    $package;
+}
+    
+sub strip_pod($$)
+{   my ($fromname, $toname) = @_;
+
+    my $from = IO::File->new($fromname, "r")
+        or die "Cannot read from $fromname: $!\n";
+
+    my $to   = IO::File->new($toname, "w")
+        or die "Cannot write to $toname: $!\n";
+
+    print "Stripping $fromname into $toname.\n"
+        if $verbose;
+
+    my $in_pod     = 0;
+    my $last_blank = 1;
+
+    while(<$from>)
+    {   warn "WARNING $fromname $.: '$1' within pod\n"
+            if $in_pod && m!^(sub|my|our|package|use) !;
+
+        if( m!^\=cut! ) { $in_pod = 0 }
+        elsif( m!^\=! ) { $in_pod = 1 }
+        elsif($in_pod)  { ; }
+        elsif( m!^\#\-\-\-! ) { ; }
+        elsif($last_blank && m!^\s*$!) { ; }
+        else
+        {   s/[ \t]+$//;
+            $last_blank = $_ eq "\n";
+            $to->print($_);
+
+            $to->print("our \$VERSION = $version;  # Part of Mail::Box\n")
+                 if m!^package\s!;
+        }
+    }
+
+    $from->close;
+    $to->close;
+}
+
+sub absorb_pod($)
+{   my $filename = shift;
+
+    my $file = IO::File->new($filename, "r")
+        or die "Cannot read from $filename: $!\n";
+
+    print "Absorbing POD of $filename: "
+        if $verbose;
+
+    my $pod  = {filename => $filename, chapters => []};
+
+    my $in_pod = 0;
+    my ($chapter, $section, $body);
+    my ($nrchapter, $nrsection) = (0,0);
+
+    while( <$file> )
+    {
+        if( m!^=cut! )
+        {   $in_pod = 0;
+            next;
+        }
+
+        if( ! m/^\=/ && ! $in_pod)
+        {
+            if( m!^\s*package\s+(.*?)\s*\;\s*$! )
+            {   my $pkg = $1;
+                warn "WARNING $filename $.: Second package statement\n"
+                    if exists $pod->{package};
+
+                $pod->{package} = $pkg;
+            }
+
+            next;
+        }
+        elsif( ! m/^\=/ )
+        { 
+            warn "WARNING $filename $.: POD outside head\n"
+                unless defined $chapter;
+
+            warn "WARNING $filename $.: Comment in pod\n"
+                if m!^\#!;
+
+            push @$body, $_;
+
+            next;
+        }
+
+        $in_pod = 1;
+        if( m!^\=head1\s+(.*?)\s*$! )
+        {   $body  = [];
+            $chapter = { title => $1, text => $body, sections => [] };
+            push @{$pod->{chapters}}, $chapter;
+            $nrchapter++;
+        }
+        elsif( m!^\=head2\s+(.*?)\s*$! && $chapter->{title} eq 'METHODS' )
+        {   $body  = [];
+
+            warn "ERROR $filename $.: Unknown section $1\n"
+                unless exists $section_order{$1};
+
+            $section = { title => $1, text => $body };
+            push @{$chapter->{sections}}, $section;
+            $nrsection++;
+        }
+        else
+        {   push @$body, $_;
+        }
+    }
+
+    unless($pod->{package})
+    {   warn "WARNING $filename: No package found.\n";
+        $pod->{package} = $pod->{filename};
+    }
+
+    $pod->{manual} = filename_to_package $pod->{filename};
+
+    print " $nrchapter chapters\n"
+        if $verbose;
+
+    $pod;
+}
+
+sub dump_pkg_structure()
+{
+    foreach my $pod (map { @{$pkgs{$_}{pods}} } sort keys %pkgs)
+    {   print "POD: $pod->{package}\n";
+        print "   FILENAME: $pod->{filename}\n";
+        print "   ISA: @{$pod->{isa}}\n";
+        foreach my $chapter (@{$pod->{chapters}})
+        {   print "   CHAPTER: $chapter->{title}\n";
+            print "      TEXT: ", scalar @{$chapter->{text}}, " lines\n";
+    
+            foreach my $section (@{$chapter->{sections}})
+            {   print "      SECTION: $section->{title}; "
+                    , scalar @{$section->{text}}, " lines\n";
+            }
+        }
+    }
+}
+
+sub get_compile_info($$)
+{   my ($package, $filename) = @_;
+
+    eval { require $filename };
+    if($@)
+    {   print "Cannot compile $filename: $@\n";
+        return ();
+    }
+
+    no strict 'refs';
+    my @isa = grep /^Mail\:\:/, @{"${package}::ISA"};
+
+    my $realize;
+    $realize = $package->willRealize
+        if $package->can('willRealize');
+
+    (isa => \@isa, realize => $realize);
+}
+
+sub cleanup_package_relations($)
+{   my $package = shift;
+    my $pkg = $pkgs{$package};
+
+    my @isa = unique map { @{$_->{isa}} } @{$pkg->{pods}};
+    warn "WARNING $package: Multiple inheritance not supported.\n"
+        if @isa > 1;
+
+    if(my $isa = $isa[0])
+    {   $pkg->{extends} = $isa;
+        push @{$pkgs{$isa}{extended_by}}, $package;
+    }
+
+    my @real = unique map { defined $_->{realize} ? ($_->{realize}) : () }
+        @{$pkg->{pods}};
+
+    warn "WARNING $package: Only one realization possible.\n"
+        if @real > 1;
+
+    if(my $real = $real[0])
+    {   $pkg->{realizes} = $real;
+        push @{$pkgs{$real}{realized_by}}, $package;
+    }
+
+    $pkg->{abbrev}  = join '', map {substr $_, 0, 1}
+        split m/\:\:/, $package;
+}
+
+sub extract_methods($$$);
+sub build_method_index()
+{   %methods = ();
+
+    foreach my $pod (map { @{$pkgs{$_}{pods}} } keys %pkgs)
+    {   my $manual = $pod->{manual};
+        print "extraction methods from $manual.\n"
+            if $verbose;
+
+        foreach my $chapter ( @{$pod->{chapters}} )
+        {   my $title = $chapter->{title};
+            next unless $title eq 'METHODS';
+            next unless $chapter->{sections};
+
+            extract_methods $manual, $_->{title}, $_->{text}
+                foreach @{$chapter->{sections}};
+        }
+    }
+}
+
+sub extract_methods($$$)
+{   my ($manual, $section, $text) = @_;
+    return unless defined $text && @$text;
+#print "Got ".@$text." lines in $section\n";
+
+    my (@description, $method, $option, $examples, $current);
+    
+    while(@$text)
+    {   my $line = shift @$text;
+        if( $line =~ m!^\=method\s*(\w+)\s*(.*?)\s*$! )
+        {   $method->{examples} = $examples if $method;
+
+            $method = { name    => $1,      usage   => $2
+                      , manual  => $manual, section => $section
+                      , descr   => '',      options => []
+                      , default => []
+                      };
+            undef $option;
+            undef $examples;
+            push @{$methods{$1}}, $method;
+        }
+        elsif( $line =~ m!^\=option\s*([\w-]+)\s*(.*?)\s*$! )
+        {   $option = { name    => $1,      usage   => $2
+                      , manual  => $manual, section => $section
+                      , descr   => ''
+                      };
+            push @{$method->{options}}, $option;
+        }
+        elsif( $line =~ m!^\=examples?! ) { $examples = '' }
+        elsif( $line =~ m!^\=default\s*([\w-]+)\s*(.*?)\s*$! )
+        {   push @{$method->{defaults}}, {option => $1, value => $2};
+        }
+        elsif(defined $examples) { $examples        .= $line }
+        elsif(defined $option)   { $option->{descr} .= $line }
+        elsif(defined $method)   { $method->{descr} .= $line }
+        else                     { push @description, $line }
+    }
+
+    $method->{examples} = $examples if $method;
+    @$text = @description;
+}
+
+sub inheritance_to_pod($)
+{   my $package    = shift;
+    my $pkg        = $pkgs{$package};
+
+    my @subclasses = $pkg->{extended_by} ? @{$pkg->{extended_by}} : ();
+    my $superclass = $pkg->{extends};
+
+    my @realized   = $pkg->{realized_by} ? @{$pkg->{realized_by}} : ();
+    my $realizes   = $pkg->{realizes};
+
+    my @pods       = @{$pkg->{pods}};
+
+    return unless @subclasses || $realizes || $superclass || @realized || @pods>1;
+
+    print <<START;
+
+=head1 CLASS INHERITANCE
+
+$package
+START
+
+    if($realizes)
+    {   print "  realizes a $realizes which\n";
+        $superclass = $pkgs{$realizes}{extends};
+    }
+
+    if(@pods>1)
+    {   foreach my $pod (@pods)
+        {   my $manual = $pod->{manual};
+            print "  has extra code in $manual\n"
+                if $manual ne $pod->{package};
+        }
+
+        print "\n$package\n";
+    }
+
+    while($superclass)
+    {   print "   is a $superclass\n";
+        $superclass = $pkgs{$superclass}{realizes}
+           ? $pkgs{$superclass}{realizes}
+           : $pkgs{$superclass}{extends};
+    }
+
+    if(@subclasses)
+    {   print "\n$package is extended by\n";
+        print "   $_\n" foreach sort @subclasses;
+    }
+
+    if(@realized)
+    {   print "\n$package is realized by\n";
+        print "   $_\n" foreach sort @realized;
+    }
+}
+
+sub make_text_pod($)
+{   my $text = shift;
+    return unless defined $text;
+
+    if(ref $text)
+    {   shift @$text while @$text && $text->[0]  =~ m!^\s*$!;
+        pop   @$text while @$text && $text->[-1] =~ m!^\s*$!;
+        print "\n", @$text if @$text;
+    }
+    else
+    {   $text =~ s/^([ 	]*\n)+//;
+        $text =~ s/([ 	]*\n)+$/\n/;
+        print "\n", $text if length $text;
+    }
+}
+
+sub make_chapter_pod($)
+{   my $chapter = shift;
+
+    print "\n=head1 $chapter->{title}\n\n";
+    make_text_pod $chapter->{text};
+    
+    foreach my $section (@{$chapter->{sections}})
+    {   print "\n=head2 $section->{title}\n\n";
+        make_text_pod $section->{text};
+    }
+}
+
+sub all_super_classes($);
+sub all_super_classes($)
+{   my $package = shift;
+    my $pkg     = $pkgs{$package};
+    my $extends = $pkg->{realizes} || $pkg->{extends};
+    $extends ? ($package, all_super_classes $extends) : ($package);
+}
+
+sub make_methods_pod($$)
+{   my ($pod, $chapter) = @_;
+    my $package = $pod->{package};
+    my $manual  = $pod->{manual};
+    print INDEX "\n$manual $package\n";
+
+    my @supers  = map { $_->{manual} } @{$pkgs{$package}{pods}};
+    push @supers, all_super_classes $package;
+
+    warn "ERROR: No title for chapter in $manual.\n"
+        unless defined $chapter->{title};
+
+    print "\n=head1 $chapter->{title}\n";
+    make_text_pod $chapter->{text};
+
+    my %sections;
+    foreach my $name (sort keys %methods)
+    {   my $method;
+        foreach my $super (@supers)
+        {   $method = (grep {$_->{manual} eq $super} @{$methods{$name}})[0];
+            last if $method;
+        }
+
+        next unless defined $method;
+
+        my $section = $method->{section};
+        push @{$sections{$section}}, $method;
+    }
+
+    foreach my $section (ordered_sections keys %sections)
+    { print "\n=head2 $section\n\n=over 4\n";
+
+      foreach my $method ( @{$sections{$section}} )
+      { my $name = $method->{name};
+
+        if($manual eq $method->{manual})
+        {   print "\n=item B<$name> $method->{usage} X<$name>\n";
+            print INDEX "$name()\n";
+
+            make_text_pod $method->{descr};
+
+            my %options;
+            foreach my $super (reverse @supers)
+            {   my $def = (grep {$_->{manual} eq $super} @{$methods{$name}})[0];
+                next unless $def && ref $def->{defaults};
+
+                $options{$_->{name}} = { %$_ }
+                   foreach @{$def->{options}};
+
+                foreach (@{$def->{defaults}})
+                {   if(exists $options{$_->{option}})
+                    {   $options{$_->{option}}{default} = $_->{value}; }
+                    else
+                    {   warn "WARNING $def->{manual} method $name: default for unknown option $_->{option}.\n";
+                    }
+                }
+            }
+
+            if(keys %options)
+            {   print "\n OPTION               DEFAULT\n";
+                foreach (sort keys %options)
+                {   my $option = $options{$_};
+                    warn "option $option->{name} has not default"
+                        unless defined $option->{default};
+warn %$option unless defined $option->{name};
+                    printf " %-20s $option->{default}\n", $option->{name};
+                }
+
+                print "\n=over 4\n";
+                foreach (sort keys %options)
+                {   my $option = $options{$_};
+                    if($option->{manual} eq $manual)
+                    {   my $label  = "$name($_)";
+                        print "\n=item B<$_> =E<gt> $option->{usage} X<$label>\n";
+                        make_text_pod $option->{descr};
+                        print INDEX "$name($_)\n";
+                    }
+                    else
+                    {   print "\n=item B<$_> =E<gt> $option->{usage}\n";
+                        my $where = $option->{manual};
+                        print "\nSee ${where}::$name($_)\n";
+                        print INDEX "$name($_) $where\n";
+                    }
+                }
+                print "\n=back\n";
+            }
+
+            my $examples = $method->{examples};
+            if(defined $examples && length $examples)
+            {    print "\nExamples:\n";
+                 make_text_pod $examples;
+            }
+        }
+        else
+        {   my $mm = $method->{manual};
+            print "\n=item B<$name> $method->{usage}\n\n";
+            print "See ${mm}::$name()\n";
+            print INDEX "$name() $mm\n";
+        }
+      }
+      print "\n=back\n";
+    }
+}
+
+sub see_also_pod()
+{   print <<SEE_ALSO;
+
+=head1 SEE ALSO
+
+A good start to read is Mail::Box-Overview.
+More documentation and a mailinglist are available from the project's
+website at $website.
+SEE_ALSO
+}
+
+sub author_pod()
+{   print <<AUTHOR;
+
+=head1 AUTHOR
+
+Mark Overmeer ($markov) with the help of many.
+AUTHOR
+}
+
+sub version_pod()
+{   print <<VERSION;
+
+=head1 VERSION
+
+This code is beta, version $version.
+
+Copyright (c) 2001-2002 Mark Overmeer. All rights reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+VERSION
+}
+
+sub manual_to_pod($)
+{   my $pod = shift;
+    my $filename = $pod->{podfile};
+
+    my $file = IO::File->new($filename, "w")
+       or die "Cannot write pod to file $filename: $!\n";
+
+    my $oldout = select $file;
+
+    my %chapter = map { ($_->{title} => $_) } @{$pod->{chapters}};
+
+    make_chapter_pod   delete $chapter{NAME};
+    inheritance_to_pod $pod->{package};
+    make_chapter_pod   delete $chapter{SYNOPSIS};
+    make_chapter_pod   delete $chapter{DESCRIPTION};
+    make_methods_pod   $pod, delete $chapter{METHODS};
+    make_chapter_pod   delete $chapter{IMPLEMENTATION}
+       if defined $chapter{IMPLEMENTATION};
+
+    see_also_pod;
+    author_pod;
+    version_pod;
+
+    select $oldout;
+
+    my @unused = sort keys %chapter;
+    warn "WARNING $filename: unused chapters @unused.\n"
+        if @unused;
+}
+
+###
+### MAIN
+###
+
+die "Cannot create $workdir: $!\n"
+   unless -d $workdir || mkdir $workdir;
+
+foreach my $filename (manifest)
+{
+    die "Cannot find file $filename."
+       unless -f $filename;
+
+    my $becomes = File::Spec->catfile($workdir, $filename);
+    my $outdir  = dirname $becomes;
+    die "Cannot create $outdir: $!"
+        unless -d $outdir || mkdir $outdir;
+
+    if($filename =~ m/\.pm$/ && $filename !~ m!^t/!)    # PM file
+    {   strip_pod $filename, $becomes;
+        my $pod        = absorb_pod $filename;
+        my $package    = $pod->{package};
+        push @{$pkgs{$package}{pods}}, $pod;
+
+        my %info       = get_compile_info $package, $filename;
+        @$pod{ keys %info } = values %info;
+
+        $becomes       =~ s/\.pm/\.pod/;
+        $pod->{podfile}= $becomes;
+    }
+    elsif(-f $becomes && -M $becomes < -M $filename)
+    { 
+        print "$filename still same as $becomes; skipped\n"
+           if $verbose;
+    }
+    else                                                # Otherwise
+    {   copy $filename, $becomes
+           or die "Cannot copy $filename to $becomes: $!\n";
+
+        print "$filename simply copied to $becomes.\n"
+           if $verbose;
+    }
+}
+
+#dump_pkg_structure;
+
+foreach my $package (keys %pkgs)
+{   cleanup_package_relations $package;
+}
+
+build_method_index;
+
+open INDEX, '>', $index
+   or die "Cannot write to index $index: $!\n";
+
+print INDEX <<'HARD_CODED';
+Mail::Box-Cookbook Mail::Box-Cookbook
+Mail::Box-Overview Mail::Box-Overview
+HARD_CODED
+
+manual_to_pod $_
+   foreach map { @{$pkgs{$_}{pods}} }
+              keys %pkgs;
+
+close INDEX;

@@ -1,0 +1,104 @@
+#!/bin/bash
+
+TOP=$PWD
+BIN=$TOP/bin
+
+TMP="${TMPDIR:-/tmp}/MailBox"
+
+HTML="${TMPDIR:-/tmp}/MailBox-html"
+HTMLOUT="$HTML-output"
+HTMLERR="$HTML-errors"
+SITE=/home/markov/shared/perl/public_html/mailbox
+
+VERSION=2.019
+
+echo ">>> Producing version $VERSION"
+
+echo ">>> Create pod"
+$BIN/make_pod $TMP $VERSION || exit $?
+
+cd $TMP                || exit $?
+find Mail -name \*.pod >>MANIFEST
+sort -u MANIFEST >x && mv x MANIFEST
+
+echo ">>> Run tests"
+perl Makefile.PL      || exit $?
+#make test             || exit $?
+
+echo ">>> Creating HTML with mpod2html"
+rm -rf $HTML
+find Mail -name \*.pod | cpio -pduma $HTML
+cp pod.css $HTML      || exit $?
+
+cp method-index $HTML || exit $?
+cd $HTML              || exit $?
+
+mpod2html . >$HTMLOUT 2>&1 || exit $?
+
+sed <$HTMLOUT >$HTMLERR '
+  /^\+\+\+/d
+  /^Writing /d
+  /syntax OK/d
+  /^[ \\t]*$/d
+  '
+
+if [ -s $HTMLERR ]
+then echo "HTML errors:"
+     cat $HTMLERR
+fi
+
+echo ">>> Improving HTML with make_html"
+
+for h in `find Mail -name \*.html`
+do
+    $BIN/improve_html method-index $h >x && mv x $h
+done
+
+echo ">>> Creating a nicer index"
+
+$BIN/make_podindex method-index >podindex.html
+
+rm method-index
+
+echo -n "Continue with distribution? [n/y] "
+read CONT
+case "$CONT" in
+y*) ;;
+*)  exit 0;;
+esac
+
+echo ">>> HTML to website"
+
+cd $HTML
+rm -rf $SITE/html
+mkdir $SITE/html
+
+tar -cf $SITE/html/current.tar *
+gzip -9f $SITE/html/current.tar
+(cd $SITE/html; ls -lh current.tar.gz)
+
+cp -r * $SITE/html
+
+echo ">>> Make dist"
+cd $TMP
+DIST=Mail-Box-$VERSION.tar.gz
+rm -f $DIST
+make dist >/dev/null
+
+(cd $TMP; ls -lh $DIST)
+
+[ -d $SITE/source ] || mkdir $SITE/source
+cp $TMP/$DIST $SITE/source/
+ln -sf $DIST $SITE/source/current.tar.gz
+
+echo ">>> Make raw"
+
+cd $TOP
+[ -d $SITE/raw ] || mkdir $SITE/raw
+RAW=Mail-Box-raw.$VERSION.cpio
+cat MANIFEST MANIFEST.raw | cpio -oca >$SITE/raw/$RAW
+bzip2 -9 $SITE/raw/$RAW
+ln -sf $RAW.bz2 $SITE/raw/current.cpio.bz2
+(cd $SITE/raw; ls -lh current.cpio.bz2)
+
+echo ">>> Ready"
