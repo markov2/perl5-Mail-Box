@@ -3,7 +3,7 @@
 # Test the creation of bounce messages
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -51,18 +51,16 @@ ok(defined $msg);
 my $bounce = $msg->bounce
  ( To         => 'new@receivers.world'
  , From       => 'I was between'
- , 'Reply-To' => 'no-one'
+ , Received   => 'by me'
  , Date       => 'Fri, 7 Dec 2001 15:44:05 -0100'
- , 'Message-ID' => '2394802'
+ , 'Message-ID' => '<simple>'
  );
 
 my $filedata;
 my $file = IO::Scalar->new(\$filedata);
 $bounce->print($file);
 
-#print "#$filedata#";
-
-ok($filedata eq <<'EXPECTED')
+is($filedata, <<'EXPECTED')
 To: me@example.com (Me the receiver)
 From: him@somewhere.else.nl (Original Sender)
 Cc: the.rest@world.net
@@ -73,11 +71,11 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Length: 53
 Lines: 2
 Content-Transfer-Encoding: 8bit
+Received: by me
+Resent-Date: Fri, 7 Dec 2001 15:44:05 -0100
 Resent-From: I was between
 Resent-To: new@receivers.world
-Resent-Date: Fri, 7 Dec 2001 15:44:05 -0100
-Resent-Reply-To: no-one
-Resent-Message-ID: <2394802>
+Resent-Message-ID: <simple>
 
 First line of orig message.
 Another line of message.

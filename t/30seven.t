@@ -3,7 +3,7 @@
 # Encoding and Decoding of 7bit
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 use lib qw(. t);
@@ -26,7 +26,7 @@ ENCODED
 
 my $codec = Mail::Message::TransferEnc::SevenBit->new;
 ok(defined $codec);
-ok($codec->name eq '7bit');
+is($codec->name, '7bit');
 
 # Test encoding
 
@@ -37,9 +37,9 @@ my $body   = Mail::Message::Body::Lines->new
 
 my $enc    = $codec->encode($body);
 ok($body!=$enc);
-ok($enc->mimeType eq 'text/html');
-ok($enc->transferEncoding eq '7bit');
-ok($enc->string eq $encoded);
+is($enc->mimeType, 'text/html');
+is($enc->transferEncoding, '7bit');
+is($enc->string, $encoded);
 
 # Test decoding
 

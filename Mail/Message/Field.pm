@@ -145,62 +145,6 @@ sub new(@)
 
 #------------------------------------------
 
-=method consume LINE | (NAME,BODY|OBJECTS)
-
-(Class method)
-Accepts a whole field LINE, or a pair with the field's NAME and BODY. In
-the latter case, the BODY data may be specified as array of OBJECTS which
-are stringified.  Returned is a nicely formatted pair of two strings: the
-field's name and a folded body.
-
-This method is called by new(), and usually not be an application
-program.
-
-=cut
-
-sub consume($;$)
-{   my $self = shift;
-    my ($name, $body) = defined $_[1] ? @_ : split(/\s*\:\s*/, (shift), 2);
-
-    Mail::Reporter->log(WARNING => "Illegal character in field name: $name")
-       if $name =~ m/[^\041-\071\073-\176]/;
-
-    #
-    # Compose the body.
-    #
-
-    if(ref $body)                 # Objects
-    {   my @objs = ref $body eq 'ARRAY' ? @$body
-                 : defined $body        ? ($body)
-                 :                        ();
-
-        # Skip field when no objects are specified.
-        return () unless @objs;
-
-        # Format the addresses
-        my @addrs = map {ref $_ && $_->isa('Mail::Address') ? $_->format : "$_"}             @objs;
-
-        $body = $self->fold($name, join(', ', @addrs));
-    }
-    elsif($body !~ s/\n+$/\n/g)   # Added by user...
-    {   $body = $self->fold($name, $body);
-    }
-    else                          # Created by parser
-    {   # correct erroneous wrap-seperators (dos files under UNIX)
-        $body =~ s/[\012\015]+/\n/g;
-        $body = ' '.$body unless substr($body, 0, 1) eq ' ';
-
-        if($body eq "\n")
-        {   Mail::Reporter->log(WARNING => "Empty field: $name\n");
-            return ();
-        }
-    }
-
-    ($name, $body);
-}
-
-#------------------------------------------
-
 =head2 The Field
 
 =cut
@@ -552,15 +496,18 @@ sub toDate($)
 
 #------------------------------------------
 
-=method stripCFWS STRING
+=method stripCFWS [STRING]
 
-(Class method) Remove the I<comments> and I<folding white spaces> from
-the string.
+(Class or Instance method) Remove the I<comments> and I<folding white
+spaces> from the STRING.  Without string and only as instance method, the
+unfolded_body() is being stripped and returned.
 
 =cut
 
 sub stripCFWS($)
-{   my $string = $_[1];
+{   my $thing  = shift;
+    my $string = @_ ? shift : $thing->unfolded_body;
+
     for($string)
     {  s/(?: \(
                  ( [^()]*
@@ -643,7 +590,10 @@ See also Mail::Message::printUndisclosed()
 =cut
 
 sub toDisclose()
-{   shift->name =~ m!^((x-)?status|(resent-)?bcc)$!;
+{   shift->name !~ m!^(?: (?:x-)?status
+                      |   (?:resent-)?bcc
+                      |   Content-Length
+                      ) $!x;
 }
 
 #------------------------------------------
@@ -651,6 +601,62 @@ sub toDisclose()
 =head2 Reading and Writing [internals]
 
 =cut
+
+#------------------------------------------
+
+=method consume LINE | (NAME,BODY|OBJECTS)
+
+(Class method)
+Accepts a whole field LINE, or a pair with the field's NAME and BODY. In
+the latter case, the BODY data may be specified as array of OBJECTS which
+are stringified.  Returned is a nicely formatted pair of two strings: the
+field's name and a folded body.
+
+This method is called by new(), and usually not be an application
+program.
+
+=cut
+
+sub consume($;$)
+{   my $self = shift;
+    my ($name, $body) = defined $_[1] ? @_ : split(/\s*\:\s*/, (shift), 2);
+
+    Mail::Reporter->log(WARNING => "Illegal character in field name: $name")
+       if $name =~ m/[^\041-\071\073-\176]/;
+
+    #
+    # Compose the body.
+    #
+
+    if(ref $body)                 # Objects
+    {   my @objs = ref $body eq 'ARRAY' ? @$body
+                 : defined $body        ? ($body)
+                 :                        ();
+
+        # Skip field when no objects are specified.
+        return () unless @objs;
+
+        # Format the addresses
+        my @addrs = map {ref $_ && $_->isa('Mail::Address') ? $_->format : "$_"}             @objs;
+
+        $body = $self->fold($name, join(', ', @addrs));
+    }
+    elsif($body !~ s/\n+$/\n/g)   # Added by user...
+    {   $body = $self->fold($name, $body);
+    }
+    else                          # Created by parser
+    {   # correct erroneous wrap-seperators (dos files under UNIX)
+        $body =~ s/[\012\015]+/\n/g;
+        $body = ' '.$body unless substr($body, 0, 1) eq ' ';
+
+        if($body eq "\n")
+        {   Mail::Reporter->log(WARNING => "Empty field: $name\n");
+            return ();
+        }
+    }
+
+    ($name, $body);
+}
 
 #------------------------------------------
 

@@ -3,7 +3,7 @@
 # Test conversions between Mail::Message and MIME::Entity
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -15,8 +15,7 @@ use Mail::Message;
 BEGIN
 {   eval {require MIME::Entity};
     if($@)
-    {   warn "requires MIME::Entity.\n";
-        plan tests => 0;
+    {   plan skip_all => "requires MIME::Entity.";
         exit 0;
     }
 
@@ -54,18 +53,18 @@ ok($head);
 # order of the returned.
 
 my @from  = $head->get('From');
-ok(@from==1);
+cmp_ok(@from, "==", 1);
 
 my @again = $head->get('X-again');
-#  ok(@again==3);   # Should be 3, but bug in MIME::Entity
-ok(@again==1);      # Wrong, but to check improvements in ME
+#  cmp_ok(@again, "==", 3);   # Should be 3, but bug in MIME::Entity
+cmp_ok(@again, "==", 1);      # Wrong, but to check improvements in ME
 
 my $body  = $msg->body;
 ok($body);
 
 my @lines = $body->lines;
-ok(@lines==6);
-ok($lines[-1] eq "use it anymore!\n");
+cmp_ok(@lines, "==", 6);
+is($lines[-1], "use it anymore!\n");
 
 #
 # Convert message back to a MIME::Entity
@@ -75,19 +74,19 @@ my $back = $convert->export($msg);
 ok(defined $back);
 $head    = $back->head;
 
-ok($head->get('to') eq "the users\n");
+is($head->get('to'), "the users\n");
 
 @from    = $head->get('from');
-ok(@from==1);
+cmp_ok(@from, "==", 1);
 
 @again   = $head->get('x-again');
-ok(@again==1);
+cmp_ok(@again, "==", 1);
 
 $body = $back->bodyhandle;
 ok($body);
 
 @lines = $body->as_lines;
-ok(@lines==6);
+cmp_ok(@lines, "==", 6);
 
 #
 # and now: MULTIPARTS!  Convert MIME::Entity to Mail::Message
@@ -108,14 +107,14 @@ ok(defined $msg);
 ok($msg->isMultipart);
 
 my @parts = $msg->parts;
-ok(@parts==2);
-ok($msg->isa('Mail::Message'));
-ok($parts[0]->isa('Mail::Message::Part'));
-ok($parts[1]->isa('Mail::Message::Part'));
+cmp_ok(@parts, "==", 2);
+isa_ok($msg, 'Mail::Message');
+isa_ok($parts[0], 'Mail::Message::Part');
+isa_ok($parts[1], 'Mail::Message::Part');
 
 $body = $msg->body;
-ok($body->preamble->nrLines==2);
-ok($body->epilogue->nrLines==2);
+cmp_ok($body->preamble->nrLines, "==", 2);
+cmp_ok($body->epilogue->nrLines, "==", 2);
 #$msg->print;
 
 #
@@ -124,12 +123,12 @@ ok($body->epilogue->nrLines==2);
 
 $me = $convert->export($msg);
 #$me->print;
-ok($me->isa('MIME::Entity'));
+isa_ok($me, 'MIME::Entity');
 ok($me->is_multipart);
 @parts = $me->parts;
-ok(@parts==2);
-ok($parts[0]->isa('MIME::Entity'));
-ok($parts[1]->isa('MIME::Entity'));
+cmp_ok(@parts, "==", 2);
+isa_ok($parts[0], 'MIME::Entity');
+isa_ok($parts[1], 'MIME::Entity');
 
 1;
 

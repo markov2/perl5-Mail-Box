@@ -3,7 +3,7 @@
 # Test processing a message/rfc822
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -84,7 +84,7 @@ my $dump;
 my $catch   = IO::Scalar->new(\$dump);
 $msg->printStructure($catch);
 
-ok($dump eq <<'DUMP');
+is($dump, <<'DUMP');
 multipart/mixed: forwarded message from Pietje Puk (1550 bytes)
    text/plain (164 bytes)
    message/rfc822 (1043 bytes)

@@ -561,7 +561,7 @@ the header.  If you specify DATA, that is used to create such group
 first.
 
 These header lines have nothing to do with the user's sense
-of C<reply>, C<forward> or C<bounce> actions: these lines trace the e-mail
+of C<reply> or C<forward> actions: these lines trace the e-mail
 transport mechanism.
 
 =examples
@@ -643,9 +643,33 @@ message-threads.
 
 =cut
 
-my $unique_id = time;
+my $unique_id     = time;
 
-sub createMessageId() { 'mailbox-'.$unique_id++ }
+sub createMessageId() { shift->messageIdPrefix . '-' . $unique_id++ }
+
+#------------------------------------------
+
+=method messagIdPrefix [STRING]
+
+Sets/returns the message-id start.  The rest of the message-id is an
+integer which is derived from the current time.  See createMessageId().
+
+=cut
+
+our $unique_prefix;
+
+sub messageIdPrefix(;$)
+{   my $self = shift;
+    return $unique_prefix if !@_ && defined $unique_prefix;
+
+    my $prefix = shift;
+    unless(defined $prefix)
+    {   require Sys::Hostname;
+        $prefix = 'mailbox-'.Sys::Hostname::hostname().'-'.$$;
+    }
+
+    $unique_prefix = $prefix;
+}
 
 #------------------------------------------
 

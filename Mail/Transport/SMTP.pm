@@ -130,10 +130,12 @@ taken from the C<From> field in the header.
 sub trySend($@)
 {   my ($self, $message, %args) = @_;
 
+warn "#1\n";
     # From whom is this message.
     my $from = $args{from} || $message->from;
     $from = $from->address if ref $from;
 
+warn "#2\n";
     # Who are the destinations.
     my $to   = $args{to}   || [$message->destinations];
     my @to   = ref $to eq 'ARRAY' ? @$to : ($to);
@@ -141,11 +143,14 @@ sub trySend($@)
     {   $_ = $_->address if ref $_ && $_->isa('Mail::Address');
     }
 
+warn "#3\n";
     # Prepare the header
     my @header;
     require IO::Lines;
     my $lines = IO::Lines->new(\@header);
     $message->head->printUndisclosed($lines);
+warn '#'; $message->head->print(\*STDERR);
+warn '#'; $message->head->printUndisclosed(\*STDERR);
 
     #
     # Send

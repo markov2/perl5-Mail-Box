@@ -4,7 +4,7 @@
 # Test the url decoding for a folder name
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 

@@ -4,7 +4,7 @@
 # Test threading on Mbox folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -47,22 +47,22 @@ ok($single);
 my $single2 = $folder->messageID(
    '200010041822.e94IMZr19712@mystic.es.dupont.com');
 ok($single2);
-ok($single2 eq $single);
+is($single2, $single);
 my $single3 = $folder->messageID(
    'garbage <200010041822.e94IMZr19712@mystic.es.dupont.com> trash');
 ok($single3);
-ok($single3 eq $single);
+is($single3, $single);
 
 my $start = $threads->threadStart($single);
 ok($start);
-ok($single->messageID eq $start->message->messageID);
+is($single->messageID, $start->message->messageID);
 
 my $message = $folder->messageID('NDBBJJFDMKFOAIFBEPPJIELLCBAA.cknoos@atg.com');
 ok($message);
 
 my $this = $threads->thread($message);
 ok($this);
-ok($this->threadToString, <<'MIDDLE');
+is($this->threadToString, <<'MIDDLE');
 1.2K Problem resizing images through perl script
 820  `- Re: Problem resizing images through perl script
 1.8K    `- RE: Problem resizing images through perl script
@@ -73,11 +73,11 @@ $start = $threads->threadStart($message);
 ok(defined $start);
 my $startmsg = $start->message;
 ok(defined $startmsg);
-ok($startmsg->isa('Mail::Message::Dummy'));
-ok($startmsg->isa('Mail::Message'));
+isa_ok($startmsg, 'Mail::Message::Dummy');
+isa_ok($startmsg, 'Mail::Message');
 ok($startmsg->isDummy);
 ok($startmsg->messageID ne $message->messageID);
-ok($start->threadToString, <<'START');
+is($start->threadToString, <<'START');
 1.2K *- Problem resizing images through perl script
 820  |  `- Re: Problem resizing images through perl script
 1.8K |     `- RE: Problem resizing images through perl script
@@ -86,13 +86,13 @@ ok($start->threadToString, <<'START');
 START
 
 $this->folded(1);
-ok($start->threadToString, <<'FOLDED');
+is($start->threadToString, <<'FOLDED');
      *- [4] Problem resizing images through perl script
 1.2K `- Re: Convert HTM, HTML files to the .jpg format
 FOLDED
 
 $this->folded(0);
-ok($start->threadToString, <<'START');
+is($start->threadToString, <<'START');
 1.2K *- Problem resizing images through perl script
 820  |  `- Re: Problem resizing images through perl script
 1.8K |     `- RE: Problem resizing images through perl script
@@ -106,7 +106,7 @@ my @lines = split "\n", $out;
 pop @lines;
 ok(@lines = $folder->messages);
 
-ok($out eq <<'DUMP');
+is($out, <<'DUMP');
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF

@@ -3,7 +3,7 @@
 # Encoding and Decoding quoted-print bodies
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -39,7 +39,7 @@ DECODED
 
 my $codec = Mail::Message::TransferEnc::QuotedPrint->new;
 ok(defined $codec);
-ok($codec->name eq 'quoted-printable');
+is($codec->name, 'quoted-printable');
 
 # Test encoding
 
@@ -50,9 +50,9 @@ my $body   = Mail::Message::Body::Lines->new
 
 my $enc    = $codec->encode($body);
 ok($body!=$enc);
-ok($enc->mimeType eq 'text/html');
-ok($enc->transferEncoding eq 'quoted-printable');
-ok($enc->string eq $encoded);
+is($enc->mimeType, 'text/html');
+is($enc->transferEncoding, 'quoted-printable');
+is($enc->string, $encoded);
 
 # Test decoding
 
@@ -64,7 +64,7 @@ $body   = Mail::Message::Body::Lines->new
 
 my $dec = $codec->decode($body);
 ok($dec!=$body);
-ok($enc->mimeType eq 'text/html');
-ok($dec->transferEncoding eq 'none');
-ok($dec->string eq $decoded);
+is($enc->mimeType, 'text/html');
+is($dec->transferEncoding, 'none');
+is($dec->string, $decoded);
 

@@ -863,7 +863,7 @@ sub body(;$@)
     $head->set('Content-Length' => $body->size)
        unless $body->isMultipart;  # too slow
 
-    $head->set('Lines'          => $body->nrLines);
+    $head->set(Lines => $body->nrLines);
     $head->set($body->transferEncoding);
     $head->set($body->disposition);
 

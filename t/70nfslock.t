@@ -4,7 +4,7 @@
 # Test the locking methods.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -19,12 +19,11 @@ my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 
 BEGIN {
    if($^O =~ m/mswin/i)
-   {   warn "not available on MicroSoft Windows.\n";
-       plan tests => 0;
+   {   plan skip_all => "not available on MicroSoft Windows.";
        exit 0;
    }
 
-   plan tests => 7
+   plan tests => 7;
 }
 
 my $lockfile  = File::Spec->catfile('t', 'lockfiletest');
@@ -39,7 +38,7 @@ my $locker = Mail::Box::Locker->new
  );
 
 ok($locker);
-ok($locker->name eq 'NFS');
+is($locker->name, 'NFS');
 
 ok($locker->lock);
 ok(-f $lockfile);

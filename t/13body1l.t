@@ -5,7 +5,7 @@
 # from file.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -32,40 +32,40 @@ my $f = IO::Scalar->new(\$filedata);
 
 my $body = Mail::Message::Body::Lines->new(file => $f);
 ok($body);
-ok($body->string eq $filedata);
-ok($body->nrLines==5);
-ok($body->size==length $filedata);
+is($body->string, $filedata);
+cmp_ok($body->nrLines, "==", 5);
+cmp_ok($body->size, "==", length $filedata);
 
 my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
 $body->print($g);
-ok($fakeout eq $filedata);
+is($fakeout, $filedata);
 
 my @lines = $body->lines;
-ok(@lines==5);
+cmp_ok(@lines, "==", 5);
 my @filedata = split /(?<=\n)/, $filedata;
-ok(@filedata==5);
-foreach (0..4) { ok($lines[$_] eq $filedata[$_]) }
+cmp_ok(@filedata, "==", 5);
+foreach (0..4) { is($lines[$_], $filedata[$_]) }
 
 # Reading data from lines.
 
 $body = Mail::Message::Body::Lines->new(data => [@filedata]);
 ok($body);
-ok($body->string eq $filedata);
-ok($body->nrLines==5);
-ok($body->size==length $filedata);
+is($body->string, $filedata);
+cmp_ok($body->nrLines, "==", 5);
+cmp_ok($body->size, "==", length $filedata);
 
 $fakeout = '';
 $body->print($g);
-ok($fakeout eq $filedata);
+is($fakeout, $filedata);
 
 @lines = $body->lines;
-ok(@lines==5);
-foreach (0..4) { ok($lines[$_] eq $filedata[$_]) }
+cmp_ok(@lines, "==", 5);
+foreach (0..4) { is($lines[$_], $filedata[$_]) }
 
 # Test overloading
 
-ok("$body" eq $filedata);
+is("$body", $filedata);
 @lines = @$body;
-ok(@lines==5);
-foreach (0..4) { ok($lines[$_] eq $filedata[$_]) }
+cmp_ok(@lines, "==", 5);
+foreach (0..4) { is($lines[$_], $filedata[$_]) }

@@ -4,7 +4,7 @@
 # Test access to folders using ties.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -30,17 +30,17 @@ my $folder = new Mail::Box::Mbox
   );
 
 ok(defined $folder);
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 tie my(@folder), 'Mail::Box::Tie::ARRAY', $folder;
-ok(@folder == 45);
+cmp_ok(@folder , "==",  45);
 
-ok($folder->message(4) eq $folder[4]);
+is($folder->message(4), $folder[4]);
 
 ok(! $folder->message(2)->deleted);
 $folder[2]->delete;
 ok($folder->message(2)->deleted);
-ok(@folder == 45);
+cmp_ok(@folder , "==",  45);
 
 ok(! $folder->message(3)->deleted);
 my $d3 = delete $folder[3];
@@ -49,12 +49,13 @@ ok($folder->message(3)->deleted);
 
 # Double messages will not be added.
 push @folder, $folder[1]->clone;
-ok(@folder == 45);
+cmp_ok(@folder , "==",  45);
 
 # Different message, however, will be added.
 push @folder, Mail::Message->build(data => []);
-ok($folder->messages == 46);
-ok(@folder == 46);
+
+cmp_ok($folder->messages , "==",  46);
+cmp_ok(@folder , "==",  46);
 
 $folder->close(write => 'NEVER');
 exit 0;

@@ -3,7 +3,7 @@
 # Test conversions from HTML/XHTML to postscript with HTML::FormatPS
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -36,9 +36,9 @@ my $body = Mail::Message::Body::Lines->new
 my $f = $html->format($body);
 ok(defined $f);
 ok(ref $f);
-ok($f->isa('Mail::Message::Body'));
-ok($f->type eq 'application/postscript');
-ok($f->transferEncoding eq 'none');
+isa_ok($f, 'Mail::Message::Body');
+is($f->type, 'application/postscript');
+is($f->transferEncoding, 'none');
 
 # The result of the conversion is not checked, because the output
 # is rather large and may vary over versions of HTML::FormatPS

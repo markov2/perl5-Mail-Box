@@ -4,7 +4,7 @@
 # Could use some more tests....
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -30,7 +30,7 @@ ENCODED
 
 my $codec = Mail::Message::TransferEnc::Base64->new;
 ok(defined $codec);
-ok($codec->name eq 'base64');
+is($codec->name, 'base64');
 
 # Test encoding
 
@@ -39,13 +39,13 @@ my $body   = Mail::Message::Body::Lines->new
   , data      => $decoded
   );
 
-ok($body->mimeType eq 'text/html');
+is($body->mimeType, 'text/html');
 
 my $enc    = $codec->encode($body);
 ok($body!=$enc);
-ok($enc->mimeType eq 'text/html');
-ok($enc->transferEncoding eq 'base64');
-ok($enc->string eq $encoded);
+is($enc->mimeType, 'text/html');
+is($enc->transferEncoding, 'base64');
+is($enc->string, $encoded);
 
 # Test decoding
 
@@ -57,7 +57,7 @@ $body   = Mail::Message::Body::Lines->new
 
 my $dec = $codec->decode($body);
 ok($dec!=$body);
-ok($enc->mimeType eq 'text/html');
-ok($dec->transferEncoding eq 'none');
-ok($dec->string eq $decoded);
+is($enc->mimeType, 'text/html');
+is($dec->transferEncoding, 'none');
+is($dec->string, $decoded);
 

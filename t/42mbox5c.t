@@ -4,7 +4,7 @@
 # Test creation/deletion and listing of folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -113,7 +113,7 @@ my $folder = Mail::Box::Mbox->new
   );
 
 ok($folder);
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 $folder->close;
 
 #
@@ -132,7 +132,7 @@ $folder = Mail::Box::Mbox->new
   );
 
 ok($folder);
-ok($folder->messages==0);
+cmp_ok($folder->messages, "==", 0);
 
 my $msg = Mail::Message->build
   ( From    => 'me@example.com'
@@ -142,7 +142,7 @@ my $msg = Mail::Message->build
   );
 
 $folder->addMessage($msg);
-ok($folder->messages==1);
+cmp_ok($folder->messages, "==", 1);
 
 $folder->close;
 ok(-s File::Spec->catfile($top, 'f4.d', 'newfolder'));
@@ -192,7 +192,7 @@ my $msg2 = Mail::Message->build
   );
 
 $folder->addMessage($msg2);
-ok($folder->messages==1);
+cmp_ok($folder->messages, "==", 1);
 $folder->close;
 ok(-s $sub1);
 

@@ -3,7 +3,7 @@
 # Test conversions between Mail::Internet and Mail::Message
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -40,24 +40,24 @@ my $head = $msg->head;
 ok($head);
 
 my @fields = sort $head->names;
-ok(@fields==5);
-ok($fields[0] eq 'again');
-ok($fields[1] eq 'from');
-ok($fields[2] eq 'in-reply-to');
-ok($fields[3] eq 'subject');
-ok($fields[4] eq 'to');
+cmp_ok(@fields, "==", 5);
+is($fields[0], 'again');
+is($fields[1], 'from');
+is($fields[2], 'in-reply-to');
+is($fields[3], 'subject');
+is($fields[4], 'to');
 
 my @from  = $head->get('from');
-ok(@from==1);
+cmp_ok(@from, "==", 1);
 
 my @again = $head->get('again');
-ok(@again==3);
+cmp_ok(@again, "==", 3);
 
 my $body  = $msg->body;
 ok($body);
 my @lines = $body->lines;
-ok(@lines==6);
-ok($lines[-1] eq "that.\n");
+cmp_ok(@lines, "==", 6);
+is($lines[-1], "that.\n");
 
 #
 # Convert message back to a Mail::Internet
@@ -68,17 +68,17 @@ ok($back);
 $head    = $back->head;
 
 @fields  = $head->tags;
-ok(@fields==5);
-ok($head->get('to') eq "the users\n");
+cmp_ok(@fields, "==", 5);
+is($head->get('to'), "the users\n");
 
 @from    = $head->get('from');
-ok(@from==1);
+cmp_ok(@from, "==", 1);
 
 @again   = $head->get('again');
-ok(@again==3);
+cmp_ok(@again, "==", 3);
 
 $body = $back->body;
-ok(@$body==6);
+cmp_ok(@$body, "==", 6);
 
 1;
 

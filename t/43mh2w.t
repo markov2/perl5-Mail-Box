@@ -10,7 +10,7 @@ use Mail::Box::MH;
 use Mail::Box::Mbox;
 use Tools;
 
-use Test;
+use Test::More;
 use File::Compare;
 use File::Copy;
 
@@ -31,7 +31,7 @@ my $folder = new Mail::Box::MH
   );
 
 ok(defined $folder);
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 my $msg3 = $folder->message(3);
 
@@ -59,18 +59,18 @@ $folder->write;
 ok(cmplists [sort {$a cmp $b} listdir $mhsrc],
             [sort {$a cmp $b} '.index', '.mh_sequences', 1..44]
   );
-ok($folder->messages==44);
+cmp_ok($folder->messages, "==", 44);
 
 $folder->message(8)->delete;
 ok($folder->message(8)->deleted);
-ok($folder->messages==44);
+cmp_ok($folder->messages, "==", 44);
 
 $folder->write(keep_deleted => 1);
 ok($folder->message(8)->deleted);
-ok($folder->messages==44);
+cmp_ok($folder->messages, "==", 44);
 
 $folder->write;
-ok($folder->messages==43);
+cmp_ok($folder->messages, "==", 43);
 foreach ($folder->messages) { ok(! $_->deleted) }
 
 $folder->close;

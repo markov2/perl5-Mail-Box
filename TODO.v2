@@ -4,17 +4,12 @@ This file lists the things to do before v2.100 beta can come out.
 Obligatory:
 
   test of scripts/
-  Mail::Message::Body::Multipart::file()
   test $msg->body(undef);
 
   Processing folders with non-platform-native line separators.
   Mail::Message->lineSeparator("\015\012");
-  Mail::Transport::SMTP
 
   appendMessage opens folder, but not needed.
-
-  Mail::Message::Field::attribute with value <undef> must remove
-  the attribute.
 
 Optional:
 

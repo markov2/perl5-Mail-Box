@@ -3,7 +3,7 @@
 # Test stripping signatures
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -24,12 +24,12 @@ my @lines = map { "$_\n" } qw/1 2 3 4 5/;
 my $body  = Mail::Message::Body::Lines->new(data => \@lines);
 
 my ($stripped, $sig) = $body->stripSignature;
-ok($stripped==$body);
+cmp_ok($stripped, "==", $body);
 ok(!defined $sig);
-ok($stripped->nrLines==@lines);
+cmp_ok($stripped->nrLines, "==", @lines);
 
 my $stripped2 = $body->stripSignature;
-ok($stripped2==$body);
+cmp_ok($stripped2, "==", $body);
 
 #
 # Simple strip
@@ -41,17 +41,17 @@ $body  = Mail::Message::Body::Lines->new(data => \@lines);
 ok($stripped!=$body);
 ok($sig!=$body);
 
-ok($stripped->nrLines==2);
+cmp_ok($stripped->nrLines, "==", 2);
 my @stripped_lines = $stripped->lines;
-ok(@stripped_lines==2);
-ok($stripped_lines[0] eq $lines[0]);
-ok($stripped_lines[1] eq $lines[1]);
+cmp_ok(@stripped_lines, "==", 2);
+is($stripped_lines[0], $lines[0]);
+is($stripped_lines[1], $lines[1]);
 
-ok($sig->nrLines==2);
+cmp_ok($sig->nrLines, "==", 2);
 my @sig_lines = $sig->lines;
-ok(@sig_lines==2);
-ok($sig_lines[0] eq $lines[2]);
-ok($sig_lines[1] eq $lines[3]);
+cmp_ok(@sig_lines, "==", 2);
+is($sig_lines[0], $lines[2]);
+is($sig_lines[1], $lines[3]);
 
 #
 # Try signature too large
@@ -61,22 +61,22 @@ ok($sig_lines[1] eq $lines[3]);
 $body  = Mail::Message::Body::Lines->new(data => \@lines);
 ($stripped, $sig) = $body->stripSignature(max_lines => 7);
 ok(!defined $sig);
-ok($stripped->nrLines==11);
+cmp_ok($stripped->nrLines, "==", 11);
 
 ($stripped, $sig) = $body->stripSignature(max_lines => 8);
-ok($sig->nrLines==8);
+cmp_ok($sig->nrLines, "==", 8);
 @sig_lines = $sig->lines;
-ok(@sig_lines==8);
-ok($sig_lines[0] eq $lines[3]);
-ok($sig_lines[1] eq $lines[4]);
-ok($sig_lines[-1] eq $lines[-1]);
+cmp_ok(@sig_lines, "==", 8);
+is($sig_lines[0], $lines[3]);
+is($sig_lines[1], $lines[4]);
+is($sig_lines[-1], $lines[-1]);
 
-ok($stripped->nrLines==3);
+cmp_ok($stripped->nrLines, "==", 3);
 @stripped_lines = $stripped->lines;
-ok(@stripped_lines==3);
-ok($stripped_lines[0] eq $lines[0]);
-ok($stripped_lines[1] eq $lines[1]);
-ok($stripped_lines[2] eq $lines[2]);
+cmp_ok(@stripped_lines, "==", 3);
+is($stripped_lines[0], $lines[0]);
+is($stripped_lines[1], $lines[1]);
+is($stripped_lines[2], $lines[2]);
 
 #
 # Try whole body is signature
@@ -85,9 +85,9 @@ ok($stripped_lines[2] eq $lines[2]);
 @lines = map { "$_\n" } qw/-- 1 2 3 4/;
 $body  = Mail::Message::Body::Lines->new(data => \@lines);
 ($stripped, $sig) = $body->stripSignature(max_lines => 7);
-ok($sig->nrLines == 5);
+cmp_ok($sig->nrLines , "==",  5);
 ok(defined $stripped);
-ok($stripped->nrLines == 0);
+cmp_ok($stripped->nrLines , "==",  0);
 
 #
 # Try string to find sep
@@ -99,7 +99,7 @@ $body  = Mail::Message::Body::Lines->new(data => \@lines);
 ok(!defined $sig);
 
 ($stripped, $sig) = $body->stripSignature(pattern => 'a');
-ok($sig->nrLines == 4);
+cmp_ok($sig->nrLines , "==",  4);
 
 #
 # Try regexp to find sep
@@ -109,8 +109,8 @@ ok($sig->nrLines == 4);
 $body  = Mail::Message::Body::Lines->new(data => \@lines);
 ($stripped, $sig) = $body->stripSignature(pattern => qr/b{2}/);
 ok($sig);
-ok($sig->nrLines == 5);
-ok($stripped->nrLines == 3);
+cmp_ok($sig->nrLines , "==",  5);
+cmp_ok($stripped->nrLines , "==",  3);
 
 #
 # Try code to find sep
@@ -120,6 +120,6 @@ ok($stripped->nrLines == 3);
 $body  = Mail::Message::Body::Lines->new(data => \@lines);
 ($stripped, $sig) = $body->stripSignature(pattern => sub {$_[0] eq "ab\n"});
 ok($sig);
-ok($sig->nrLines == 4);
-ok($stripped->nrLines == 3);
+cmp_ok($sig->nrLines , "==",  4);
+cmp_ok($stripped->nrLines , "==",  3);
 

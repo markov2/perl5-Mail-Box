@@ -4,29 +4,40 @@
 # specified by rfc2822.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
 use lib qw(. t);
 
-BEGIN {plan tests => 10}
+BEGIN {plan tests => 20}
 
-use Mail::Message::Field;
+use Mail::Message::Field::Fast;
 use Mail::Address;
 use Tools;
 
-sub cfws($)
-{   Mail::Message::Field->stripCFWS(shift);
+my @tests =
+( 'aap noot mies'                              => 'aap noot mies'
+, "aap\n noot\n"                               => 'aap noot'
+, "aap (comment) noot"                         => 'aap noot'
+, "(a) aap (comment) noot (c)"                 => 'aap noot'
+, "aap (com (nested) ment) noot"               => 'aap noot'
+, "aap ((nested) comment) noot"                => 'aap noot'
+, "aap (comment (nested)) noot"                => 'aap noot'
+, "aap (comment(nested)) noot"                 => 'aap noot'
+, "aap ((nested)comment(nested)) noot"         => 'aap noot'
+, "aap ((nes\n\nted)co\nmment(nested)\n) noot" => 'aap noot'
+);
+
+my @take = @tests;
+while(@take)
+{   my ($from, $to) = (shift @take, shift @take);
+    is(Mail::Message::Field->stripCFWS($from), $to );
 }
 
-ok(cfws('aap noot mies') eq 'aap noot mies');
-ok(cfws("aap\nnoot\n") eq 'aap noot');
-ok(cfws("aap (comment) noot") eq 'aap noot');
-ok(cfws("(a) aap (comment) noot (c)") eq 'aap noot');
-ok(cfws("aap (com (nested) ment) noot") eq 'aap noot');
-ok(cfws("aap ((nested) comment) noot") eq 'aap noot');
-ok(cfws("aap (comment (nested)) noot") eq 'aap noot');
-ok(cfws("aap (comment(nested)) noot") eq 'aap noot');
-ok(cfws("aap ((nested)comment(nested)) noot") eq 'aap noot');
-ok(cfws("aap ((nes\n\nted)co\nmment(nested)\n) noot") eq 'aap noot');
+@take = @tests;
+while(@take)
+{   my ($from, $to) = (shift @take, shift @take);
+    my $field = Mail::Message::Field::Fast->new('Something' => $from);
+    is($field->stripCFWS, $to);
+}

@@ -7,6 +7,8 @@ Mail/Box-Overview.pod
 Mail/Box.pm
 Mail/Box/Dir.pm
 Mail/Box/Dir/Message.pm
+Mail/Box/File.pm
+Mail/Box/File/Message.pm
 Mail/Box/Locker.pm
 Mail/Box/Locker/DotLock.pm
 Mail/Box/Locker/Flock.pm
@@ -31,6 +33,7 @@ Mail/Box/Parser.pm
 Mail/Box/Parser/Perl.pm
 Mail/Box/Search.pm
 Mail/Box/Search/Grep.pm
+Mail/Box/Search/SpamAssassin.pm
 Mail/Box/Thread/Manager.pm
 Mail/Box/Thread/Node.pm
 Mail/Box/Tie.pm

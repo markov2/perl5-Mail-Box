@@ -4,7 +4,7 @@
 # Test appending messages on Mbox folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -16,7 +16,7 @@ use Tools;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 29}
+BEGIN {plan tests => 30}
 
 #
 # We will work with a copy of the original to avoid that we write
@@ -47,13 +47,13 @@ my $folder = $mgr->open
 die "Couldn't read $cpy: $!\n"
     unless $folder;
 
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 # Add a message which is already in the opened folder.  This should
 # be ignored.
 
 $folder->addMessage($folder->message(3)->clone);
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 #
 # Create an Mail::Message and add this to the open folder.
@@ -66,14 +66,15 @@ my $msg = Mail::Message->build
   , data    => [ "a short message\n", "of two lines.\n" ]
   );
 
+ok(defined $msg);
 my @appended = $mgr->appendMessage("=$cpyfn", $msg);
-ok($folder->messages==46);
-ok(@appended==1);
-ok($appended[0]->isa('Mail::Box::Message'));
+cmp_ok($folder->messages, "==", 46);
+cmp_ok(@appended, "==", 1);
+isa_ok($appended[0], 'Mail::Box::Message');
 
-ok($mgr->openFolders==1);
+cmp_ok($mgr->openFolders, "==", 1);
 $mgr->close($folder);
-ok($mgr->openFolders==0);
+cmp_ok($mgr->openFolders, "==", 0);
 
 my $msg2 = Mail::Message->build
   ( From      => 'me_too@example.com'
@@ -89,9 +90,9 @@ my $old_size = -s $cpy;
   , extract   => 'LAZY'
   , access    => 'rw'
   );
-ok(@appended==1);
+cmp_ok(@appended, "==", 1);
 
-ok($mgr->openFolders==0);
+cmp_ok($mgr->openFolders, "==", 0);
 ok($old_size != -s $cpy);
 
 $folder = $mgr->open
@@ -109,30 +110,30 @@ my $sec = $mgr->open
   );
 
 ok($folder);
-ok($folder->messages==47);
+cmp_ok($folder->messages, "==", 47);
 ok($sec);
-ok($sec->messages==0);
-ok($mgr->openFolders==2);
+cmp_ok($sec->messages, "==", 0);
+cmp_ok($mgr->openFolders, "==", 2);
 
 my $move = $folder->message(1);
 ok(defined $move);
 
 my @moved = $mgr->moveMessage($sec, $move);
-ok(@moved==1);
-ok($moved[0]->isa('Mail::Box::Message'));
-ok($moved[0]->folder->name eq $sec->name);
+cmp_ok(@moved, "==", 1);
+isa_ok($moved[0], 'Mail::Box::Message');
+is($moved[0]->folder->name, $sec->name);
 
 ok($move->deleted);
-ok($folder->messages==47);
-ok($sec->messages==1);
+cmp_ok($folder->messages, "==", 47);
+cmp_ok($sec->messages, "==", 1);
 
 my $copy   = $folder->message(2);
 my @copied = $mgr->copyMessage($sec, $copy);
-ok(@copied==1);
-ok($copied[0]->isa('Mail::Box::Message'));
+cmp_ok(@copied, "==", 1);
+isa_ok($copied[0], 'Mail::Box::Message');
 ok(!$copy->deleted);
-ok($folder->messages==47);
-ok($sec->messages==2);
+cmp_ok($folder->messages, "==", 47);
+cmp_ok($sec->messages, "==", 2);
 
 $folder->close;
 $sec->close;

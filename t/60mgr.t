@@ -4,7 +4,7 @@
 # Test the folder manager
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -34,7 +34,7 @@ my $folder  = $manager->open
   );
 
 ok(defined $folder);
-ok($folder->isa('Mail::Box::Mbox'));
+isa_ok($folder, 'Mail::Box::Mbox');
 
 my $second = $manager->open
  ( folder       => $src
@@ -42,14 +42,14 @@ my $second = $manager->open
  );
 
 ok(defined $second);
-ok($second eq $folder);
+is($second, $folder);
 my @notices = $manager->report('NOTICES');
-ok(@notices==1);
-ok($notices[-1] eq "Folder t/mbox.src is already open.\n");
-ok($manager->openFolders==1);
+cmp_ok(@notices, "==", 1);
+is($notices[-1], "Folder t/mbox.src is already open.\n");
+cmp_ok($manager->openFolders, "==", 1);
 
 undef $second;
-ok($manager->openFolders==1);
+cmp_ok($manager->openFolders, "==", 1);
 
 my $n = $manager->open
  ( folder       => $new
@@ -60,11 +60,11 @@ my $n = $manager->open
 ok(! -f $new);
 ok(not defined $n);
 @notices = $manager->report('NOTICES');
-ok(@notices==1);
+cmp_ok(@notices, "==", 1);
 
 my @warnings = $manager->report('WARNINGS');
-ok(@warnings==1);
-ok($warnings[-1] eq "Folder t/create does not exist (mbox).\n");
+cmp_ok(@warnings, "==", 1);
+is($warnings[-1], "Folder t/create does not exist (mbox).\n");
 
 $manager->log('WARNINGS');  # back to default reporting.
 $manager->trace('WARNINGS');

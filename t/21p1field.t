@@ -4,7 +4,7 @@
 # This also doesn't cover reading headers from file.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -27,44 +27,44 @@ warn "   * Parser in pure Perl status: released\n";
 #
 
 my $f = Mail::Message::Field->new('Sender:  B ;  C');
-ok($f->name eq 'sender');
-ok($f->body eq 'B');
-ok($f->comment =~ m/^\s*C\s*/);
+is($f->name, 'sender');
+is($f->body, 'B');
+like($f->comment , qr/^\s*C\s*/);
 
 # No comment, strip CR LF
 
 my $g = Mail::Message::Field->new("Sender: B\015\012");
-ok($g->body eq 'B');
-ok($g->comment eq "");
+is($g->body, 'B');
+is($g->comment, "");
 
 # Check toString
 
 my $x = $f->toString;
-ok($x eq "Sender: B ;  C\n");
+is($x, "Sender: B ;  C\n");
 
 $x = $g->toString;
-ok($x eq "Sender: B\n");
+is($x, "Sender: B\n");
 
 # Now check folding.
 
 my $k = Mail::Message::Field->new(Sender => 'short line');
-ok($k->toString eq "Sender: short line\n");
+is($k->toString, "Sender: short line\n");
 my @klines = $k->toString;
-ok(@klines==1);
+cmp_ok(@klines, "==", 1);
 
 my $l = Mail::Message::Field->new(Sender =>
  'oijfjslkgjhius2rehtpo2uwpefnwlsjfh2oireuqfqlkhfjowtropqhflksjhflkjhoiewurpq');
 my @llines = $k->toString;
-ok(@llines==1);
+cmp_ok(@llines, "==", 1);
 
 my $m = Mail::Message::Field->new(Sender =>
   'roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop, qhflksjhflkj, hoiewurpq');
 
-ok($m->nrLines==2);
+cmp_ok($m->nrLines, "==", 2);
 $m->setWrapLength(35);
-ok($m->nrLines==3);
+cmp_ok($m->nrLines, "==", 3);
 
 my @mlines = $m->toString(72);
-ok(@mlines==2);
-ok($mlines[0] eq "Sender: roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop,\n");
-ok($mlines[1] eq " qhflksjhflkj, hoiewurpq\n");
+cmp_ok(@mlines, "==", 2);
+is($mlines[0], "Sender: roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop,\n");
+is($mlines[1], " qhflksjhflkj, hoiewurpq\n");

@@ -3,7 +3,7 @@
 # Encoding and Decoding of 8bit
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -27,7 +27,7 @@ ENCODED
 
 my $codec = Mail::Message::TransferEnc::EightBit->new;
 ok(defined $codec);
-ok($codec->name eq '8bit');
+is($codec->name, '8bit');
 
 # Test encoding
 
@@ -38,9 +38,9 @@ my $body   = Mail::Message::Body::Lines->new
 
 my $enc    = $codec->encode($body);
 ok($body!=$enc);
-ok($enc->mimeType eq 'text/html');
-ok($enc->transferEncoding eq '8bit');
-ok($enc->string eq $encoded);
+is($enc->mimeType, 'text/html');
+is($enc->transferEncoding, '8bit');
+is($enc->string, $encoded);
 
 # Test decoding
 

@@ -3,7 +3,7 @@
 # Test the creation of forward subjects
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -14,10 +14,10 @@ use Mail::Message::Construct;
 
 BEGIN {plan tests => 7}
 
-ok(Mail::Message->forwardSubject('subject') eq 'Forw: subject');
-ok(Mail::Message->forwardSubject('Re: subject') eq 'Forw: Re: subject');
-ok(Mail::Message->forwardSubject('Re[2]: subject') eq 'Forw: Re[2]: subject');
-ok(Mail::Message->forwardSubject('subject (forw)') eq 'Forw: subject (forw)');
-ok(Mail::Message->forwardSubject('subject (Re)') eq 'Forw: subject (Re)');
-ok(Mail::Message->forwardSubject(undef) eq 'Forwarded');
-ok(Mail::Message->forwardSubject('') eq 'Forwarded');
+is(Mail::Message->forwardSubject('subject'), 'Forw: subject');
+is(Mail::Message->forwardSubject('Re: subject'), 'Forw: Re: subject');
+is(Mail::Message->forwardSubject('Re[2]: subject'), 'Forw: Re[2]: subject');
+is(Mail::Message->forwardSubject('subject (forw)'), 'Forw: subject (forw)');
+is(Mail::Message->forwardSubject('subject (Re)'), 'Forw: subject (Re)');
+is(Mail::Message->forwardSubject(undef), 'Forwarded');
+is(Mail::Message->forwardSubject(''), 'Forwarded');

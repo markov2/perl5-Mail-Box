@@ -4,7 +4,7 @@
 # Test the locking methods.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -31,7 +31,7 @@ my $locker = Mail::Box::Locker->new
  );
 
 ok($locker);
-ok($locker->name eq 'DOTLOCK');
+is($locker->name, 'DOTLOCK');
 
 ok($locker->lock);
 ok(-f $lockfile);

@@ -3,7 +3,7 @@
 # Test conversions from HTML/XHTML to plain text with HTML::FormatText
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -36,12 +36,12 @@ my $body = Mail::Message::Body::Lines->new
 my $f = $html->format($body);
 ok(defined $f);
 ok(ref $f);
-ok($f->isa('Mail::Message::Body'));
-ok($f->mimeType eq 'text/plain');
-ok($f->charset eq 'iso-8859-1');
-ok($f->transferEncoding eq 'none');
+isa_ok($f, 'Mail::Message::Body');
+is($f->mimeType, 'text/plain');
+is($f->charset, 'iso-8859-1');
+is($f->transferEncoding, 'none');
 
-ok($f->string eq <<'EXPECTED');
+is($f->string, <<'EXPECTED');
    Life according to Brian
    =======================
 

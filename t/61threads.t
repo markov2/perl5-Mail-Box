@@ -3,7 +3,7 @@
 # Test threads over multi-folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -14,5 +14,4 @@ use Tools;
 
 BEGIN {plan tests => 1}
 
-warn "   * Multi-folder threads status ALPHA (not tested)\n";
-ok(1);
+pass("   * Multi-folder threads status ALPHA (not tested)");

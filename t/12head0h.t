@@ -4,7 +4,7 @@
 # header from file.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -18,52 +18,52 @@ use IO::Scalar;
 
 my $h = Mail::Message::Head::Complete->new;
 {  my @o = $h->names;
-   ok(@o==0);
+   cmp_ok(scalar @o, '==', 0);
 }
 
 # Adding a first.
 
 {  my $a = $h->add(From => 'me@home');
    ok(ref $a);
-   ok($a->isa('Mail::Message::Field'));
+   isa_ok($a, 'Mail::Message::Field');
 }
 
 {  my @o = $h->names;
-   ok(@o==1);
+   cmp_ok(@o, '==', 1);
 }
 
 {  my @f = $h->get('From'); # list context
-   ok(@f==1);
+   cmp_ok(@f, '==', 1);
    ok(ref $f[0]);
-   ok($f[0]->isa('Mail::Message::Field'));
-   ok($f[0]->body eq 'me@home');
+   isa_ok($f[0], 'Mail::Message::Field');
+   is($f[0]->body, 'me@home');
 }
 
 {  my $f = $h->get('From'); # scalar context
-   ok($f->body eq 'me@home');
+   is($f->body, 'me@home');
 }
 
 # Adding a second.
 
 $h->add(From => 'you2me');
 {  my @o = $h->names;
-   ok(@o==1);
+   cmp_ok(@o, '==', 1);
 }
 
 {  my @f = $h->get('From'); # list context
-   ok(@f==2);
-   ok($f[0]->body eq 'me@home');
-   ok($f[1]->body eq 'you2me');
+   cmp_ok(@f, '==', 2);
+   is($f[0]->body, 'me@home');
+   is($f[1]->body, 'you2me');
 }
 
 {  my $f = $h->get('From'); # scalar context
-   ok($f->body eq 'you2me');
+   is($f->body, 'you2me');
 }
 
 # Missing
 
 {  my @f = $h->get('unknown');
-   ok(@f==0);
+   cmp_ok(@f, '==', 0);
 }
 
 {  my $f = $h->get('unknown');
@@ -75,25 +75,25 @@ $h->add(From => 'you2me');
 {
    $h->set(From => 'perl');
    my @f = $h->get('From');
-   ok(@f==1);
+   cmp_ok(@f, '==', 1);
 }
 
 {  my @o = $h->names;
-   ok(@o==1);
+   cmp_ok(@o, '==', 1);
 }
 
 $h->set(New => 'test');
 {  my @o = sort $h->names;
-   ok(@o==2);
-   ok($o[0] eq 'from');
-   ok($o[1] eq 'new');
+   cmp_ok(@o, '==', 2);
+   is($o[0], 'from');
+   is($o[1], 'new');
 }
 
 # Reset
 
 $h->reset('From');
 {  my @f = $h->get('From');
-   ok(@f==0);
+   cmp_ok(@f, '==', 0);
 }
 
 {
@@ -102,7 +102,7 @@ $h->reset('From');
 }
 
 {  my @f = $h->get('neW');
-   ok(@f==2);
+   cmp_ok(@f, '==', 2);
 }
 
 # Print
@@ -124,7 +124,7 @@ From: me
 
 EXPECTED_OUTPUT
 
-ok($output eq $expected);
-ok($h->toString eq $expected);
+is($output, $expected);
+is($h->toString, $expected);
 
 $fakefile->close;

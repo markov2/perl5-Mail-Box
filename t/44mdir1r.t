@@ -4,7 +4,7 @@
 # Test reading of Maildir folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -43,8 +43,8 @@ my $folder = new Mail::Box::Maildir
 
 ok(defined $folder);
 
-ok($folder->messages==45);
-ok($folder->organization eq 'DIRECTORY');
+cmp_ok($folder->messages, "==", 45);
+is($folder->organization, 'DIRECTORY');
 
 #
 # Count drafts (from Tools.pm flags)
@@ -52,7 +52,7 @@ ok($folder->organization eq 'DIRECTORY');
 
 my $drafts = 0;
 $_->label('draft') && $drafts++ foreach $folder->messages;
-ok($drafts==8);
+cmp_ok($drafts, "==", 8);
 
 #
 # No single head should be read now, because extract == LAZY
@@ -63,7 +63,7 @@ my $heads = 0;
 foreach ($folder->messages)
 {  $heads++ unless $_->head->isDelayed;
 }
-ok($heads==4);   # Last 4 messages started in new and have Status read
+cmp_ok($heads, "==", 4);   # Last 4 messages started in new and have Status read
 
 #
 # Loading a header should not be done unless really necessary.
@@ -83,7 +83,7 @@ my $parsed = 0;
 foreach ($folder->messages)
 {  $parsed++ if $_->isParsed;
 }
-ok($parsed==0);
+cmp_ok($parsed, "==", 0);
 
 #
 # Trigger one message to get read.
@@ -99,7 +99,7 @@ ok($message->isParsed);
 $message = $folder->message(8);
 ok(defined $message->head->get('subject'));
 ok(not $message->isParsed);
-ok(ref $message->head eq 'Mail::Message::Head::Complete');
+is(ref $message->head, 'Mail::Message::Head::Complete');
 
 # This shouldn't cause any parsings: we do lazy extract, but Mail::Box
 # will always take the `Subject' header for us.
@@ -114,8 +114,8 @@ foreach ($folder->messages)
 {  $parsed++ unless $_->isDelayed;
    $heads++  unless $_->head->isDelayed;
 }
-ok($parsed==1);  # message 7
-ok($heads==45);
+cmp_ok($parsed, "==", 1);  # message 7
+cmp_ok($heads, "==", 45);
 
 #
 # The subjects must be the same as from the original Mail::Box::Mbox
@@ -151,7 +151,7 @@ ok(!$missed);
 my $msg3 = $folder->message(3);
 my $body = $msg3->body;
 ok(defined $body);
-ok(@$body==42);       # check expected number of lines in message 4.
+cmp_ok(@$body, "==", 42);       # check expected number of lines in message 4.
 
 $folder->close;
 
@@ -170,7 +170,7 @@ $folder = new Mail::Box::Maildir
 
 ok(defined $folder);
 
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 $parsed     = 0;
 $heads      = 0;
@@ -198,8 +198,8 @@ foreach ($folder->messages)
 }
 
 ok(not $mistake);
-ok($parsed == 7);
-ok($heads == 9);
+cmp_ok($parsed , "==",  7);
+cmp_ok($heads , "==",  9);
 
 $folder->close;
 

@@ -4,7 +4,7 @@
 # Test writing of mbox folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -63,7 +63,7 @@ my $copy = new Mail::Box::Mbox
   );
 
 ok($copy);
-ok($folder->messages==$copy->messages);
+cmp_ok($folder->messages, "==", $copy->messages);
 
 # Check also if the subjects are the same.
 

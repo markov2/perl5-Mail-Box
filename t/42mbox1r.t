@@ -3,7 +3,7 @@
 # Test reading of mbox folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -14,7 +14,7 @@ use Tools;
 
 use File::Compare;
 
-BEGIN {plan tests => 59}
+BEGIN {plan tests => 149}
 
 my @src = (folder => "=$fn", folderdir => 't');
 
@@ -32,8 +32,8 @@ my $folder = new Mail::Box::Mbox
   );
 
 ok(defined $folder);
-ok($folder->messages == 45);
-ok($folder->organization eq 'FILE');
+cmp_ok($folder->messages , "==",  45);
+is($folder->organization, 'FILE');
 
 #
 # Extract one message.
@@ -41,15 +41,15 @@ ok($folder->organization eq 'FILE');
 
 my $message = $folder->message(2);
 ok(defined $message);
-ok($message->isa('Mail::Box::Message'));
+isa_ok($message, 'Mail::Box::Message');
 
 #
 # Extract a few messages.
 #
 
 my @some = $folder->messages(3,7);
-ok(@some==5);
-ok($some[0]->isa('Mail::Box::Message'));
+cmp_ok(@some, "==", 5);
+isa_ok($some[0], 'Mail::Box::Message');
 
 #
 # All message should be parsed.
@@ -65,22 +65,19 @@ ok($parsed);
 
 my ($end, $msgnr) = (0, 0);
 foreach $message ($folder->messages)
-{   $msgnr++;
-    my $ok = 0;
-    my ($msgbegin, $msgend)   = $message->fileLocation;
+{   my ($msgbegin, $msgend)   = $message->fileLocation;
     my ($headbegin, $headend) = $message->head->fileLocation;
     my ($bodybegin, $bodyend) = $message->body->fileLocation;
 
 #warn "($msgbegin, $msgend) ($headbegin, $headend) ($bodybegin, $bodyend)\n";
-    $ok++ if $msgbegin==$end;
-    $ok++ if $headbegin > $msgbegin;
-    $ok++ if $bodybegin==$headend;
+    cmp_ok($msgbegin, "==", $end,      "begin $msgnr");
+    cmp_ok($headbegin, ">", $msgbegin, "end $msgnr");
+    cmp_ok($bodybegin, "==", $headend, "glue $msgnr");
     $end = $bodyend;
-    ok($ok==3);
-    warn "Message ", $message->get('subject') || '<no subject>', " failed\n"
-       unless $ok==3;
+
+    $msgnr++;
 }
-ok($end== -s $folder->filename);
+cmp_ok($end, "==",  -s $folder->filename);
 
 #
 # Try to delete a message
@@ -88,10 +85,10 @@ ok($end== -s $folder->filename);
 
 $folder->message(2)->delete;
 ok($folder->message(2)->deleted);
-ok($folder->messages == 45);
+cmp_ok($folder->messages , "==",  45);
 
-ok($folder->messages('ACTIVE')  == 44);
-ok($folder->messages('DELETED') ==  1);
+cmp_ok($folder->messages('ACTIVE')  , "==",  44);
+cmp_ok($folder->messages('DELETED') , "==",   1);
 
 $folder->close(write => 'NEVER');
 

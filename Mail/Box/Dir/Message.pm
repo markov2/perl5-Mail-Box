@@ -119,6 +119,25 @@ sub filename(;$)
 
 #-------------------------------------------
 
+# Asking the filesystem for the size is faster counting (in
+# many situations.  It even may be lazy.
+
+sub size()
+{   my $self = shift;
+
+    unless($self->modified)
+    {   my $filename = $self->filename;
+        if(defined $filename)
+        {   my $size = -s $filename;
+            return $size if defined $size;
+        }
+    }
+
+    $self->SUPER::size;
+}
+
+#-------------------------------------------
+
 sub diskDelete()
 {   my $self = shift;
     $self->SUPER::diskDelete;

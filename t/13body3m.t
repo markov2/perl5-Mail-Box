@@ -3,7 +3,7 @@
 # Test processing of multipart message bodies.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -23,10 +23,10 @@ my $body = Mail::Message::Body::Multipart->new
  , boundary          => 'xyz'
  );
 
-ok($body->boundary eq 'xyz');
+is($body->boundary, 'xyz');
 $body->boundary('part-separator');
-ok($body->boundary eq 'part-separator');
-ok($body->mimeType eq 'multipart/mixed');
+is($body->boundary, 'part-separator');
+is($body->mimeType, 'multipart/mixed');
 
 my $h1 = Mail::Message::Head::Complete->new;
 
@@ -38,14 +38,14 @@ my $b1 = Mail::Message::Body::Lines->new
  );
 
 ok($b1);
-ok($b1->mimeType eq 'text/html');
-ok($b1->transferEncoding eq '8bit');
-ok($b1->disposition eq 'none');
+is($b1->mimeType, 'text/html');
+is($b1->transferEncoding, '8bit');
+is($b1->disposition, 'none');
 
 my $p1 = Mail::Message->new(head => $h1);
-ok($p1->body($b1) == $b1);
-ok($p1->get('Content-Type') eq 'text/html');
-ok($p1->get('Content-Transfer-Encoding') eq '8bit');
+cmp_ok($p1->body($b1) , "==",  $b1);
+is($p1->get('Content-Type'), 'text/html');
+is($p1->get('Content-Transfer-Encoding'), '8bit');
 ok(!defined $p1->get('Content-Disposition'));
 
 my $h2 = Mail::Message::Head::Complete->new;
@@ -60,15 +60,15 @@ my $b2 = Mail::Message::Body::Lines->new
 ok($b2);
 
 my $p2 = Mail::Message->new(head => $h2);
-ok($p2->body($b2) == $b2);
+cmp_ok($p2->body($b2) , "==",  $b2);
 
 # Empty multipart
 
 my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
-ok($body->parts==0);
+cmp_ok($body->parts, "==", 0);
 $body->print($g);
-ok($fakeout eq "--part-separator--\n");
+is($fakeout, "--part-separator--\n");
 
 # First attachment
 
@@ -76,9 +76,10 @@ $fakeout = '';
 
 my $newbody = $body->attach($p1);
 ok($newbody != $body);
-ok($newbody->parts==1);
+cmp_ok($newbody->parts, "==", 1);
 $newbody->print($g);
-ok($fakeout eq <<'EXPECTED');
+
+is($fakeout, <<'EXPECTED');
 --part-separator
 Content-Type: text/html; charset="us-ascii"
 Content-Length: 12
@@ -95,11 +96,11 @@ EXPECTED
 
 my $newerbody = $newbody->attach($p2);
 ok($newerbody != $newbody);
-ok($newerbody->parts==2);
+cmp_ok($newerbody->parts, "==", 2);
 
 $fakeout = '';
 $newerbody->print($g);
-ok($fakeout eq <<'EXPECTED');
+is($fakeout, <<'EXPECTED');
 --part-separator
 Content-Type: text/html; charset="us-ascii"
 Content-Length: 12
@@ -141,7 +142,7 @@ ok($newestbody != $newbody);
 
 $fakeout = '';
 $newestbody->print($g);
-ok($fakeout eq <<'EXPECTED');
+is($fakeout, <<'EXPECTED');
 preamb1
 preamb2
 --part-separator
@@ -173,14 +174,15 @@ EXPECTED
 # header.
 
 my $message = Mail::Message->buildFromBody($newestbody,
-    From => 'me', To => 'you', Date => 'now');
+    From => 'me', To => 'you', Date => 'now', 'Message-Id' => '<simple>');
 
 $fakeout = '';
 $message->print($g);
-ok($fakeout eq <<'EXPECTED');
+is($fakeout, <<'EXPECTED');
 From: me
 To: you
 Date: now
+Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
 Lines: 24
 Content-Transfer-Encoding: 8bit
@@ -212,14 +214,15 @@ epilogue
 EXPECTED
 
 my $m1 = Mail::Message->buildFromBody($body, From => 'me', To => 'you',
-   Date => 'now');
+   Date => 'now', 'Message-Id' => '<simple>');
 
 $fakeout = '';
 $m1->print($g);
-ok($fakeout eq <<'EXPECTED');
+is($fakeout, <<'EXPECTED');
 From: me
 To: you
 Date: now
+Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
 Lines: 1
 Content-Transfer-Encoding: 8bit
@@ -228,14 +231,15 @@ Content-Transfer-Encoding: 8bit
 EXPECTED
 
 my $m2 = Mail::Message->buildFromBody($b1, From => 'me', To => 'you',
-   Date => 'now');
+   Date => 'now', 'Message-Id' => '<simple>');
 
 $fakeout = '';
 $m2->print($g);
-ok($fakeout eq <<'EXPECTED');
+is($fakeout, <<'EXPECTED');
 From: me
 To: you
 Date: now
+Message-Id: <simple>
 Content-Type: text/html; charset="us-ascii"
 Content-Length: 12
 Lines: 2
@@ -252,4 +256,4 @@ EXPECTED
 my $m3 = $message->clone;
 ok($m3);
 ok($m3 != $message);
-ok($m3->parts == $message->parts);
+cmp_ok($m3->parts , "==",  $message->parts);

@@ -4,7 +4,7 @@
 # Test mh-sequences
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -51,7 +51,7 @@ ok(not $folder->message(2)->label('seen'));
 ok($folder->message(3)->label('seen'));
 
 ok($folder->message(4)->label('current'));
-ok($folder->current->messageID eq $folder->message(4)->messageID);
+is($folder->current->messageID, $folder->message(4)->messageID);
 
 ok(not $folder->message(1)->label('current'));
 $folder->current($folder->message(1));
@@ -66,8 +66,8 @@ my @seq = <SEQ>;
 close SEQ;
 
 my ($cur)    = grep /^cur\: /, @seq;
-ok($cur, "cur: 2\n");
+is($cur, "cur: 2\n");
 my ($unseen) = grep /^unseen\: /, @seq;
-ok($unseen, "unseen: 3 12-15 33 35\n");
+is($unseen, "unseen: 3 12-15 33 35\n");
 
 clean_dir $mhsrc;

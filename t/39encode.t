@@ -4,7 +4,7 @@
 # Could use some more tests....
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -38,19 +38,19 @@ ok(defined $body);
 
 my $dec = $body->encode(transfer_encoding => 'none');
 ok(defined $dec);
-ok($dec->isa('Mail::Message::Body'));
+isa_ok($dec, 'Mail::Message::Body');
 ok(!$dec->checked);
-ok($dec->string eq $decoded);
-ok($dec->transferEncoding eq 'none');
+is($dec->string, $decoded);
+is($dec->transferEncoding, 'none');
 
 my $enc = $dec->encode(transfer_encoding => '7bit');
 ok(defined $enc);
-ok($enc->isa('Mail::Message::Body'));
+isa_ok($enc, 'Mail::Message::Body');
 ok(!$enc->checked);
-ok($enc->string eq $decoded);
+is($enc->string, $decoded);
 
 my $msg = Mail::Message->buildFromBody($enc, From => 'me', To => 'you',
-   Date => 'now');
+   Date => 'now', 'Message-Id' => '<simple>');
 ok($msg);
 ok($msg->body->checked);
 
@@ -58,10 +58,11 @@ my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
 $msg->print($g);
 
-ok($fakeout eq <<'MSG');
+is($fakeout, <<'MSG');
 From: me
 To: you
 Date: now
+Message-Id: <simple>
 Content-Type: text/html; charset="us-ascii"
 Content-Length: 83
 Lines: 2

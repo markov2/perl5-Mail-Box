@@ -4,7 +4,7 @@
 # Test folder-to-folder copy
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -30,18 +30,18 @@ ok(defined $folder);
 
 unlink qw/a b c d e/;
 
-my $a = $mgr->open('a', type => 'mh', create => 1, access => 'w');
-ok(defined $a);
+my $A = $mgr->open('a', type => 'mh', create => 1, access => 'w');
+ok(defined $A);
 
-$mgr->copyMessage($a, $folder->message($_)) for 0..9;
+$mgr->copyMessage($A, $folder->message($_)) for 0..9;
 
-my $b = $a->openSubFolder('b', create => 1, access => 'w');
+my $b = $A->openSubFolder('b', create => 1, access => 'w');
 ok(defined $b);
 $mgr->copyMessage($b, $folder->message($_)) for 10..19;
-ok($b->messages==10);
+cmp_ok($b->messages, "==", 10);
 $b->close;
 
-my $c = $a->openSubFolder('c', create => 1, access => 'w');
+my $c = $A->openSubFolder('c', create => 1, access => 'w');
 ok(defined $c);
 $mgr->copyMessage($c, $folder->message($_)) for 20..29;
 
@@ -51,54 +51,54 @@ $mgr->copyMessage($d, $folder->message($_)) for 30..39;
 
 $d->close;
 $c->close;
-$a->close;
+$A->close;
 
 $folder->close;
-ok($mgr->openFolders == 0);
+cmp_ok($mgr->openFolders , "==",  0);
 
 #
 # Convert the built MH structure into MBOX
 #
 
-$a = $mgr->open('a', access => 'rw');
-ok($a);
+$A = $mgr->open('a', access => 'rw');
+ok($A);
 
-my @sub = sort $a->listSubFolders;
-ok(@sub==2);
-ok($sub[0] eq 'b');
-ok($sub[1] eq 'c');
+my @sub = sort $A->listSubFolders;
+cmp_ok(@sub, "==", 2);
+is($sub[0], 'b');
+is($sub[1], 'c');
 
 my $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw');
-ok($a->messages==10);
+cmp_ok($A->messages, "==", 10);
 
-$a->message($_)->delete for 3,4,8;
-ok(defined $a->copyTo($e, select => 'ALL', subfolders => 0));
-ok($e->messages==10);
+$A->message($_)->delete for 3,4,8;
+ok(defined $A->copyTo($e, select => 'ALL', subfolders => 0));
+cmp_ok($e->messages, "==", 10);
 $e->delete;
 
 $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw');
-ok(defined $a->copyTo($e, select => 'DELETED', subfolders => 0));
-ok($e->messages==3);
+ok(defined $A->copyTo($e, select => 'DELETED', subfolders => 0));
+cmp_ok($e->messages, "==", 3);
 $e->delete;
 
 $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw');
-ok(defined $a->copyTo($e, select => 'ACTIVE', subfolders => 'FLATTEN'));
-ok($e->messages==37);
+ok(defined $A->copyTo($e, select => 'ACTIVE', subfolders => 'FLATTEN'));
+cmp_ok($e->messages, "==", 37);
 $e->delete;
 
 $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw');
-ok(defined $a->copyTo($e, select => 'ACTIVE', subfolders => 'RECURSE'));
-ok($e->messages==7);
+ok(defined $A->copyTo($e, select => 'ACTIVE', subfolders => 'RECURSE'));
+cmp_ok($e->messages, "==", 7);
 
 my @subs = sort $e->listSubFolders;
-ok(@subs==2);
-ok($subs[0] eq 'b');
-ok($subs[1] eq 'c');
+cmp_ok(@subs, "==", 2);
+is($subs[0], 'b');
+is($subs[1], 'c');
 
 $b = $e->openSubFolder('b');
 ok(defined $b);
-ok($b->isa('Mail::Box::Mbox'));
-ok($b->messages == 10);
+isa_ok($b, 'Mail::Box::Mbox');
+cmp_ok($b->messages , "==",  10);
 
 $b->close;
 

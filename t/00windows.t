@@ -4,7 +4,7 @@
 # so only has LF line-terminations.  In this script, this is
 # translated.  The Content-Length of the messages is updated too.
 
-use Test;
+use Test::More;
 
 use strict;
 use warnings;
@@ -12,8 +12,7 @@ use FileHandle;
 
 BEGIN {
    unless($^O =~ m/mswin/i)
-   {   warn "requires MicroSoft Windows.\n";
-       plan tests => 0;
+   {   plan skip_all => "preparation for MicroSoft Windows.";
        exit 0;
    }
 
@@ -69,4 +68,4 @@ until(eof SRC)
 die "Errors in reading $src"  unless close SRC;
 die "Errors in writing $dest" unless close DEST;
 
-ok(1);
+pass("Folder conversion complete");

@@ -4,7 +4,7 @@
 # Test writing of mbox folders using the inplace policy.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -99,7 +99,7 @@ my $copy = new Mail::Box::Mbox
   );
 
 ok(defined $copy);
-ok($folder->messages==$copy->messages);
+cmp_ok($folder->messages, "==", $copy->messages);
 
 # Check also if the subjects are the same.
 

@@ -4,7 +4,7 @@
 # Test appending messages on Maildir folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -18,8 +18,7 @@ use File::Copy;
 
 BEGIN {
    if($^O =~ /mswin/i)
-   {   warn "Maildir filenames are incompatible with Windows";
-       plan tests => 0;
+   {   plan skip_all => 'Not on Windows';
        exit 0;
    }
 
@@ -44,7 +43,7 @@ die "Couldn't read $mdsrc: $!\n"
 # We checked this in other scripts before, but just want to be
 # sure we have enough messages again.
 
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 # Add a message which is already in the opened folder.  However, the
 # message heads are not yet parsed, hence the message can not be
@@ -54,15 +53,15 @@ my $message3 = $folder->message(3);
 ok($message3->isDelayed);
 my $added = $message3->clone;
 ok(defined $added);
-ok(ref $added eq 'Mail::Message');
+is(ref $added, 'Mail::Message');
 
 ok(!$message3->isDelayed);
 
 my $coerced = $folder->addMessage($added);    # coerced == added (reblessed)
-ok(ref $added eq 'Mail::Box::Maildir::Message');
-ok(ref $coerced eq 'Mail::Box::Maildir::Message');
+is(ref $added, 'Mail::Box::Maildir::Message');
+is(ref $coerced, 'Mail::Box::Maildir::Message');
 
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 ok(not $message3->deleted);
 ok($added->deleted);
@@ -79,12 +78,12 @@ my $msg = Mail::Message->build
   );
 
 $coerced = $mgr->appendMessage($mdsrc, $msg);
-ok($coerced->isa('Mail::Box::Maildir::Message'));
-ok($folder->messages==46);
+isa_ok($coerced, 'Mail::Box::Maildir::Message');
+cmp_ok($folder->messages, "==", 46);
 
-ok($mgr->openFolders==1);
+cmp_ok($mgr->openFolders, "==", 1);
 $mgr->close($folder);      # changes are not saved.
-ok($mgr->openFolders==0);
+cmp_ok($mgr->openFolders, "==", 0);
 
 $mgr->appendMessage($mdsrc, $msg
   , lock_type => 'NONE'

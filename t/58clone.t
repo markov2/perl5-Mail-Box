@@ -3,7 +3,7 @@
 # Test cloning messages
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -53,7 +53,7 @@ my $msg = Mail::Message->buildFromBody
 
 my $msg2 = $msg->clone;
 ok($msg2);
-ok($msg2->parts == 3);
+cmp_ok($msg2->parts , "==",  3);
 ok($mp->part(-1)->body->isNested);
 
 my $orig_text  = '';
@@ -67,4 +67,4 @@ $msg2->print($clone);
 $clone->close;
 
 ok(length $orig_text);
-ok($orig_text eq $clone_text);
+is($orig_text, $clone_text);

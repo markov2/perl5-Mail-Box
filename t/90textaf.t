@@ -3,7 +3,7 @@
 # Test formatting as plain text with Text::Autoformat
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -15,8 +15,7 @@ use Mail::Message;
 BEGIN {
     eval 'require Text::Autoformat';
     if($@)
-    {   warn "requires Text::Autoformat.\n";
-        plan tests => 0;
+    {   plan skip_all => "requires Text::Autoformat.\n";
         exit 0;
     }
 
@@ -43,7 +42,7 @@ ok($af);
 my $dump = $af->autoformatBody($body);
 ok(defined $dump);
 
-ok("$dump" eq <<'DUMP');
+is("$dump", <<'DUMP');
 This is some raw text to form the body of the message which has to be
 printed. I hope it is nice.
 > some badly formatted input lines are also in here, to test whether

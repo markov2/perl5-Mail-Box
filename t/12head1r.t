@@ -3,7 +3,7 @@
 # Test the processing of resent groups.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -30,28 +30,28 @@ my $rg = Mail::Message::Head::ResentGroup->new
  );
 
 ok(defined $rg);
-ok($rg->isa('Mail::Message::Head::ResentGroup'));
+isa_ok($rg, 'Mail::Message::Head::ResentGroup');
 
 { my $from = $rg->from;
   ok(ref $from);
-  ok($from->isa('Mail::Message::Field'));
-  ok($from->name eq 'resent-from');
+  isa_ok($from, 'Mail::Message::Field');
+  is($from->name, 'resent-from');
 }
 
 {  my $date = $rg->date;
    ok(ref $date);
-   ok($date->isa('Mail::Message::Field'));
-   ok($date->name eq 'resent-date');
-   ok($date->Name eq 'Resent-Date');
+   isa_ok($date, 'Mail::Message::Field');
+   is($date->name, 'resent-date');
+   is($date->Name, 'Resent-Date');
 }
 
 {  my $msgid = $rg->messageId;
    ok(ref $msgid);
-   ok($msgid->isa('Mail::Message::Field'));
-   ok($msgid->name eq 'resent-message-id');
-   ok($msgid->Name eq 'Resent-Message-ID');
-   ok($msgid =~ m!^\<!);
-   ok($msgid =~ m!\>$!);
+   isa_ok($msgid, 'Mail::Message::Field');
+   is($msgid->name, 'resent-message-id');
+   is($msgid->Name, 'Resent-Message-ID');
+   like($msgid, qr!^\<!);
+   like($msgid, qr!\>$!);
 }
 
 #
@@ -71,7 +71,7 @@ $h->addResentGroup($rg);
    # Cannot check the whole output: some lines are generated...
    $output =~ s/(Date|ID)\: .*/$1: [removed]/gm;
 
-   ok($output eq <<'EXPECTED');
+   is($output, <<'EXPECTED');
 From: me
 To: you
 Received: obligatory field
@@ -96,7 +96,7 @@ my $rg2 = $h->addResentGroup
 
 ok(defined $rg2);
 ok(ref $rg2);
-ok($rg2->isa('Mail::Message::Head::ResentGroup'));
+isa_ok($rg2, 'Mail::Message::Head::ResentGroup');
 
 {  my $output;
    my $fh = IO::Scalar->new(\$output);
@@ -107,7 +107,7 @@ ok($rg2->isa('Mail::Message::Head::ResentGroup'));
    $output =~ s/Date\: .*/Date: [removed]/gm;
    $output =~ s/ID\: .*?\d.*/ID: [removed]/gm;
 
-   ok($output eq <<'EXPECTED');
+   is($output, <<'EXPECTED');
 From: me
 To: you
 Return-Path: Appears before everything else
@@ -129,22 +129,22 @@ EXPECTED
 
 my $h2 = $h->clone;
 ok(defined $h2);
-ok($h2->isa('Mail::Message::Head::Complete'));
+isa_ok($h2, 'Mail::Message::Head::Complete');
 
 {  my @rgs = $h2->resentGroups;
-   ok(@rgs==2);
+   cmp_ok(@rgs, '==', 2);
    ok(defined $rgs[0]);
    ok(ref $rgs[0]);
    ok($rgs[0]->isa('Mail::Message::Head::ResentGroup'));
 
    my $rg1 = $rgs[0];
-   ok($rg1->messageId eq '<my own id>');
+   is($rg1->messageId, '<my own id>');
 
    my @of  = $rg1->orderedFields;
-   ok(@of==9);
+   cmp_ok(@of, '==', 9);
 
    @of     = $rgs[1]->orderedFields;
-   ok(@of==4);
+   cmp_ok(@of, '==', 4);
 
 # Now delete, and close scope to avoid accidental reference to
 # fields which should get cleaned-up.
@@ -153,10 +153,10 @@ ok($h2->isa('Mail::Message::Head::Complete'));
 }
 
 {  my @rgs = $h2->resentGroups;
-   ok(@rgs==1);
+   cmp_ok(@rgs, '==', 1);
 
    my @of  = $rgs[0]->orderedFields;
-   ok(@of==4);
+   cmp_ok(@of, '==', 4);
 
    my $output;
    my $fh = IO::Scalar->new(\$output);
@@ -166,7 +166,7 @@ ok($h2->isa('Mail::Message::Head::Complete'));
    # Cannot check the whole output: some lines are generated...
    $output =~ s/(Date|ID)\: .*/$1: [removed]/gm;
 
-   ok($output eq <<'EXPECTED');
+   is($output, <<'EXPECTED');
 From: me
 To: you
 Received: obligatory field

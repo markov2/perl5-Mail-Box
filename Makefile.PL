@@ -20,6 +20,7 @@ WriteMakefile
     , Mail::Address  => 0.0
     , MIME::Types    => 1.001
     , Sys::Hostname  => 0.0
+    , Test::More     => 0.47
 
 # Optional
 #   Text::Autoformat

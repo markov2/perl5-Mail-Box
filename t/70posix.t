@@ -4,7 +4,7 @@
 # Test the locking methods.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -32,7 +32,7 @@ my $locker = Mail::Box::Locker->new
  );
 
 ok(defined $locker);
-ok($locker->name eq 'POSIX');
+is($locker->name, 'POSIX');
 
 ok($locker->lock);
 ok(-f $lockfile);

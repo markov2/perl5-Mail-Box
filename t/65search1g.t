@@ -4,7 +4,7 @@
 # Test searching with grep
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -25,7 +25,7 @@ my $mgr    = Mail::Box::Manager->new;
 
 my $folder = $mgr->open($cpy);
 ok(defined $folder);
-ok($folder->messages == 45);
+cmp_ok($folder->messages , "==",  45);
 
 #
 # Simple search in body
@@ -38,14 +38,14 @@ my $oldfh = select $fh;
 my $grep1  = Mail::Box::Search::Grep->new
  ( match   => 'However'
  , in      => 'BODY'
- , details => 'PRINT'
+ , deliver => 'PRINT'
  );
 
 $grep1->search($folder);
 $fh->close;
 select $oldfh;
 
-ok($output eq <<'EXPECTED');
+is($output, <<'EXPECTED');
 t/mbox.cpy, message 8: Resize with Transparency
    21: However, ImageMagick (ImageMagick 4.2.7, PerlMagick 4.27 on Linux)
 t/mbox.cpy, message 38: Re: core dump in simple ImageMagick example
@@ -60,7 +60,7 @@ undef $grep1;
 # search in head with limit
 #
 
-undef $output;
+$output = '';
 $fh    = IO::Scalar->new(\$output) or die $!;
 select $fh;
 
@@ -68,14 +68,14 @@ my $grep2  = Mail::Box::Search::Grep->new
  ( match   => 'atcmpg'
  , in      => 'HEAD'
  , limit   => -4
- , details => 'PRINT'
+ , deliver => 'PRINT'
  );
 
 my @m2 = $grep2->search($folder);
 $fh->close;
 select $oldfh;
 
-ok(@m2==4);
+cmp_ok(@m2, "==", 4);
 
 my $last = shift @m2;
 foreach (@m2)
@@ -86,7 +86,7 @@ foreach (@m2)
 # messages are reversed ordered here, but in order returned: looking
 # backwards in the folder file.
 
-ok($output eq <<'EXPECTED');
+is($output, <<'EXPECTED');
 t/mbox.cpy, message 44: Font metrics
   Received: from ns.ATComputing.nl (ns.ATComputing.nl [195.108.229.25])
   	by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id TAA26427
@@ -114,12 +114,12 @@ my @hits;
 my $grep3  = Mail::Box::Search::Grep->new
  ( match   => qr/ImageMagick/
  , in      => 'MESSAGE'
- , details => \@hits
+ , deliver => \@hits
  );
 
 my @m3 = $grep3->search($folder);
-ok(@m3==24);
-ok(@hits==60);
+cmp_ok(@m3, "==", 24);
+cmp_ok(@hits, "==", 60);
 
 $last = shift @m3;
 my %m3 = ($last->seqnr => 1);
@@ -128,10 +128,10 @@ foreach (@m3)   # in order?
     $m3{$_->seqnr}++;
     $last = $_;
 }
-ok(keys %m3==24);
+cmp_ok(keys %m3, "==", 24);
 
 my %h3 = map { ($_->{message}->seqnr => 1) } @hits;
-ok(keys %h3==24);
+cmp_ok(keys %h3, "==", 24);
 
 undef $grep3;
 
@@ -143,12 +143,12 @@ undef $grep3;
 my $grep4  = Mail::Box::Search::Grep->new
  ( match   => qr/ImageMagick/i
  , in      => 'MESSAGE'
- , details => \@hits
+ , deliver => \@hits
  );
 
 my @m4 = $grep4->search($folder);
-ok(@m4==28);
-ok(@hits==102);
+cmp_ok(@m4, "==", 28);
+cmp_ok(@hits, "==", 102);
 
 undef $grep4;
 
@@ -162,12 +162,12 @@ $folder->message($_)->delete(1) for 3, 6, 8, 9, 11, 13, 23, 33;
 my $grep5  = Mail::Box::Search::Grep->new
  ( match   => qr/ImageMagick/i
  , in      => 'MESSAGE'
- , details => \@hits
+ , deliver => \@hits
  );
 
 my @m5 = $grep5->search($folder);
-ok(@m5==22);
-ok(@hits==89);
+cmp_ok(@m5, "==", 22);
+cmp_ok(@hits, "==", 89);
 
 undef $grep5;
 
@@ -178,12 +178,12 @@ my $grep6  = Mail::Box::Search::Grep->new
  ( match   => qr/ImageMagick/i
  , in      => 'MESSAGE'
  , deleted => 1
- , details => \@hits
+ , deliver => \@hits
  );
 
 my @m6 = $grep6->search($folder);
-ok(@m6==28);
-ok(@hits==102);
+cmp_ok(@m6, "==", 28);
+cmp_ok(@hits, "==", 102);
 
 undef $grep6;
 
@@ -193,12 +193,12 @@ undef $grep6;
 my $grep7  = Mail::Box::Search::Grep->new
  ( match   => qr/ImageMagick/i
  , in      => 'HEAD'
- , details => \@hits
+ , deliver => \@hits
  );
 
 my @m7 = $grep7->search($folder);
-ok(@m7==11);
-ok(@hits==27);
+cmp_ok(@m7, "==", 11);
+cmp_ok(@hits, "==", 27);
 
 undef $grep7;
 
@@ -208,14 +208,14 @@ undef $grep7;
 my $grep8  = Mail::Box::Search::Grep->new
  ( match   => qr/ImageMagick/i
  , in      => 'BODY'
- , details => \@hits
+ , deliver => \@hits
  );
 
 my @m8 = $grep8->search($folder);
-ok(@m8==20);
-ok(@hits==62);
+cmp_ok(@m8, "==", 20);
+cmp_ok(@hits, "==", 62);
 
-ok($grep8->search($folder)==20);
+cmp_ok($grep8->search($folder), "==", 20);
 
 undef $grep8;
 
@@ -226,7 +226,7 @@ my $grep9  = Mail::Box::Search::Grep->new
  , in      => 'BODY'
  );
 
-ok($grep9->search($folder)==1);
+cmp_ok($grep9->search($folder), "==", 1);
 
 undef $grep9;
 
@@ -241,17 +241,17 @@ select $fh;
 my $grep10  = Mail::Box::Search::Grep->new
  ( match   => 'ImageMagick'
  , in      => 'BODY'
- , details => 'PRINT'
+ , deliver => 'PRINT'
  );
 
 my $t     = $mgr->threads($folder);
 my $start = $t->threadStart($folder->message(25));  #isa multipart
 my @msgs  = $start->threadMessages;
 
-ok(@msgs==2);
+cmp_ok(@msgs, "==", 2);
 ok($grep10->search($start));
 
-ok($output eq <<'EXPECTED');
+is($output, <<'EXPECTED');
 t/mbox.cpy, message 26: Re: your mail
    13: Are you using ImageMagick 5.2.0?  When I used the script I sent the
 t/mbox.cpy, message 25: Re: your mail
@@ -259,9 +259,9 @@ p  19: > Are you using ImageMagick 5.2.0?  When I used the script I sent the
 EXPECTED
 
 my @m10 = $grep10->search(\@msgs);
-ok(@m10==2);
-ok($m10[0]==$msgs[0]);
-ok($m10[1]==$msgs[1]);
+cmp_ok(@m10, "==", 2);
+cmp_ok($m10[0], "==", $msgs[0]);
+cmp_ok($m10[1], "==", $msgs[1]);
 
 $fh->close;
 select $oldfh;
@@ -277,17 +277,17 @@ select $fh;
 my $grep11  = Mail::Box::Search::Grep->new
  ( match      => 'ImageMagick'
  , in         => 'BODY'
- , details    => 'PRINT'
+ , deliver    => 'PRINT'
  , multiparts => 0
  );
 
 my @m11 = $grep11->search($start);
-ok(@m11==1);
+cmp_ok(@m11, "==", 1);
 
 $fh->close;
 select $oldfh;
 
-ok($output eq <<'EXPECTED');
+is($output, <<'EXPECTED');
 t/mbox.cpy, message 26: Re: your mail
    13: Are you using ImageMagick 5.2.0?  When I used the script I sent the
 EXPECTED
@@ -309,16 +309,16 @@ my $grep12  = Mail::Box::Search::Grep->new
  ( match      => 'pointsize'
  , in         => 'MESSAGE'
  , binaries   => 1
- , details    => 'PRINT'
+ , deliver    => 'PRINT'
  );
 
 my @m12 = $grep12->search($msg);
-ok(@m12==1);
+cmp_ok(@m12, "==", 1);
 
 $fh->close;
 select $oldfh;
 
-ok($output eq <<'EXPECTED');
+is($output, <<'EXPECTED');
 t/mbox.cpy, message 20: 
 p  12:       , pointsize => $poinsize
 EXPECTED

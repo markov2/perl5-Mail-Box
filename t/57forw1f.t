@@ -3,7 +3,7 @@
 # Test the creation of forwarded messages
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -71,10 +71,10 @@ my $forward = $msg->forward
   );
 
 ok(defined $forward);
-ok($forward->isa('Mail::Message'));
+isa_ok($forward, 'Mail::Message');
 my @f = $forward->body->string;
 my @g = $msg->body->string;
-ok(@f eq @g);
+is(@f, @g);
 #$forward->print(\*STDERR);
 
 #
@@ -88,12 +88,12 @@ $forward = $msg->forward
   );
 
 ok($forward->body!=$msg->body);
-ok(  $forward->head->get('to') eq $dest);
-ok($forward->head->get('from') eq $msg->head->get('to'));
+is(  $forward->head->get('to'), $dest);
+is($forward->head->get('from'), $msg->head->get('to'));
 ok(! defined $forward->head->get('cc'));
 
 #$forward->print;
-ok($forward->body->string eq <<'EXPECT');
+is($forward->body->string, <<'EXPECT');
 ---- BEGIN forwarded message
 From: him@somewhere.else.nl (Original Sender)
 To: me@example.com (Me the receiver)
@@ -123,14 +123,14 @@ $forward = $msg->forward
   , To          => $dest
   );
 
-ok(  $forward->head->get('to') eq $dest);
-ok($forward->head->get('from') eq $msg->head->get('to'));
-ok($forward->head->get('cc') eq 'xyz');
+is(  $forward->head->get('to'), $dest);
+is($forward->head->get('from'), $msg->head->get('to'));
+is($forward->head->get('cc'), 'xyz');
 ok(!defined $forward->head->get('skip'));
-ok($forward->head->get('bcc') eq 'username <user@example.com>');
+is($forward->head->get('bcc'), 'username <user@example.com>');
 
 #$forward->print;
-ok($forward->body->string eq <<'EXPECT');
+is($forward->body->string, <<'EXPECT');
 From me!
 > .egassem giro fo enil tsriF
 > .egassem fo enil rehtonA

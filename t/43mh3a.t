@@ -4,7 +4,7 @@
 # Test appending messages on MH folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -40,7 +40,7 @@ die "Couldn't read $mhsrc: $!\n"
 # We checked this in other scripts before, but just want to be
 # sure we have enough messages again.
 
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 # Add a message which is already in the opened folder.  However, the
 # message heads are not yet parsed, hence the message can not be
@@ -52,7 +52,7 @@ my $added = $message3->clone;
 ok(!$message3->isDelayed);
 
 $folder->addMessage($added);
-ok($folder->messages==45);
+cmp_ok($folder->messages, "==", 45);
 
 ok(not $message3->deleted);
 ok($added->deleted);
@@ -69,11 +69,11 @@ my $msg = Mail::Message->build
   );
 
 $mgr->appendMessage($mhsrc, $msg);
-ok($folder->messages==46);
+cmp_ok($folder->messages, "==", 46);
 
-ok($mgr->openFolders==1);
+cmp_ok($mgr->openFolders, "==", 1);
 $mgr->close($folder);      # changes are not saved.
-ok($mgr->openFolders==0);
+cmp_ok($mgr->openFolders, "==", 0);
 
 $mgr->appendMessage($mhsrc, $msg
   , lock_type => 'NONE'

@@ -4,7 +4,7 @@
 # Test threading of MH folders.
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -33,10 +33,10 @@ my $folder = $mgr->open
 
 my $threads = $mgr->threads(folder => $folder);
 
-ok($threads->known == 0);
+cmp_ok($threads->known , "==",  0);
 
 my @all = $threads->sortedAll;
-ok(@all == 28);
+cmp_ok(@all , "==",  28);
 
 my $out = join '', map {$_->threadToString} @all;
 
@@ -44,7 +44,7 @@ my @lines = split "\n", $out;
 pop @lines;
 ok(@lines = $folder->messages);
 
-ok($out eq <<'DUMP');
+is($out, <<'DUMP');
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF

@@ -7,6 +7,50 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.024: Sun Sep 22 23:06:55 CEST 2002
+
+	Fixes:
+
+	- SMTP sending accidentally only included the headers *not* to
+	  be disclosed :(  The check has the correct negation in
+	  Mail::Message::Field::toDisclose() now.
+	  Reported by [Matthew Darwin]
+
+	- Generated messages without message-id must get one assigned.
+	  Reported by [Matthew Darwin]
+
+	Improvements:
+
+	- All tests converted to use Test::More, which produces better
+	  feedback on failures. Hopefully, failures on Windows will
+	  start disappearing now.
+
+	- Mail::Box::Dir::Message's take their size from the real
+	  file (unless they are modified)
+
+	- Mail::Box::Mbox now derived from new Mail::Box::File
+
+	- Mail::Box::Mbox::Message now derived from new
+	  Mail::Box::File::Message.
+
+	- Set the shape of the message-id with
+	  Mail::Message::Head::messageIdPrefix()
+
+	- A message constructed without data will be an empty text
+	  message, not an empty multipart :(
+
+	- Mail::Message::Construct::build() now calls buildFromBody()
+	  to prepare the whole message, instead of doing it itself.
+	  You can also specify field objects to buld() now.
+
+	- From and To fields are no longer required to construct a
+	  message.  They may be filled-in later.
+
+	- Mail::Message::Construct::bounce() now uses the
+	  MM::Head::ResentGroup object, which much improved outcome.
+
+	- Made a start with Mail::Box::Search::SpamAssassin.
+
 version 2.023: Sat Sep 14 11:11:03 CEST 2002
 
 	Fixes:

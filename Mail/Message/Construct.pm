@@ -436,7 +436,6 @@ sub reply(@)
     my $newhead = $reply->head;
     $newhead->set(Cc  => $cc)  if $cc;
     $newhead->set(Bcc => $args{Bcc}) if $args{Bcc};
-    $newhead->set('Message-ID'  => $msgid || $newhead->createMessageId);
 
     # Ready
 
@@ -800,7 +799,6 @@ sub forward(@)
     $newhead->set(Cc   => $args{Cc}  ) if $args{Cc};
     $newhead->set(Bcc  => $args{Bcc} ) if $args{Bcc};
     $newhead->set(Date => $args{Date}) if $args{Date};
-    $newhead->set('Message-ID' => $msgid || $newhead->createMessageId);
 
     # Ready
 
@@ -895,16 +893,14 @@ specified, a new message is created with the same body to start with, but
 new headers.  A BODY may be specified as well.  However, there are more
 ways to add data simply.
 
-The CONTENT is a list of key-value pairs.  The keys which start with a
-capital are used as header-lines.  Lowercased fields are used for other
-purposes as listed below.  Each field may be used more than once.
-If more than one C<data>, C<file>, and C<attach> is specified, a
-multi-parted message is created.
+The CONTENT is a list of key-value pairs and header field objects.
+The keys which start with a capital are used as header-lines.  Lowercased
+fields are used for other purposes as listed below.  Each field may be used
+more than once.  If more than one C<data>, C<file>, and C<attach> is
+specified, a multi-parted message is created.
 
-When the CONTENT reflects a header field to be, the key is used as
-name of the field (be careful with the capitalization).  The value
-can be a string, an address (C<Mail::Address> object), or a reference
-to an array of addresses.
+This C<build> method will use buildFromBody() when the body object has
+been constructed.  Together, they produce your message.
 
 =option  data STRING|ARRAY-OF-LINES
 =default data undef
@@ -947,6 +943,7 @@ One attachment to the message.  Each attachment can be full MESSAGE or a BODY.
   ( From   => 'me@home.nl'
   , To     => Mail::Address->new('your name', 'you@yourplace.aq')
   , Cc     => 'everyone@example.com'
+  , $other_message->get('Bcc')
 
   , data   => [ "This is\n", "the first part of\n", "the message\n" ]
   , file   => 'myself.gif'
@@ -960,10 +957,21 @@ sub build(@)
 {   my $class = shift;
 
     my $head  = Mail::Message::Head::Complete->new;
-    my @parts = @_ % 2 ? shift : ();
-    
+    my @parts
+      = ! ref $_[0] ? ()
+      : $_[0]->isa('Mail::Message')       ? shift
+      : $_[0]->isa('Mail::Message::Body') ? shift
+      :               ();
+
+    my @headerlines;
     while(@_)
-    {   my ($key, $value) = (shift, shift);
+    {   my $key = shift;
+        if(ref $key && $key->isa('Mail::Message::Field'))
+        {   push @headerlines, $key;
+            next;
+        }
+
+        my $value = shift;
         if($key eq 'data')
         {   push @parts, Mail::Message::Body->new(data => $value) }
         elsif($key eq 'file')
@@ -971,19 +979,18 @@ sub build(@)
         elsif($key eq 'attach')
         {   push @parts, ref $value eq 'ARRAY' ? @$value : $value }
         elsif($key =~ m/^[A-Z]/)
-        {   $head->add($key => $value) }
+        {   push @headerlines, $key, $value }
         else
         {   croak "Skipped unknown key $key in build." } 
     }
 
     my $message = $class->new(head => $head);
-    my $body    = @parts==1 ? $parts[0]
+    my $body
+       = @parts==0 ? Mail::Message::Body::Lines->new()
+       : @parts==1 ? $parts[0]
        : Mail::Message::Body::Multipart->new(parts => \@parts);
 
-    $message->body($body->check);
-    $message->statusToLabels;
-
-    $message;
+    $class->buildFromBody($body, @headerlines);
 }
 
 #------------------------------------------
@@ -999,10 +1006,9 @@ Header fields are added in order, and before the header lines as
 defined by the body are taken.  They may be supplied as key-value
 pairs or Mail::Message::Field objects.  In case of a key-value
 pair, the field's name is to be used as key and the value is a
-string, address (C<Mail::Address> object), or array of addresses.
+string, address (Mail::Address object), or array of addresses.
 
-The C<To> and C<From> fields must be specified.  A C<Date> field is
-added unless supplied.
+A C<Date> and a C<Message-Id> field are added unless supplied.
 
 =examples
 
@@ -1032,12 +1038,6 @@ sub buildFromBody(@)
         else          {$head->add(shift, shift)}
     }
 
-    carp "From and To fields are obligatory"
-        unless defined $head->get('From') && defined $head->get('To');
-
-    $head->set(Date => Mail::Message::Field->toDate(localtime))
-        unless defined $head->get('Date');
-
     my $message = $class->new
      ( head => $head
      , @log
@@ -1045,59 +1045,29 @@ sub buildFromBody(@)
 
     $message->body($body->check);
     $message->statusToLabels;
+
+    # be sure the mesasge-id is actually stored in the header.
+    $head->add('Message-Id' => '<'.$message->messageId.'>')
+        unless defined $head->get('message-id');
+
+    $head->add(Date => Mail::Message::Field->toDate)
+        unless defined $head->get('Date');
+
     $message;
 }
 
 #------------------------------------------
 
-=method bounce OPTIONS
+=method bounce RG-OBJECT|OPTIONS
 
-Bounce the message off to a difference destination, or multiple
-destinations.  Most OPTIONS specify header lines which are added
-to the original message.  Their name will therefor be prepended by
-C<Resent->.  These lines have preference over the lines which do
-not start with C<Resent->.
+Creates a new message object, which has a resent-group added.  The
+program calling this considers itself as an intermediate step in the
+message delivery process.
 
-=option  From ADDRESS
-=default From undef
-
-Your address as string or C<Mail::Address> object.
-
-=option  To ADDRESSES
-=default To undef
-
-One or more destination addresses, as string, one C<Mail::Address> object or
-array of C<Mail::Address> objects.
-
-=option  Cc ADDRESSES
-=default Cc undef
-
-The receiver(s) of carbon-copies: not the main targets, but receiving
-an informational copy.
-
-=option  Bcc ADDRESSES
-=default Bcc undef
-
-The receiver(s) of blind carbon-copies: the other receivers will not
-see these addresses.
-
-=option  Date STRING
-=default Date <now>
-
-A properly formatted STRING for the date.
-
-=option  Message-ID KEY
-=default Message-ID <unique>
-
-A unique KEY which identifies this message.  If you do not specify a key,
-one is chosen for you.  There is one C<Resent-Message-ID> which identifies
-all bounces for this message.  If one id is already present, than this
-option will be ignored.
-
-=option  Reply-To ADDRESS
-=default Reply-To undef
-
-The address where the receiver has to reply to.
+The resent-group is created by instantiating a
+Mail::Message::Head::ResentGroup object (RG), which you may also
+pass yourself.  See Mail::Message::Head::ResentGroup::new() for the
+available OPTIONS.
 
 =examples
 
@@ -1105,29 +1075,15 @@ The address where the receiver has to reply to.
  $bounce->send;
  $outbox->addMessage($bounce);
 
+ my $rg     = Mail::Message::Head::ResentGroup->new(To => 'you');
+ $msg->bounce($rg)->send;
+
 =cut
 
 sub bounce(@)
-{   my ($self, %args) = @_;
-
+{   my $self   = shift;
     my $bounce = $self->clone;
-    my $head   = $bounce->head;
-
-    my $date   = $args{Date} || Mail::Message::Field->toDate(localtime);
-
-    $head->add('Resent-From' => $args{From}) if $args{From};
-    $head->add('Resent-To'   => $args{To}  ) if $args{To};
-    $head->add('Resent-Cc'   => $args{Cc}  ) if $args{Cc};
-    $head->add('Resent-Bcc'  => $args{Bcc} ) if $args{Bcc};
-    $head->add('Resent-Date' => $date);
-    $head->add('Resent-Reply-To' => $args{'Reply-To'}) if $args{'Reply-To'};
-
-    unless(defined $head->get('Resent-Message-ID'))
-    {   my $msgid  = $args{'Message-ID'} || $head->createMessageId;
-        $msgid = "<$msgid>" unless $msgid =~ m/\<.*\>/;
-        $head->add('Resent-Message-ID' => $msgid);
-    }
-
+    $bounce->head->addResentGroup(@_);
     $bounce;
 }
 

@@ -42,6 +42,9 @@ Plans for the (near?) future:
   - Outlook
   - Exchange
   - Netscape
+  - Zip       Compressed folders
+  - Encrypt
+  - DBI       Database
 
   Any more?
   One of the main reasons that these are not implemented, is that my

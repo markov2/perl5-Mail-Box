@@ -3,7 +3,7 @@
 # Test the creation of reply messages
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -71,18 +71,18 @@ my $reply = $msg->reply
   );
 
 ok(defined $reply);
-ok($reply->isa('Mail::Message'));
-ok($reply->body==$msg->body);
+isa_ok($reply, 'Mail::Message');
+cmp_ok($reply->body, "==", $msg->body);
 
-ok(  $reply->head->get('to') eq $msg->head->get('from'));
-ok($reply->head->get('from') eq $msg->head->get('to'));
+is(  $reply->head->get('to'), $msg->head->get('from'));
+is($reply->head->get('from'), $msg->head->get('to'));
 ok(!defined $reply->head->get('cc'));
 ok(!defined $reply->head->get('skip'));
 ok(!defined $reply->head->get('content-something'));
 #$reply->head->print(\*STDERR);
 
 #warn $reply->body->string;
-ok($reply->body->string eq $text.$sig);
+is($reply->body->string, $text.$sig);
 
 #
 # Create a complicated reply
@@ -99,13 +99,13 @@ $reply = $msg->reply
   );
 
 ok($reply->body!=$msg->body);
-ok(  $reply->head->get('to') eq $msg->head->get('from'));
-ok($reply->head->get('from') eq $msg->head->get('to'));
-ok(  $reply->head->get('cc') eq $msg->head->get('cc'));
+is(  $reply->head->get('to'), $msg->head->get('from'));
+is($reply->head->get('from'), $msg->head->get('to'));
+is(  $reply->head->get('cc'), $msg->head->get('cc'));
 ok(!defined $reply->head->get('skip'));
 
 #$reply->body->print;
-ok($reply->body->string eq <<'EXPECT');
+is($reply->body->string, <<'EXPECT');
 On Wed Feb  9 20:44:05 2000, Original Sender wrote:
 ] First line of orig message.
 ] Another line of message.
@@ -124,14 +124,14 @@ $reply = $msg->reply
   , Bcc         => Mail::Address->new('username', 'user@example.com')
   );
 
-ok(  $reply->head->get('to') eq $msg->head->get('from'));
-ok($reply->head->get('from') eq $msg->head->get('to'));
+is(  $reply->head->get('to'), $msg->head->get('from'));
+is($reply->head->get('from'), $msg->head->get('to'));
 ok(!defined $reply->head->get('cc'));
 ok(!defined $reply->head->get('skip'));
-ok($reply->head->get('bcc') eq 'username <user@example.com>');
+is($reply->head->get('bcc'), 'username <user@example.com>');
 
 #$reply->print;
-ok($reply->body->string eq <<'EXPECT');
+is($reply->body->string, <<'EXPECT');
 On Wed Feb  9 20:44:05 2000, Original Sender wrote:
 > .egassem giro fo enil tsriF
 > .egassem fo enil rehtonA

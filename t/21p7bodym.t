@@ -3,7 +3,7 @@
 # Test the reading from file of message bodies which are multiparts
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -15,16 +15,16 @@ use Mail::Message::Body::Multipart;
 use Mail::Message::Head;
 use Tools;
 
-BEGIN {plan tests => 11}
+BEGIN { plan tests => 313 }
 
-my $getbodytype = sub { 'Mail::Message::Body::Lines' };
+my $getbodytype = sub {'Mail::Message::Body::Lines'};
 
 ###
 ### First pass through all messages, with correct data, if available
 ###
 
 my $parser = Mail::Box::Parser::Perl->new(filename  => $src);
-ok($parser);
+ok(defined $parser,                "creation of parser");
 
 $parser->pushSeparator('From ');
 
@@ -35,17 +35,16 @@ while(1)
     last unless $sep;
 
     $msgnr++;
-
-    my $ok = 0;
-    $ok++ if $sep =~ m/^From /;
+    my $count = @msgs;
+    like($sep, qr/^From /,                     "1 from $count");
 
     my $head = Mail::Message::Head->new;
-    $ok++ if defined $head;
+    ok(defined $head,                          "1 head count");
 
     $head->read($parser);
 
-    my $cl    = $head->get('Content-Length');
-    my $li    = $head->get('Lines');
+    my $cl    = int $head->get('Content-Length');
+    my $li    = int $head->get('Lines');
 
     unless($head->isMultipart)
     {   # Skip non-multipart
@@ -53,21 +52,26 @@ while(1)
         next;
     }
 
-    my $body = Mail::Message::Body::Multipart->new
-        ->read($parser, $head, $getbodytype, $cl, $li);
-    $ok++ if defined $body;
+    my $message;
+    my $body = Mail::Message::Body::Multipart->new(message => \$message);
 
     my $mp = $head->get('Content-Type')->comment;
     if($mp =~ m/['"](.*?)["']/)
     {   $body->boundary($1);
     }
 
+    $body->read($parser, $head, $getbodytype, $cl, $li);
+    ok(defined $body,                          "1 body $count");
+
     my $size  = $body->size;
     my $lines = $body->nrLines;
     my $su    = $head->get('Subject');
 
-    $ok++ if $body->isMultipart || !defined $li || $li == $lines;
-    $ok++ if $body->isMultipart || !defined $cl || $cl == $size;
+    cmp_ok($li , "==",  $lines,                "1 lines $count")
+        if defined $li;
+
+    cmp_ok($cl , "==",  $size,                 "1 size $count")
+        if defined $cl;
 
     my $msg = 
      { size   => $size
@@ -77,18 +81,11 @@ while(1)
      , subject=> $su
      };
 
-    warn "Failed(1) msg $msgnr, ok=$ok: ", ($su || '<no subject>'), "\n"
-        unless $ok==5;
-
     push @msgs, $msg;
-
-    ok($ok==5);
 }
 
-ok(@msgs==3);
+cmp_ok(@msgs, "==", 3);
 $parser->stop;
-
-# From here on with test 55
 
 ###
 ### Now read the whole folder again, but without help of content-length
@@ -105,44 +102,43 @@ while(1)
 {   my (undef, $sep) = $parser->readSeparator;
     last unless $sep;
 
-    my $ok   = 0;
-
-    $ok++ if $sep =~ m/^From /;
+    like($sep, qr/^From /,                      "2 from $count");
 
     my $head = Mail::Message::Head->new->read($parser);
-    $ok++ if defined $head;
+    ok(defined $head,                           "2 head $count");
 
     unless($head->isMultipart)
     {   # Skip non-multipart
         Mail::Message::Body::Lines->new->read($parser, $head, undef);
         next;
     }
+    my $msg = $msgs[$count];
 
-    my $msg  = $msgs[$count++];
-    my $body = Mail::Message::Body::Multipart->new
-        ->read($parser, $head, $getbodytype);
-    $ok++ if defined $body;
+    my $message;
+    my $body = Mail::Message::Body::Multipart->new(message => \$message);
+    ok(defined $body,                           "2 body $count");
 
     my $mp = $head->get('Content-Type')->comment;
     if($mp =~ m/['"](.*?)["']/)
     {   $body->boundary($1);
     }
 
+    $body->read($parser, $head, $getbodytype);
+
+    my $su    = $head->get('Subject');
     my $size  = $body->size;
     my $lines = $body->nrLines;
-    my $su    = $head->get('Subject');
 
-    $ok++ if        $size == $msg->{size};
-    $ok++ if       $lines == $msg->{lines};
-    $ok++ if (!defined $su && !defined $msg->{subject})
-                   || $su eq $msg->{subject};
-    $ok++ if $head->names == $msg->{fields};
-    $ok++ if         $sep eq $msg->{sep};
+    cmp_ok($size, "==",  $msg->{size},           "2 size $count");
+    cmp_ok($lines, "==",  $msg->{lines},         "2 lines $count");
 
-    warn "Failed(2) ", ($su || '<no subject>'), "\n"
-        unless $ok==8;
+    is($su, $msg->{subject},                     "2 subject $count")
+        if defined $su && defined $msg->{subject};
 
-    ok($ok==8);
+    cmp_ok($head->names , "==",  $msg->{fields}, "2 names $count");
+    is($sep, $msg->{sep},                        "2 sep $count");
+
+    $count++;
 }
 
 $parser->stop;
@@ -162,12 +158,10 @@ while(1)
 {   my (undef, $sep) = $parser->readSeparator;
     last unless $sep;
 
-    my $ok   = 0;
-
-    $ok++ if $sep =~ m/^From /;
+    like($sep, qr/^From /,                       "3 From $count");
 
     my $head = Mail::Message::Head->new->read($parser);
-    $ok++ if defined $head;
+    ok(defined $head,                            "3 Head $count");
 
     unless($head->isMultipart)
     {   # Skip non-multipart
@@ -175,31 +169,31 @@ while(1)
         next;
     }
 
-    my $msg  = $msgs[$count++];
-    my $body = Mail::Message::Body::Multipart->new->read($parser, $head,
-        $getbodytype, $msg->{size}-15, $msg->{lines}-3);
-
-    $ok++ if defined $body;
+    my $msg  = $msgs[$count];
+    my $message;
+    my $body = Mail::Message::Body::Multipart->new(message => \$message);
+    ok(defined $body,                            "3 Body $count");
 
     my $mp = $head->get('Content-Type')->comment;
     if($mp =~ m/['"](.*?)["']/)
     {   $body->boundary($1);
     }
 
+    $body->read($parser, $head, $getbodytype, $msg->{size}-15, $msg->{lines}-3);
+
     my $su    = $head->get('Subject');
     my $size  = $body->size;
     my $lines = $body->nrLines;
 
-    $ok++ if        $size == $msg->{size};
-    $ok++ if       $lines == $msg->{lines};
-    $ok++ if (!defined $su && !defined $msg->{subject})
-                   || $su eq $msg->{subject};
-    $ok++ if $head->names == $msg->{fields};
-    $ok++ if         $sep eq $msg->{sep};
+    cmp_ok($size, '==', $msg->{size},            "3 size $count");
+    cmp_ok($lines, '==', $msg->{lines},          "3 lines $count");
 
-    warn "Failed(3) ", ($su || '<no subject>'), "\n"
-        unless $ok==8;
+    is($su, $msg->{subject}, "3 subject $count")
+        if defined $su && defined $msg->{subject};
 
-    ok($ok==8);
+    cmp_ok($head->names, '==', $msg->{fields},   "3 name $count");
+    is($sep, $msg->{sep},                        "3 sep $count");
+
+    $count++;
 }
 

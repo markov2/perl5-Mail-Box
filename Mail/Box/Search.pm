@@ -17,7 +17,7 @@ Mail::Box::Search - select messages within a mail box
  my $mgr    = Mail::Box::Manager->new;
  my $folder = $mgr->open('Inbox');
 
- my $filter = Mail::Box::Search::Grep->new;
+ my $filter = Mail::Box::Search::[something]->new;
  my @msgs   = $filter->search($folder, ...);
  if($filter->search($message)) {...}
 
@@ -36,9 +36,12 @@ Currently implemented searches:
 Match header or body against a regular expression in a UNIX C<grep> like
 fashion.
 
-=back
+=item Mail::Box::Search::SpamAssassin
 
-A Mail::Box::Search::Spam is high on the wishlist.
+Try to detect spam, using Mail::SpamAssassin.  This package is under
+development.
+
+=back
 
 =head1 METHODS
 
@@ -68,15 +71,14 @@ Decode the messages before the search takes place.  Even plain text messages
 can be encoded, for instance as C<quoted-printable>, which may disturb the
 results.  However, decoding will slow-down the search.
 
-=option  details undef|'PRINT'|'DELETE'|REF-ARRAY|CODE
-=default details undef
+=option  deliver undef|CODE|'DELETE'|LABEL
+=default deliver undef
 
 The exact functionality of this parameter differs per search method, so
 read the applicable man-page.  In any case C<undef> means that details
 are not collected for this search, which is the fastest search.
 
-C<PRINT> will cause a call to a standard printing routine per line
-found.  C<DELETE> will flag the message to be flagged for deletion.
+C<DELETE> will flag the message to be flagged for deletion.
 You may also specify your own CODE reference.  With an reference
 to an array, the information about the matches is collected as a list
 of hashes, one hash per match.
@@ -158,6 +160,13 @@ sub init($)
     croak "Cannot search in body."
         if $self->{MBS_check_body} && !$self->can('inBody');
 
+    my $deliver             = $args->{deliver};
+    $self->{MBS_deliver}
+      = ref $deliver eq 'CODE' ? sub { $deliver->($self, $_[0]) }
+      : !defined $deliver      ? undef
+      : $deliver eq 'DELETE'   ? sub {$_[0]->{part}->toplevel->delete(1)}
+      : $self->log(ERROR => "Don't know how to deliver via $deliver");
+
     my $logic               = $args->{logical}  || 'REPLACE';
     $self->{MBS_negative}   = $logic =~ s/\s*NOT\s*$//;
     $self->{MBS_logical}    = $logic;
@@ -197,7 +206,7 @@ or C<1>, or when the search in done in scalar context.
 
  my $grep = Mail::Box::Search::Grep->new
   ( match   => 'My Name Is Nobody'
-  , details => 'PRINT'
+  , deliver => 'PRINT'
   );
 
  $grep->search($folder);
@@ -226,7 +235,7 @@ sub search(@)
     my $take = 0;
     if($limit < 0)    { $take = -$limit; @messages = reverse @messages }
     elsif($limit > 0) { $take = $limit }
-    elsif(!defined $label && !wantarray && !$self->{MBS_details}) {$take = 1 }
+    elsif(!defined $label && !wantarray && !$self->{MBS_deliver}) {$take = 1 }
 
     my $logic         = $self->{MBS_logical};
     my @selected;
@@ -272,7 +281,7 @@ sub searchPart($)
       if $self->{MBS_check_head};
 
    return $matched unless $self->{MBS_check_body};
-   return $matched if $matched && !$self->{MBS_details};
+   return $matched if $matched && !$self->{MBS_deliver};
 
    my $body  = $part->body;
    my @bodies;
@@ -289,7 +298,7 @@ sub searchPart($)
            next if $no_delayed && $piece->isDelayed;
 
            $matched += $self->searchPart($piece);
-           return $matched if $matched && !$self->{MBS_details};
+           return $matched if $matched && !$self->{MBS_deliver};
        }
    }
    else
@@ -341,8 +350,8 @@ sub inBody(@) {shift->notImplemented}
 
 =method printMatch [FILEHANDLE], HASH
 
-Print the information about the match (see C<details> option in the
-search() method) in some understandable way.  If no file handle
+Print the information about the match (see search(deliver)) in
+some understandable way.  If no file handle
 is specified, the output will go to the selected filehandle (see
 C<perldoc -f select>).
 

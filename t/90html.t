@@ -3,7 +3,7 @@
 # Test conversions as HTML/XHTML without help of external modules
 #
 
-use Test;
+use Test::More;
 use strict;
 use warnings;
 
@@ -27,10 +27,10 @@ warn "   * Converters to foreign formats status: released\n";
 #
 
 my $to   = Mail::Message::Field::Fast->new(To => 'me@example.com (Mark Overmeer)');
-ok($html->fieldToHtml($to) eq '<strong>To: </strong><a href="mailto:me@example.com">me@example.com</a> (Mark Overmeer)');
+is($html->fieldToHtml($to), '<strong>To: </strong><a href="mailto:me@example.com">me@example.com</a> (Mark Overmeer)');
 
 my $to2  = Mail::Message::Field::Fast->new('reply-to' => 'me@example.com, you@tux.aq');
-ok($html->fieldToHtml($to2) eq '<strong>Reply-To: </strong><a href="mailto:me@example.com">me@example.com</a>, <a href="mailto:you@tux.aq">you@tux.aq</a>');
+is($html->fieldToHtml($to2), '<strong>Reply-To: </strong><a href="mailto:me@example.com">me@example.com</a>, <a href="mailto:you@tux.aq">you@tux.aq</a>');
 
 #
 # test headToHtmlTable
@@ -54,10 +54,10 @@ my $table_dump = <<'TABLE-DUMP';
 TABLE-DUMP
 
 my $table = $html->headToHtmlTable($head, 'width=>"50%"');
-ok($table eq $table_dump);
+is($table, $table_dump);
 
 my $xtable = $xhtml->headToHtmlTable($head, 'width=>"50%"');
-ok($xtable eq $table_dump);
+is($xtable, $table_dump);
 
 #
 # test headToHtmlHead
@@ -74,11 +74,11 @@ my $html_head_dump = <<'HTML_HEAD_DUMP';
 HTML_HEAD_DUMP
 
 my $html_head = $html->headToHtmlHead($head);
-ok($html_head eq $html_head_dump);
+is($html_head, $html_head_dump);
 
 (my $xhtml_head_dump = $html_head_dump) =~ s!"\>!" />!g;
 my $xhtml_head = $xhtml->headToHtmlHead($head);
-ok($xhtml_head eq $xhtml_head_dump);
+is($xhtml_head, $xhtml_head_dump);
 
 
 $html_head = $html->headToHtmlHead
@@ -97,7 +97,7 @@ $html_head_dump = <<'HTML_HEAD_DUMP';
 <meta name="Subject" content="No e-mail@at.this.line">
 </head>
 HTML_HEAD_DUMP
-ok($html_head eq $html_head_dump);
+is($html_head, $html_head_dump);
 
 $html_head = $html->headToHtmlHead
  ( $head

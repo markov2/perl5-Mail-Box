@@ -49,8 +49,8 @@ Create a UNIX-grep like search filter.
 
 =default in <$field ? 'HEAD' : 'BODY'>
 
-=option  details undef|REF-ARRAY|CODE|'PRINT'|'DELETE'
-=default details undef
+=option  deliver undef|CODE|'DELETE'|LABEL|'PRINT'|REF-ARRAY
+=default deliver undef
 
 Store the details about where the match was found.  The search may take
 much longer when this feature is enabled.
@@ -110,6 +110,15 @@ sub init($)
 {   my ($self, $args) = @_;
 
     $args->{in} ||= ($args->{field} ? 'HEAD' : 'BODY');
+
+    my $deliver = $args->{deliver} || $args->{details};  # details is old name
+    $args->{deliver}
+     = !defined $deliver       ? $deliver
+     : ref $deliver eq 'CODE'  ? $deliver
+     : $deliver eq 'PRINT'     ? sub { $_[0]->printMatch($_[1]) }
+     : ref $deliver eq 'ARRAY' ? sub { push @$deliver, $_[1] }
+     :                           $deliver;
+
     $self->SUPER::init($args);
 
     my $take = $args->{field};
@@ -128,20 +137,7 @@ sub init($)
      :  ref $match eq 'CODE'   ? $match
      : croak "Illegal match pattern $match.";
 
-    my $details = $self->{MBS_details} = $args->{details};
-    $self->{MBSG_deliver}
-     = !defined $details ? undef
-     : $details eq 'PRINT'
-     ? sub { $self->printMatch($_[0]) }
-     : $details eq 'DELETE'
-     ? sub { $_[0]->{part}->toplevel->delete(1) }
-     : ref $details eq 'ARRAY'
-     ? sub { push @$details, $_[0] }
-     : ref $details eq 'CODE'
-     ? sub { $details->($self, $_[0]) }
-     : croak "Where to deliver the details? $details";
-
-   $self;
+    $self;
 }
 
 #-------------------------------------------
@@ -165,13 +161,14 @@ sub inHead(@)
 
     my @details = (message => $part->toplevel, part => $part);
     my ($field_check, $match_check, $deliver)
-      = @$self{ qw/MBSG_field_check MBSG_match_check MBSG_deliver/ };
+      = @$self{ qw/MBSG_field_check MBSG_match_check MBS_deliver/ };
 
     my $matched = 0;
   LINES:
     foreach my $field ($head->orderedFields)
     {   next unless $field_check->($head, $field->name)
                  && $match_check->($head, $field);
+
         $matched++;
         last LINES unless $deliver;  # no deliver: only one match needed
         $deliver->( {@details, field => $field} );
@@ -188,7 +185,7 @@ sub inBody(@)
 
     my @details = (message => $part->toplevel, part => $part);
     my ($field_check, $match_check, $deliver)
-      = @$self{ qw/MBSG_field_check MBSG_match_check MBSG_deliver/ };
+      = @$self{ qw/MBSG_field_check MBSG_match_check MBS_deliver/ };
 
     my $matched = 0;
     my $linenr  = 0;
