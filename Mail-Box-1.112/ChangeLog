@@ -3,6 +3,12 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.112:
+
+	* Changed the detection of "From"-lines again... each Mbox-
+          type package formats the line differently.  I hope they
+	  all share the inclusion of a year, as minimum.
+
 version 1.111: Sat Apr 28 16:15:52 CEST 2001
 
 	by Jochen Lutz <jlu@gmx.de>:

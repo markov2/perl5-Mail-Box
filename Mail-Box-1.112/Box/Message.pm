@@ -190,7 +190,7 @@ sub init($)
 
 =item messageID
 
-Retreive the message's id.  Every message has a unique message-id.  This id
+Retrieve the message's id.  Every message has a unique message-id.  This id
 is used mainly for recognizing discussion threads.
 
 =cut
@@ -1235,7 +1235,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.111
+This code is beta, version 1.112
 
 =cut
 
