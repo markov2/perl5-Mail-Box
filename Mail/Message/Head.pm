@@ -103,13 +103,6 @@ The MESSAGE where this header belongs to.  Usually, this is not known
 at creation of the header, but sometimes it is.  If not, call the
 message() method later to set it.
 
-=option  wrap_length INTEGER
-=default wrap_length 72
-
-Set the desired maximum length of structured header fields to the
-specified INTEGER.  If wrap_length is less than 1, wrapping is
-disabled.
-
 =cut
 
 sub new(@)
@@ -129,14 +122,8 @@ sub init($)
     $self->{MMH_field_type} = $args->{field_type}
         if $args->{field_type};
 
-    if(defined $args->{message})
-    {   $self->{MMH_message} = $args->{message};
-        weaken($self->{MMH_message});
-    }
-
-    $self->{MMH_wrap_length} = $args->{wrap_length}
-        ? ($args->{wrap_length} > 0 ? $args->{wrap_length} : 0)
-        : 72;
+    $self->message($args->{message})
+        if defined $args->{message};
 
     $self->{MMH_fields}     = {};
     $self->{MMH_order}      = [];
@@ -222,19 +209,6 @@ sub modified(;$)
 {   my $self = shift;
     @_ ? $self->{MMH_modified} = shift : $self->{MMH_modified};
 }
-
-#------------------------------------------
-
-=method isResent
-
-Return whether this message is the result of a bounce.  The bounce
-will produced lines which start with C<Resent->, line C<Resent-To>
-which has preference over C<To> as destination for the message.
-This may trigger completion.
-
-=cut
-
-sub isResent() { defined shift->get('resent-message-id') }
 
 #------------------------------------------
 
@@ -345,11 +319,11 @@ sub get_all(@) { my @all = shift->get(@_) }   # compatibility, force list
 
 Like names(), but only returns the known header fields, which
 may be less than names() for header types which are partial.
-Will never trigger completion.
+names() will trigger completion, where C<knownNames> does not.
 
 =cut
 
-sub knownNames() { @{shift->{MMH_order}} }
+sub knownNames() { keys %{shift->{MMH_fields}} }
 
 #------------------------------------------
 
@@ -393,32 +367,41 @@ passes the PARSER as an argument.  Do not call this method yourself!
 sub read($)
 {   my ($self, $parser) = @_;
 
-    my @fields    = $parser->readHeader($self->{MMH_wrap_length});
+    my @fields = $parser->readHeader;
     @$self{ qw/MMH_begin MMH_end/ } = (shift @fields, shift @fields);
 
-    $parser->defaultParserType(ref $parser);
+    my $type   = $self->{MMH_field_type} || 'Mail::Message::Field::Fast';
 
-    my $known     = $self->{MMH_fields};
-    my $fieldtype = $self->{MMH_field_type} || 'Mail::Message::Field::Fast';
-
-    foreach (@fields)
-    {   my $field = $fieldtype->newNoCheck( @$_ );
-        my $name  = $field->name;
-
-        push @{$self->{MMH_order}}, $name
-            unless exists $known->{$name};
-
-        if(defined $known->{$name})
-        {   if(ref $known->{$name} eq 'ARRAY')
-                 { push @{$known->{$name}}, $field }
-            else { $known->{$name} = [ $known->{$name}, $field ] }
-        }
-        else
-        {   $known->{$name} = $field;
-        }
-    }
+    $self->addNoRealize($type->new( @$_ ))
+        foreach @fields;
 
     $self;
+}
+
+#------------------------------------------
+
+=method orderedFields
+
+Retuns the fields ordered the way they were read or added.
+
+=cut
+
+sub orderedFields() { grep {defined $_} @{shift->{MMH_order}} }
+
+#------------------------------------------
+
+=method addOrderedFields FIELDS
+
+=cut
+
+#  Warning: fields are added in addResentGroup() as well!
+sub addOrderedFields(@)
+{   my $order = shift->{MMH_order};
+    foreach (@_)
+    {   push @$order, $_;
+        weaken( $order->[-1] );
+    }
+    @_;
 }
 
 #------------------------------------------
@@ -464,36 +447,6 @@ sub moveLocation($)
 
 #------------------------------------------
 
-sub createMessageId()
-{  shift->log(INTERNAL =>
-       "You didn't check well enough for a msg-id: header should be realized.");
-}
-
-#------------------------------------------
-
-=method wrapLength [CHARS]
-
-Returns the soft upper limit length of header lines, optionally after
-setting it to CHARS first.
-
-=cut
-
-sub wrapLength(;$)
-{   my $self = shift;
-    return $self->{MMH_wrap_length} unless @_;
-
-    my $wrap = shift;
-    return $wrap if $wrap==$self->{MMH_wrap_length};
-
-    foreach my $name ($self->names)
-    {   $_->setWrapLength($wrap) foreach $self->get($name);
-    }
-
-    $self->{MMH_wrap_length} = $wrap;
-}
-
-#------------------------------------------
-
 =method setNoRealize FIELD
 
 Set a field, but avoid the loading of a possibly partial header as set()
@@ -508,9 +461,7 @@ sub setNoRealize($)
     my $known = $self->{MMH_fields};
     my $name  = $field->name;
 
-    push @{$self->{MMH_order}}, $name
-        unless exists $known->{$name};
-
+    $self->addOrderedFields($field);
     $known->{$name} = $field;
     $field;
 }
@@ -531,8 +482,7 @@ sub addNoRealize($)
     my $known = $self->{MMH_fields};
     my $name  = $field->name;
 
-    push @{$self->{MMH_order}}, $name
-        unless exists $known->{$name};
+    $self->addOrderedFields($field);
 
     if(defined $known->{$name})
     {   if(ref $known->{$name} eq 'ARRAY') { push @{$known->{$name}}, $field }

@@ -25,7 +25,7 @@ $SIG{INT} = $SIG{QUIT} = $SIG{PIPE} = $SIG{TERM} = sub {exit 0};
 
 =head1 NAME
 
-Mail::Box - manage a message-folder.
+Mail::Box - manage a mailbox, a folder with messages
 
 =head1 SYNOPSIS
 
@@ -63,41 +63,51 @@ A Mail::Box::Manager creates Mail::Box objects.  But you already
 knew, because you started with the Mail::Box-Overview manual page.
 That page is obligatory reading, sorry!
 
-Mail::Box is the base class for accessing various types of mail folder
-organizational structures in a uniform way.  The various folder types vary
-on how they store their messages. For example, a folder may store many
-messages in a single file, or store each message in a separate file in a
-directory. Similarly, there may be different techniques for locking the
-folders.
+Mail::Box is the base class for accessing various types of mailboxes (folders)
+in a uniform manner.  The various folder types vary on how they store their
+messages, but when some effort those differences could be hidden behind
+a general API. For example, some folders store many messages in one single file,
+where other store each message in a separate file withing the same directory.
 
-No object will be of type Mail::Box: it is only used as base class
-for the real folder types.  Mail::Box is extended by
+No object in your program will be of type Mail::Box: it is only used as base
+class for the real folder types.  Mail::Box is extended by
 
 =over 4
 
 =item * Mail::Box::Mbox
 
-A folder type in which all related messages are stored in one file.  This
+a folder type in which all related messages are stored in one file.  This
 is very common folder type for UNIX.
 
 =item * Mail::Box::MH
 
-This folder creates a directory for each folder, and a message is one
-file inside that directory.  The message files are numbered.
+this folder creates a directory for each folder, and a message is one
+file inside that directory.  The message files are numbered sequentially
+on order of arrival.  A special C<.mh_sequences> file maintains flags
+about the messages.
 
 =item * Mail::Box::Maildir
 
-This folder creates a directory for each folder.  A folder directory
-contains a C<tmp>, C<new>, and C<cur> subdirectory.  New messages are
-first stored in C<new>, and later moved to C<cur>.  Each message is one
-file with a name starting with timestamp.
+maildir folders have a directory for each folder, although the first
+implementation only supported one folder in total.  A folder directory
+contains a C<tmp>, C<new>, and C<cur> subdirectory, each containting
+messages with a different purpose.  New messages are created in C<tmp>,
+then moved to C<new> (ready to be accepted).  Later, they are moved to
+the C<cur> directory (accepted).  Each message is one file with a name
+starting with timestamp.  The name also contains flags about the status
+of the message.
+
+=item * Mail::Box::POP3
+
+Pop3 is a protocol which can be used to retreive messages from a
+remote system.  After the connection to a POP server is made, the
+messages can be looked at and removed as if they are on the local
+system.  [IMPLEMENTATION NOT FINISHED YET]
 
 =back
 
-The Mail::Box is used to get Mail::Box::Message objects from the
-mailbox.  Applications then usually use information or add information to the
-message object. For instance, the application can set a label which indicates
-whether a message has been replied to or not.
+Other folder types are on the (long) wishlist to get implemented.  Please,
+help implementing more of them.
 
 =head1 METHODS
 
@@ -113,13 +123,10 @@ whether a message has been replied to or not.
 
 =method new OPTIONS
 
-(Class method) Open a new folder. OPTIONS is a list of labeled parameters
-defining options for the mailboxes. Some options pertain to Mail::Box, and
+(Class method) Open a new folder. A list of labeled OPTIONS
+for the mailbox can be supplied. Some options pertain to Mail::Box, and
 others are added by sub-classes. The list below describes all the options
-provided by Mail::Box and the various sub-classes distributed with it. Those
-provided by the Mail::Box class are described in detail here. For a
-description of the other options, see the documentation for the respective
-sub-class.
+provided by any Mail::Box.
 
 To control delay-loading of messages, as well the headers as the bodies,
 a set of C<*_type> options are available. C<extract> determines whether
@@ -129,91 +136,92 @@ we want delay-loading.
 =default access 'r'
 
 Access-rights to the folder. MODE can be read-only (C<"r">), append (C<"a">),
-and read-write (C<"rw">).  Folders are opened for read-only (C<"r">) by
-default.
+and read-write (C<"rw">).  Folders are opened for read-only (C<"r">)
+(which means write-protected) by default!
 
-These modes have nothing in common with the modes actually used to open the
-folder-files within this module.  For instance, if you specify C<"rw">, and
-open the folder, only read-permission on the folder-file is required.  Writing
-to a folder will always create a new file to replace the old one.
+These MODEs have no relation to the modes actually used to open the
+folder files within this module.  For instance, if you specify C<"rw">, and
+open the folder, only read permission on the folder-file is required.
+
+Be warned: writing a MBOX folder may create a new file to replace the
+old folder.  The permissions and owner of the file get changed by this.
 
 =option  create BOOLEAN
 =default create <false>
 
 Automatically create the folder when it does not exist yet.  This will only
-work when access is granted for writing or appending to the folder.  Be
-careful: you may create a different folder type than you expect unless you
-ensure the C<type> (See Mail::Box::Manager::open()).
+work when access is granted for writing or appending to the folder.
+
+Be careful: you may create a different folder type than you expect unless you
+explicitly specify the C<type> (See Mail::Box::Manager::open(type)).
 
 =option  folder FOLDERNAME
 =default folder $ENV{MAIL}
 
 Which folder to open (for reading or writing). When used for reading (the
 C<access> option set to C<"r"> or C<"a">) the mailbox should already exist
-and be readable. The file or directory of the mailbox need not exist if it
+and must be readable. The file or directory of the mailbox need not exist if it
 is opened for reading and writing (C<"rw">).  Write-permission is checked when
 opening an existing mailbox.
 
 =option  folderdir DIRECTORY
 =default folderdir undef
 
-Where are folders written by default?  You can specify a folder-name
-preceded by C<=> to explicitly state that the folder is located below
-this directory.  For example: if C<folderdir =E<gt> '/tmp'> and
-C<folder =E<gt> '=abc'>, then the name of the folder-file is C<'/tmp/abc'>.
-
-=option  head_wrap INTEGER
-=default head_wrap 72
-
-Fold the structured headers to the specified length.
-Folding is disabled when C<0> is specified.
+Where are folders to be found by default?  A folder-name may be preceded by
+a equals-sign (C<=>, a C<mutt> convension) to explicitly state that the folder
+is located below the default directory.  For example: in case
+C<folderdir =E<gt> '/tmp'> and C<folder =E<gt> '=abc'>, the name of the folder-file
+is C<'/tmp/abc'>.  Each folder type has already some default set.
 
 =option  keep_dups BOOLEAN
 =default keep_dups <false>
 
 Indicates whether or not duplicate messages within the folder should          
 be retained.  A message is considered to be a duplicate if its message-id      
-is the same as a previously parsed message within the folder. If this         
+is the same as a previously parsed message within the same folder. If this         
 option is false (the default) such messages are automatically deleted,
-because it is useless to store the same message twice.
+because it is considered useless to store the same message twice.
 
 =option  save_on_exit BOOLEAN
 =default save_on_exit <true>
 
-Sets the policy for saving the folder when it is closed. (See close())
-A folder can be closed manually or via a number of
-implicit methods (including when the program is terminated).
+Sets the policy for saving the folder when it is closed.
+A folder can be closed manually (see close()) or in a number of
+implicit ways, including on the moment the program is terminated.
 
 =option  remove_when_empty BOOLEAN
 =default remove_when_empty <true>
 
-Determines whether or not to remove the folder file or directory
-automatically when the write would result in a folder without sub-folders
-or messages. This option is dependent on the type of folder.
+Determines whether to remove the folder file or directory
+automatically when the write would result in a folder without
+messages nor sub-folders.
 
 =option  trusted BOOLEAN
 =default trusted <depends on folder location>
 
 Flags whether to trust the data in the folder or not.  Folders which
-reside in your C<folderdir> will be trusted by default, but folders
-which are outside it will need some extra checking.
+reside in your C<folderdir> will be trusted by default (even when the
+names if not specified staring with C<=>).  Folders which are outside
+the folderdir or read from STDIN (Mail::Message::Construct::read()) are
+not trused by default, and require some extra checking.
 
 If you do not check encodings of received messages, you may print
-text messages with binary data to the screen.  This is a security risk.
+binary data to the screen, which is a security risk.
 
 =option  extract INTEGER | CODE | METHOD | 'LAZY'|'ALWAYS'
 =default extract 10240
 
+Defines when to parse (process) the content of the message.
 When the header of a message is read, you may want to postpone the
-reading of the body.  Header information is more often needed than
+reading of the body: header information is more often needed than
 the body data, so why parse it always together?  The cost of delaying
-is not too high.
+is not too high, and with some luck you may never need parsing the body.
 
 If you supply an INTEGER to this option, bodies of those messages with a
 total size less than that number will be extracted from the folder only
-when necessary.  Messages where the size is not included in the header
-(like often the case for multiparts and nested messages) will not be
-extracted by default.
+when necessary.  Messages where the size (in the C<Content-Length> field)
+is not included in the header, like often the case for multiparts and nested
+messages, will not be extracted by default.
 
 If you supply a CODE reference, that subroutine is called every time
 that the extraction mechanism wants to determine whether to parse the
@@ -221,36 +229,41 @@ body or not. The subroutine is called with the following arguments:
 
  CODE->(FOLDER, HEAD)
 
-where FOLDER is a reference to the folder we are reading.  HEAD refers to a
-Mail::Message::Head::Complete.  The routine must return a C<true> value (extract
-now) or a C<false> value (be lazy, do not parse yet).  Think about using the
-C<guessBodySize> and C<guessTimestamp> on the header to determine
-your choice.
+where FOLDER is a reference to the folder we are reading.  HEAD refers to the
+Mail::Message::Head::Complete head of the message at hand.  The routine must
+return a C<true> value (extract now) or a C<false> value (be lazy, do not
+parse yet).  Think about using the Mail::Message::guessBodySize() and
+Mail::Message::guessTimestamp() on the header to determine your choice.
 
 The third possibility is to specify the NAME of a method.  In that case,
 for each message is called:
 
  FOLDER->NAME(HEAD)
 
-Where each parameter has the same meaning as described above.
+Where each component has the same meaning as described above.
 
-The fourth way to use this parameter involves constants: with C<'LAZY'>
-all messages will be delayed. With C<'ALWAYS'> you force unconditional
-loading.
+The fourth way to use this option involves constants: with C<'LAZY'>
+all messages will be delayed. With C<'ALWAYS'> you enforce unconditional
+parsing, no delaying will take place.  The latter is usuful when you are
+sure you always need all the messages in the folder.
 
-Examples:
+ $folder->new(extract => 'LAZY');  # Very lazy
+ $folder->new(extract => 10000);   # Less than 10kB
 
- $folder->new(extract => 'LAZY');
- $folder->new(extract => 10000);
- $folder->new(extract => sub
-    { my ($f, $head) = @_;
-      my $size = $head->guessBodySize;
-      defined $size ? $size < 10000 : 1
-    }); #same
+ # same, but implemented yourself
+ $folder->new(extract => &large);
+ sub large($) {
+    my ($f, $head) = @_;
+    my $size = $head->guessBodySize;
+    defined $size ? $size < 10000 : 1
+ };
 
+ # method call by name, useful for Mail::Box extensions
+ # The example selects all messages sent by you to be loaded
+ # without delay.  Other messages will be delayed.
  $folder->new(extract => 'sent_by_me');
- sub Mail::Box::send_by_me($$)
- {   my ($self, $header) = @_;
+ sub Mail::Box::send_by_me($) {
+     my ($self, $header) = @_;
      $header->get('from') =~ m/\bmy\@example.com\b/i;
  }
 
@@ -258,17 +271,19 @@ Examples:
 =default body_type <folder specific>
 
 When messages are read from a folder-file, the headers will be stored in
-a C<head_type>-object.  For the body, however, there is a range of
+a C<head_type> object.  For the body, however, there is a range of
 choices about type, which are all described in the Mail::Message::Body
 manual page.
 
 Specify a CODE-reference which produces the body-type to be created, or
-a CLASS of the body which is used when the body is not a multipart.  In case
-of a code, the header-structure is passed as first argument to the routine.
+a CLASS of the body which is used when the body is not a multipart or
+nested.  In case of a code reference, the header structure is passed as
+first argument to the routine.
 
 Do I<not> return a delayed body-type (like C<::Delayed>), because that is
-determined by the C<extract()> method.  Do always check for multipart
-messages, otherwise your parts (I<attachments>) will not be split-up.
+determined by the C<extract> option while the folder is opened.  Even
+delayed message will require some real body type when they get parsed
+eventually.  Multiparts and nested messages are also outside your control.
 
 For instance:
 
@@ -416,7 +431,6 @@ sub init($)
 
     $self->{MB_messages}     = [];
     $self->{MB_organization} = $args->{organization}      || 'FILE';
-    $self->{MB_head_wrap}    = $args->{head_wrap} if defined $args->{head_wrap};
     $self->{MB_linesep}      = "\n";
     $self->{MB_keep_dups}    = !$self->writable || $args->{keep_dups};
 
@@ -628,7 +642,6 @@ sub update(@)
 
     my @new  = $self->updateMessages
       ( trusted      => $self->{MB_trusted}
-      , head_wrap    => $self->{MB_head_wrap}
       , head_type    => $self->{MB_head_type}
       , field_type   => $self->{MB_field_type}
       , message_type => $self->{MB_message_type}
@@ -1396,7 +1409,6 @@ sub read(@)
     # Read from existing folder.
     return unless $self->readMessages
       ( trusted      => $self->{MB_trusted}
-      , head_wrap    => $self->{MB_head_wrap}
       , head_type    => $self->{MB_head_type}
       , field_type   => $self->{MB_field_type}
       , message_type => $self->{MB_message_type}
@@ -1519,9 +1531,6 @@ you may lose data if the system crashes or if there are software problems.
 Override write-protection by the C<access> option while opening the folder
 (whenever possible, it may still be blocked by the operating system).
 
-=option  head_wrap INTEGER
-=default head_wrap 72
-
 =option  keep_deleted BOOLEAN
 =default keep_deleted <false>
 
@@ -1604,7 +1613,7 @@ sub coerce($)
 Called by read() to actually read the messages from one specific
 folder type.  The read() organizes the general activities.
 
-The OPTIONS are C<trusted>, C<head_wrap>, C<head_type>, C<field_type>,
+The OPTIONS are C<trusted>, C<head_type>, C<field_type>,
 C<message_type>, C<body_delayed_type>, and C<head_delayed_type> as
 defined by the folder at hand.  The defaults are the constructor
 defaults (see new()).

@@ -142,6 +142,9 @@ You may reply to a whole message or a message part.
 You may wish to overrule some of the default header settings for the
 reply immediately, or you may do that later with C<set> on the header.
 
+ADDRESSES may be specified as string, or
+a Mail::Address object, or as array of Mail::Address objects.
+
 =option  body BODY
 =default body undef
 
@@ -229,12 +232,12 @@ a nested multipart will be the result.  The value of this option does not
 matter, as long as it is present.  See C<Mail::Message::Body::Multipart>.
 
 =option  To ADDRESSES
-=default To <'from' in current>
+=default To <sender in current>
 
-The destination of your message, by default taken from the C<Reply-To>
-field in the source message.  If that field is not present, the C<From> field
-is taken.  The ADDRESSES may be specified as string, or
-a C<Mail::Address> object, or as array of C<Mail::Address> objects.
+The destination of your message.  By default taken from the C<Reply-To>
+field in the source message.  If that field is not present, the C<Sender>
+field is taken.  If that field is not present as well, the C<From> line
+is scanned.  If they all fail, C<undef> is returned.
 
 =option  From ADDRESSES
 =default From <'to' in current>
@@ -352,7 +355,7 @@ sub reply(@)
     {   my $reply = $mainhead->get('reply-to');
         $to       = [ $reply->addresses ] if defined $reply;
     }
-    $to  ||= $self->from || return;
+    $to  ||= $self->sender || return;
 
     # Add Cc
     my $cc = $args{Cc};
@@ -526,10 +529,12 @@ sub replyPrelude($)
      : $who->isa('Mail::Message::Field') ? ($who->addresses)[0]
      :                                     $who;
 
-    my $from      = ref $user && $user->isa('Mail::Address')
-     ? $user->name : 'someone';
+    my $from
+     = ref $user && $user->isa('Mail::Address')
+     ? ($user->name || $user->address || $user->format)
+     : 'someone';
 
-    my $time      = gmtime $self->timestamp;
+    my $time = gmtime $self->timestamp;
     "On $time, $from wrote:\n";
 }
 
@@ -577,7 +582,7 @@ effective for single-part messages.
 =default prelude undef
 
 The line(s) which will be added before the quoted forwarded lines.  If nothing
-is specified, the result of the C<forwardPrelude()> method (as described
+is specified, the result of the forwardPrelude() method (as described
 below) is used.  When C<undef> is specified, no prelude
 will be added.
 
@@ -722,8 +727,9 @@ sub forward(@)
     }
 
     # To whom to send
-    my $to = $args{To}
-      or croak "No address to forwarded to";
+    my $to = $args{To};
+    $self->log(ERROR => "No address to forwarded to"), return
+       unless $to;
 
     # Create a subject
     my $subject = $args{Subject};
@@ -848,11 +854,10 @@ sub forwardPrelude()
 {   my $head  = shift->head;
 
     my @lines = "---- BEGIN forwarded message\n";
-    my $r     = $head->isResent ? 'resent-' : '';
-    my $from  = $head->get($r.'from');
-    my $to    = $head->get($r.'to');
-    my $cc    = $head->get($r.'cc');
-    my $date  = $head->get($r.'date');
+    my $from  = $head->get('from');
+    my $to    = $head->get('to');
+    my $cc    = $head->get('cc');
+    my $date  = $head->get('date');
 
     push @lines, $from->toString if defined $from;
     push @lines,   $to->toString if defined $to;
@@ -1183,22 +1188,42 @@ sub file()
 
 #------------------------------------------
 
-=method printStructure [INDENT]
+=method printStructure [FILEHANDLE][, INDENT]
 
-Print the structure of a message.
+Print the structure of a message to the selected filehandle.
+The message's subject and the types of all composing parts are
+displayed.
+
+INDENT specifies the initial indentation string: it is added in
+front of each line, and SHALL end with a blank, if specified.
+
+=examples
+
+ my $msg = ...;
+ $msg->printStructure(\*OUTPUT);
+ $msg->printStructure;
+
+ # Possible output for one message:
+ multipart/mixed: forwarded message from Pietje Puk (1550 bytes)
+    text/plain (164 bytes)
+    message/rfc822 (1043 bytes)
+       multipart/alternative: A multipart alternative (942 bytes)
+          text/plain (148 bytes)
+          text/html (358 bytes)
 
 =cut
 
-sub printStructure(;$)
+sub printStructure(;$$)
 {   my $self    = shift;
-    my $indent  = shift || '';
+    my $indent  = @_ && !ref $_[-1] && substr($_[-1], -1, 1) eq ' ' ? pop : '';
+    my $fh      = @_ ? shift : select;
 
     my $subject = $self->get('Subject') || '';
-    $subject = ": $subject" if length $subject;
+    $subject    = ": $subject" if length $subject;
 
     my $type    = $self->get('Content-Type') || '';
     my $size    = $self->size;
-    print "$indent$type$subject ($size bytes)\n";
+    $fh->print("$indent$type$subject ($size bytes)\n");
 
     my $body    = $self->body;
     my @parts
@@ -1206,7 +1231,7 @@ sub printStructure(;$)
       : $body->isNested    ? ($body->nested)
       :                      ();
 
-    $_->printStructure($indent.'   ') foreach @parts;
+    $_->printStructure($fh, $indent.'   ') foreach @parts;
 }
     
 1;

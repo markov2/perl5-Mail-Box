@@ -302,7 +302,7 @@ sub open(@)
     $name    = defined $args{folder} ? $args{folder} : $ENV{MAIL}
         unless defined $name;
 
-    if($name =~ m/^(\w+)\:/ && grep { $_ eq $1 } $self->foldertypes)
+    if($name =~ m/^(\w+)\:/ && grep { $_ eq $1 } $self->folderTypes)
     {   # Complicated folder URL
         my %decoded = $self->decodeFolderURL($name);
         if(keys %decoded)

@@ -7,7 +7,8 @@ use base 'Mail::Message::Head';
 use Mail::Box::Parser;
 
 use Carp;
-use Date::Parse;
+use Scalar::Util 'weaken';
+use List::Util 'sum';
 
 =head1 NAME
 
@@ -20,7 +21,7 @@ Mail::Message::Head::Complete - the header of one message
 
 =head1 DESCRIPTION
 
-A mail's message can be in various states: unread, partially read, and
+ mail's message can be in various states: unread, partially read, and
 fully read.  The class stores a message of which all header lines are
 known for sure.
 
@@ -68,10 +69,7 @@ sub clone(;@)
 {   my $self   = shift;
     my $copy   = ref($self)->new($self->logSettings);
 
-    foreach my $name ($self->grepNames(@_))
-    {   $copy->add($_->clone) foreach $self->get($name);
-    }
-
+    $copy->add($_->clone) foreach $self->orderedFields;
     $copy;
 }
 
@@ -83,13 +81,18 @@ sub clone(;@)
 
 #------------------------------------------
 
-=method add FIELD | LINE | NAME, BODY [,COMMENT]
+=method add FIELD | LINE | (NAME,BODY[,ATTRS])
 
 Add a field to the header.  If a field is added more than once, all values
 are stored in the header, in the order they are added.
 
+When a FIELD object is specified (some Mail::Message::Field instance), that
+will be added.  Another possibility is to specify a raw header LINE, or a
+header line nicely split-up in NAME and BODY, in which case the
+field constructor is called for you.
+
 The return value of this method is the Mail::Message::Field object
-which is created (or was specified).  Triggers Completion.
+which is created (or was specified).
 
 =examples
 
@@ -104,27 +107,21 @@ which is created (or was specified).  Triggers Completion.
 
 sub add(@)
 {   my $self = shift;
-    my $type = $self->{MMH_field_type} || 'Mail::Message::Field::Fast';
 
     # Create object for this field.
 
-    my $field;
-    if(@_==1 && ref $_[0])   # A fully qualified field is added.
-    {   $field = shift;
-        confess "Add field to header requires $type but got ".ref($field)."\n"
-            unless $field->isa($type);
-    }
-    else { $field = $type->new(@_) }
+    my $field
+      = @_==1 && ref $_[0] ? shift     # A fully qualified field is added.
+      : ($self->{MMH_field_type} || 'Mail::Message::Field::Fast')->new(@_);
 
-    $field->setWrapLength($self->{MMH_wrap_length});
+    $field->setWrapLength;
 
     # Put it in place.
 
     my $known = $self->{MMH_fields};
     my $name  = $field->name;  # is already lower-cased
 
-    push @{$self->{MMH_order}}, $name
-        unless exists $known->{$name};
+    $self->addOrderedFields($field);
 
     if(defined $known->{$name})
     {   if(ref $known->{$name} eq 'ARRAY') { push @{$known->{$name}}, $field }
@@ -140,7 +137,7 @@ sub add(@)
 
 #------------------------------------------
 
-=method set FIELD | LINE | NAME, BODY [,COMMENT]
+=method set FIELD | LINE | (NAME, BODY [,ATTRS])
 
 The C<set> method is similar to the add() method, and takes the same
 options. However, existing values for fields will be removed before a new
@@ -154,18 +151,10 @@ my %skip_none = map { ($_ => 1) } @skip_none;
 sub set(@)
 {   my $self = shift;
     my $type = $self->{MMH_field_type} || 'Mail::Message::Field::Fast';
+    $self->{MMH_modified}++;
 
     # Create object for this field.
-
-    my $field;
-    if(@_==1 && ref $_[0])   # A fully qualified field is added.
-    {   $field = shift;
-        confess "Add field to header requires $type but got ".ref($field)."\n"
-            unless $field->isa($type);
-    }
-    else
-    {   $field = $type->new(@_);
-    }
+    my $field = @_==1 && ref $_[0] ? shift->clone : $type->new(@_);
 
     my $name  = $field->name;         # is already lower-cased
     my $known = $self->{MMH_fields};
@@ -178,16 +167,10 @@ sub set(@)
         return $field;
     }
 
-    # Put it in place.
-
-    $field->setWrapLength($self->{MMH_wrap_length});
-
-    push @{$self->{MMH_order}}, $name
-        unless exists $known->{$name};
-
+    $field->setWrapLength;
     $known->{$name} = $field;
-    $self->{MMH_modified}++;
 
+    $self->addOrderedFields($field);
     $field;
 }
 
@@ -199,6 +182,11 @@ Replace the values in the header fields named by NAME with the values
 specified in the list of FIELDS. A single name can correspond to multiple
 repeated fields.
 
+For C<Received> fields, you should take a look at I<resent groups>, as
+implemented in Mail::Message::Head::ResentGroup.  Removing those
+lines without their related lines is not a smart idea.  Read the
+details Mail::Message::Head::ResentGroup::delete().
+
 If FIELDS is empty, the corresponding NAME fields will
 be removed. The location of removed fields in the header order will be
 remembered. Fields with the same name which are added later will appear at
@@ -206,21 +194,37 @@ the remembered position.  This is equivalent to the delete() method.
 
 =examples
 
- # reduce number of 'Received' lines to last 5)
- my @received = $head->get('Received');
- $head->reset('Received', @received[-5..-1]) if @received > 5;
+ # reduce number of 'Keywords' lines to last 5)
+ my @keywords = $head->get('Keywords');
+ $head->reset('Keywords', @keywords[-5..-1]) if @keywords > 5;
+
+ # Reduce the number of Received lines to only the last added one.
+ my @rgs = $head->resentGroups;
+ shift @rgs;     # keep this one (later is added in front)
+ $_->delete foreach @rgs;
 
 =cut
 
 sub reset($@)
 {   my ($self, $name) = (shift, lc shift);
-    my $known = $self->{MMH_fields};
-
-    if(@_==0)    { undef $known->{$name}  }
-    elsif(@_==1) { $known->{$name} = shift }
-    else         { $known->{$name} = [@_]  }
 
     $self->{MMH_modified}++;
+    my $known = $self->{MMH_fields};
+
+    if(@_==0)
+    {   delete $known->{$name};
+        return ();
+    }
+
+    # Cloning required, otherwise double registrations will not be
+    # removed from the ordered list: that's controled by 'weaken'
+
+    my @fields = map {$_->clone} @_;
+
+    if(@_==1) { $known->{$name} = $fields[0] }
+    else      { $known->{$name} = [@fields]  }
+
+    $self->addOrderedFields(@fields);
     $self;
 }
  
@@ -230,11 +234,46 @@ sub reset($@)
 
 Remove the field with the specified name.  If the header contained
 multiple lines with the same name, they will be replaced all together.
-This method simply calls reset().
+This method simply calls reset() without replacement fields.
 
 =cut
 
 sub delete($) { $_[0]->reset($_[1]) }
+
+#------------------------------------------
+
+=method removeField FIELD
+
+Remove the specified FIELD from the header.  This is useful when there
+are possible more than one fields with the same name, and you need to
+remove exactly one of them.  Also have a look at delete(), reset() and set().
+
+=cut
+
+sub removeField($)
+{   my ($self, $field) = @_;
+    my $name = $field->name;
+
+    my $known = $self->{MMH_fields};
+
+    if(!defined $known->{$name})
+    { ; }  # complain
+    elsif(ref $known->{$name} eq 'ARRAY')
+    {    for(my $i=0; $i < @{$known->{$name}}; $i++)
+         {
+             return splice @{$known->{$name}}, $i, 1
+                 if $known->{$name}[$i] eq $field;
+         }
+    }
+    elsif($known->{$name} eq $field)
+    {    return delete $known->{$name};
+    }
+
+    $self->log(WARNING =>
+        "Could not remove field $name from header: not found.");
+
+    return;
+}
 
 #------------------------------------------
 
@@ -305,12 +344,12 @@ sub grepNames(@)
     {   $take    = $take[0];   # one regexp prepared already
     }
     else
-    {   # I love this tric:
+    {   # I love this trick:
         local $" = ')|(?:';
         $take    = qr/^(?:(?:@take))/i;
     }
 
-    grep {$_ =~ $take} $self->names;
+    grep {$_->Name =~ $take} $self->orderedFields;
 }
 
 #------------------------------------------
@@ -335,13 +374,8 @@ sub print(;$)
 {   my $self  = shift;
     my $fh    = shift || select;
 
-    my $known = $self->{MMH_fields};
-
-    foreach my $name (@{$self->{MMH_order}})
-    {   my $this = $known->{$name} or next;
-        my @this = ref $this eq 'ARRAY' ? @$this : $this;
-        $_->print($fh) foreach @this;
-    }
+    $_->print($fh)
+        foreach $self->orderedFields;
 
     $fh->print("\n");
 
@@ -361,15 +395,11 @@ C<Bcc> and C<Resent-Bcc> lines are included.
 sub printUndisclosed($)
 {   my ($self, $fh) = @_;
 
-    my $known = $self->{MMH_fields};
-    foreach my $name (@{$self->{MMH_order}})
-    {   next if $name eq 'Resent-Bcc' || $name eq 'Bcc';
-        my $this = $known->{$name} or next;
-        my @this = ref $this eq 'ARRAY' ? @$this : $this;
-        $_->print($fh) foreach @this;
-    }
+    $_->print($fh)
+       foreach grep {$_->toDisclose} $self->orderedFields;
 
     $fh->print("\n");
+
     $self;
 }
 
@@ -384,16 +414,10 @@ of lines (list context).  Triggers completion.
 
 sub toString()
 {   my $self  = shift;
-    my $known = $self->{MMH_fields};
 
-    my @lines;
-    foreach my $name (@{$self->{MMH_order}})
-    {   my $this = $known->{$name} or next;
-        my @this = ref $this eq 'ARRAY' ? @$this : $this;
-        push @lines, $_->toString foreach @this;
-    }
-
+    my @lines = map {$_->toString} $self->orderedFields;
     push @lines, "\n";
+
     wantarray ? @lines : join('', @lines);
 }
 
@@ -406,16 +430,7 @@ the trailing newline)
 
 =cut
 
-sub nrLines()
-{   my $self = shift;
-    my $nr   = 1;  # trailing
-
-    foreach my $name ($self->names)
-    {   $nr += $_->nrLines foreach $self->get($name);
-    }
-
-    $nr;
-}
+sub nrLines() { sum 1, map { $_->nrLines } shift->orderedFields }
 
 #------------------------------------------
 
@@ -426,14 +441,7 @@ the trailing newline).
 
 =cut
 
-sub size()
-{   my $self  = shift;
-    my $bytes = 1;  # trailing blank
-    foreach my $name ($self->names)
-    {   $bytes += $_->size foreach $self->get($name);
-    }
-    $bytes;
-}
+sub size() { sum 1, map {$_->size} shift->orderedFields }
 
 #------------------------------------------
 
@@ -468,12 +476,12 @@ sub guessTimestamp()
 
     my $stamp;
     if(my $date = $self->get('date'))
-    {   $stamp = str2time($date, 'GMT');
+    {   $stamp = Mail::Message::Field->dateToTimestamp($date);
     }
 
     unless($stamp)
     {   foreach (reverse $self->get('received'))
-        {   $stamp = str2time($_, 'GMT');
+        {   $stamp = Mail::Message::Field->dateToTimestamp($_->comment);
             last if $stamp;
         }
     }
@@ -502,6 +510,100 @@ sub guessBodySize()
     return $1 * 40   if defined $lines && $lines =~ m/(\d+)/;
 
     undef;
+}
+
+#------------------------------------------
+
+=method resentGroups
+
+Returns a list of Mail::Message::Head::ResentGroup objects which
+each represent one intermediate point in the message's transmission in
+the order as they appear in the header: the most recent one first.
+
+A resent group contains a set of header fields whose names start
+with C<Resent->.  Before the first C<Resent> line is I<trace> information,
+which is composed of an optional C<Return-Path> field and an required
+C<Received> field.
+
+=cut
+
+sub resentGroups()
+{   my $self = shift;
+    my (@groups, $return_path, @fields);
+    require Mail::Message::Head::ResentGroup;
+
+    foreach my $field ($self->orderedFields)
+    {   my $name = $field->name;
+        if($name eq 'return-path')              { $return_path = $field }
+        elsif(substr($name, 0, 7) eq 'resent-') { push @fields, $field }
+        elsif($name eq 'received')
+        {   push @groups, Mail::Message::Head::ResentGroup->new
+               (@fields, head => $self)
+                   if @fields;
+
+            @fields = defined $return_path ? ($return_path, $field) : ($field);
+            undef $return_path;
+        }
+    }
+
+    push @groups, Mail::Message::Head::ResentGroup->new(@fields, head => $self)
+          if @fields;
+
+    @groups;
+}
+
+#------------------------------------------
+
+=method addResentGroup RESENT-GROUP|DATA
+
+Add a RESENT-GROUP (a Mail::Message::Head::ResentGroup object) to
+the header.  If you specify DATA, that is used to create such group
+first.
+
+These header lines have nothing to do with the user's sense
+of C<reply>, C<forward> or C<bounce> actions: these lines trace the e-mail
+transport mechanism.
+
+=examples
+
+ my $rg = Mail::Message::Head::ResentGroup->new(head => $head, ...);
+ $head->addResentGroup($rg);
+
+ my $rg = $head->addResentGroup(From => 'me');
+
+=cut
+
+sub addResentGroup(@)
+{   my $self  = shift;
+
+    require Mail::Message::Head::ResentGroup;
+    my $rg = @_==1 ? (shift)
+      : Mail::Message::Head::ResentGroup->new(@_, head => $self);
+
+    my @fields = $rg->orderedFields;
+    my $order  = $self->{MMH_order};
+
+    my $i;
+    for($i=0; $i < @$order; $i++)
+    {   next unless defined $order->[$i];
+        last if $order->[$i]->name =~ m!^(?:received|return-path|resent-)!;
+    }
+
+    my $known = $self->{MMH_fields};
+    while(@fields)
+    {   my $f    = pop @fields;
+        splice @$order, $i, 0, $f;
+        weaken( $order->[$i] );
+        my $name = $f->name;
+
+        # Adds *before* in the list.
+           if(!defined $known->{$name})      {$known->{$name} = $f}
+        elsif(ref $known->{$name} eq 'ARRAY'){unshift @{$known->{$name}},$f}
+        else                       {$known->{$name} = [$f, $known->{$name}]}
+    }
+
+    $self->modified(1);
+    $rg;
 }
 
 #------------------------------------------
@@ -544,5 +646,7 @@ message-threads.
 my $unique_id = time;
 
 sub createMessageId() { 'mailbox-'.$unique_id++ }
+
+#------------------------------------------
 
 1;

@@ -11,7 +11,7 @@ use warnings;
 
 use lib qw(. t);
 
-BEGIN {plan tests => 57}
+BEGIN {plan tests => 63}
 
 use Mail::Message::Field::Fast;
 use Mail::Address;
@@ -30,35 +30,45 @@ ok(not defined $a->comment);
 
 # No folding permitted.
 
-my $bbody = 'B  ; C234290iwfjoj w etuwou   toiwutoi wtwoetuw oiurotu 3 ouwout 2 oueotu2 fqweortu3';
-my $b = Mail::Message::Field::Fast->new("A: $bbody");
-my @lines = $b->toString(40);
+my $b1 = ' B  ; C234290iwfjoj w etuwou   toiwutoi';
+my $b2 = ' wtwoetuw oiurotu 3 ouwout 2 oueotu2';
+my $b3 = ' fqweortu3';
+my $bbody = "$b1$b2$b3";
 
+my $b = Mail::Message::Field::Fast->new("A: $bbody");
+my @lines = $b->toString(100);
 ok(@lines==1);
-ok($lines[0] eq "A: $bbody\n");
-ok($b->body eq $bbody);
+ok($lines[0] eq "A:$bbody\n");
+
+@lines = $b->toString(42);
+ok(@lines==3);
+ok($lines[0] eq "A:$b1\n");
+ok($lines[1] eq "$b2\n");
+ok($lines[2] eq "$b3\n");
+ok(' '.$b->body eq $bbody);
 
 #
 # Processing of structured lines.
 #
 
 my $f = Mail::Message::Field::Fast->new('Sender:  B ;  C');
+ok($f->isStructured);
 ok($f->name eq 'sender');
 ok($f->body eq 'B');
-ok($f eq 'B');
-ok($f->comment =~ m/^\s*C\s*/);
+ok($f eq 'B ;  C');
+ok($f->comment eq 'C');
 
 # No comment, strip CR LF
 
-my $g = Mail::Message::Field::Fast->new("Sender: B\015\012");
+my $g = Mail::Message::Field::Fast->new("Sender: B\015\012\n");
 ok($g->body eq 'B');
-ok(not defined $g->comment);
+ok($g->comment eq '');
 
 # Separate head and body.
 
-my $h = Mail::Message::Field::Fast->new("Sender", "B\015\012");
+my $h = Mail::Message::Field::Fast->new("Sender", "B\015\012\n");
 ok($h->body eq 'B');
-ok(not defined $h->comment);
+ok($h->comment eq '');
 
 my $i = Mail::Message::Field::Fast->new('Sender', 'B ;  C');
 ok($i->name eq 'sender');
@@ -81,11 +91,13 @@ my $l = Mail::Message::Field::Fast->new(A =>
  'oijfjslkgjhius2rehtpo2uwpefnwlsjfh2oireuqfqlkhfjowtropqhflksjhflkjhoiewurpq');
 my @llines = $k->toString;
 ok(@llines==1); 
+
 my $m = Mail::Message::Field::Fast->new(A =>
   'roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop, qhflksjhflkj, hoiewurpq');
 
 my @mlines = $m->toString;
-ok(@mlines==1);
+ok(@mlines==2);
+ok($mlines[1] eq " hoiewurpq\n");
 
 my $n  = Mail::Message::Field::Fast->new(A => 7);
 my $x = $n + 0;
@@ -105,6 +117,7 @@ my @mb = Mail::Address->parse('me@localhost, you@somewhere.nl');
 ok(@mb==2);
 my $r  = Mail::Message::Field::Fast->new(Cc => $mb[0]);
 ok($r->toString eq "Cc: me\@localhost\n");
+
 $r     = Mail::Message::Field::Fast->new(Cc => \@mb);
 ok($r->toString eq "Cc: me\@localhost, you\@somewhere.nl\n");
 
@@ -148,3 +161,4 @@ ok(Mail::Message::Field->wellformedName('Content-Transfer-Encoding') eq 'Content
 ok(Mail::Message::Field->wellformedName('content-transfer-encoding') eq 'Content-Transfer-Encoding');
 ok(Mail::Message::Field->wellformedName('CONTENT-TRANSFER-ENCODING') eq 'Content-Transfer-Encoding');
 ok(Mail::Message::Field->wellformedName('cONTENT-tRANSFER-eNCODING') eq 'Content-Transfer-Encoding');
+

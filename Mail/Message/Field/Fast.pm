@@ -16,7 +16,7 @@ Mail::Message::Field::Fast - one line of a message header
 
 =head1 DESCRIPTION
 
-See Mail::Message::Field.  This is the faster, but less flexible
+This is the faster, but less flexible
 implementation of a header field.  The data is stored in an array,
 and some hacks are made to speeds things up.  Be gentle with me, and
 consider that each message contains many of these lines, so speed
@@ -27,78 +27,97 @@ is very important here.
 =cut
 
 #------------------------------------------
+#
+# The DATA is stored as:   [ NAME, FOLDED-BODY ]
+# The body is kept in a folded fashion, where each line starts with
+# a single blank.
 
 =head2 Initiation
 
 =cut
 
 #------------------------------------------
-#
-# The array is defined as:
-#   [ $name, $body, $comment, $folded ]
-#   where folded may not be or undef
 
-sub new($;$$@)
-{
-    my $class  = shift;
-    my ($name, $body, $comment);
+=method new DATA
 
-    if(@_==2 && ref $_[1] eq 'ARRAY' && !ref $_[1][0])
-                 { $name = shift }
-    elsif(@_>=3) { ($name, $body, $comment) = @_ }
-    elsif(@_==2) { ($name, $body) = @_ }
-    elsif(@_==1) { $name = shift }
-    else         { confess }
+The constructor of this object does not follow the usual practise within
+the Mail::Box suite: it does not use the constructor Mail::Reporter::new().
+Therefor it has no logging or tracing facilities.
 
-    #
-    # Compose the body.
-    #
+The method can be used in one of the following ways:
 
-    if(!defined $body)
-    {   # must be one line of a header.
-        ($name, $body) = split /\:\s*/, $name, 2;
+=over 4
 
-        unless($body)
-        {   warn "No colon in headerline: $name\n";
-            $body = '';
-        }
-    }
-    elsif($name =~ m/\:/)
-    {   warn "A header-name cannot contain a colon in $name\n";
-        return undef;
-    }
+=item * B<new> LINE
 
-    if(defined $body && ref $body)
-    {   # Objects
-        $body = join ', ',
-            map {$_->isa('Mail::Address') ? $_->format : "$_"}
-                (ref $body eq 'ARRAY' ? @$body : $body);
-    }
-    
-    warn "Header-field name contains illegal character: $name\n"
-        if $name =~ m/[^\041-\176]/;
+=item * B<new> NAME, (BODY|OBJECTS), [ATTRIBUTES]
 
-    $body =~ s/\s*\015?\012$//;
+=back
 
-    #
-    # Take the comment.
-    #
+Create a new header field object.  Specify the whole LINE at once, and
+it will be split-up for you.  I case you already have the parts of the
+header line, you may specify them separately as NAME and BODY.
 
-    if(defined $comment && length $comment)
-    {   # A comment is defined, so shouldn't be in body.
-        warn "A header-body cannot contain a semi-colon in $body."
-            if $body =~ m/\;/;
-    }
-    elsif(__PACKAGE__->isStructured($name))
-    {   # try strip comment from field-body.
-        ($body, $comment) = split /\s*\;\s*/, $body, 2;
-    }
+In case you specify a single OBJECT, or a reference to an array of OBJECTS,
+these objects are processed to become suitable to fill a field, usually
+by simple strification.  When you specify one or more Mail::Address objects,
+these are transformed into a string using their C<format> method.
+You may also add one Mail::Message::Field, whose body is taken.  In case of
+ an array, the elements are joined into one string with a comma.
 
-    #
-    # Create the object.
-    #
+ATTRIBUTES can be exactly one string which may contain multiple attributes
+at once, quoted and formatted as required in RFC2822.  As alternative,
+list of key-value pairs can be used.  In this case, the values will get
+quoted if needed and everything formatted as the protocol demands.
 
-    bless [$name, $body, $comment], $class;
+=examples
+
+ my $mime = Mail::Message::Field->new(
+     'Content-Type: text/plain; charset=US-ASCII');
+
+ my $mime = Mail::Message::Field->new(
+     'Content-Type' => 'text/plain; charset=US-ASCII');
+
+ my $mime = Mail::Message::Field->new(
+     'Content-Type' => 'text/plain', 'charset=US-ASCII');
+
+ my $mime = Mail::Message::Field->new(
+     'Content-Type' => 'text/plain', charset => 'US-ASCII');
+
+ my $mime = Mail::Message::Field->new(
+     To => Mail::Address->new('my name', 'me@example.com');
+
+ my $mime = Mail::Message::Field->new(
+     Cc => [ Mail::Address->new('your name', 'you@example.com')
+           , Mail::Address->new('his name', 'he@example.com')
+           ]);
+
+But in practice, you can simply call
+
+ my $head = Mail::Message::Head->new;
+ $head->add('Content-Type' => 'text/plain', charset => 'US-ASCII');
+
+which implicitly calls this constructor (when needed).  You can specify
+the same things for add() as this C<new> accepts.
+
+=default log   <disabled>
+=default trace <disabled>
+
+=cut
+
+sub new($;$@)
+{   my $class = shift;
+
+    my ($name, $body) = $class->consume(@_==1 ? (shift) : (shift, shift));
+    return () unless defined $body;
+
+    my $self = bless [$name, $body], $class;
+
+    # Attributes
+    $self->comment(shift)             if @_==1;   # one attribute line
+    $self->attribute(shift, shift) while @_ > 1;  # attribute pairs
+
+    $self;
 }
 
 #------------------------------------------
@@ -116,6 +135,13 @@ sub clone()
 
 #------------------------------------------
 
+sub length()
+{   my $self = shift;
+    length($self->[0]) + 1 + length($self->[1]);
+}
+
+#------------------------------------------
+
 =head2 Access to the Field
 
 =cut
@@ -126,36 +152,39 @@ sub name() { lc shift->[0] }
 
 #------------------------------------------
 
-sub body() {    shift->[1] }
+sub Name() { shift->[0] }
 
 #------------------------------------------
 
-sub comment(;$)
+sub folded()
 {   my $self = shift;
-    @_ ? $self->[2] = shift : $self->[2];
+    return $self->[0].':'.$self->[1]
+        unless wantarray;
+
+    my @lines = $self->folded_body;
+    my $first = $self->[0]. ':'. shift @lines;
+    ($first, @lines);
 }
 
 #------------------------------------------
 
-sub content()
+sub unfolded_body($;@)
 {   my $self = shift;
-    return $self->[1] unless defined $self->[2];
-    "$self->[1]; $self->[2]";
+
+    $self->[1] = $self->fold($self->[0], @_)
+       if @_;
+
+    $self->unfold($self->[1]);
 }
 
 #------------------------------------------
 
-sub folded(;$)
-{   my $self = shift;
-    if(@_)
-    {   return unless defined($self->[3] = shift);
-        return @{$self->[3]};
-    }
-    return @{$self->[3]} if defined $self->[3];
-
-      defined $self->[2]
-    ? "$self->[0]: $self->[1]; $self->[2]\n"
-    : "$self->[0]: $self->[1]\n";
+sub folded_body($)
+{   my ($self, $body) = @_;
+    if(@_==2) { $self->[1] = $body }
+    else      { $body = $self->[1] }
+     
+    wantarray ? split(m!(?<=\n)!, $body) : $body;
 }
 
 #------------------------------------------
@@ -166,9 +195,11 @@ sub folded(;$)
 
 #------------------------------------------
 
-sub newNoCheck($$$;$)
-{   my $class = shift;
-    bless [ @_ ], $class;
+# For performance only
+
+sub print(;$)
+{   my $self = shift;
+    (shift || select)->print($self->[0].':'.$self->[1]);
 }
 
 #------------------------------------------

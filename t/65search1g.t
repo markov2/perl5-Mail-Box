@@ -89,23 +89,19 @@ foreach (@m2)
 ok($output eq <<'EXPECTED');
 t/mbox.cpy, message 44: Font metrics
   Received: from ns.ATComputing.nl (ns.ATComputing.nl [195.108.229.25])
-          by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id TAA26427
-          for <markov@ATComputing.nl>; Wed, 4 Oct 2000 19:56:00 +0200
-          (MET DST)
+  	by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id TAA26427
+  	for <markov@ATComputing.nl>; Wed, 4 Oct 2000 19:56:00 +0200 (MET DST)
 t/mbox.cpy, message 43: Core Dump on ReadImage
   Received: from ns.ATComputing.nl (ns.ATComputing.nl [195.108.229.25])
-          by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id WAA14913
-          for <markov@ATComputing.nl>; Tue, 1 Aug 2000 22:37:13 +0200
-          (MET DST)
+  	by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id WAA14913
+  	for <markov@ATComputing.nl>; Tue, 1 Aug 2000 22:37:13 +0200 (MET DST)
 t/mbox.cpy, message 42: Re: Core Dump on ReadImage
   Message-ID: <20000807113844.A22119@atcmpg.ATComputing.nl>
 t/mbox.cpy, message 41: Re: core dump in simple ImageMagick example
   Received: from ns.ATComputing.nl (ns.ATComputing.nl [195.108.229.25])
-          by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id NAA29434
-          for <markov@ATComputing.nl>; Wed, 26 Jul 2000 13:46:33 +0200
-          (MET DST)
-  References: <397C6C6B.989E4BB2@catchword.com>
-          <20000726133231.G25170@atcmpg.ATComputing.nl>
+  	by atcmpg.ATComputing.nl (8.9.0/8.9.0) with ESMTP id NAA29434
+  	for <markov@ATComputing.nl>; Wed, 26 Jul 2000 13:46:33 +0200 (MET DST)
+  References: <397C6C6B.989E4BB2@catchword.com> <20000726133231.G25170@atcmpg.ATComputing.nl>
 EXPECTED
 
 undef $grep2;

@@ -82,16 +82,13 @@ ok(defined $msg);
 
 my $dump;
 my $catch   = IO::Scalar->new(\$dump);
-{  my $old_out = select $catch;
-   $msg->printStructure;
-   select $old_out;
-}
+$msg->printStructure($catch);
 
 ok($dump eq <<'DUMP');
-multipart/mixed: forwarded message from Pietje Puk (1557 bytes)
+multipart/mixed: forwarded message from Pietje Puk (1550 bytes)
    text/plain (164 bytes)
-   message/rfc822 (1050 bytes)
-      multipart/alternative: A multipart alternative (949 bytes)
+   message/rfc822 (1043 bytes)
+      multipart/alternative: A multipart alternative (942 bytes)
          text/plain (148 bytes)
          text/html (358 bytes)
 DUMP

@@ -120,8 +120,8 @@ sub fieldToHtml($;$)
 
 =method headToHtmlTable HEAD, [TABLE-PARAMS]
 
-Produce a display of the selected fields of the header (see the
-C<selectedFields> method) in a table shape.  The optional
+Produce a display of the selected fields of the header (see
+selectedFields()) in a table shape.  The optional
 TABLE-PARAMS are added as parameters to the produced TABLE tag.
 In list context, the separate lines are returned.  In scalar
 context, everything is returned as one.
@@ -147,12 +147,10 @@ sub headToHtmlTable($;$)
 
     my @lines = "<table $tp>\n";
     foreach my $f ($self->selectedFields($head))
-    {   push @lines, '<tr><th valign="top" align="left">'
-                     . $self->textToHtml($_->wellformedName).":</th>\n"
-                   , '    <td valign="top">'
-                     . $self->fieldContentsToHtml($_, $subject)
-                     . "</td></tr>\n"
-            foreach $head->get($f);
+    {   my $name_html = $self->textToHtml($f->wellformedName);
+        my $cont_html = $self->fieldContentsToHtml($f, $subject);
+        push @lines, qq(<tr><th valign="top" align="left">$name_html:</th>\n)
+                   , qq(    <td valign="top">$cont_html</td></tr>\n);
     }
 
     push @lines, "</table>\n";
@@ -226,13 +224,11 @@ sub headToHtmlHead($@)
                    ."\"$self->{MMCH_tail}\n";
     }
 
-    foreach my $f (sort map {lc} $self->selectedFields($head))
-    {   next if exists $meta{$f};
-
-        push @lines, '<meta name="' . $self->textToHtml($_->wellformedName)
-                   . '" content="'  . $self->textToHtml($_->content)
-                   . "\"$self->{MMCH_tail}\n"
-            foreach $head->get($f);
+    foreach my $f ($self->selectedFields($head))
+    {   next if exists $meta{$f->name};
+        push @lines, '<meta name="' . $self->textToHtml($f->wellformedName)
+                   . '" content="'  . $self->textToHtml($f->content)
+                   . "\"$self->{MMCH_tail}\n";
     }
 
     push @lines, "</head>\n";

@@ -22,9 +22,11 @@ Support modules        Mail::Reporter
    01report.t          maintaining warnings/errors/trace
 
 Basic Mail::Message    Mail::Message  ::Field + ::Head* + ::Body*
+   11cfws.t            removal of comments and folding white spaces
    11field1.t          test storage of one header-line in ::Fast
    11field2.t          test storage of one header-line in ::Flex
    12head0h.t          test storage of one header
+   12head1r.t          test handling resent groups
    13body0s.t          test storage of a string body
    13body1l.t          test storage of a lines body
    13body2f.t          test storage of a body in a file

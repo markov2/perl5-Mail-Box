@@ -37,7 +37,7 @@ my $f = $html->format($body);
 ok(defined $f);
 ok(ref $f);
 ok($f->isa('Mail::Message::Body'));
-ok($f->type eq 'text/plain');
+ok($f->mimeType eq 'text/plain');
 ok($f->charset eq 'iso-8859-1');
 ok($f->transferEncoding eq 'none');
 

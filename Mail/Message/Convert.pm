@@ -114,7 +114,7 @@ new().
 
 sub selectedFields($)
 {   my ($self, $head) = @_;
-    $head->grepNames($self->{MMC_fields})
+    $head->grepNames($self->{MMC_fields});
 }
 
 #------------------------------------------

@@ -62,6 +62,7 @@ Mail/Message/Field/Flex.pm
 Mail/Message/Head.pm
 Mail/Message/Head/Complete.pm
 Mail/Message/Head/Delayed.pm
+Mail/Message/Head/ResentGroup.pm
 Mail/Message/Head/Subset.pm
 Mail/Message/Part.pm
 Mail/Message/TransferEnc.pm
@@ -98,9 +99,11 @@ scripts/mailbox2html
 scripts/takemail
 t/00windows.t
 t/01report.t
+t/11cfws.t
 t/11field1.t
 t/11field2.t
 t/12head0h.t
+t/12head1r.t
 t/13body0s.t
 t/13body1l.t
 t/13body2f.t
@@ -161,5 +164,4 @@ t/90mailint.t
 t/90mimeent.t
 t/90textaf.t
 t/Tools.pm
-t/mbox.cpy
 t/mbox.src

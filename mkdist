@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=2.021
+VERSION=2.022
 
 umask 022
 
@@ -28,14 +28,14 @@ echo ">>> Producing version $VERSION"
 echo ">>> Create pod"
 $BIN/make_pod $TMP $VERSION || exit $?
 
-cd $TMP                || exit $?
+cd $TMP               || exit $?
 find Mail -name \*.pod >>MANIFEST
 sort -u MANIFEST >x && mv x MANIFEST
 
 echo ">>> Run tests"
 perl Makefile.PL      || exit $?
 chmod a+x t/*.t
-#make test             || exit $?
+make test             || exit $?
 
 echo ">>> Creating HTML with mpod2html"
 rm -rf $HTML

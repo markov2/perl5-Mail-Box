@@ -10,7 +10,7 @@ use warnings;
 
 use lib qw(. t);
 
-BEGIN {plan tests => 43}
+BEGIN {plan tests => 44}
 
 use Mail::Message::Field::Flex;
 use Mail::Address;
@@ -29,11 +29,15 @@ ok(not defined $a->comment);
 
 my $bbody = 'B  ; C234290iwfjoj w etuwou   toiwutoi wtwoetuw oiurotu 3 ouwout 2 oueotu2 fqweortu3';
 my $b = Mail::Message::Field::Flex->new("A: $bbody");
-my @lines = $b->toString(40);
+my @lines = $b->toString(100);
 
 ok(@lines==1);
 ok($lines[0] eq "A: $bbody\n");
 ok($b->body eq $bbody);
+
+@lines = $b->toString(40);
+ok(@lines==3);
+ok($lines[2] eq " oueotu2 fqweortu3\n");
 
 #
 # Processing of structured lines.
@@ -42,27 +46,27 @@ ok($b->body eq $bbody);
 my $f = Mail::Message::Field::Flex->new('Sender:  B ;  C');
 ok($f->name eq 'sender');
 ok($f->body eq 'B');
-ok($f eq 'B');
+ok($f eq 'B ;  C');
 ok($f->comment =~ m/^\s*C\s*/);
 
 # No comment, strip CR LF
 
 my $g = Mail::Message::Field::Flex->new("Sender: B\015\012");
 ok($g->body eq 'B');
-ok(not defined $g->comment);
+ok($g->comment eq '');
 
 # Separate head and body.
 
 my $h = Mail::Message::Field::Flex->new("Sender", "B\015\012");
 ok($h->body eq 'B');
-ok(not defined $h->comment);
+ok($h->comment eq '');
 
 my $i = Mail::Message::Field::Flex->new('Sender', 'B ;  C');
 ok($i->name eq 'sender');
 ok($i->body eq 'B');
 ok($i->comment =~ m/^\s*C\s*/);
 
-my $j = Mail::Message::Field::Flex->new('Sender', 'B', 'C');
+my $j = Mail::Message::Field::Flex->new('Sender', 'B', [comment => 'C']);
 ok($j->name eq 'sender');
 ok($j->body eq 'B');
 ok($j->comment =~ m/^\s*C\s*/);
@@ -78,11 +82,6 @@ my $l = Mail::Message::Field::Flex->new(A =>
  'oijfjslkgjhius2rehtpo2uwpefnwlsjfh2oireuqfqlkhfjowtropqhflksjhflkjhoiewurpq');
 my @llines = $k->toString;
 ok(@llines==1); 
-my $m = Mail::Message::Field::Flex->new(A =>
-  'roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop, qhflksjhflkj, hoiewurpq');
-
-my @mlines = $m->toString;
-ok(@mlines==1);
 
 my $n  = Mail::Message::Field::Flex->new(A => 7);
 my $x = $n + 0;

@@ -50,7 +50,7 @@ my $body   = Mail::Message::Body::Lines->new
 
 my $enc    = $codec->encode($body);
 ok($body!=$enc);
-ok($enc->type eq 'text/html');
+ok($enc->mimeType eq 'text/html');
 ok($enc->transferEncoding eq 'quoted-printable');
 ok($enc->string eq $encoded);
 
@@ -64,7 +64,7 @@ $body   = Mail::Message::Body::Lines->new
 
 my $dec = $codec->decode($body);
 ok($dec!=$body);
-ok($enc->type eq 'text/html');
+ok($enc->mimeType eq 'text/html');
 ok($dec->transferEncoding eq 'none');
 ok($dec->string eq $decoded);
 

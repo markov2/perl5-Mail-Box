@@ -26,7 +26,7 @@ my $body = Mail::Message::Body::Multipart->new
 ok($body->boundary eq 'xyz');
 $body->boundary('part-separator');
 ok($body->boundary eq 'part-separator');
-ok($body->type eq 'multipart/mixed');
+ok($body->mimeType eq 'multipart/mixed');
 
 my $h1 = Mail::Message::Head::Complete->new;
 
@@ -38,7 +38,7 @@ my $b1 = Mail::Message::Body::Lines->new
  );
 
 ok($b1);
-ok($b1->type eq 'text/html');
+ok($b1->mimeType eq 'text/html');
 ok($b1->transferEncoding eq '8bit');
 ok($b1->disposition eq 'none');
 

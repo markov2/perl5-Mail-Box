@@ -158,9 +158,10 @@ sub seqnr(;$)
 =method copyTo FOLDER
 
 Copy the message to the indicated opened FOLDER, without deleting the
-original.  The coerced message (the copy) is returned.
+original.  The coerced message (the copy in the desitnation folder) is
+returned.
 
-=examples
+=example
 
  my $draft = $mgr->open(folder => 'Draft');
  $message->copyTo($draft);
@@ -170,6 +171,25 @@ original.  The coerced message (the copy) is returned.
 sub copyTo($)
 {   my ($self, $folder) = @_;
     $folder->addMessage($self->clone);
+}
+
+#-------------------------------------------
+
+=method moveTo FOLDER
+
+Move the message from this folder to the FOLDER specified.  This will
+create a copy (using clone()) first, and flag this original message
+to be deleted.  So until the source folder is closed, two copies of
+the message stay in memory.  The newly created message (part of the
+destination folder) is returned.
+
+=cut
+
+sub moveTo($)
+{   my ($self, $folder) = @_;
+    my $added = $folder->addMessage($self->clone);
+    $self->delete;
+    $added;
 }
 
 #-------------------------------------------

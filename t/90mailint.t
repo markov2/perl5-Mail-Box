@@ -39,13 +39,13 @@ ok($msg);
 my $head = $msg->head;
 ok($head);
 
-my @fields = $head->names;
+my @fields = sort $head->names;
 ok(@fields==5);
-ok($fields[0] eq 'from');        # order must be preserved
-ok($fields[1] eq 'to');
-ok($fields[2] eq 'subject');
-ok($fields[3] eq 'in-reply-to');
-ok($fields[4] eq 'again');
+ok($fields[0] eq 'again');
+ok($fields[1] eq 'from');
+ok($fields[2] eq 'in-reply-to');
+ok($fields[3] eq 'subject');
+ok($fields[4] eq 'to');
 
 my @from  = $head->get('from');
 ok(@from==1);

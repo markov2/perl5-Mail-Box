@@ -359,7 +359,7 @@ sub init($)
     unless(ref $mime)
     {   $mime = Mail::Message::Field->new('Content-Type' => lc $mime);
         $mime->attribute(charset => $args->{charset} || 'us-ascii')
-            if $mime->body =~ m!^text/!;
+            if $mime =~ m!^text/!;
     }
 
     $transfer = Mail::Message::Field->new('Content-Transfer-Encoding' =>
@@ -526,7 +526,7 @@ the header field C<Content-Type>, but may have changed during encoding
 
 The returned is a reference to a Mail::Message::Field object, where
 you can ask for the C<body> (main content of the field) and the comment
-(after a semicolon).  A field stringifies as its body only.
+(after a semicolon).  To get to the body, you can better use mimeType().
 
 =examples
 
@@ -537,22 +537,30 @@ you can ask for the C<body> (main content of the field) and the comment
  my $content = $msg->decoded;
  my $type    = $content->type;
 
- print "This is a $type message";
+ print "This is a $type message\n";
+    # --> This is a text/plain; charset="us-ascii" message
+
+ print "This is a ", $type->body, "message\n";
     # --> This is a text/plain message
 
- print "Comment: ", $content->comment;
+ print "Comment: ", $type->comment, "\n";
     # --> Comment: charset="us-ascii"
 
 =cut
 
-sub type()             { shift->{MMB_type} }
+sub type() { shift->{MMB_type} }
 
 #------------------------------------------
 
 =method mimeType
 
-Returns a C<MIME::Type> object which is related to this body's type.  This
+Returns a MIME::Type object which is related to this body's type.  This
 differs from the C<type> method, which results in a Mail::Message::Field.
+
+=example
+
+ if($body->mimeType eq 'text/html') {...}
+ print $body->mimeType->simplified;
 
 =cut
 
@@ -560,8 +568,10 @@ sub mimeType()
 {   my $self = shift;
     return $self->{MMB_mime} if exists $self->{MMB_mime};
 
-    my $type = $self->{MMB_type};
-    $self->{MMB_mime} = $mime_types->type($type) || MIME::Type->new($type);
+    my $type = $self->{MMB_type}->body;
+
+    $self->{MMB_mime}
+       = $mime_types->type($type) || MIME::Type->new(type => $type);
 }
 
 #------------------------------------------

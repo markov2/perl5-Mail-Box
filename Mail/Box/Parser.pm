@@ -315,19 +315,18 @@ sub readSeparator($) {shift->notImplemented}
 
 #------------------------------------------
 
-=method readHeader WRAP
+=method readHeader
 
 Read the whole message-header and return it as list
 C<< field => value, field => value >>.  Mind that some fields will
-appear more than once.  The WRAP is the expected length of lines,
-but is not yet used.
+appear more than once.
 
 The first element will represent the position in the file where the
 header starts.  The follows the list of header field names and bodies.
 
 =example
 
- my ($where, @header) = $parser->readHeader(72);
+ my ($where, @header) = $parser->readHeader;
 
 =cut
 
@@ -409,26 +408,6 @@ a LF.  Mac uses CR.
 =cut
 
 sub lineSeparator() {shift->{MBP_linesep}}
-
-#------------------------------------------
-
-=method foldHeaderLine LINE, LENGTH
-
-(Class method) Fold the specified line (which is a header-line with a
-structured format) into multiple lines.  Each line is terminated by a
-newline.
-
-This method is called by Mail::Message::Field::toString() to
-format headers before writing them to a file.
-
-=example
-
- my $string = 'From: me; very long comment';
- print Mail::Box::Parser::C->foldHeaderLine($string, 40);
-
-=cut
-
-sub foldHeaderLine($$) {shift->notImplemented}
 
 #------------------------------------------
 

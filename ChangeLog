@@ -7,6 +7,104 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.022: Mon Sep  9 18:55:01 CEST 2002
+
+	Detailed checks against RFC2822 is in progress, which means that
+	some changes have to be made.  The API had to be changed on some
+	places, but on most places could be kept unchanged.
+
+	Application breakers:
+
+	- $msg->from now returns a list fo addresses!  Mind the context!
+	  required by the RFC.
+
+	- stringified $body->type returns whole Content-Type body.  Use
+	  $body->mimeType!  Example:
+	     if($msg->type eq 'text/html')     # breaks now
+	     if($msg->mimeType eq 'text/html') # works as always
+
+	- a header field stringifies to "body; comment", not only
+	  the body.
+
+	Fixes:
+
+	- Messages which of unknown Content-Type (unknown by MIME::Types)
+	  could cause segmentation violates.  Solved by [Darrell Fuhriman]
+
+	- In Mail::Box::Manager, the method foldertypes() was called, which
+	  should have been folderTypes(). [Swapnil Khabiya]
+
+	- Mail::Message::Construct::replyPrelude produced warning when
+	  from address of originating message dit not defined a user's
+	  name.  Now it has a fallback. Reported by [Jon Thomason]
+
+	Improvements:
+
+	- new method Mail::Box::Message::moveTo()
+
+	- new method Mail::Message::sender()
+
+	- Mail::Message::Convert::selectedFields() retuns fields now
+	  (in the right order), not field names.
+
+	- Mail::Reporter::log() now also as class method.
+
+	- Mail::Reporter::defaultTrace() to set program global defaults
+	  for logging and tracing.
+
+	- New class Mail::Message::Head::ResentGroup with tests in
+	  t/12head1r.t
+
+	- Mali::Message::Construct::printStructure now accepts a filehandle.
+
+	- reply() takes return address from: Reply-To || Sender || From
+	  (Sender added)
+
+	I have re-read specification rfc2822, and reimplemented the three
+	Mail::Message::Field* objects.  The next changes are made to
+	these objects:
+
+	- field data is only stored in folded form to improve performance
+	  during parsing and reduce memory consumption (which is quite
+	  high for headers) but also to be able to handle structured fields
+	  better.  This introduced two new methods:
+	    folded_body()
+	    unfolded_body()
+	  The body(), comment(), and content() are quite different now,
+	  although return the same results.
+
+	- toDate() without argument returns an rfc2822 valid date
+	   representing the current local time.
+
+	- new() accepts attributes.  The OPTIONS are only available
+ 	  for ::Flex fields.                                    
+
+	- attributes handle escapes of quotes in quoted strings.
+
+	- new method length() which returns the total field length.
+
+	- new method toDisclose() which tells
+	  Mail::Message::Head::printUndisclosed whether the header should
+	  be visible for extenal receivers.
+
+	- new method stripCFWS() removes comments and folding white space from
+	  header lines.  This should only be used on structured header
+	  fields.  Tests in t/11cfws.t
+
+	- new method dateToTimestamp converts a date in RFC2822 spec into
+	  a timestamp.
+
+	Also Mail::Message::Head got revisited.  The order of the fields
+	is protected stronger.
+
+	- new method orderedFields()
+
+	- new method addResentGroup()
+
+	- new method resentGroups()
+
+	- new method removeField($field)
+
 version 2.021: Tue Aug 20 17:42:24 CEST 2002
 
 	Fixes:

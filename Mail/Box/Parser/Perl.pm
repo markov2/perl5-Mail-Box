@@ -141,9 +141,8 @@ my $empty = qr/^[\015\012]*$/;
 
 #------------------------------------------
 
-sub readHeader($)
-{   my ($self, $wrap) = @_;
-    my $trust = $self->{MBPP_trusted};
+sub readHeader()
+{   my $self  = shift;
     my $file  = $self->{MBPP_file};
 
     my $start = $file->tell;
@@ -153,106 +152,24 @@ sub readHeader($)
 LINE:
     while(defined $line)
     {   last if $line =~ $empty;
-        my ($name, $body) = split /\:\s*/, $line, 2;
+        my ($name, $body) = split /\s*\:\s*/, $line, 2;
 
         unless(defined $body)
-        {   $self->log(WARNING => "Unexpected end of header:\n  $line");
+        {   $self->log(WARNING => "Unexpected end of header:\n $line");
             $file->seek(-length $line, 1);
             last LINE;
         }
 
-        # Do unfolding
-    
-        my @body    = $line;
+        # Collect folded lines
         while($line = $file->getline)
-        {   last unless $line =~ m/^[ \t]/;
-
-            $body .= $line;
-            push @body, $line;
+        {   $line =~ m!^[ \t]! ? ($body .= $line) : last;
         }
     
-        $body =~ s/\015?\012?$//;
-
-        unless(length $body)
-        {   $self->log(NOTICE => "Skipped empty field $name.");
-            next;
-        }
-
-        unless($trust)
-        {   for($body) {s/\s+/ /gs; s/ $//s};
-
-            $self->log(NOTICE =>
-                "Blanks stripped after header field name: $name.")
-                    if $name =~ s/\s+$//;
-    
-            $self->log(NOTICE => "Field $name is empty.")
-                unless length $body;
-        }
-
-        if(exists $Mail::Message::Field::_structured{lc $name})
-        {   my $folded = $trust ? \@body
-             : $self->foldHeaderLine("$name: $body", $wrap);
-
-            ($body, my $comment) = split /\s*\;\s*/, $body, 2;
-            push @ret, [ $name, $body, $comment, $folded ];
-        }
-        else
-        {   push @ret, [ $name, $body ];
-        }
+        push @ret, [ $name, $body ];
     }
 
     $ret[1]  = $file->tell;
     @ret;
-}
-
-#------------------------------------------
-
-sub foldHeaderLine($$)
-{   my ($self, $original, $wrap) = (shift, shift, shift);
-    my @lines;
-    my $pre = '';
-
-    for($original)
-    {   s/\s+/ /g;   # unfold
-        s/\s+$//g;
-        if(length $_ < $wrap)
-        {   (my $folded = $original) =~ s/\s*$/\n/;
-            @lines = ($folded);
-            last;
-        }
-
-        while(1)
-        {   # Find last special char before wrap.
-            $_ = $pre.$_;
-            last if length $_ <= $wrap;
-
-            my $find = reverse substr($_, 20, $wrap-20);
-            my $blank_pos = index $find, ' ';
-            my $tab_pos   = index $find, "\t";
-            my $pos
-                = $blank_pos < 0          ? $tab_pos
-                : $tab_pos   < 0          ? $blank_pos
-                : $tab_pos   > $blank_pos ? $blank_pos
-                : -1;
-
-            if($pos >= 0) { $pos = 20+length($find)-$pos-1 }
-            else
-            {   # Not found, so extend line.
-                $pos = $wrap;
-                while($pos < length)
-                {   my $c = substr $_, $pos++, 1;
-                    last if $c eq ' ' || $c eq '.';
-                }
-                $pos--;
-            }
-            push @lines, (substr $_, 0, $pos, '')."\n";
-            $pre = '        ';
-            s/^\s+//;
-        }
-        push @lines, "$_\n" if length $_;
-    }
-
-    \@lines;
 }
 
 #------------------------------------------

@@ -46,7 +46,6 @@ a real message with the specified MESSAGE-ID.
 =default field_type <not used>
 =default head <not used>
 =default head_type <not used>
-=default head_wrap <not used>
 =default log 'WARNINGS'
 =default messageId <required>
 =default modified <always false>

@@ -35,12 +35,12 @@ ok($f->comment =~ m/^\s*C\s*/);
 
 my $g = Mail::Message::Field->new("Sender: B\015\012");
 ok($g->body eq 'B');
-ok(not defined $g->comment);
+ok($g->comment eq "");
 
 # Check toString
 
 my $x = $f->toString;
-ok($x eq "Sender: B; C\n");
+ok($x eq "Sender: B ;  C\n");
 
 $x = $g->toString;
 ok($x eq "Sender: B\n");
@@ -60,11 +60,11 @@ ok(@llines==1);
 my $m = Mail::Message::Field->new(Sender =>
   'roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop, qhflksjhflkj, hoiewurpq');
 
-ok($m->nrLines==1);
-$m->setWrapLength(72);
 ok($m->nrLines==2);
+$m->setWrapLength(35);
+ok($m->nrLines==3);
 
-my @mlines = $m->toString;
+my @mlines = $m->toString(72);
 ok(@mlines==2);
 ok($mlines[0] eq "Sender: roijfjslkgjhiu, rehtpo2uwpe, fnwlsjfh2oire, uqfqlkhfjowtrop,\n");
-ok($mlines[1] eq "        qhflksjhflkj, hoiewurpq\n");
+ok($mlines[1] eq " qhflksjhflkj, hoiewurpq\n");

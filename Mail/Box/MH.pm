@@ -317,7 +317,6 @@ sub index()
 
     $self->{MBM_index} = $self->{MBM_index_type}->new
      ( filename  => $self->{MBM_index_filename}
-     , head_wrap => $self->{MB_head_wrap}
      , $self->logSettings
      )
 

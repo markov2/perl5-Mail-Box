@@ -54,7 +54,8 @@ the following OPTIONS related to error reports.
 =default log 'WARNINGS'
 
 Log messages which have a priority higher or equal to the specified
-level are stored internally and can be retrieved later.
+level are stored internally and can be retrieved later.  The global
+default for this option can be changed with defaultTrace().
 
 Known levels are C<'INTERNAL'>, C<'ERRORS'>, C<'WARNINGS'>, C<'PROGRESS'>,
 C<'NOTICES'> C<'DEBUG'>, and C<'NONE'>.  The C<PROGRESS> level relates to
@@ -67,7 +68,8 @@ for C<WARNINGS>, and C<NOTICE> for C<NOTICES>.
 =default trace 'WARNINGS'
 
 Trace messages which have a level higher or equal to the specified level
-are directly printed using warn.
+are directly printed using warn.  The global default for this option can
+be changed with defaultTrace().
 
 =cut
 
@@ -82,10 +84,13 @@ for(my $l = 1; $l < @levelname; $l++)
 
 sub new(@) {my $class = shift; (bless {}, $class)->init({@_}) }
 
+my $default_log   = $levelprio{WARNINGS};
+my $default_trace = $levelprio{WARNINGS};
+
 sub init($)
 {   my ($self, $args) = @_;
-    $self->{MR_log}   = $levelprio{$args->{log}   || 'WARNING'};
-    $self->{MR_trace} = $levelprio{$args->{trace} || 'WARNING'};
+    $self->{MR_log}   = $levelprio{$args->{log}   || $default_log};
+    $self->{MR_trace} = $levelprio{$args->{trace} || $default_trace};
     $self;
 }
 
@@ -94,6 +99,34 @@ sub init($)
 =head2 Logging and Tracing
 
 =cut
+
+#------------------------------------------
+
+=method defaultTrace [LEVEL, [LEVEL]
+
+(Class method)
+Reports the default trace and log level which is used for object as list
+of two elements.  When not explicitly set, both are set to C<WARNINGS>.
+
+You may specify one or two arguments.  In case of one argument, the
+default log and trace levels will both be set to that value.  When two
+levels are specified, the first represent the default log-level and
+the second the default trace level.
+
+=examples
+
+ my ($loglevel, $tracelevel) = Mail::Reporter->defaultTrace;
+ Mail::Reporter->defaultTrace('NOTICES');
+ Mail::Reporter->defaultTrace('WARNINGS', 'INFO');
+
+=cut
+
+sub defaultTrace(;$$)
+{   my $self = shift;
+    return ($default_log, $default_trace) unless @_;
+
+    ($default_log, $default_trace) = @_==1 ? ($_[0], $_[0]) : @_;
+}
 
 #------------------------------------------
 
@@ -119,12 +152,17 @@ sub trace(;$)
 
 =method log [LEVEL [,STRINGS]]
 
-This method has three uses.  Without any argument, it returns the name
-of the current log level.  With one argument, a new level of logging
-detail is set.  With more arguments, it is a report which may need to be
-logged or traced.
+(Class or Instance method)
+As instance method this function has three different purposes.  Without
+any argument, it returns the name of the current log level.  With one
+argument, a new level of logging detail is set.  With more arguments, it
+is a report which may need to be logged or traced.
 
-Each log-entry has a LEVEL (see above), and a text string which will
+As class method, only a message can be passed.  The global configuration
+value set with defaultTrace() is used to decide whether the message is
+shown or ignored.
+
+Each log-entry has a LEVEL and a text string which will
 be constructed by joining the STRINGS.  If there is no newline, it will
 be added.
 
@@ -137,6 +175,8 @@ be added.
  $folder ->log(NOTICE  => "Cannot read from file $filename.");
  $manager->log(DEBUG   => "Hi there!", reverse sort @l);
 
+ Mail::Message->log(ERROR => 'Unknown');
+
 =cut
 
 # Implementation detail: the C code avoids calls back to Perl by
@@ -145,25 +185,40 @@ be added.
 # whether or not to display it.
 
 sub log(;$@)
-{   my $self = shift;
-    return $levelname[$self->{MR_log}] unless @_;
+{   my $thing = shift;
 
-    my $level = shift;
-    my $prio  = $levelprio{$level}
-        or croak "Unknown log-level $level.";
+    if(ref $thing)   # instance call
+    {   return $levelname[$thing->{MR_log}] unless @_;
 
-    return $self->{MR_log} = $prio unless @_;
+        my $level = shift;
+        my $prio  = $levelprio{$level}
+            or croak "Unknown log-level $level.";
 
-    my $text    = join '', @_;
-    $text      .= "\n" unless (substr $text, -1) eq "\n";
+        return $thing->{MR_log} = $prio unless @_;
 
-    warn "$level: $text"
-        if $prio >= $self->{MR_trace};
+        my $text    = join '', @_;
+        $text      .= "\n" unless (substr $text, -1) eq "\n";
 
-    push @{$self->{MR_report}[$prio]}, $text
-        if $prio >= $self->{MR_log};
+        warn "$level: $text"
+            if $prio >= $thing->{MR_trace};
 
-    $self;
+        push @{$thing->{MR_report}[$prio]}, $text
+            if $prio >= $thing->{MR_log};
+    }
+    else             # class method
+    {   my $level = shift;
+        my $prio  = $levelprio{$level}
+            or croak "Unknown log-level $level.";
+
+        return $thing unless $prio >= $default_trace;
+
+        my $text    = join '', @_;
+        $text      .= "\n" unless (substr $text, -1) eq "\n";
+
+        warn "$level: $text";
+    }
+
+    $thing;
 }
 
 

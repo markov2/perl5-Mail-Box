@@ -439,7 +439,6 @@ sub readMessages(@)
     my @msgopts  =
       ( $self->logSettings
       , folder     => $self
-      , head_wrap  => $args{head_wrap}
       , head_type  => $args{head_type}
       , field_type => $args{field_type}
       , trusted    => $args{trusted}

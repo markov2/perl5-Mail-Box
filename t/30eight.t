@@ -38,7 +38,7 @@ my $body   = Mail::Message::Body::Lines->new
 
 my $enc    = $codec->encode($body);
 ok($body!=$enc);
-ok($enc->type eq 'text/html');
+ok($enc->mimeType eq 'text/html');
 ok($enc->transferEncoding eq '8bit');
 ok($enc->string eq $encoded);
 

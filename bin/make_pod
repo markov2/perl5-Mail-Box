@@ -657,7 +657,7 @@ die "Cannot create $workdir: $!\n"
 
 foreach my $filename (manifest)
 {
-    die "Cannot find file $filename."
+    die "Cannot find file $filename from MANIFEST.\n"
        unless -f $filename;
 
     my $becomes = File::Spec->catfile($workdir, $filename);

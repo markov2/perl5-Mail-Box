@@ -162,7 +162,7 @@ sub guessTimestamp() {undef}
 #------------------------------------------
 
 sub read($)
-{   my ($self, $parser, $headtype, $bodytype, $wrap)  = @_;
+{   my ($self, $parser, $headtype, $bodytype)  = @_;
 
 #   $parser->skipHeader not implemented... returns where
     $self->{MMH_where}   = 0;

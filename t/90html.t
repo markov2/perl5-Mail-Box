@@ -67,9 +67,9 @@ my $html_head_dump = <<'HTML_HEAD_DUMP';
 <head>
 <title>No e-mail@at.this.line</title>
 <meta name="Author" content="you@tux.aq">
+<meta name="To" content="me@example.com (Mark Overmeer)">
 <meta name="From" content="you@tux.aq, john.doe@some.where.else (Doe, John)">
 <meta name="Subject" content="No e-mail@at.this.line">
-<meta name="To" content="me@example.com (Mark Overmeer)">
 </head>
 HTML_HEAD_DUMP
 
@@ -92,13 +92,12 @@ $html_head_dump = <<'HTML_HEAD_DUMP';
 <title>Title, not subject</title>
 <meta name="Author" content="you@tux.aq">
 <meta name="Keywords" content="html tags like &lt; and &gt;, &amp; and &quot;, must be encoded">
+<meta name="To" content="me@example.com (Mark Overmeer)">
 <meta name="From" content="you@tux.aq, john.doe@some.where.else (Doe, John)">
 <meta name="Subject" content="No e-mail@at.this.line">
-<meta name="To" content="me@example.com (Mark Overmeer)">
 </head>
 HTML_HEAD_DUMP
 ok($html_head eq $html_head_dump);
-
 
 $html_head = $html->headToHtmlHead
  ( $head
