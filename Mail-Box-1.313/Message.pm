@@ -3,13 +3,13 @@ package Mail::Message;
 use strict;
 use warnings;
 
-our $VERSION = '1.300';
+our $VERSION = '1.313';
 
 use Mail::Box;
 
 =head1 NAME
 
-Mail::Message - Under construction: new basic message object
+Mail::Message - UNDER CONSTRUCTION: new basic message object
 
 =head1 SYNOPSIS
 
@@ -215,7 +215,7 @@ David Coppit <david@coppit.org>
 
 =head1 VERSION
 
-This code is beta version 1.300, so far from complete.  Please
+This code is beta version 1.313, so far from complete.  Please
 contribute with remarks and additions.
 
 =head1 COPYRIGHT
@@ -228,8 +228,6 @@ it under the same terms as Perl itself.
 
 L<Mail::Box>
 L<Mail::Folder::FastReader>
-
-Crocker, D.H., Standard for the Format of Arpa Internet Text Messages, RFC822.
 
 =cut
 

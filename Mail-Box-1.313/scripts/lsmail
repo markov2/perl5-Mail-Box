@@ -1,0 +1,168 @@
+#!/usr/bin/perl -w
+
+use strict;
+use lib '/home/markov/fake';
+use Mail::Box::Manager;
+
+my $VERSION = '1.313';
+
+Mail::Box->VERSION($VERSION);
+
+=head1 NAME
+
+lsmail - list a mailbox
+
+=head1 SYNOPSIS
+
+lsmail [-treads] [mailboxs]
+
+=cut
+
+sub usage($)
+{   my $rc = shift;
+
+    warn <<USAGE;
+Usage: $0 [options] mailbox
+    options:
+       -threads              list in threads
+       -help  -?             show this help
+USAGE
+
+    exit $rc;
+}
+
+my %option =
+  ( threads     => 0
+  , help        => 0
+  , verbose     => 0
+  );
+
+sub get_options()
+{   use Getopt::Long;
+
+    GetOptions(\%option
+, 'threads|thread|t|'
+, 'help|?!'
+, 'verbose|v'
+              );
+}
+
+sub trace(@) { warn @_,"\n" if $option{verbose} }
+
+
+#####
+##### MAIN
+#####
+
+usage 22 unless get_options;
+usage 0  if $option{help};
+
+my @mailboxes = @ARGV;
+my $mgr = Mail::Box::Manager->new;
+
+#
+# Open the folders.
+#
+
+my @folders;
+my @open_options =
+  ( access       => 'r'
+  , lazy_extract => 'ALWAYS'
+  );
+
+if(@mailboxes)
+{   foreach my $mailbox (@mailboxes)
+    {   trace "Opening folder $mailbox.";
+
+        my $folder = $mgr->open(folder => $mailbox, @open_options);
+
+        die "Mailbox $mailbox cannot be opened.\n"
+            unless $folder;
+
+        push @folders, $folder;
+    }
+}
+else
+{   trace "Opening default folder";
+
+    my $folder = $mgr->open(@open_options);
+
+    die "Default mailbox cannot be read.\n"
+        unless $folder;
+
+    push @folders, $folder;
+}
+
+#
+# List the folders
+#
+
+if($option{threads})
+{   trace "Collecting threads for all folders.";
+    my $threads = $mgr->threads(folders => \@folders);
+
+    trace "Dumping threads.";
+    foreach my $thread ($threads->sortedAll)
+    {   print $thread->threadToString;
+    }
+}
+else
+{   trace "List subjects.";
+    foreach my $folder (@folders)
+    {   foreach my $message ($folder->allMessages)
+        {   my $subject = $message->head->get('subject') || '<no subject>';
+            print $subject,"\n";
+        }
+    }
+}
+
+#
+# Close folders
+#
+
+$mgr->closeAllFolders;
+
+exit 0;
+#-------------------------------------------
+
+__END__
+
+=head1 DESCRIPTION
+
+List the contents of one or more mailbox.  Specifying more than one
+name is only usefull when you read in threads, in which case the messages
+of both folders are merged.
+
+Options:
+
+=over 4
+
+=item -threads =E<gt> BOOLEAN
+
+(or C<-t> or C<-nothreads> or C<-not>) list the messages in threads.  The
+messages are sorted on time: the oldest starter comes first.
+
+=item -help =E<gt> BOOLEAN
+
+(or C<-help> or C<-?>) Print a brief help
+
+=item -verbose =E<gt> BOOLEAN
+
+(or C<-verbose> or C<-noverbose>) Be verbose about the progress of the
+program.  Especially useful for debugging purposes.
+
+=back
+
+=head1 AUTHOR
+
+Mark Overmeer (F<Mark@Overmeer.net>).
+All rights reserved.  This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
+
+=head1 VERSION
+
+This code is beta, version 1.313
+
+=cut
+
+1;

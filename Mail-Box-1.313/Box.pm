@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.312';
+$VERSION = '1.313';
 
 use Carp;
 use MIME::Parser;
@@ -639,7 +639,9 @@ sub close(@)
 
     # Inform manager that the folder is closed.
     $self->{MB_manager}->close($self)
-        if exists $self->{MB_manager};
+        if exists $self->{MB_manager}
+           && !$args{close_by_manager};
+
     delete $self->{MB_manager};
 
     my $write
@@ -658,7 +660,6 @@ sub close(@)
            : 1;
 
     $self->{MB_locker}->unlock;
-    undef $self;
     $rc;
 }
 
@@ -1488,7 +1489,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.312
+This code is beta, version 1.313
 
 =cut
 

@@ -10,6 +10,9 @@ There are many tests, but it does not cover every situation, yet.
 The first BETA had version 1.0.  The module will go out of BETA if I
 know of any application which succesfully uses Mail::Box.
 
+At the moment, we are working on a replacement for the MIME::Entity
+family of modules.  Read about our plans is "PLANS".
+
 The script/web/mailbox2html is experimental, and currently best
 contributing by giving an example how to use Mail::Box.
 
@@ -22,40 +25,38 @@ test some parts of the program.  Other parts have been written, but are
 not tested.  Everything you read in the manual-pages should be there.
 
 Mbox-folders:
-   2mbox1r.t          reading
-   2mbox2w.t          writing
-   2mbox3d.t          delay loading
-   2mbox4a.t          appending to opened and unopened folders
-   2mbox5c.t          folders and sub-folders
-   2mbox6t.t          test threads
+   12mbox1r.t          reading
+   12mbox2w.t          writing
+   12mbox3d.t          delay loading
+   12mbox4a.t          appending to opened and unopened folders
+   12mbox5c.t          folders and sub-folders
+   12mbox6t.t          test threads
 
 MH-folders:
-   3mh1r.t            reading
-   3mh2w.t            writing
-   3mh3a.t            appending to opened and unopened folders
-   3mh5c.t            folders and sub-folders
-   3mh6t.t            test threads
-   3mh7s.t            mh_sequences and labels.
+   13mh1r.t            reading
+   13mh2w.t            writing
+   13mh3a.t            appending to opened and unopened folders
+   13mh5c.t            folders and sub-folders
+   13mh6t.t            test threads
+   13mh7s.t            mh_sequences and labels.
 
 Folder manager:
-   7mgr.t             locating/opening/closing folders.
+   17mgr.t             locating/opening/closing folders.
 
 Ties:
-   8tieary.t          accessing folder as array.
-   8tiehash.t         accessing folder as hash.
+   18tieary.t          accessing folder as array.
+   18tiehash.t         accessing folder as hash.
 
 Locking:
-   9dotlock.t         dotlock mechanism
-   9filelck.t         locking based on file-handle
-   9nfslock.t         dotlocking over NFS
+   19dotlock.t         dotlock mechanism
+   19filelck.t         locking based on file-handle
+   19nfslock.t         dotlocking over NFS
 
 
 NOT Tested
 ==========
 
 MH index-file  (but I expect it to work)
-
-Handling illegal messages in the folder, and other fault conditions.
 
 So many things are tested, but quite a lot is still lacking.  Please
 contribute.

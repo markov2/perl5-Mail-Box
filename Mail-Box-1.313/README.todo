@@ -38,8 +38,8 @@ Plans for the (near?) future:
   One of the main reasons that these are not implemented, is that my
   knowledge on how they work is insufficient.
 
-* Make everything autoloading (of perl-code, this time).
-  Mail::Box::MH, ::Mbox, and ::Thread, could be made autoloading....
+* Make more autoloading (of perl-code, this time).
+  Mail::Box::MH, ::Mbox, could be made autoloading....
   however, I didn't make work it yet.  All modules are designed to
   minimize their dependency, so I should work well.
 
@@ -47,4 +47,5 @@ Plans for the (near?) future:
   loading mechanism.
 
 * Basic message reading and writing in C
-  This will boost performance.  Actually, I'm working on it.
+  This will boost performance.  Actually, I'm working on it: read PLANS.
+

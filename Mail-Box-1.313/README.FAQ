@@ -1,0 +1,43 @@
+
+Frequently Asked Questions  (FAQ)
+
+This page may give an answer to your questions.  I hope you have
+contributions
+
+ 1) Why should I use the Mail::Box::Manager?
+
+    You can process folders using the Mail::Box::Mbox and Mail::Box::MH
+    objects, without a Mail::Box::Manager.  However, using the manager,
+    your application will work for any kind of folder: it is autodecting
+    the right type!
+
+    Besides, the manager protects you from opening the same folder
+    twice (which may cause `inconvenience') and can create
+    message-threads.
+
+ 2) What are threads?
+
+    Very confusing, the word `thread' is also used for a very different
+    thing in Perl and UNIX.  Some operating systems (and Perl) have
+    give one program the possibility to start multiple sub-programs
+    within itself.  These are called `process-threads', or `threads' for
+    short.
+
+    However, in our context, we speak about `message-threads', which
+    describe the relation between messages.  Each message may contain
+    the message-id of a message it is in reply to.  Usually they also
+    contain a list of reference to all messages which were about the
+    same subject and a logical follow-up.
+
+    Mail::Box is able to give simple access to `message-threads' (also
+    `threads' for short) via the Mail::Box::Manager.
+
+ 3) How can it be that Mail::Box folders show less messages in the
+    folder than other applications do?
+
+    Because Mail::Box has support for reading e-mail per thread, it
+    keeps an index based on message-id.  Every message shall have
+    a unique message-id, so when the same id is found again, that
+    message considered to be a copy and ignored.
+
+    By the way: this may save a lot of spam to read ;)

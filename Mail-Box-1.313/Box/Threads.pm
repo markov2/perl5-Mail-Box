@@ -373,14 +373,12 @@ sub inThread($)
 sub _processDelayedNodes()
 {   my $self    = shift;
     return $self unless $self->{MBT_delayed};
-#warn scalar values %{$self->{MBT_delayed}}, " delayed\n";
 
     foreach my $node (values %{$self->{MBT_delayed}})
     {   $self->_processDelayedMessage($node, $_)
             foreach $node->message;
     }
 
-#warn "Now ".(keys %{$self->{MBT_ids}})." ids known.\n";
     delete $self->{MBT_delayed};
     $self;
 }
@@ -443,8 +441,11 @@ sub _processDelayedMessage($$)
 
 sub outThread($)
 {   my ($self, $message) = @_;
-    my $node = $message->thread or return $message;
-    $node->delMessage($message);
+    my $msgid = $message->messageID;
+    my $node  = $self->{MBT_ids}{$msgid} or return $message;
+
+    $node->{MBT_messages}
+        = [ grep {$_ ne $message} @{$node->{MBT_messages}} ];
 
     $self;
 }
@@ -1149,7 +1150,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.312
+This code is beta, version 1.313
 
 =cut
 

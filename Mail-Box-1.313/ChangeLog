@@ -3,6 +3,27 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.313:
+
+	* Started a FAQ
+
+	* Caught $mgr->open where foldername could not be determined.
+
+	* Caught possible recursion in closing folders by the manager.
+
+	* Added scripts/lsmail as example.
+
+	* Fixed removal of nodes from a thread.
+
+	* Fixed update of version-numbers of scripts.
+
+	* Changed the name of various descriptive files to start with
+	  README.  This should clean-up the directory a little.
+
+	* Renamed the existing test-scripts to numbers above 10, so
+	  new parser scripts can take lower number, hence be executed
+	  first.
+
 version 1.312: Fri Jul  6 22:22:32 CEST 2001
 
 	* Rather nasty bug, where POSIX::dup() interfered with
@@ -15,7 +36,7 @@ version 1.312: Fri Jul  6 22:22:32 CEST 2001
 	* Generalized Mail::Box::addMessage such that
 	  Mail::Box::{Mbox,MH}::addMessage could be removed.
 
-	* Added Plans for Mail::Box v2.000
+	* Added PLANS for Mail::Box v2.000
 
 version 1.311: Mon Jul  2 22:15:25 CEST 2001
 

@@ -29,8 +29,8 @@ Mail::Box::Manager - Manage a set of folders
 This code is beta, which means that there are no serious applications
 written with it yet.  Please inform the author when you have, so this
 module can go to stable.  Read the STATUS file enclosed in the package for
-more details.  You may also want to have a look in the B<examples> which
-come with the module.
+more details.  You may also want to have a look in the example B<scripts>
+which come with the module.
 
 The Mail::Box package can be used as back-end to Mail User-Agents
 (MUA's), and has special features to help those agents to get fast
@@ -51,11 +51,15 @@ Overview:
         |
         | open()
         |                           
-        v
-     Mail::Box        contains
-  (Mail::Box::Mbox) <-----------> Mail::Box::Message
-   (Mail::Box::MH)                       isa
-                                     MIME::Entity
+        v           contains
+  Mail::Box::Mbox <-----------> Mail::Box
+  (Mail::Box::MH)                ::Mbox::Message
+       isa                             isa
+     Mail::Box    ............. Mail::Box::Message
+                                       isa
+                                   MIME::Entity
+                                       isa
+                                  Mail::Internet
 
 All classes are written to be extendible.  The most complicated work
 is done in MIME::Entity, which is written and maintained by
@@ -271,6 +275,11 @@ sub open(@)
 {   my ($self, %args) = @_;
     my $name          = $args{folder} ||= $ENV{MAIL};
 
+    unless(defined $name && length $name)
+    {   warn "No foldername specified.\n";
+        return undef;
+    }
+        
     $args{folderdir} ||= $self->{MBM_folderdirs}->[0]
         if $self->{MBM_folderdirs};
 
@@ -392,10 +401,10 @@ sub close($)
         return;
     }
 
-    $folder->close;
     $self->{MBM_folders} = [ @remaining ];
-
     $_->removeFolder($folder) foreach @{$self->{MBM_threads}};
+
+    $folder->close(close_by_manager => 1);
     $self;
 }
 
@@ -692,7 +701,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.312
+This code is beta, version 1.313
 
 =cut
 

@@ -10,6 +10,11 @@ The most important manual-pages are Mail::Box::Manager, Mail::Box,
 and Mail::Box::Message.  They explain parts of the features in
 more detail than this document.
 
+Other descriptive documents in this module:
+    README.FAQ       Frequently asked questions
+    README.plans     Design for Mail::Box v2.0
+    README.status    Status of current implementation
+    README.todo      Thoughts about possible extentions
 
 ===== Status
 
