@@ -80,7 +80,6 @@ description of Mbox specific options.
 
  access            Mail::Box          'r'
  create            Mail::Box          0
- dummy_type        Mail::Box::Threads 'Mail::Box::Thread::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          $ENV{HOME}.'/Mail'
  lazy_extract      Mail::Box          10kb
@@ -99,10 +98,6 @@ description of Mbox specific options.
  save_on_exit      Mail::Box          1
  subfolder_extention Mail::Box::Mbox  '.d'
  take_headers      Mail::Box          <quite some>
- threader          Mail::Box::Threads undef
- thread_body       Mail::Box::Threads 0
- thread_timespan   Mail::Box::Threads <not used>
- thread_window     Mail::Box::Threads <not used>
  <none>            Mail::Box::Tie
 
 Mbox specific options:
@@ -390,7 +385,7 @@ sub readMessages(@)
     $self->{MB_delayed_loads} = $delayed;
 
     $self->fileClose
-        unless $delayed || $self->lockMethod eq 'FILE';
+        if !$delayed && $self->lockMethod ne 'FILE';
 
     $self;
 }
@@ -481,7 +476,7 @@ sub addMessage($)
     # The message is accepted.
     $self->SUPER::addMessage($message);
     $self->messageID($msgid, $message);
-    $self->toBeThreaded($message);
+    $message;
 }
 
 #-------------------------------------------
@@ -818,6 +813,15 @@ sub openSubFolder($@)
     $self->clone(folder => $self->name . '/' .$name, @_);
 }
 
+#-------------------------------------------
+
+#=item scanForMessages MESSAGE, MESSAGE-IDS, TIMESTAMP, WINDOW
+# Not needed for Mboxes: we have all headers from the start.
+# This method overrules the default complex scanning.
+#=cut
+
+sub scanForMessages(@) {shift};
+
 =back
 
 =head1 AUTHOR
@@ -828,7 +832,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.200
+This code is beta, version 1.300
 
 =cut
 

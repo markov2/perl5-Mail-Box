@@ -99,10 +99,6 @@ L<details about the implementation|/"IMPLEMENTATION">, but first the use.
 
 package Mail::Box::Message;
 use Date::Parse;
-use Mail::Box::Thread;
-
-use vars qw/@ISA/;
-@ISA = 'Mail::Box::Thread';
 
 =head1 CLASS Mail::Box::Message
 
@@ -166,8 +162,6 @@ my $unreg_msgid = time;
 
 sub init($)
 {   my ($self, $args) = @_;
-
-    $self->SUPER::init($args);
 
     $self->{MBM_size}      = $args->{size}      || 0;
     $self->{MBM_deleted}   = $args->{deleted}   || 0;
@@ -496,8 +490,7 @@ sub shortString()
     my $subject = $self->head->get('subject') || '';
     chomp $subject;
 
-    sprintf "%4s(%2d) %-30.30s", $self->shortSize
-          , scalar $self->followUps, $subject;
+    sprintf "%4s(%2d) %-30.30s", $self->shortSize, $subject;
 }
 
 #-------------------------------------------
@@ -924,19 +917,13 @@ Examples:
 
 sub new($) { shift->SUPER::new(messageID => shift, deleted => 1) }
  
-#sub init($)
-#{   my ($self, $args) = @_;
-#    $self->SUPER::init($args);
-#}
-
 sub isDummy() { 1 }
 
 sub shortSize($) {"   0"};
 
 sub shortString()
 {   my Mail::Box::Message $self = shift;
-    sprintf "----(%2d) <not found>"
-          , scalar $self->followUps;
+    sprintf "----(%2d) <not found>";
 }
 
 
@@ -1218,10 +1205,10 @@ may be for instance C<mbox> or C<MH>.
           |    ^          ^           ^
           ^     \         |          /
           |      `--- ::Message ----'
-          |               |
-     MIME::Entity         ^
-          |               |
-          ^           ::Thread
+          |
+     MIME::Entity
+          |
+          ^
           |
      Mail::Internet
 
@@ -1233,7 +1220,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.200
+This code is beta, version 1.300
 
 =cut
 

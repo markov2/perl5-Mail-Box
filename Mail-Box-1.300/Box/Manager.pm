@@ -13,21 +13,26 @@ Mail::Box::Manager - Manage a set of folders
 
    use Mail::Box::Manager;
    my $mgr    = new Mail::Box::Manager;
-   my $folder = $mgr->open(folder => $ENV{MAIL});
    $mgr->registerType(mbox => 'Mail::Box::Mbox');
+
+   # Create folder objects.
+   my $folder = $mgr->open(folder => $ENV{MAIL});
    $mgr->close($folder);
    $mgr->copyMessage('Draft', $message);
    $mgr->moveMessage('Outbox', $message1, $message2, create => 1 );
+
+   # Create thread-detectors (see Mail::Box::Threads)
+   my $threads = $mgr->threads(folder => $folder);
 
 =head1 DESCRIPTION
 
 This code is beta, which means that there are no serious applications
 written with it yet.  Please inform the author when you have, so this
-module can go to stable.  Read the STATUS file inclosed in the package for
+module can go to stable.  Read the STATUS file enclosed in the package for
 more details.
 
 The Mail::Box package can be used as back-end to Mail User-Agents
-(MUA's), and has special features to help those agents to have fast
+(MUA's), and has special features to help those agents to get fast
 access to folder-data.  These features may delay access to folders
 for other kinds of applications.  Maybe Mail::Procmail has more for
 you in such cases.
@@ -36,31 +41,37 @@ you in such cases.
 
 The folder manager maintains a set of folders (mail-boxes).  Those
 folders may be of different types.  Most folder-types can be detected
-automatically.  This class is the only one you create in your program:
-all other classes will come when needed.
+automatically.  This manager-class is the only one you create in your
+program: all other classes will come when needed.
 
 Overview:
 
-  Mail::Box::Manager
+  Mail::Box::Manager 
         |
         | open()
-        |              message()
-        v             ,--------->  Mail::Box::Message
-     Mail::Box      /                    isa
-  (Mail::Box::Mbox)                  MIME::Entity
-   (Mail::Box::MH)                   : :
-    : : :                            : :
-    : : :                            : Mail::Box::Message::Dummy
-    : : :                            Mail::Box::Message::NotParsed
-    : : Mail::Box::Tie
-    : Mail::Box::Threads
-    Mail::Box::Locker
+        |                           
+        v
+     Mail::Box        contains
+  (Mail::Box::Mbox) <-----------> Mail::Box::Message
+   (Mail::Box::MH)                       isa
+                                     MIME::Entity
 
 All classes are written to be extendible.  The most complicated work
 is done in MIME::Entity, which is written and maintained by
 Eryq (eryq@zeegee.com).
 
-=head1 METHODS
+=head2 The threads manager
+
+Most messages are replies on other messages.  It is pleasant to read mail
+when you see directly how messages relate.  Certainly when the amount
+of messages grow to dozins a day.
+
+The main manager also keeps overview on the created thread-detection
+objects, and informs them when the content of a folder is changed.  In
+extention to other Mail-Agents, Mail::Box can show you threads which are
+spread over more than one folder.
+
+=head1 METHODS for the manager
 
 =over 4
 
@@ -70,7 +81,7 @@ Eryq (eryq@zeegee.com).
 
 =item new ARGS
 
-(class method) Create a new folder folder-manager.  This constructor
+(class method) Create a new folder manager.  This constructor
 may carry the following options:
 
 =over 4
@@ -149,7 +160,8 @@ sub init($)
         push @{$self->{MBM_folderdirs}}, @dirs;
     }
 
-    $self->{MBM_open_folders} = [];
+    $self->{MBM_folders} = [];
+    $self->{MBM_threads} = [];
     $self;
 }
 
@@ -167,7 +179,7 @@ when a folder is opened in autodetect mode.
 Example:
 
    $manager->registerType(mbox => 'Mail::Box::Mbox',
-      save_on_exit => 0, folderdir => '/tmp');
+       save_on_exit => 0, folderdir => '/tmp');
 
 =cut
 
@@ -204,6 +216,12 @@ sub folderTypes()
 }
 
 #-------------------------------------------
+
+=back
+
+=head1 METHODS to handle folders
+
+=over 4
 
 =item open ARGS
 
@@ -273,7 +291,7 @@ sub open(@)
             $folder = $class->create($name, @options, %args)
                 if !$folder && $args{create};
 
-            $self->addOpenFolder($folder) if $folder;
+            push @{$self->{MBM_folders}}, $folder if $folder;
             return $folder;
         }
         warn "I do not know foldertype $args{type}: autodecting.";
@@ -288,7 +306,9 @@ sub open(@)
     {   my ($type, $class, @options) = @$_;
         push @options, manager => $self;
         next unless $class->foundIn($name, @find_options);
-        return $self->addOpenFolder($class->new(@options, %args));
+        my $folder = $class->new(@options, %args);
+        push @{$self->{MBM_folders}}, $folder if $folder;
+        return $folder;
     }
 
     # Open read-only only for folders which exist.
@@ -308,23 +328,13 @@ sub open(@)
 
 #-------------------------------------------
 
-=item addOpenFolder FOLDER
-
 =item openFolders
 
-As could be expected from the name, C<addOpenFolder> adds a new folder to
-set of open folders.  Ignores undefined value for FOLDER.
-C<openFolders> returns a list of all open folders.
+Returns a list of all open folders.
 
 =cut
 
-sub addOpenFolder(@)
-{   my ($self, $folder) = @_;
-    push @{$self->{MBM_open_folders}}, $folder if $folder;
-    $folder;
-}
-
-sub openFolders() { @{shift->{MBM_open_folders}} }
+sub openFolders() { @{shift->{MBM_folders}} }
 
 #-------------------------------------------
 
@@ -351,10 +361,11 @@ sub isOpenFolder($)
 
 C<close> removes the specified folder from the list of open folders.
 Indirectly it will update the files on disk if needed (depends on
-the C<save_on_exit> flag to each seperate folder).
+the C<save_on_exit> flag to each seperate folder).  The folder's messages
+will be withdrawn from the known message-threads.
 
 You may also close the folder directly.  The manager will be informed
-about this event.
+about this event and take its actions.
 
 Examples:
 
@@ -372,15 +383,17 @@ sub close($)
     return unless $folder;
 
     my $name      = $folder->name;
-    my @remaining = grep {$name ne $_->name} @{$self->{MBM_open_folders}};
+    my @remaining = grep {$name ne $_->name} @{$self->{MBM_folders}};
 
-    if(@{$self->{MBM_open_folders}} == @remaining)
+    if(@{$self->{MBM_folders}} == @remaining)
     {   warn "The folder was not opened by this folder-manager.\n";
         return;
     }
 
     $folder->close;
-    $self->{MBM_open_folders} = [ @remaining ];
+    $self->{MBM_folders} = [ @remaining ];
+
+    $_->removeFolder($folder) foreach @{$self->{MBM_threads}};
     $self;
 }
 
@@ -590,6 +603,85 @@ sub delete($@)
 
 =back
 
+=head1 METHODS to handle threaders
+
+=over 4
+
+=cut
+
+#-------------------------------------------
+
+=item threads OPTIONS
+
+Create a new object which keeps track on message threads.  You can read
+about the possible options in the Mail::Box::Threads manpage.
+
+Example:
+
+    $mgr->threads(folders => [ $inbox, $send ]);
+
+=cut
+
+sub threads(@)
+{   my ($self, %args) = @_;
+    my $type    = $args{threader_type} || 'Mail::Box::Threads';
+    my $base    = 'Mail::Box::Threads';
+
+
+    my $folders = exists $args{folder}    ? delete $args{folder}
+                :                           delete $args{folders};
+
+    my @folders = !$folders               ? ()
+                : ref $folders eq 'ARRAY' ? @$folders
+                :                           $folders;
+
+    my $threads;
+    if(ref $type)
+    {   # Already prepared object.
+        confess "You need to pass a $base derived"
+            unless $type->isa($base);
+        $threads = $type;
+    }
+    else
+    {   # Create an object.  The code is compiled, which safes us the
+        # need to compile Mail::Box::Threads when no threads are needed.
+        eval "require $type";
+        croak "Unusable threader $type: $@" if $@;
+        croak "You need to pass a $base derived"
+            unless $type->isa($base);
+
+        $threads = $type->new(manager => $self, %args);
+    }
+
+    $threads->includeFolder($_) foreach @folders;
+    push @{$self->{MBM_threads}}, $threads;
+    $threads;
+}
+
+#-------------------------------------------
+
+=item toBeThreaded FOLDER, MESSAGES
+
+=item toBeUnthreaded FOLDER, MESSAGES
+
+Signal to the manager that all thread-managers which are using the
+specified folder must be informed that new messages are
+coming in (respectively going out).
+
+=cut
+
+sub toBeThreaded($@)
+{   my $self = shift;
+    $_->toBeThreaded(@_) foreach @{$self->{MBM_threads}};
+}
+
+sub toBeUnthreaded($@)
+{   my $self = shift;
+    $_->toBeUnthreaded(@_) foreach @{$self->{MBM_threads}};
+}
+
+=back
+
 =head1 AUTHOR
 
 Mark Overmeer (F<Mark@Overmeer.net>).
@@ -598,7 +690,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.200
+This code is beta, version 1.300
 
 =cut
 

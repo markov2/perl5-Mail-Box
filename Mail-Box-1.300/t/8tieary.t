@@ -11,7 +11,7 @@ BEGIN {plan tests => 8}
 
 use lib '..', 't';
 use Mail::Box::Mbox;
-use Mail::Box::Tie;
+use Mail::Box::Tie::ARRAY;
 
 my $src  = File::Spec->catfile('t', 'mbox.src');
 
@@ -28,7 +28,7 @@ my $folder = new Mail::Box::Mbox
 ok(defined $folder);
 ok($folder->allMessages==45);
 
-tie my(@folder), 'Mail::Box::Tie', $folder;
+tie my(@folder), 'Mail::Box::Tie::ARRAY', $folder;
 ok(@folder == 45);
 
 ok($folder->message(4) eq $folder[4]);

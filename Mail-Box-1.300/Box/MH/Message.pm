@@ -329,6 +329,8 @@ sub load($;$)
     my $args = { message => $new };
     $folder->{MB_delayed_loads}--;
     (bless $self, $class)->delayedInit($args);
+    $folder->toBeThreaded($self);
+    $self;
 }
 
 #-------------------------------------------
@@ -503,7 +505,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.200
+This code is beta, version 1.300
 
 =cut
 

@@ -2,13 +2,12 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.200';
+$VERSION = '1.300';
 
 use Carp;
 use MIME::Parser;
 
 use Mail::Box::Message;
-use Mail::Box::Threads;
 use Mail::Box::Locker;
 
 use strict;
@@ -36,11 +35,11 @@ Tied-interface:
    my $mgr   = new Mail::Box::Manager;
    my $inbox = $mgr->open(folder => '/tmp/inbox');
    
-   tie my(@inbox), $inbox;
+   tie my(@inbox), 'Mail::Box::Tie::ARRAY', $inbox;
    $inbox[3]->print        # equiv to $folder->message(3)->print
-   tie my(%inbox), $inbox;
+   tie my(%inbox), 'Mail::Box::Tie::HASH', $inbox;
    $inbox{$msgid}->print   # equiv to $folder->messageID($msgid)->print
-   # See Mail::Box::Tied
+   # See Mail::Box::Tie
 
 
 =head1 DESCRIPTION
@@ -48,23 +47,6 @@ Tied-interface:
 Read Mail::Box::Manager first.
 Mail::Box is the base-class for accessing various types of mail-folder
 organizational structures in a uniformal way.
-
-This class extends:
-
-=over 4
-
-=item * Mail::Box::Threads
-
-implements thread detection and simplified access to the threads found.
-
-=item * Mail::Box::Tie
-
-provides simple array-based access to the folder.
-
-=back
-
-You need to read their manual-pages too, to find-out what a folder is
-capable of.
 
 The various folder-types do vary on how they store their messages (a
 folder with many messages in a single file or a folder as a directory
@@ -94,7 +76,6 @@ manual-pages)
 
  access            Mail::Box          'r'
  create            Mail::Box          0
- dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          <no default>
  lazy_extract      Mail::Box          10kb
@@ -111,10 +92,6 @@ manual-pages)
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  take_headers      Mail::Box          <specify everything you need>
- threader          Mail::Box::Threads undef
- thread_body       Mail::Box::Threads 0
- thread_timespan   Mail::Box::Threads '3 days'
- thread_window     Mail::Box::Threads 10
  <none>            Mail::Box::Tie
 
 The options added by Mail::Box
@@ -340,7 +317,9 @@ sub init($)
           :                    sub {$_[3] >= $extract}
     }
 
-    $self->registerHeaders(qw/date from mail-from subject/);
+    $self->registerHeaders(qw/date from mail-from subject status x-status/
+        , qw/message-id in-reply-to references/    # for threads
+        );
 
     #
     # Inventory on which header-lines we will have to take.
@@ -368,26 +347,6 @@ sub init($)
             , lock_timeout=> $args->{lock_timeout}
             , lock_wait   => $args->{lock_wait}
             , lock_file   => $args->{lockfile} || $args->{lock_file}
-            );
-    }
-
-    #
-    # Create a thread-maintainer.
-    #
-
-    my $threader = $args->{threader};
-    if($threader && ref $threader)
-    {   confess "No locker object passed."
-            unless $locker->isa('Mail::Box::Threads');
-        $self->{MB_threader} = $threader;
-    }
-    else
-    {   $self->{MB_threader} = Mail::Box::Threads->new
-            ( folder      => $self
-            , dummy_type  => $args->{dummy_type}
-            , thread_body => $args->{thread_body}
-            , timespan    => $args->{thread_timespan}
-            , window      => $args->{thread_window}
             );
     }
 
@@ -812,13 +771,15 @@ sub lazyExtract($$$)
 
 =item message INDEX
 
-Get or set a message with on a certain index.
+Get or set a message with on a certain index.  Negative indexes
+start at the end of the folder.
 
 Examples:
 
     my $msg = $folder->message(3);
     $folder->message(3)->delete;   # status changes to `deleted'
     $folder->message(3) = $msg;
+    print $folder->message(-1);    # last message.
 
 =cut
 
@@ -863,7 +824,7 @@ sub messageID($;$)
 
     # Auto-delete doubles.
     if(my $double = $self->{MB_msgid}{$msgid})
-    {   $message->delete unless $double->isa('Mail::Box::Dummy');
+    {   $message->delete unless $double->isa('Mail::Box::Message::Dummy');
         return $message;
     }
 
@@ -1339,19 +1300,128 @@ sub lockFilename() { shift->{MB_locker}->filename}
 
 #-------------------------------------------
 
-# Call threading methods.
+# toBeThreaded MESSAGES
+# toBeUnthreaded MESSAGES
+#
+# The specified message is ready to be included in (or remove from) a thread.
+# This will be passed on to the mail-manager, which keeps an overview on
+# which thread-detection objects are floating around.
 
-sub toBeThreaded(@)   { shift->{MB_threader}->toBeThreaded(@_) }
-sub toBeUnthreaded(@) { shift->{MB_threader}->toBeUnthreaded(@_) }
-sub inThread(@)       { shift->{MB_threader}->inThread(@_) }
-sub outThread(@)      { shift->{MB_threader}->outThread(@_) }
-sub thread(@)         { shift->{MB_threader}->thread(@_) }
-sub threads(@)        { shift->{MB_threader}->threads(@_) }
-sub knownThreads(@)   { shift->{MB_threader}->knownThreads(@_) }
+sub toBeThreaded(@)
+{   my $self = shift;
+
+    my $manager = $self->{MB_manager}
+       or return $self;
+
+    $manager->toBeThreaded($self, @_);
+    $self;
+}
+
+sub toBeUnthreaded(@)
+{   my $self = shift;
+
+    my $manager = $self->{MB_manager}
+       or return $self;
+
+    $manager->toBeThreaded($self, @_);
+    $self;
+}
 
 #-------------------------------------------
 
-=back
+# scanForMessages MESSAGE, MESSAGE-IDS, TIMESTAMP, WINDOW
+#
+# The MESSAGE which is known contains references to messages before
+# it which are not found yet.  But those messages can be in the same
+# folder.  Scan back in this folder for the MESSAGE-IDS (which may be
+# one string or a reference to an array of strings).  The TIMESTAMP
+# and WINDOW (see options in new()) limit the search.
+#
+
+sub scanForMessages($$$$)
+{   my ($self, $startid, $msgids, $moment, $window) = @_;
+    return $self unless $self->allMessages;  # empty folder.
+
+    # Set-up window-bound.
+    my $bound;
+    if($window eq 'ALL')
+    {   $bound = 0;
+    }
+    elsif(defined $startid)
+    {   my $startmsg = $self->messageID($startid);
+        $bound = $startmsg->nr - $window if $startmsg;
+        $bound = 0 if $bound < 0;
+    }
+
+    my $last = ($self->{MBM_last} || $self->allMessages) -1;
+    return $self if $bound >= $last;
+
+    # Set-up time-bound
+    my $after = $moment eq 'EVER' ? 0 : $moment;
+
+    # Set-up msgid-list
+    my %search = map {($_, 1)} ref $msgids ? @$msgids : $msgids;
+
+    while(!defined $bound || $last >= $bound)
+    {   my $message = $self->message($last);
+        my $msgid   = $message->messageID;  # triggers load of head
+
+        if(delete $search{$msgid})
+        {   last unless keys %search;
+        }
+
+        last if $message->timestamp < $after;
+        $last--;
+    }
+
+    $self->{MBM_last} = $last;
+    keys %search;
+}
+
+#-------------------------------------------
+
+# sort PREPARE, COMPARE, LIST
+#
+# (class method) Implements a general sort, with preparation phase.
+# First prepare a value foreach each element of the list by calling
+# the specified routine with the element as first argument.  Then
+# sort it based on the COMPARE routine.  In this case, the two argumements
+# to be compared are parsed.
+
+sub sort(@)
+{   my ($class, $prepare, $compare) = splice @_, 0, 3;
+    return () unless @_;
+
+    my %value = map { ($_ => $prepare->($_))} @_;
+    sort {$compare->($value{$a}, $value{$b})} @_;
+}
+
+#-------------------------------------------
+
+=item timespan2seconds TIME
+
+TIME is a string, which starts with a float, and then one of the
+words 'hour', 'hours', 'day', 'days', 'week', or 'weeks'.  For instance:
+
+    '1 hour'
+    '4 weeks'
+
+=cut
+
+sub timespan2seconds($)
+{
+    if( $_[1] =~ /^\s*(\d+\.?\d*|\.\d+)\s*(hour|day|week)s?\s*$/ )
+    {     $2 eq 'hour' ? $1 * 3600
+        : $2 eq 'day'  ? $1 * 86400
+        :                $1 * 604800;  # week
+    }
+    else
+    {   carp "Invalid timespan '$_' specified.\n";
+        undef;
+    }
+}
+
+#-------------------------------------------
 
 =head1 AUTHOR
 
@@ -1361,7 +1431,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.200
+This code is beta, version 1.300
 
 =cut
 

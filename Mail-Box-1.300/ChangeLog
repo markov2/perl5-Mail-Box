@@ -3,11 +3,21 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.300:
+
+	* Split Mail::Box::Tie into Mail::Box::Tie::HASH
+	  and Mail::Box::Tie::ARRAY, without the users noticing it ;)
+
+	**** SERIOUS CHANGES **** (mainly internal)
+
+	Re-implementation of thread-detection.  It is a pitty, but I
+	couldn't maintain the old interface and seperate threads from
+	folders at the same time.  However, a transformation can be
+	done swifty.
+
 version 1.200: Sat Jun 23 23:44:59 CEST 2001
 
 	**** SERIOUS CHANGES **** (mainly internal)
-	The internal implementation of thread-detection will be modified
-	in the next release.
 
 	* Added `organization' method to folder to see how a folder is
 	  organized.  Returns 'FILE' or 'DIRECTORY'

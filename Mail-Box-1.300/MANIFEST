@@ -12,6 +12,7 @@ t/3mh5c.t
 t/3mh6t.t
 t/3mh7s.t
 t/7mgr.t
+t/7threads.t
 t/8tieary.t
 t/8tiehash.t
 t/9dotlock.t
@@ -31,8 +32,9 @@ Box/MH.pm
 Box/MH/Message.pm
 Box.pm
 Box/Threads.pm
-Box/Thread.pm
 Box/Tie.pm
+Box/Tie/HASH.pm
+Box/Tie/ARRAY.pm
 ChangeLog
 Makefile.PL
 MANIFEST

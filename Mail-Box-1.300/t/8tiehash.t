@@ -11,7 +11,7 @@ BEGIN {plan tests => 99}
 
 use lib '..', 't';
 use Mail::Box::Mbox;
-use Mail::Box::Tie;
+use Mail::Box::Tie::HASH;
 
 my $src  = File::Spec->catfile('t', 'mbox.src');
 
@@ -27,7 +27,7 @@ my $folder = new Mail::Box::Mbox
 
 ok(defined $folder);
 
-tie my(%folder), 'Mail::Box::Tie', $folder;
+tie my(%folder), 'Mail::Box::Tie::HASH', $folder;
 ok(keys %folder == 45);
 ok(! defined $folder{not_existing});
 

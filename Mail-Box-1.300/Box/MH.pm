@@ -51,7 +51,6 @@ see below, but first the full list.
 
  access            Mail::Box          'r'
  create            Mail::Box          0
- dummy_type        Mail::Box::Threads 'Mail::Box::Thread::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          <no default>
  index_filename    Mail::Box::Index   foldername.'/.index'
@@ -71,10 +70,6 @@ see below, but first the full list.
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  take_headers      Mail::Box          'DELAY'
- threader          Mail::Box::Threads undef
- thread_body       Mail::Box::Threads 0
- thread_timespan   Mail::Box::Threads '3 days'
- thread_window     Mail::Box::Threads 10
  <none>            Mail::Box::Tie
 
 MH specific options:
@@ -136,8 +131,6 @@ sub init($)
           :               File::Spec->catfile($directory, $_)        # relative
           );
     }
-
-    $self->registerHeaders( qw/status x-status/ );
 
     # Check if we can write to the folder, if we need to.
 
@@ -326,7 +319,6 @@ sub readMessage($;$)
     $message->head_init;
 
     $self->messageID($message->messageID, $message);
-    $self->toBeThreaded($message);
     $message->statusToLabels->XstatusToLabels;
     $message;
 }
@@ -350,14 +342,13 @@ sub addMessage($)
         return $self if $found && !$found->isDummy;
 
         $self->messageID($msgid, $message);
-        $self->toBeThreaded($message);
     }
     else
     {   $message->folder($self);
     }
 
     # The message is accepted.
-    $self->Mail::Box::addMessage($message);
+    $self->SUPER::addMessage($message);
     $self;
 }
 
@@ -647,7 +638,6 @@ sub messageID($;$)
     {   if(my $message = shift)
         {   # Define loaded message.
             $self->SUPER::messageID($msgid, $message);
-            $self->toBeThreaded($message);
             return $self->{MB_msgid}{$msgid};
         }
         else
@@ -679,7 +669,7 @@ C<new()>.
 
 =cut
 
-sub allMessageIDs() { shift->readAllHeaders->Mail::Box::allMessageIDs }
+sub allMessageIDs() { shift->readAllHeaders->SUPER::allMessageIDs }
 
 #-------------------------------------------
 
@@ -1050,8 +1040,8 @@ folder-files.
 However, MH-based folders perform very bad if you need header-information
 of all messages.  For instance, if you want to have full knowledge about
 all message-threads (see Mail::Box::Threads) in the folder, it requires
-to read all header-lines in all message-files.  And usually, reading in
-threads is desired.
+to read all header-lines in all message-files.  And usually, reading
+your messages as threads is desired.
 
 So, each message is written in a seperate file.  The file-names are
 numbers, which count from C<1>.  Next to these message-files, a
@@ -1120,7 +1110,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.200
+This code is beta, version 1.300
 
 =cut
 
