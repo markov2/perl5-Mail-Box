@@ -3,12 +3,14 @@ INSTALL
 LICENSE
 MANIFEST
 Mail/Box-Cookbook.pod
+Mail/Box-Index.pod
 Mail/Box-Overview.pod
 Mail/Box.pm
 Mail/Box/Dbx.pm
 Mail/Box/Dbx/Message.pm
 Mail/Box/Dir.pm
 Mail/Box/Dir/Message.pm
+Mail/Box/FastScalar.pm
 Mail/Box/File.pm
 Mail/Box/File/Message.pm
 Mail/Box/IMAP4.pm
@@ -29,6 +31,7 @@ Mail/Box/Manager.pm
 Mail/Box/Mbox.pm
 Mail/Box/Mbox/Message.pm
 Mail/Box/Message.pm
+Mail/Box/Message/Destructed.pm
 Mail/Box/Net.pm
 Mail/Box/Net/Message.pm
 Mail/Box/POP3.pm
@@ -201,6 +204,7 @@ tests/50message/40forwsubj.t
 tests/50message/41forward.t
 tests/50message/50rebuild.t
 tests/50message/58clone.t
+tests/50message/60destruct.t
 tests/50message/Definition.pm
 tests/51folder/10copyto.t
 tests/51folder/20tieary.t

@@ -11,7 +11,7 @@ use Mail::Address;
 use Carp;
 use Scalar::Util 'blessed';
 use List::Util   'first';
-use IO::Scalar;
+use Mail::Box::FastScalar;
 
 =chapter NAME
 
@@ -70,7 +70,7 @@ Rules can be specified as method name, or as code reference.  See the
 DETAILS chapter in this manual page, and M<recursiveRebuildPart()>.
 
 By default, only the relatively safe transformations are performed:
-C<replaceDeletedParts>, C<descendMultiparts>, C<descendNested>
+C<replaceDeletedParts>, C<descendMultiparts>, C<descendNested>,
 C<flattenMultiparts>, C<flattenEmptyMultiparts>.  In the future, more
 safe transformations may be added to this list.
 
@@ -256,7 +256,7 @@ sub replaceDeletedParts($@)
             || $part->isDeleted;
 
     my $structure = '';
-    my $output    = IO::Scalar->new(\$structure, '  ');
+    my $output    = Mail::Box::FastScalar->new(\$structure, '  ');
     $part->printStructure($output);
 
     Mail::Message::Part->build
@@ -388,13 +388,13 @@ sub recursiveRebuildPart($@)
 
 =chapter DETAILS
 
+=section Rebuilding a message
+
 Modifying an existing message is a complicated job.  Not only do you need
 to know what you are willing to change, but you have to take care about
 multiparts (possibly nested in multiple levels), rfc822 encapsulated
 messages, header field consistency, and so on.  The M<rebuild()> method
 let you focus on the task, and takes care of the rest.
-
-=section Rebuilding a message
 
 The M<rebuild()> method uses rules to transform the one message into an
 other.  If one or more of the rules apply, a new message will be returned.
@@ -411,29 +411,30 @@ to all the rules again until no rule makes a change on the part anymore.
 A rule may also return C<undef> in which case the part will be removed
 from the (resulting) message.
 
-=section Description of the general rules
+=subsection General rules
 
 This sections describes the general configuration rules: all quite straight
-forward transformations on the message structure.
+forward transformations on the message structure.  The rules marked with (*)
+are used by default.
 
 =over 4
 
-=item * descendMultiparts
+=item * descendMultiparts (*)
 
 Apply the rules to the parts of (possibly nested) multiparts, not only to
 the top-level message.
 
-=item * descendNested
+=item * descendNested (*)
 
 Apply the rules to the C<message/rfc822> encapsulated message as well.
 
-=item * flattenEmptyMultiparts
+=item * flattenEmptyMultiparts (*)
 
 Multipart messages which do not have any parts left are replaced by
 a single part which contains the preamble, epilogue and a brief
 explanation.
 
-=item * flattenMultiparts
+=item * flattenMultiparts (*)
 
 When a multipart contains only one part, that part will take the place of
 the multipart: the removal of a level of nesting.  This way, the preamble
@@ -464,7 +465,7 @@ Simple message bodies which do not contain any lines of content are
 removed.  This will loose the information which is stored in the
 headers of these bodies.
 
-=item * replaceDeletedParts
+=item * replaceDeletedParts (*)
 
 All parts of the message which are flagged for deletion are replace
 by a message which says that the part is deleted.
@@ -474,7 +475,7 @@ by a message which says that the part is deleted.
 You can specify a selection of these rules with M<rebuild(rules)> and
 M<rebuild(extraRules)>.
 
-=section Description of the conversion rules
+=subsection Conversion rules
 
 This section describes the rules which try to be smart with the
 content.  Please contribute with ideas and implementations.
@@ -498,7 +499,7 @@ your system.
 
 =back
 
-=section Adding your own rule
+=subsection Adding your own rules
 
 If you have designed your own rule, please consider contributing this
 to Mail::Box; it may be useful for other people as well.

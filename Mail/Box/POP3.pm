@@ -7,8 +7,8 @@ use warnings;
 
 use Mail::Box::POP3::Message;
 use Mail::Box::Parser::Perl;
+use Mail::Box::FastScalar;
 
-use IO::File;
 use File::Spec;
 use File::Basename;
 use Carp;
@@ -310,7 +310,7 @@ sub getHead($)
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
      ( filename  => "$pop"
-     , file      => IO::ScalarArray->new($lines)
+     , file      => Mail::Box::FastScalar->new(join '', @$lines)
      , fix_headers => $self->{MB_fix_headers}
      );
 
@@ -409,5 +409,34 @@ sub writeMessages($@)
 }
 
 #-------------------------------------------
+
+=chapter DETAILS
+
+=section How POP3 folders work
+
+Rfc1939 defines how POP3 works.  POP3 is a really simple protocol to
+receive messages from a server to a user's client.  POP3 is also
+really limited: it can only be used to fetch messages, but has not
+many ways to limit the amount of network traffic, like the IMAP4
+protocol has.
+
+One POP3 account represents only one folder: there is no way of
+sub-folders in POP3.  POP3 doesn't support writing (except for
+some message status flags).
+
+=section This implementation
+
+The protocol specifics are implemented in M<Mail::Transport::POP3>,
+written by Liz Mattijsen.  That module does not use any of the
+other POP3 modules available on CPAN for the reason that MailBox
+tries to be smarter: it is capable of re-establishing broken POP3
+connection when the server supports UIDs.
+
+The implementation has shown to work with many different POP servers.
+In the test directory of the distribution, you will find a small
+server implementation, which is used to test the client.
+
+=cut
+
 
 1;

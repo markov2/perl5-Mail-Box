@@ -7,7 +7,7 @@ use base 'Mail::Message::Body';
 use Mail::Message::Body::Lines;
 use Mail::Message::Part;
 
-use IO::Lines;
+use Mail::Box::FastScalar;
 
 =chapter NAME
 
@@ -230,8 +230,8 @@ sub lines()
 
 sub file()                    # It may be possible to speed-improve the next
 {   my $self   = shift;       # code, which first produces a full print of
-    my @lines;                # the message in memory...
-    my $dump   = IO::Lines->new(\@lines);
+    my $text;                 # the message in memory...
+    my $dump   = Mail::Box::FastScalar->new(\$text);
     $self->print($dump);
     $dump->seek(0,0);
     $dump;

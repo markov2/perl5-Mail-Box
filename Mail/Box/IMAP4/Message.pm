@@ -127,4 +127,40 @@ sub loadBody()
 
 #-------------------------------------------
 
+=chapter DETAILS
+
+=section Labels
+
+=subsection IMAP protocol flags
+
+Labels (or flags) are known to all folder formats, but differ how they
+are stored.  Some folder types use message header lines to keep the
+labels, other use a seperate file.  The IMAP protocol does not specify
+how the labels are kept, but does specify how they are named.
+
+The label names as defined by the IMAP protocol are are standardized into
+the MailBox standard to hide folder differences.  The following translations
+are performed always:
+
+ \Seen     => seen
+ \Answered => replied
+ \Flagged  => flagged
+ \Deleted  => deleted
+ \Draft    => draft
+ \Recent   => NOT old
+
+Other flags may be used as well, but will be translated into lower-case,
+because IMAP servers may behave case-insensive.
+
+=examples of label translations
+
+ $imap->message(3)->label(replied => 1, draft => 0);
+
+will result in a IMAP protocol statements like
+
+ A003 STORE 4 +FLAGS (\Answered)
+ A003 STORE 4 -FLAGS (\Draft)
+
+=cut
+
 1;

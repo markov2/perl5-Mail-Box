@@ -277,7 +277,7 @@ sub appendMessages(@)
         return ();
     }
 
-    my $msgtype = 'Mail::Box::File::Message';
+    my $msgtype = $class.'::Message';
     my @coerced;
 
     foreach my $msg (@messages)
@@ -674,9 +674,7 @@ sub tmpNewFolder($) { shift->filename . '.tmp' }
 
 #-------------------------------------------
 
-=chapter DETAILS
-
-=section How file based folders work
+=subsection File based folders
 
 File based folders maintain a folder (a set of messages) in one
 single file.  The advantage is that your folder has only one

@@ -39,88 +39,13 @@ Mail::Message::Body - the data of a body in a message
 The encoding and decoding functionality of a M<Mail::Message::Body> is
 implemented in the M<Mail::Message::Body::Encode> package.  That package is
 automatically loaded when encoding and decoding of messages needs to take
-place.
+place.  Methods to simply build an process body objects are implemented
+in M<Mail::Message::Body::Construct>.
 
 The body of a message (a M<Mail::Message> object) is stored in one of the
-body types.  The functionality of each body type is equivalent, but there
+many body types.  The functionality of each body type is equivalent, but there
 are performance differences.  Each body type has its own documentation
-which contains details about its implementation.
-
-A body can be contained in a message, but may also live without a message.
-In both cases it stores data, and the same questions can be asked: what
-type of data it is, how many bytes and lines, what encoding is used.  Any
-body can be encoded and decoded, returning a new body object.  However, 
-bodies which are part of a message will always be in a shape that they can
-be written to a file or send to somewhere: they will be encoded if needed.
-
-For example:
-
- my $body    = M<Mail::Message::Body::String>->new(mime_type => 'image/gif');
- $body->print(\*OUT);    # this is binary image data...
-
- my $encoded = $message->body($body);
- $encoded->print(\*OUT); # ascii data, encoded image
-
-Now encoded refers to the body of the C<$message> which is the content of
-C<$body> in a shape that it can be transmitted.  Usually C<base64> encoding
-is used.
-  
-=over 4
-
-=item * M<Mail::Message::Body::Lines>
-
-Each line of the message body is stored as single scalar.  This is a
-useful representation for a detailed look in the message body, which is
-usually line-organized.
-
-=item * M<Mail::Message::Body::String>
-
-The whole message body is stored in one scalar.  Small messages can be
-contained this way without performance penalties.
-
-=item * M<Mail::Message::Body::File>
-
-The message body is stored in an external temporary file.  This type of
-storage is especially useful when the body is large, the total folder is
-large, or memory is limited.
-
-=item * M<Mail::Message::Body::Delayed>
-
-The message-body is not yet read, but the exact location of the
-body is known so the message can be read when needed.
-
-=item * M<Mail::Message::Body::Multipart>
-
-The message body contains a set of sub-messages (which can contain
-multipart bodies themselves).  Each sub-message is an instance
-of M<Mail::Message::Part>, which is an extension of M<Mail::Message>.
-
-=item * M<Mail::Message::Body::Nested>
-
-Nested messages, like C<message/rfc822>: they contain a message in
-the body.  For most code, they simply behave like multiparts.
-
-=item * Mail::Message::Body::InFolder
-
-NOT IMPLEMENTED YET.
-The message is kept in the folder, and is only taken out when the
-content is changed.
-
-=item * Mail::Message::Body::External
-
-NOT IMPLEMENTED YET.
-The message is kept in a separate file, usually because the message body
-is large.  The difference with the C<::External> object is that this external
-storage stays this way between closing and opening of a folder. The
-C<::External> object only uses a file when the folder is open.
-
-=back
-
-Each body type has methods to produce the storage of the other types.
-As example, you can ask any body type for the message as a list of lines,
-but this call will be most efficient for the M<Mail::Message::Body::Lines>
-type.
-
+with details about its implementation.
 =chapter OVERLOADED
 
 =overload @{}
@@ -956,5 +881,100 @@ sub AUTOLOAD(@)
 }   
 
 #------------------------------------------
+
+=chapter DETAILS
+
+=section Access to the body
+
+A body can be contained in a message, but may also live without a message.
+In both cases it stores data, and the same questions can be asked: what
+type of data it is, how many bytes and lines, what encoding is used.  Any
+body can be encoded and decoded, returning a new body object.  However, 
+bodies which are part of a message will always be in a shape that they can
+be written to a file or send to somewhere: they will be encoded if needed.
+
+=example
+
+ my $body    = M<Mail::Message::Body::String>->new(mime_type => 'image/gif');
+ $body->print(\*OUT);    # this is binary image data...
+
+ my $encoded = $message->body($body);
+ $encoded->print(\*OUT); # ascii data, encoded image
+
+Now encoded refers to the body of the C<$message> which is the content of
+C<$body> in a shape that it can be transmitted.  Usually C<base64> encoding
+is used.
+  
+=section Body class implementation
+
+The body of a message can be stored in many ways.  Roughtly, the
+implementations can be split in two groups: the data collectors and
+the complex bodies.  The primer implement various ways to access data,
+and are full compatible: they only differ in performance and memory
+footprint under different circumstances.  The latter are created to
+handle complex multiparts and lazy extraction.
+
+=subsection Data collector bodies
+
+=over 4
+
+=item * M<Mail::Message::Body::String>
+
+The whole message body is stored in one scalar.  Small messages can be
+contained this way without performance penalties.
+
+=item * M<Mail::Message::Body::Lines>
+
+Each line of the message body is stored as single scalar.  This is a
+useful representation for a detailed look in the message body, which is
+usually line-organized.
+
+=item * M<Mail::Message::Body::File>
+
+The message body is stored in an external temporary file.  This type of
+storage is especially useful when the body is large, the total folder is
+large, or memory is limited.
+
+=item * Mail::Message::Body::InFolder
+
+NOT IMPLEMENTED YET.
+The message is kept in the folder, and is only taken out when the
+content is changed.
+
+=item * Mail::Message::Body::External
+
+NOT IMPLEMENTED YET.
+The message is kept in a separate file, usually because the message body
+is large.  The difference with the C<::External> object is that this external
+storage stays this way between closing and opening of a folder. The
+C<::External> object only uses a file when the folder is open.
+
+=back
+
+=subsection Complex bodies
+
+=over 4
+
+=item * M<Mail::Message::Body::Delayed>
+
+The message-body is not yet read, but the exact location of the
+body is known so the message can be read when needed.  This is part of
+the lazy extraction mechanism.  Once extracted, the object can become
+any simple or complex body.
+
+=item * M<Mail::Message::Body::Multipart>
+
+The message body contains a set of sub-messages (which can contain
+multipart bodies themselves).  Each sub-message is an instance
+of M<Mail::Message::Part>, which is an extension of M<Mail::Message>.
+
+=item * M<Mail::Message::Body::Nested>
+
+Nested messages, like C<message/rfc822>: they contain a message in
+the body.  For most code, they simply behave like multiparts.
+
+=back
+
+=cut
 
 1;

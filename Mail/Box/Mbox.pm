@@ -57,7 +57,7 @@ sub init($)
 If a directory is found on the location of the folder to be created, this
 STRING is used to extend that directory name with.  This will cause the
 directory to be seen as sub-folder for the created folder.  This argument
-is passed to M<dirToSubFolder()>.
+is passed to M<folderToFilename()>.
 
 =cut
 

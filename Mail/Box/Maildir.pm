@@ -379,7 +379,7 @@ sub updateMessages($)
         $message->storeBody($body) if $body;
         $self->storeMessage($message);
 
-        $message->statusToLabels->labelsToFilename;
+        $message->labelsToFilename;
         push @newmsgs, $message->accept;
     }
 
@@ -416,7 +416,6 @@ sub writeMessages($)
         my $new      = IO::File->new($newtmp, 'w')
            or croak "Cannot create file $newtmp: $!";
 
-        $message->labelsToStatus;  # just for fun
         $message->write($new);
         $new->close;
 
@@ -498,7 +497,7 @@ sub appendMessages(@)
 The explanation is complicated, but for normal use you should bother
 yourself with all details.
 
-=section How Maildir folders work
+=section How MAILDIR folders work
 
 Maildir-type folders use a directory to store the messages of one folder.
 Each message is stored in a separate file.  This seems useful, because
@@ -514,37 +513,6 @@ your messages as threads is desired.  Maildir maintains a tiny amount
 of info visible in the filename, which may make it perform just a little
 bit faster than MH.
 
-The following information was found at F<http://cr.yp.to/proto/maildir.html>.
-Each message is written in a separate file.  The filename is
-constructed from the time-of-arrival, a unique component, hostname,
-a syntax marker, and flags. For example C<1014220791.meteor.42:2,DF>.
-The filename must match:
-
- my ($time, $unique, $hostname, $info)
-    = $filename =~ m!^(\d+)\.(.*)\.(\w+)(\:.*)?$!;
- my ($semantics, $flags)
-    = $info =~ m!([12])\,([RSTDF]+)$!;
- my @flags = split //, $flags;
-
-The C<@flags> are sorted alphabetically, with the following meanings:
-
- D = draft, to be sent later
- F = flagged for user-defined purpose
- R = has been replied
- S = seen / (partially) read by the user
- T = trashed, flagged to be deleted later
-
-=section Labels
-
-The filename contains flags, and those flags are translated into labels
-when the folder is opened.  Labels can be changed by the application using
-M<Mail::Message::labels()>.
-
-Changes will directly reflect in a filename change.
-The C<Status> and C<X-Status> lines in the header, which are used by
-Mbox kind of folders, are ignored except when a new message is received
-in the C<new> directory.  In case a message has to be written to file
-for some reason, the status header lines are updated as well.
 
 =cut
 

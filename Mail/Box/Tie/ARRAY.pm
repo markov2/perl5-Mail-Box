@@ -195,6 +195,10 @@ sub STORESIZE($)
 
 =chapter DETAILS
 
+=section Folder tied as array
+
+=subsection Limitations
+
 This module implements C<TIEARRAY>, C<FETCH>, C<STORE>, C<FETCHSIZE>,
 C<STORESIZE>, C<DELETE>, C<PUSH>, and C<DESTROY>.
 

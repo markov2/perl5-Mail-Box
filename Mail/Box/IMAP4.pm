@@ -7,8 +7,8 @@ use warnings;
 
 use Mail::Box::IMAP4::Message;
 use Mail::Box::Parser::Perl;
+use Mail::Box::FastScalar;
 
-use IO::File;
 use File::Spec;
 use File::Basename;
 use Carp;
@@ -242,7 +242,7 @@ sub getHead($)
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
      ( filename  => "$imap"
-     , file      => IO::ScalarArray->new($lines)
+     , file      => Mail::Box::FastScalar->new(join '', @$lines)
      );
 
     $self->lazyPermitted(1);
@@ -295,7 +295,7 @@ sub getHeadAndBody($)
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
      ( filename  => "$imap"
-     , file      => IO::ScalarArray->new($lines)
+     , file      => Mail::Box::FastScalar->new(join '', @$lines)
      );
 
     my $head = $message->readHead($parser);
@@ -337,8 +337,6 @@ sub writeMessages($@)
 =chapter DETAILS
 
 =section How IMAP4 folders work
-
-=section This implementation
 
 =cut
 

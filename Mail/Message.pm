@@ -38,7 +38,7 @@ Mail::Message - general message object
 
 =chapter DESCRIPTION
 
-A M<Mail::Message> object is a container for MIME-encoded message information,
+A C<Mail::Message> object is a container for MIME-encoded message information,
 as defined by RFC2822.  Everything what is not specificly related to storing
 the messages in mailboxes (folders) is implemented in this class.  Methods
 which are are related to folders is implemented in the M<Mail::Box::Message>
@@ -245,13 +245,13 @@ sub coerce($)
 
 =method clone
 
-Create a copy of this message.  Returned is a M<Mail::Message> object.
+Create a copy of this message.  Returned is a C<Mail::Message> object.
 The head and body, the log and trace levels are taken.  Labels are
 copied with the message, but the delete and modified flags are not.
  
 BE WARNED: the clone of any kind of message (or a message part)
-will B<always> be a M<Mail::Message> object.  For example, a
-Mail::Box::Message's clone is detached from the folder of its original.
+will B<always> be a C<Mail::Message> object.  For example, a
+M<Mail::Box::Message>'s clone is detached from the folder of its original.
 When you use M<Mail::Box::addMessage()> with the cloned message at hand,
 then the clone will automatically be coerced into the right message type
 to be added.
@@ -436,7 +436,7 @@ is short (but little less flexibile) for
  my $mailer = M<Mail::Transport::SMTP>->new(@smtpopts);
  $mailer->send($message, @sendopts);
 
-See examples/send.pl in the distribution of Mail::Box.
+See examples/send.pl in the distribution of M<Mail::Box>.
 
 =error No default mailer found to send message.
 
@@ -473,8 +473,8 @@ line ending is represented by one character (like UNIX, MacOS, and sometimes
 Cygwin), and not two characters (like Windows and sometimes Cygwin).
 
 If you write the message to file on a system which uses CR and LF to end a
-single line (all Windows versions), the result in file will be nrLines() larger
-than this method returns.
+single line (all Windows versions), the result in file will be M<nrLines()>
+larger than this method returns.
 
 =cut
 
@@ -490,14 +490,14 @@ sub size()
 =method head [HEAD]
 
 Return (optionally after setting) the HEAD of this message.
-The head must be an (sub-)class of Mail::Message::Head.
+The head must be an (sub-)class of M<Mail::Message::Head>.
 When the head is added, status information is taken from it
 and transformed into labels.  More labels can be added by the
 LABELS hash.  They are added later.
 
 =example
 
- $msg->head(Mail::Message::Head->new);  # set
+ $msg->head(M<Mail::Message::Head>->new);  # set
  my $head = $msg->head;                 # get
 
 =cut
@@ -530,16 +530,17 @@ sub head(;$)
 
 #------------------------------------------
 
-=method get FIELD
+=method get FIELDNAME
 
-Returns the value which is stored in the header FIELD with the specified
-name.  If the field has multiple appearances in the header, only the last
-instance is returned.
+Returns the value which is stored in the header field with the specified
+name.  The FIELDNAME is case insensitive.  The I<unfolded body> of the
+field is returned, stripped from any attributes.
+See M<Mail::Message::Field::body()>.
 
-The field name is case insensitive.  the I<unfolded body> of the field
-is returned, see M<Mail::Message::Field::unfoldedBody()>.  If you need
-more complex handing of fields, then call M<Mail::Message::Head::get()>
-yourself.
+If the field has multiple appearances in the header, only the last
+instance is returned.  If you need more complex handing of fields, then
+call M<Mail::Message::Head::get()> yourself.  See M<study()> when you
+want to be smart, doing the better (but slower) job.
 
 =example the get() short-cut for header fields
 
@@ -556,13 +557,39 @@ sub get($)
     $field->body;
 }
 
+#------------------------------------------
+
+=method study FIELDNAME
+
+Study the content of a field, like M<get()> does, with as main difference
+that a M<Mail::Message::Field::Full> object is returned.  These objects
+stringify to an utf8 decoded representation of the data contained in
+the field, where M<get()> does not decode.
+See M<Mail::Message::Field::study()>.
+
+=example the study() short-cut for header fields
+
+ print $msg->study('to'), "\n";
+
+Is equivalent to:
+
+ print $msg->head->study('to'), "\n";       # and
+ print $msg->head->get('to')->study, "\n";
+
+=cut
+
+sub study($)
+{  my $head = shift->head or return;
+   scalar $head->study(@_);    # return only last
+}
+
 #-------------------------------------------
 
 =method from
 
 Returns the address of the sender.  It is possible to have more than
 one address specified in the C<From> field of the message. Therefore a
-list of Mail::Address objects is returned, which usually has
+list of M<Mail::Address> objects is returned, which usually has
 length 1.
 
 If you need one address of a sender, for instance to create a reply to,
@@ -581,7 +608,7 @@ sub from() { map {$_->addresses} shift->head->get('From') }
 =method sender
 
 Returns exactly one address, which is the originator of this message.
-The returned Mail::Address object is taken from the C<Sender> header
+The returned M<Mail::Address> object is taken from the C<Sender> header
 field, unless that field does not exists, in which case the first
 address from the C<From> field is taken.  If none of both provide
 an address, C<undef> is returned.
@@ -611,7 +638,7 @@ sub sender()
 =method to
 
 Returns the addresses which are specified on the C<To> header line (or lines).
-A list of Mail::Address objects is returned.  The people addressed
+A list of M<Mail::Address> objects is returned.  The people addressed
 here are the targets of the content, and should read it contents
 carefully.
 
@@ -758,11 +785,11 @@ for normal use unless you understand the consequences: you change
 the message content without changing the message-ID.  The right
 way to go is via
 
- $message = Mail::Message->buildFromBody($body);  # or
- $message = Mail::Message->build($body);          # or
+ $message = M<Mail::Message>->buildFromBody($body);  # or
+ $message = M<Mail::Message>->build($body);          # or
  $message = $origmsg->forward(body => $body);
 
-The BODY must be an (sub-)class of Mail::Message::Body.  In this case,
+The BODY must be an (sub-)class of M<Mail::Message::Body>.  In this case,
 information from the specified body will be copied into the header.  The
 body object will be encoded if needed, because messages written to file
 or transmitted shall not contain binary data.  The converted body
@@ -777,7 +804,7 @@ can be connected to a different message.
  my $body      = $msg->body;
  my @encoded   = $msg->body->lines;
 
- my $new       = Mail::Message::Body->new(mime_type => 'text/html');
+ my $new       = M<Mail::Message::Body>->new(mime_type => 'text/html');
  my $converted = $msg->body($new);
 
 =cut
@@ -858,7 +885,8 @@ resources...
 
 Specifies which kind of body should be used for the final result, and
 eventual intermediate conversion stages.  It is not sure that this
-will be the type of the body returned.  BODYTYPE extends Mail::Message::Body.
+will be the type of the body returned.  BODYTYPE extends
+M<Mail::Message::Body>.
 
 =examples
 
@@ -887,8 +915,9 @@ sub decoded(@)
 =method encode OPTIONS
 
 Encode the message to a certain format.  Read the details in the
-dedicated manual page Mail::Message::Body::Encode.  The OPTIONS which
-can be specified here are those of the Mail::Message::Body::encode() method.
+dedicated manual page M<Mail::Message::Body::Encode>.  The OPTIONS which
+can be specified here are those of the M<Mail::Message::Body::encode()>
+method.  
 
 =cut
 
@@ -927,7 +956,7 @@ Returns the I<parts> of this message. Usually, the term I<part> is used
 with I<multipart> messages: messages which are encapsulated in the body
 of a message.  To abstract this concept: this method will return you
 all header-body combinations which are stored within this message.
-Objects returned are Mail::Message's and Mail::Message::Part's.
+Objects returned are C<Mail::Message>'s and M<Mail::Message::Part>'s.
 
 The option default to 'ALL', which will return the message itself for
 single-parts, the nested content of a message/rfc822 object, respectively
@@ -970,8 +999,6 @@ sub parts(;$)
     : $recurse            ? @parts
     : confess "Select parts via $what?";
 }
-
-sub isDeleted() {0} # needed for parts('ACTIVE'|'DELETED') on non-folder messages.
 
 #------------------------------------------
 
@@ -1082,66 +1109,17 @@ sub labels()
 
 #------------------------------------------
 
-=method labelsToStatus
+=method isDeleted
 
-When the labels were changes, there may be an effect for the
-C<Status> and/or C<X-Status> header-lines.  Whether this update has
-to take place depends on the type of folder.
-
-=cut
-
-sub labelsToStatus()
-{   my $self    = shift;
-    my $head    = $self->head;
-    my $labels  = $self->labels;
-
-    my $status  = $head->get('status') || '';
-    my $newstatus
-      = $labels->{seen}    ? 'RO'
-      : $labels->{old}     ? 'O'
-      : '';
-
-    $head->set(Status => $newstatus)
-        if $newstatus ne $status;
-
-    my $xstatus = $head->get('x-status') || '';
-    my $newxstatus
-      = ($labels->{replied} ? 'A' : '')
-      . ($labels->{flagged} ? 'F' : '');
-
-    $head->set('X-Status' => $newxstatus)
-        if $newxstatus ne $xstatus;
-
-    $self;
-}
-
-#-------------------------------------------
-
-=method statusToLabels
-
-Update the labels according the status lines in the header.  Defined values
-for the 'Status' field are C<R> (Read, label 'seen') and C<O> (label 'old').
-Values for the 'X-Status' field are C<A> (Answered, label 'replied') and
-C<F> (label 'flagged').
+A plain C<Mail::Message> is never deleted, but messages in folders and
+message parts (both extensions of this message base class) can be.  For
+simplicity, this method will always return C<false>: no we are not
+deleted.
 
 =cut
 
-sub statusToLabels()
-{   my $self    = shift;
-    my $head    = $self->head;
-
-    if(my $status  = $head->get('status'))
-    {   $self->{MM_labels}{seen} = ($status  =~ /R/ ? 1 : 0);
-        $self->{MM_labels}{old}  = ($status  =~ /O/ ? 1 : 0);
-    }
-
-    if(my $xstatus = $head->get('x-status'))
-    {   $self->{MM_labels}{replied} = ($xstatus  =~ /A/ ? 1 : 0);
-        $self->{MM_labels}{flagged} = ($xstatus  =~ /F/ ? 1 : 0);
-    }
-
-    $self;
-}
+# needed for parts('ACTIVE'|'DELETED') on non-folder messages.
+sub isDeleted() {0}
 
 #------------------------------------------
 
@@ -1202,8 +1180,7 @@ sub readHead($;$)
 {   my ($self, $parser) = (shift, shift);
 
     my $headtype = shift
-      || $self->{MM_head_type}
-      || 'Mail::Message::Head::Complete';
+      || $self->{MM_head_type} || 'Mail::Message::Head::Complete';
 
     $headtype->new
       ( message     => $self
@@ -1364,37 +1341,207 @@ sub DESTROY()
 
 #------------------------------------------
 
+=method destruct
+
+Remove the information contained in the message object.  This will be
+ignored when more than one reference to the same message object exists,
+because the method has the same effect as assigning C<undef> to the
+variable which contains the reference.  Normal garbage collection will
+call M<DESTROY()> when possible.
+
+This method is only provided to hide differences with messages which are
+located in folders: their M<Mail::Box::Message::destruct()> works quite
+differently.
+
+=example of Mail::Message destruct
+
+ my $msg = M<Mail::Message>->read;
+ $msg->destruct;
+ $msg = undef;    # same
+
+=cut
+
+sub destruct() { $_[0] = undef }
+
+#------------------------------------------
+
 =chapter DETAILS
 
 =section Structure of a Message
 
-A MIME-compliant message is build upon two parts: the I<head> and the
-I<body>.  The body contains the I<payload>: the data to be transfered.  The
-data can be encoded, only accessible with a specific application, and may use
-some weird character-set, like Vietnamese; the Mail::Box module tries to
-assist you with handling these e-mails without the need to know all the
-details.  This additional information (I<meta-information>) about the
-body data is stored in the header.
+A MIME-compliant message is build upon two parts: the I<header> and the
+I<body>.
 
-The header is a list of fields, some spanning more than one line (I<folded>)
-each telling something about the message. Information stored in here are for
-instance the sender of the message, the receivers of the message, when it
-was transported, how it was transported, etc etc.  Headers can grow quite
-large.
+=subsection The header
 
-In Mail::Box, each message object manages exactly one header object
+The header is a list of fields, some spanning more than one line
+(I<folded>) each telling something about the message. Information stored
+in here are for instance the sender of the message, the receivers of
+the message, when it was transported, how it was transported, etc etc.
+Headers can grow quite large.
+
+In MailBox, each message object manages exactly one header object
 (a M<Mail::Message::Head>) and one body object (a M<Mail::Message::Body>).
 The header contains a list of header fields, which are represented by
 M<Mail::Message::Field> objects.
 
-=section Implementation
+=subsection The body
 
-Mail::Box is as lazy as possible.  Whenever you open a folder, it tries
-to avoid processing the messages within that folder.  In stead of parsing
-(decoding) the messages when the folder is opened, they are parsed the
-moment they are used for the first time.  In Mail::Box, this is called
-I<delayed loading>.  You can read more about that in the PDF formatted
-papers which are available at the main website of Mail::Box.
+The body contains the "payload": the data to be transfered.
+The data can be encoded, only accessible with a specific application,
+and may use some weird character-set, like Vietnamese; the MailBox
+distribution tries to assist you with handling these e-mails without
+the need to know all the details.  This additional information
+("meta-information") about the body data is stored in the header.
+The header contains more information, for instance about the message
+transport and relations to other messages.
+
+=section Message object implementation
+
+The general idea about the structure of a message is
+
+ M<Mail::Message>
+  |  |
+  |  `-has-one--M<Mail::Message::Body>
+  |
+  `----has-one--M<Mail::Message::Head>
+                  |
+                  `-has-many--M<Mail::Message::Field>
+
+However: there are about 7 kinds of body objects, 3 kinds of headers and
+3 kinds of fields.  You will usually not see too much of these kinds,
+because they are merely created for performance reasons and can be used
+all the same, with the exception of the multipart bodies.
+
+A multipart body is either a M<Mail::Message::Body::Multipart>
+(mime type C<multipart/*>) or a M<Mail::Message::Body::Nested>
+(mime type C<message/rfc822>).  These bodies are more complex:
+
+ M<Mail::Message::Body::Multipart>
+  |
+  `-has-many--M<Mail::Message::Part>
+               |  |
+               |  `-has-one--M<Mail::Message::Body>
+               |
+               `----has-one--M<Mail::Message::Head>
+
+Before you try to reconstruct multiparts or nested messages yourself,
+you can better take a look at M<Mail::Message::Construct::Rebuild>.
+
+=section Message class implementation
+
+The class structure of messages is very close to that of folders.  For
+instance, a M<Mail::Box::File::Message> relates to a M<Mail::Box::File>
+folder.
+
+As extra level of inheritance, it has a M<Mail::Message>, which
+is a message without location.  And there is a special case of
+message: M<Mail::Message::Part> is a message encapsulated in a
+multipart body.
+
+The message types are:
+
+ M<Mail::Box::Mbox::Message>            M<Mail::Box::POP3::Message>
+ |  M<Mail::Box::Dbx::Message>      M<Mail::Box::IMAP4::Message>  |
+ |  |                                                    |  |
+ M<Mail::Box::File::Message>             M<Mail::Box::Net::Message>
+         |                                      |
+         |       M<Mail::Box::Maildir::Message>    |
+         |       |   M<Mail::Box::MH::Message>     |
+         |       |   |                          |
+         |       M<Mail::Box::Dir::Message>        |
+         |                |                     |
+         `------------.   |   .-----------------'
+                      |   |   |
+                   M<Mail::Box::Message>    M<Mail::Message::Part>
+                          |                     |
+                          |       .-------------'
+                          |       |
+                      M<Mail::Message>
+                          |
+                          |
+                    M<Mail::Reporter> (general base class)
+
+By far most folder features are implemented in M<Mail::Box>, so
+available to all folder types.  Sometimes, features which appear
+in only some of the folder types are simulated for folders that miss
+them, like sub-folder support for MBOX.
+
+Two strange other message types are defined:
+the M<Mail::Message::Dummy>, which fills holes in
+M<Mail::Box::Thread::Node> lists, and a M<Mail::Box::Message::Destructed>,
+this is an on purpose demolished message to reduce memory consumption.
+
+=section Labels
+
+Labels (also named "Flags") are used to indicate some special condition on
+the message, primary targeted on organizational issues: which messages are
+already read or should be deleted.  There is a very strong user relation
+to labels.
+
+The main complication is that each folder type has its own way of storing
+labels.  To give an indication: MBOX folders use C<Status> and C<X-Status>
+header fields, MH uses a C<.mh-sequences> file, MAILDIR encodes the flags
+in the message's filename, and IMAP has flags as part of the protocol.
+
+Besides, some folder types can store labels with user defined names,
+where other lack that feature.  Read all about the specifics in the
+manual page of the message type you actually have.
+
+=subsection Predefined labels
+
+To standardize the folder types, MailBox has defined the following labels,
+which can be used with the M<label()> and M<labels()> methods on all kinds
+of messages:
+
+=over 4
+
+=item * deleted
+
+This message is flagged to be deleted once the folder closes.  Be very
+careful about the concept of 'delete' in a folder context (yes, also the
+M<Mail::Box::Message::delete()> and M<Mail::Box::Message::deleted()>
+methods): it is only a flag, and does not involve immediate action!
+This means, for instance, that the memory which is used by Perl to
+store the message is not released immediately (see M<destruct()> if you
+need to).
+
+=item * draft
+
+The user has prepared this message, but is has not been send (yet).  This
+flag is not automatically added to a message by MailBox, and has only
+a meaning in user applications.
+
+=item * flagged
+
+Messages can be I<flagged> for some purpose, for instance as result of
+a search for spam in a folder.  The M<Mail::Box::messages()> method
+can be used to collect all these flagged messages from the folder.
+
+Probably it is more useful to use an understandable name (like C<spam>)
+for these selections, however these self-defined labels can not stored
+in all folder types.
+
+=item * old
+
+The message was already in the folder when it was opened the last time,
+so was not recently added to the folder.  This flag will never automatically
+be set by MailBox, because it would probably conflict with the user's
+idea of what is old.
+
+=item * replied
+
+The user (or application) has sent a message back to the sender of
+the message, as response of this one.  This flag is automatically
+set if you use M<reply()>, but not with M<forward()> or M<bounce()>.
+
+=item * seen
+
+When this flag is set, the receiver of the message has consumed the message.
+A mail user agent (MUA) will set this flag when the user has opened the
+message once.
+
+=back
 
 =cut
 

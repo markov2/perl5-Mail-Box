@@ -59,7 +59,7 @@ my $heads = 0;
 foreach ($folder->messages)
 {  $heads++ unless $_->head->isDelayed;
 }
-cmp_ok($heads, "==", 4);   # Last 4 messages started in new and have Status read
+cmp_ok($heads, "==", 0);
 
 #
 # Loading a header should not be done unless really necessary.

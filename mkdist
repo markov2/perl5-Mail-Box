@@ -16,7 +16,7 @@ RAW=public_html/mailbox/raw
 HTML=public_html/mailbox/html
 
 MANIFESTS="MANIFEST MANIFEST.extra"
-EXAMPLE_OODOC=examples/mailbox.tar.gz
+EXAMPLE_OODOC=../OODoc/examples/mailbox.tar.gz
 
 [ -d $DIST ] || mkdir $DIST || exit $?
 
@@ -92,8 +92,9 @@ fi
 # Publish the HTML as package
 #
 
+HTMLNAME="html-current.tar.gz"
+
 ( cd $HTML || exit $?
-  HTMLNAME="html-current.tar.gz"
   [ -n "$VERBOSE" ] && echo "* Publishing $HTML/$HTMLNAME"
   tar -czf $HTMLNAME $(cat MANIFEST) || exit $?
 )

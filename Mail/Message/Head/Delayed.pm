@@ -77,6 +77,10 @@ sub isModified() { 0 }
 
 #------------------------------------------
 
+sub isEmpty() { 0 }
+
+#------------------------------------------
+
 =section Access to the header
 
 =method get NAME [,INDEX]

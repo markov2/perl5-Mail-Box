@@ -84,8 +84,10 @@ my $dump;
 my $catch   = IO::Scalar->new(\$dump);
 $msg->printStructure($catch);
 
+# if 1550 bytes is reported for the whole message, then the Status
+# field hasn't been removed after reading.
 is($dump, <<'DUMP');
-multipart/mixed: forwarded message from Pietje Puk (1550 bytes)
+multipart/mixed: forwarded message from Pietje Puk (1539 bytes)
    text/plain (164 bytes)
    message/rfc822 (1043 bytes)
       multipart/alternative: A multipart alternative (942 bytes)

@@ -99,6 +99,10 @@ sub deleted($)
 
 #-------------------------------------------
 
+=section Labels
+
+=cut
+
 sub label(@)
 {   my $self   = shift;
     return $self->SUPER::label unless @_;
@@ -106,41 +110,6 @@ sub label(@)
     my $return = $self->SUPER::label(@_);
     $self->labelsToFilename;
     $return;
-}
-
-#-------------------------------------------
-
-=section Internals
-
-=method accept
-
-Accept a message for the folder.  This will move it from the C<new> or
-C<tmp> sub-directories into the C<cur> sub-directory.  When you accept an
-already accepted message, nothing will happen.
-
-=error Message $filename is not in a Maildir folder.
-
-To accept a message into a folder (move it from a temporary location into
-this folder's view), it must be already created one maildir folder's
-sub-directory. When a I<foreign> message is coerce to become part of a
-maildir, the coercion will create a file which is acceptable.
-
-=cut
-
-sub accept($)
-{   my $self   = shift;
-    my $old    = $self->filename;
-
-    unless($old =~ m!(.*)/(new|cur|tmp)/([^:]*)(\:[^:]*)?$! )
-    {   $self->log(ERROR => "Message $old is not in a Maildir folder.\n");
-        return undef;
-    }
-
-    return $self if $2 eq 'cur';
-    my $new = "$1/cur/$3";
-
-    $self->log(PROGRESS => "Message $old is accepted.\n");
-    $self->filename($new);
 }
 
 #-------------------------------------------
@@ -182,5 +151,87 @@ sub labelsToFilename()
 }
 
 #-------------------------------------------
+
+=section Internals
+
+=method accept
+
+Accept a message for the folder.  This will move it from the C<new> or
+C<tmp> sub-directories into the C<cur> sub-directory.  When you accept an
+already accepted message, nothing will happen.
+
+=error Message $filename is not in a Maildir folder.
+
+To accept a message into a folder (move it from a temporary location into
+this folder's view), it must be already created one maildir folder's
+sub-directory. When a I<foreign> message is coerce to become part of a
+maildir, the coercion will create a file which is acceptable.
+
+=cut
+
+sub accept($)
+{   my $self   = shift;
+    my $old    = $self->filename;
+
+    unless($old =~ m!(.*)/(new|cur|tmp)/([^:]*)(\:[^:]*)?$! )
+    {   $self->log(ERROR => "Message $old is not in a Maildir folder.\n");
+        return undef;
+    }
+
+    return $self if $2 eq 'cur';
+    my $new = "$1/cur/$3";
+
+    $self->log(PROGRESS => "Message $old is accepted.\n");
+    $self->filename($new);
+}
+
+#-------------------------------------------
+
+=chapter DETAILS
+
+=section Labels
+
+=subsection Flags in filename
+
+When new messages arrive on system and have to be stored in a maildir folder,
+they are put in the C<new> sub-directory of the folder (first created in
+the C<tmp> sub-directory and then immediately moved to C<new>).
+The following information was found at L<http://cr.yp.to/proto/maildir.html>.
+
+Each message is written in a separate file.  The filename is
+constructed from the time-of-arrival, a hostname, an unique component,
+a syntax marker, and flags. For example C<1014220791.meteor.42:2,DF>.
+The filename must match:
+
+ my ($time, $unique, $hostname, $info)
+    = $filename =~ m!^(\d+)\.(.*)\.(\w+)(\:.*)?$!;
+ my ($semantics, $flags)
+    = $info =~ m!([12])\,([RSTDF]+)$!;
+ my @flags = split //, $flags;
+
+When an application opens the folder, the message in C<new> are
+inspected and moved to the C<cur> sub-directory.  Messages which were
+already in that directory are considered C<old> (labelled that way inside
+MailBox).  The messages are moved, and their name is immediately
+extended with flags.  An example:
+
+ new/897979431.meteor.42      may become
+ cur/897979431.meteor.42:2,FS
+
+The added characters C<':2,'> refer to the "second state of processing",
+where the message has been inspected.  And the characters (which should
+be in alphabetic order) mean
+
+ D      => draft
+ F      => flagged
+ R      => replied  (answered)
+ S      => seen
+ T      => deleted  (tagged for deletion)
+
+The flags will immediately change when M<label()> or M<delete()> is used,
+which differs from other message implementations: maildir is stateless,
+and should not break when applications crash.
+
+=cut
 
 1;

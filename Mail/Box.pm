@@ -77,49 +77,6 @@ file withing the same directory.
 No object in your program will be of type C<Mail::Box>: it is only used
 as base class for the real folder types.  C<Mail::Box> is extended by
 
-=over 4
-
-=item * M<Mail::Box::Mbox>
-
-a folder type in which all related messages are stored in one file.  This
-is very common folder type for UNIX.
-
-=item * M<Mail::Box::MH>
-
-this folder creates a directory for each folder, and a message is one
-file inside that directory.  The message files are numbered sequentially
-on order of arrival.  A special C<.mh_sequences> file maintains flags
-about the messages.
-
-=item * M<Mail::Box::Maildir>
-
-maildir folders have a directory for each folder, although the first
-implementation only supported one folder in total.  A folder directory
-contains a C<tmp>, C<new>, and C<cur> subdirectory, each containting
-messages with a different purpose.  New messages are created in C<tmp>,
-then moved to C<new> (ready to be accepted).  Later, they are moved to
-the C<cur> directory (accepted).  Each message is one file with a name
-starting with timestamp.  The name also contains flags about the status
-of the message.
-
-=item * M<Mail::Box::POP3>
-
-Pop3 is a protocol which can be used to retreive messages from a
-remote system.  After the connection to a POP server is made, the
-messages can be looked at and removed as if they are on the local
-system.
-
-=item * M<Mail::Box::Dbx>
-
-Dbx files are created by Outlook Express. Using the external (optional)
-Mail::Transport::Dbx module, you can read these folders.  Writing and
-deletion of messages is not supported. Read access is enough to do
-folder conversions, for instance.
-
-=back
-
-Other folder types are on the (long) wishlist to get implemented.  Please,
-help implementing more of them.
 
 =cut
 
@@ -2018,5 +1975,145 @@ sub DESTROY
 # MB_save_on_exit: new(save_on_exit)
 
 #-------------------------------------------
+
+=chapter DETAILS
+
+=section Different kinds of folders
+
+In general, there are three classes of folders: those who group messages
+per file, those who group messages in a directory, and those do not
+provide direct access to the message data.  These folder types are
+each based on a different base class.
+
+=over 4
+
+=item * File based folders M<Mail::Box::File>
+
+File based folders maintain a folder (a set of messages) in one
+single file.  The advantage is that your folder has only one
+single file to access, which speeds-up things when all messages
+must be accessed at once.
+
+One of the main disadvantages over directory based folders
+is that you have to construct some means to keep all message apart.
+For instance MBOX adds a message separator line between the messages
+in the file, and this line can cause confusion with the message's
+contents.
+
+Where access to all messages at once is faster in file based folders,
+access to a single message is (much) slower, because the whole folder
+must be read.  However, in directory based folders you have to figure-out
+which message you need, which may be a hassle as well.
+
+Examples of file based folders are MBOX, DBX, and NetScape.
+
+=item * Directory based folders M<Mail::Box::Dir>
+
+In stead of collecting multiple messages in one file, you can also
+put each message in a separate file and collect those files in a
+directory to represent a folder.
+
+The main disadvantages of these folders are the enormous amount of
+tiny files you usually get in your file-system.  It is extremely
+slow to search through your whole folder, because many files have
+to be opened to do so.
+
+The best feature of this organization is that each message is kept
+exactly as it was received, and can be processed with external scripts
+as well: you do not need any mail user agent (MUA).
+
+Examples of directoy organized folders are MH, Maildir, EMH, and XMH.
+
+=item * Network (external) folders M<Mail::Box::Net>
+
+Where both types described before provide direct access to the
+message data, maintain these folder types the message data for you:
+you have to request for messages or parts of them.  These folders
+do not have a filename, file-system privileges and system locking
+to worry about, but typically require a hostname, folder and message
+IDs, and authorization.
+
+Examples of these folder types are the popular POP and IMAP, and
+database oriented message storage.
+
+=back
+
+=section Supported folder types
+
+=over 4
+
+=item * M<Mail::Box::Dbx> (read only)
+
+Dbx files are created by Outlook Express. Using the external (optional)
+M<Mail::Transport::Dbx> module, you can read these folders, even
+when you are running MailBox on a UNIX/Linux platform.
+
+Writing and deleting messages is not supported by the library, and
+therefore not by MailBox. Read access is enough to do folder conversions,
+for instance.
+
+=item * M<Mail::Box::IMAP4> (under development)
+
+=item * M<Mail::Box::Maildir>
+
+Maildir folders have a directory for each folder.  A folder directory
+contains C<tmp>, C<new>, and C<cur> sub-directories, each containting
+messages with a different purpose.  Files with new messages are created
+in C<tmp>, then moved to C<new> (ready to be accepted).  Later, they are
+moved to the C<cur> directory (accepted).  Each message is one file with
+a name starting with timestamp.  The name also contains flags about the
+status of the message.
+
+Maildir folders can not be used on Windows by reason of file-name
+limitations on that platform.
+
+=item * M<Mail::Box::Mbox>
+
+A folder type in which all related messages are stored in one file.  This
+is a very common folder type for UNIX.
+
+=item * M<Mail::Box::MH>
+
+This folder creates a directory for each folder, and a message is one
+file inside that directory.  The message files are numbered sequentially
+on order of arrival.  A special C<.mh_sequences> file maintains flags
+about the messages.
+
+=item * M<Mail::Box::POP3> (read/delete only)
+
+POP3 is a protocol which can be used to retreive messages from a
+remote system.  After the connection to a POP server is made, the
+messages can be looked at and removed as if they are on the local
+system.
+
+=back
+
+Other folder types are on the (long) wishlist to get implemented.  Please,
+help implementing more of them.
+
+=section Folder class implementation
+
+The class structure of folders is very close to that of messages.  For
+instance, a M<Mail::Box::File::Message> relates to a M<Mail::Box::File>
+folder.  The folder types are:
+
+ M<Mail::Box::Mbox>    M<Mail::Box::Maildir>  M<Mail::Box::POP3>
+ |  M<Mail::Box::Dbx>  |  M<Mail::Box::MH>    |  M<Mail::Box::IMAP4>
+ |  |               |  |                |  |
+ |  |               |  |                |  |
+ M<Mail::Box::File>    M<Mail::Box::Dir>      M<Mail::Box::Net>
+       |                  |                   |
+       `--------------.   |   .---------------'
+                      |   |   |
+                      M<Mail::Box>
+                          |
+                          |
+                    M<Mail::Reporter> (general base class)
+
+By far most folder features are implemented in M<Mail::Box>, so
+available to all folder types.  Sometimes, features which appear
+in only some of the folder types are simulated for folders that miss
+them, like sub-folder support for MBOX.
+=cut
 
 1;

@@ -544,7 +544,7 @@ sub writeMessages($)
 
 =chapter DETAILS
 
-=section How MH-folders work
+=section How MH folders work
 
 MH-type folders use a directory to store the messages of one folder.  Each
 message is stored in a separate file.  This seems useful, because changes
@@ -564,23 +564,14 @@ directory may contain a file named C<.mh_sequences>, storing labels which
 relate to the messages.  Furthermore, a folder-directory may contain
 sub-directories, which are seen as sub-folders.
 
-=section Labels
-
-User actions on a message are flagged with a label.  When the folder is
-opened, these flags are read from the C<.mh_sequences> file.  When the
-folder is closed that file gets updated.  C<Status> and C<X-Status> lines
-in the message headers -as used by Mbox folders- are only looked at when
-new messages are added to the folder.  These lines are only updated when a
-MH message has to be written to a folder for some reason.
-
 =section This implementation
 
 This implementation supports the C<.mh-sequences> file and sub-folders.
 Next to this, considerable effort it made to avoid reading each message-file.
-This should boost performance of the C<Mail::Box> module over other
+This should boost performance of the MailBox distribution over other
 Perl-modules which are able to read folders.
 
-Folder-types which store their messages each in one file, together in
+Folder types which store their messages each in one file, together in
 one directory, are bad for performance.  Consider that you want to know
 the subjects of all messages, while browser through a folder with your
 mail-reading client.  This would cause all message-files to be read.

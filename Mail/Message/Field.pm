@@ -7,6 +7,7 @@ use base 'Mail::Reporter';
 use Carp;
 use Mail::Address;
 use Date::Parse;
+use Date::Format ();
 
 our %_structured;  # not to be used directly: call isStructured!
 my $default_wrap_length = 78;
@@ -29,6 +30,10 @@ Mail::Message::Field - one line of a message header
 
 =chapter DESCRIPTION
 
+This implementation follows the guidelines of rfc2822 as close as possible,
+and may there produce a different output than implementations based on
+the obsolete rfc822.  However, the old output will still be accepted.
+
 These objects each store one header line, and facilitates access routines to
 the information hidden in it.  Also, you may want to have a look at the
 added methods of a message:
@@ -44,78 +49,6 @@ added methods of a message:
  my @dest    = $message->destinations;
 
  my $other   = $message->get('Reply-To');
-
-=section Header fields
-
-This implementation follows the guidelines of rfc2822 as close as possible,
-and may there produce a different output than implementations based on
-the obsolete rfc822.  However, the old output will still be accepted.
-
-A head line is composed of two parts separated by a color (C<:>).  Before
-the colon is called the I<name> of the field, and the right part the
-I<body>.  In some lines, the body contains a semicolon (C<;>) which
-indicates the start of something refered to as I<comment>.  This comment
-is often used to contain I<attributes>: key-value pairs of information,
-which is of course much more important than simply accompanying text.
-
-=section Folding
-
-Many implementations of mail transfer agents (MTAs) have problems with
-lines longer than 998 characters.  Many implementations of mail user agents
-(MUAs) can not handle lines longer than 78 characters well.  MTAs are
-programs which implement the SMTP protocol, like the C<sendmail> command
-or a web-browser which sends e-mail.  MUAs are programs which people use to
-read their e-mail, like C<mutt>, C<elm>, C<pine>, or also a web-browser.
-
-To avoid the problems with long lines, head lines are often folded into
-lines of 78 characters maximum.  Longer lines are wrapped, in RFC-terms
-I<folded>.  On some places in the body of a field, a line-feed is
-inserted.  The remaining part of the body is on the next line, which
-MUST be preceeded by at least one white-space (tab or blank)
-
-Some fields are called C<structured>: their structure is well-defined by
-the RFC.  In these fields, their is more flexibility where folding may
-take place.  Other fields only permit folding on white-spaces.
-
-=section Performance consideration
-
-C<Mail::Message::Field> is the only object in the Mail::Box suite
-which is not derived from a C<Mail::Reporter>.  The consideration is
-that fields are so often created, and such a small objects at the
-same time, that setting-up a logging for each of the objects is relatively
-expensive and not really useful.
-
-On the other hand: full understanding of fields is really, really
-expensive.  It should be used as rarely as possible to keep a little
-performance in your program.
-
-For this performance reason only, the are three types of fields: the
-fast, the flexible, and the full understander:
-
-=over 4
-
-=item * M<Mail::Message::Field::Flex>
-
-The flexible implementation uses a has to store the data.  The M<new()>
-and C<init> are split, so this object is extensible.
-
-=item * M<Mail::Message::Field::Fast>
-
-The fast implementation uses an array to store the same data.  That
-will be faster.  Furthermore, it is less extensible because the object
-creation and initiation is merged into one method.
-
-=item * M<Mail::Message::Field::Full>
-
-With a full implementation of all applicable RFCs (about 5), the best
-understanding of the fields is reached.  However, this comes with
-a serious memory and performance penalty.  These objects are created
-from fast or flex header fields when M<Mail::Message::study()> or
-M<Mail::Message::Head::study()> are called.
-
-=back
-
-As user of the object, there is not visible difference.
 
 =chapter OVERLOADED
 
@@ -660,7 +593,12 @@ sub toDate(@)
 {   my $class = shift;
     use POSIX 'strftime';
     my @time  = @_== 0 ? localtime() : @_==1 ? localtime(shift) : @_;
-    strftime "$weekday[$time[6]], %d $month[$time[4]] %Y %H:%M:%S %z", @time;
+    my $time  = strftime("$weekday[$time[6]], %d $month[$time[4]] %Y %H:%M:%S %z", @time);
+
+    Date::Format::Generic->strftime($time, @time)
+       if $time =~ m/\%z/;
+
+    $time; 
 }
 
 #------------------------------------------
@@ -678,6 +616,29 @@ e-mail addresses found in this header line.
 =cut
 
 sub addresses() { Mail::Address->parse(shift->unfoldedBody) }
+
+#------------------------------------------
+
+=method study
+
+Study the header field in detail: turn on the full parsing and detailed
+understanding of the content of the fields.  M<Mail::Message::Field::Fast>
+and M<Mail::Message::Field::Fast> objects will be transformed into any
+M<Mail::Message::Field::Full> object.
+
+=examples
+
+ my $subject = $msg->head->get('subject')->study;
+ my $subject = $msg->head->study('subject');  # same
+ my $subject = $msg->study('subject');        # same
+
+=cut
+
+sub study()
+{   my $self = shift;
+    require Mail::Message::Field::Full;
+    Mail::Message::Field::Full->new($self->folded);
+}
 
 #------------------------------------------
 
@@ -880,7 +841,271 @@ sub unfold($)
 
 #------------------------------------------
 
-=section Error handling
+=chapter DETAILS
+
+=section Field syntax
+
+Fields are stored in the header of a message, which are represented by
+M<Mail::Message::Head> objects. A field is a combination of a I<name>,
+I<body>, and I<attributes>.  Especially the term "body" is cause for
+confusion: sometimes the attributes are considered to be part of the body.
+
+The name of the field is followed by a colon ("C<:>", not preceeded by
+blanks, but followed by one blank).  Each attribute is preceeded by
+a separate semi-colon ("C<;>").  Names of fields are case-insensitive and
+cannot contain blanks.
+
+=examples of fields
+
+Correct fields:
+
+ Field: hi!
+ Content-Type: text/html; charset=latin1
+ 
+Incorrect fields, but accepted:
+
+ Field : wrong, blank before colon
+ Field:                 # wrong, empty
+ Field:not nice, blank preferred after colon
+ One Two: wrong, blank in name
+
+=subsection Folding fields
+
+Fields which are long can be folded to span more than one line.  The real
+limit for lines in messages is only at 998 characters, however such long
+lines are not easy to read without support of an application.  Therefore
+rfc2822 (which defines the message syntax) specifies explicitly that
+field lines can be re-formatted into multiple sorter lines without change
+of meaning, by adding new-line characters to any field before any blank or
+tab.
+
+Usually, the lines are reformatted to create lines which are 78 characters
+maximum. Some applications try harder to fold on nice spots, like before
+attributes.  Especially the C<Received> field is often manually folded into
+some nice layout.  In most cases however, it is preferred to produce lines
+which are as long as possible but max 78.
+
+BE WARNED that all fields can be subjected to folding, and that you usually
+want the unfolded value.
+
+=examples of field folding
+
+ Subject: this is a short line, and not folded
+
+ Subject: this subject field is much longer, and therefore
+  folded into multiple
+  lines, although one more than needed.
+
+=subsection Structured fields
+
+The rfc2822 describes a large number of header fields explicitly.  These
+fields have a defined meaning.  For some of the fields, like the C<Subject>
+field, the meaning is straight forward the contents itself.  These fields
+are the I<Unstructured Fields>.
+
+Other fields have a well defined internal syntax because their content is
+needed by e-mail applications. For instance, the C<To> field contains
+addresses which must be understood by all applications in the same way.
+These are the I<Structured Fields>, see M<isStructured()>.
+
+=subsection Comments in fields
+
+Stuctured fields can contain comments, which are pieces of text enclosed in
+parenthesis.  These comments can be placed close to anywhere in the line
+and must be ignored be the application.  Not all applications are capable
+of handling comments correctly in all circumstances.
+
+=examples of field comments
+
+ To: mailbox (Mail::Box mailinglist) <mailbox@overmeer.net>
+ Date: Thu, 13 Sep 2001 09:40:48 +0200 (CEST)
+ Subject: goodbye (was: hi!)
+
+On the first line, the text "Mail::Box mailinglist" is used as comment.
+Be warned that rfc2822 explicitly states that comments in e-mail address
+specifications should not be considered to contain any usable information.
+
+On the second line, the timezone is specified as comment. The C<Date>
+field format has no way to indicate the timezone of the sender, but only
+contains the timezone difference to UTC, however one could decide to add
+this as comment.  Application must ignore this data because the C<Date>
+field is structured.
+
+The last field is unstructured.  The text between parantheses is an
+integral part of the subject line.
+
+=section Getting a field
+
+As many programs as there are handling e-mail, as many variations on
+accessing the header information are requested.  Be careful which way
+you access the data: read the variations described here and decide
+which solution suites your needs best.
+
+=subsection Using get() field
+
+The C<get()> interface is copied from other Perl modules which can
+handle e-mail messages.  Many applications which simply replace
+M<Mail::Internet> objects by M<Mail::Message> objects will work
+without modification.
+
+There is more than one get method.  The exact results depend on which
+get you use.  When M<Mail::Message::get()> is called, you will get the
+unfolded, stripped from comments, stripped from attributes contents of
+the field as B<string>.  Character-set encodings will still be in the
+string.  If the same fieldname appears more than once in the header,
+only the last value is returned.
+
+When M<Mail::Message::Head::get()> is called in scalar context, the
+the last field with the specified name is returned as field B<object>.
+This object strinigfies into the unfolded contents of the field, including
+attributes and comments.  In list context, all appearances of the field
+in the header are returned as objects.
+
+BE WARNED that some lines seem unique, but are not according to the
+official rfc.  For instance, C<To> fields can appear more than once.
+If your program calls C<get('to')> in scalar context, some information
+is lost.
+
+=examples of using get()
+
+ print $msg->get('subject') || 'no subject';
+ print $msg->head->get('subject') || 'no subject';
+
+ my @to = $msg->head->get('to');
+
+=subsection Using study() field
+
+As the name C<study> already implies, this way of accessing the fields is
+much more thorough but also slower.  The C<study> of a field is like a
+C<get>, but provides easy access to the content of the field and handles
+character-set decoding correctly.
+
+The M<Mail::Message::study()> method will only return the last field
+with that name as object.  M<Mail::Message::Head::study()> and
+M<Mail::Message::Field::study()> return all fields when used in list
+context.
+
+=examples of using study()
+
+ print $msg->study('subject') || 'no subject';
+ my @rec  = $msg->head->study('Received');
+
+ my $from = $msg->head->get('From')->study;
+ my $from = $msg->head->study('From');  # same
+ my @addr = $from->addresses;
+
+=subsection Resent groups
+
+Some fields belong together in a group of fields.  For instance, a set
+of lines is used to define one step in the mail transport process.  Each
+step adds a C<Received> line, and optionally some C<Resent-*> lines and
+C<Return-Path>.  These groups of lines shall stay together and in order
+when the message header is processed.
+
+The C<Mail::Message::Head::ResentGroup> object simplifies the access to
+these related fields.  These resent groups can be deleted as a whole,
+or correctly constructed.
+
+=examples of using resent groups
+
+ my $rgs = $msg->head->resentGroups;
+ $rgs[0]->delete if @rgs;
+
+ $msg->head->removeResentGroups;
+
+=section The field's data
+
+There are many ways to get the fields info as object, and there are also
+many ways to process this data within the field.
+
+=subsection Access to the field
+
+=over 4
+
+=item * M<string()>
+
+Returns the text of the body exactly as will be printed to file when
+M<print()> is called, so name, main body, and attributes.
+
+=item * M<foldedBody()>
+
+Returns the text of the body, like M<string()>, but without the name of
+the field.
+
+=item * M<unfoldedBody()>
+
+Returns the text of the body, like M<foldedBody()>, but then with all
+new-lines removed.  This is the normal way to get the content of
+unstructured fields.  Character-set encodings will still be in place.
+Fields are stringified into their unfolded representation.
+
+=item * M<stripCFWS()>
+
+Returns the text of structured fields, where new-lines and comments are
+removed from the string.  This is a good start for parsing the field,
+for instance to find e-mail addresses in them.
+
+=item * M<Mail::Message::Field::Full::decodedBody()>
+
+Studied fields can produce the unfolded text decoded into utf8 strings.
+This is an expensive process, but the only correct way to get the field's
+data.  More useful for people who are not living in ASCII space.
+
+=item * Studied fields
+
+Studied fields have powerful methods to provide ways to access and produce
+the contents of (structured) fields exactly as the involved rfcs prescribe.
+
+=back
+
+=subsection Using simplified field access
+
+Some fields are accessed that often that there are support methods to
+provide simplified access.  All these methods are called upon a message
+directly.
+
+=examples of simplified field access
+
+ print $message->subject;
+ print $message->get('subject') || '';  # same
+
+ my @from = $message->from; # returns addresses
+ $message->reply->send if $message->sender;
+
+The C<sender> method will return the address specified in the C<Sender>
+field, or the first named in the C<From> field.  It will return C<undef>
+in case no address is known.
+
+=section Field class implementation
+
+For performance reasons only, there are three types of fields: the
+fast, the flexible, and the full understander:
+
+=over 4
+
+=item * M<Mail::Message::Field::Fast>
+
+C<Fast> objects are not derived from a C<Mail::Reporter>.  The consideration
+is that fields are so often created, and such a small objects at the same
+time, that setting-up a logging for each of the objects is relatively
+expensive and not really useful.
+The fast field implementation uses an array to store the data: that
+will be faster than using a hash.  Fast fields are not easily inheritable,
+because the object creation and initiation is merged into one method.
+
+=item * M<Mail::Message::Field::Flex>
+
+The flexible implementation uses a hash to store the data.  The M<new()>
+and C<init> methods are split, so this object is extensible.
+
+=item * M<Mail::Message::Field::Full>
+
+With a full implementation of all applicable RFCs (about 5), the best
+understanding of the fields is reached.  However, this comes with
+a serious memory and performance penalty.  These objects are created
+from fast or flex header fields when M<study()> is called.
+
+=back
 
 =cut
 

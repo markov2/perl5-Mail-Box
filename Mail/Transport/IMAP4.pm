@@ -5,9 +5,11 @@ use warnings;
 package Mail::Transport::IMAP4;
 use base 'Mail::Transport::Receive';
 
+my $CRLF = $^O eq 'MSWin32' ? "\n" : "\015\012";
+
 =chapter NAME
 
-Mail::Transport::IMAP4 - handle messages via the IMAP4 protocol
+Mail::Transport::IMAP4 - proxy to Mail::IMAPClient
 
 =chapter SYNOPSIS
 
@@ -17,17 +19,20 @@ Mail::Transport::IMAP4 - handle messages via the IMAP4 protocol
 
 =chapter DESCRIPTION
 
-UNDER DEVELOPMENT: Cannot be used yet.
+****** UNDER DEVELOPMENT *****, cannot be used (yet)
+
 
 The IMAP4 protocol is quite complicated: it is feature rich and allows
 verious asynchronous actions.  The main document describing IMAP is
-rfc2060.
+rfc3501 (which obsoleted the original specification of protocol 4r1
+in rfc2060 in March 2003).
 
 This package, as part of Mail::Box, does not implement the actual
-protocol itself, but uses M<Mail::IMAPClient> to do the work.  The task
-for this package is to hide as much differences between that module's
-interface and the common M<Mail::Box> folder types.  This package is used
-by M<Mail::Box::IMAP4> for the real work.
+protocol itself but uses M<Mail::IMAPClient> to do the work.  The task
+for this package is to hide as many differences between that module's
+interface and the common M<Mail::Box> folder types.  Multiple
+M<Mail::Box::IMAP4> folders can share one M<Mail::Transport::IMAP4>
+connection.
 
 =chapter METHODS
 
@@ -38,12 +43,24 @@ multiple folders for a single user, which means that connections
 may get shared.  This is sharing is hidden for the user.
 
 =default port 143
+=default via  C<'imap'>
 
-=option  authenticate 'KERBEROS_V4'|'GSSAPI'|'SKEY'|'AUTO'
+=option  authenticate 'PLAIN'|'CRAM-MD5'|'NTLM'|'AUTO'|CODE
 =default authenticate C<'AUTO'>
 
-Authenthication method.  RFC1731 defines a few authentication methods
-to be (optionally) used with IMAP. NOT IMPLEMENTED YET.
+Authenthication method.  C<AUTO> will try all known methods.
+The NTLM authentication requires M<Authen::NTLM> to be installed.  If this
+module is not installed, it will be skipped by AUTO.
+
+You can also specify your own mechan$^O eq 'MSWin32' ? "\n" : ism as CODE reference.  The
+M<Mail::IMAPClient> documentation refers to this code as I<Authcallback>.
+In case you have your own implementation, please consider to contribute
+it to Mail::Box.
+
+=error module Authen::NTLM is not installed
+You try to establish an IMAP4 connection which explicitly uses NTLM
+authentication, but the optional M<Authen::NTLM>, which implements this is
+not installed on your system.
 
 =cut
 
@@ -54,7 +71,11 @@ sub init($)
 
     $self->SUPER::init($args) or return;
 
-    $self->{MTP_auth}    = $args->{authenticate} || 'AUTO';
+    my $auth = $self->{MTI_auth} = $args->{authenticate} || 'AUTO';
+    eval "require Authen::NTML";
+    $self->log(ERROR => 'module Authen::NTLM is not installed')
+       if $auth eq 'NTLM' && $@;
+
     return unless $self->socket;   # establish connection
 
     $self;
@@ -89,7 +110,7 @@ of all ID's which are known by the server on this moment.
 sub ids(;@)
 {   my $self = shift;
     return unless $self->socket;
-    wantarray ? @{$self->{MTP_n2uidl}} : $self->{MTP_n2uidl};
+    wantarray ? @{$self->{MTI_n2uidl}} : $self->{MTI_n2uidl};
 }
 
 #------------------------------------------
@@ -113,7 +134,7 @@ sub messages()
     $self->log(ERROR =>"Cannot get the messages of imap4 via messages()."), return ()
        if wantarray;
 
-    $self->{MTP_messages};
+    $self->{MTI_messages};
 }
 
 #------------------------------------------
@@ -124,7 +145,7 @@ Returns the total number of octets used by the mailbox on the remote server.
 
 =cut
 
-sub folderSize() { shift->{MTP_total} }
+sub folderSize() { shift->{MTI_total} }
 
 #------------------------------------------
 
@@ -151,7 +172,7 @@ sub header($;$)
     my $socket    = $self->socket      or return;
     my $n         = $self->id2n($uidl) or return;
 
-    $self->sendList($socket, "TOP $n $bodylines\n");
+    $self->sendList($socket, "TOP $n $bodylines$CRLF");
 }
 
 #------------------------------------------
@@ -175,16 +196,16 @@ sub message($;$)
 
     my $socket  = $self->socket      or return;
     my $n       = $self->id2n($uidl) or return;
-    my $message = $self->sendList($socket, "RETR $n\n");
+    my $message = $self->sendList($socket, "RETR $n$CRLF");
 
     return unless $message;
 
     # Some IMAP4 servers add a trailing empty line
     pop @$message if @$message && $message->[-1] =~ m/^[\012\015]*$/;
 
-    return if exists $self->{MTP_nouidl};
+    return if exists $self->{MTI_nouidl};
 
-    $self->{MTP_fetched}{$uidl} = undef; # mark this ID as fetched
+    $self->{MTI_fetched}{$uidl} = undef; # mark this ID as fetched
     $message;
 }
 
@@ -203,15 +224,15 @@ sub messageSize($)
     return unless $uidl;
 
     my $list;
-    unless($list = $self->{MTP_n2length})
+    unless($list = $self->{MTI_n2length})
     {   my $socket = $self->socket or return;
-        my $raw = $self->sendList($socket, "LIST\n") or return;
+        my $raw = $self->sendList($socket, "LIST$CRLF") or return;
         my @n2length;
         foreach (@$raw)
         {   m#^(\d+) (\d+)#;
             $n2length[$1] = $2;
         }   
-        $self->{MTP_n2length} = $list = \@n2length;
+        $self->{MTI_n2length} = $list = \@n2length;
     }
 
     my $n = $self->id2n($uidl) or return;
@@ -230,7 +251,7 @@ disconnected or the last reference to the object goes out of scope.
 =cut
 
 sub deleted($@)
-{   my $dele = shift->{MTP_dele} ||= {};
+{   my $dele = shift->{MTI_dele} ||= {};
     (shift) ? @$dele{ @_ } = () : delete @$dele{ @_ };
 }
 
@@ -246,7 +267,7 @@ fetched().
 
 sub deleteFetched()
 {   my $self = shift;
-    $self->deleted(1, keys %{$self->{MTP_fetched}});
+    $self->deleted(1, keys %{$self->{MTI_fetched}});
 }
 
 #------------------------------------------
@@ -284,8 +305,8 @@ See also deleteFetched().
 
 sub fetched(;$)
 {   my $self = shift;
-    return if exists $self->{MTP_nouidl};
-    $self->{MTP_fetched};
+    return if exists $self->{MTI_nouidl};
+    $self->{MTI_fetched};
 }
 
 #------------------------------------------
@@ -299,7 +320,7 @@ is returned.
 
 =cut
 
-sub id2n($;$) { shift->{MTP_uidl2n}{shift()} }
+sub id2n($;$) { shift->{MTI_uidl2n}{shift()} }
 
 #------------------------------------------
 
@@ -317,13 +338,13 @@ by a normal user of this class.
 Returns a connection to the IMAP4 server.  If there was no connection yet,
 it will be created transparently.  If the connection with the IMAP4 server
 was lost, it will be reconnected and the assures that internal
-state information (STAT and UIDL) is up-to-date in the object.
+state information (STAT and UID) is up-to-date in the object.
 
 If the contact to the server was still present, or could be established,
-an IO::Socket::INET object is returned.  Else, C<undef> is returned and
+an M<IO::Socket::INET> object is returned.  Else, C<undef> is returned and
 no further actions should be tried on the object.
 
-=error Cannot re-connect reliably to server which doesn't support UIDL.
+=error Cannot re-connect reliably to server which doesn't support UID.
 
 The connection to the remote IMAP4 was lost, and cannot be re-established
 because the server's protocol implementation lacks the necessary information.
@@ -336,7 +357,7 @@ sub socket(;$)
     my $socket = $self->_connection;
     return $socket if $socket;
 
-    unless(exists $self->{MTP_nouidl})
+    unless(exists $self->{MTI_nouidl})
     {   $self->log(ERROR =>
            "Can not re-connect reliably to server which doesn't support UIDL");
         return;
@@ -347,7 +368,7 @@ sub socket(;$)
 
 # Save socket in the object and return it
 
-    $self->{MTP_socket} = $socket;
+    $self->{MTI_socket} = $socket;
 }
 
 #------------------------------------------
@@ -410,7 +431,7 @@ sub sendList($$)
     my @list;
     local $_; # make sure we don't spoil it for the outside world
     while(<$socket>)
-    {   last if m#^\.\r?\n#s;
+    {   last if m#^\.\r?$CRLF#s;
         s#^\.##;
 	push @list, $_;
     }
@@ -426,25 +447,16 @@ sub OK($;$) { substr(shift || '', 0, 3) eq '+OK' }
 
 sub _connection(;$)
 {   my $self = shift;
+   my $socket = $self->{MTI_socket} or return undef;
 
-# Check if we (still) got a connection
-
-    my $socket;
-    my $wasconnected;
-
-    if($wasconnected = $socket = $self->{MTP_socket})
-    {   my $error = 1;
-        if(eval {print $socket "NOOP\n"})
-        {   my $response = <$socket>;
-            $error = !defined($response); # anything will indicate it's alive
-        }
-
-        if($error)
-	{   undef $socket;
-            delete $self->{MTP_socket};
-        }
+    # Check if we (still) got a connection
+    eval {print $socket "NOOP$CRLF"};
+    if($@ || ! <$socket> )
+    {   delete $self->{MTP_socket};
+        return undef;
     }
-    return $socket if $socket;
+
+    $socket;
 }
 
 #------------------------------------------
@@ -490,7 +502,7 @@ sub login(;$)
 # Check if it looks like a POP server
 
     my $connected;
-    my $authenticate = $self->{MTP_auth};
+    my $authenticate = $self->{MTI_auth};
     my $welcome = <$socket>;
     unless(OK($welcome))
     {   $self->log(ERROR =>
@@ -503,7 +515,7 @@ sub login(;$)
     if($authenticate eq 'AUTO' or $authenticate eq 'APOP')
     {   if($welcome =~ m#^\+OK (<\d+\.\d+\@[^>]+>)#)
         {   my $md5 = Digest::MD5::md5_hex($1.$password);
-            my $response = $self->send($socket, "APOP $username $md5\n")
+            my $response = $self->send($socket, "APOP $username $md5$CRLF")
 	     or return;
             $connected = OK($response);
         }
@@ -513,9 +525,9 @@ sub login(;$)
 
     unless($connected)
     {   if($authenticate eq 'AUTO' or $authenticate eq 'LOGIN')
-        {   my $response = $self->send($socket, "USER $username\n") or return;
+        {   my $response = $self->send($socket, "USER $username$CRLF") or return;
             if(OK($response))
-	    {   $response = $self->send($socket, "PASS $password\n") or return;
+	    {   $response = $self->send($socket, "PASS $password$CRLF") or return;
                 $connected = OK($response);
             }
         }
@@ -539,44 +551,44 @@ sub _status($;$)
 
 # Check if we can do a STAT
 
-    my $stat = $self->send($socket, "STAT\n") or return;
+    my $stat = $self->send($socket, "STAT$CRLF") or return;
     if($stat =~ m#^\+OK (\d+) (\d+)#)
-    {   @$self{qw(MTP_messages MTP_total)} = ($1,$2);
+    {   @$self{qw(MTI_messages MTI_total)} = ($1,$2);
     }
     else
-    {   delete $self->{MTP_messages};
-        delete $self->{MTP_size};
+    {   delete $self->{MTI_messages};
+        delete $self->{MTI_size};
         $self->log(ERROR => "Could not do a STAT");
         return;
     }
 
 # Check if we can do a UIDL
 
-    my $uidl = $self->send($socket, "UIDL\n") or return;
-    $self->{MTP_nouidl} = undef;
-    delete $self->{MTP_uidl2n}; # lose the reverse lookup: UIDL -> number
+    my $uidl = $self->send($socket, "UIDL$CRLF") or return;
+    $self->{MTI_nouidl} = undef;
+    delete $self->{MTI_uidl2n}; # lose the reverse lookup: UIDL -> number
     if(OK($uidl))
     {   my @n2uidl;
-        $n2uidl[$self->{MTP_messages}] = undef; # optimization, sets right size
+        $n2uidl[$self->{MTI_messages}] = undef; # optimization, sets right size
         while(<$socket>)
         {   last if substr($_, 0, 1) eq '.';
-            s#\r?\n$##; m#^(\d+) (.+)#;
+            s#\r?$CRLF$##; m#^(\d+) (.+)#;
             $n2uidl[$1] = $2;
         }
         shift @n2uidl; # make message 1 into index 0
-        $self->{MTP_n2uidl} = \@n2uidl;
-        delete $self->{MTP_n2length};
-        delete $self->{MTP_nouidl};
+        $self->{MTI_n2uidl} = \@n2uidl;
+        delete $self->{MTI_n2length};
+        delete $self->{MTI_nouidl};
     }
 
 # We can't do UIDL, we need to fake it
 
     else
-    {   my $list = $self->send($socket, "LIST\n") or return;
+    {   my $list = $self->send($socket, "LIST$CRLF") or return;
         my @n2length;
         my @n2uidl;
         if(OK($list))
-        {   my $messages = $self->{MTP_messages};
+        {   my $messages = $self->{MTI_messages};
             my ($host, $port) = $self->remoteHost;
             $n2length[$messages] = $n2uidl[$messages] = undef; # optimization
             while(<$socket>)
@@ -587,16 +599,16 @@ sub _status($;$)
             }
             shift @n2length; shift @n2uidl; # make 1st message in index 0
         }
-        $self->{MTP_n2length} = \@n2length;
-        $self->{MTP_n2uidl} = \@n2uidl;
+        $self->{MTI_n2length} = \@n2length;
+        $self->{MTI_n2uidl} = \@n2uidl;
     }
 
     my $i = 1;
     my %uidl2n;
-    foreach(@{$self->{MTP_n2uidl}})
+    foreach(@{$self->{MTI_n2uidl}})
     {   $uidl2n{$_} = $i++;
     }
-    $self->{MTP_uidl2n} = \%uidl2n;
+    $self->{MTI_uidl2n} = \%uidl2n;
     1;
 }
 
@@ -641,17 +653,20 @@ sub askSubfoldersOf($)
 
 #------------------------------------------
 
-=method getFlag ID, LABEL
+=method getFlags ID
 
-Returns the value of the LABEL for the message with this ID.
+Returns the values of all flags which are related to the message with the
+specified ID.  These flags are translated into the names which are
+standard for the Mail::Box suite
 
 =cut
 
-my %systemflags =             # all other flags should be passed unharmed
+# Explanation in Mail::Box::IMAP::Message chapter DETAILS
+my %systemflags =
  ( '\Seen'     => 'seen'
  , '\Answered' => 'replied'
  , '\Flagged'  => 'flagged'
- , '\Deleted'  => 'deleted'   # requires special treatent: call deleted()
+ , '\Deleted'  => 'deleted'
  , '\Draft'    => 'draft'
  , '\Recent'   => 'old'       #  NOT old
  );
@@ -691,7 +706,7 @@ terminated.
 sub DESTROY()
 {   my $self = shift;
     $self->SUPER::DESTROY;
-    $self->disconnect if $self->{MTP_socket}; # only do if not already done
+    $self->disconnect if $self->{MTI_socket}; # only do if not already done
 }
 
 1;

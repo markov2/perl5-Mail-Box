@@ -70,15 +70,26 @@ sub isDummy()    { 1 }
 
 #-------------------------------------------
 
+=method head ...
+
+=error You cannot take the head/body of a dummy message
+Dummy messages are place-holders in message threads: the thread detected
+the existence of the message, because it found the message-id in a
+Reply-To or References field, however it did not find the header and
+body of the message yet.  Use M<isDummy()> to check whether the thread
+node returned a dummy or not.
+
+=cut
+
 sub head()
-{    shift->log(INTERNAL => "You cannot take the head of a dummy");
+{    shift->log(ERROR => "You cannot take the head of a dummy message");
      ();
 }
 
 #-------------------------------------------
 
 sub body()
-{    shift->log(INTERNAL => "You cannot take the body of a dummy");
+{    shift->log(ERROR => "You cannot take the body of a dummy message");
      ();
 }
 

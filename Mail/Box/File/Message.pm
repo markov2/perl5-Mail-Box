@@ -116,8 +116,6 @@ sub fromLine(;$)
 
 =section Internals
 
-#-------------------------------------------
-
 =method readFromParser PARSER
 
 Read one message from a M<Mail::Box::File> based folder, including the

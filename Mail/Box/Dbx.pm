@@ -234,11 +234,18 @@ sub parser()
 
 =chapter DETAILS
 
-=section Accessing dbx folders
+=section How DBX folders work
 
 DBX files are create by Outlook Express.  I can not tell you too much
 about it, because me (as author) never use Windows or MicroSoft tools.
 Still, it is possible to access some Outlook created folders from Unix.
+
+The folder structure for dbx starts with a single C<Folders.dbx>
+file.  This folder contains names of sub-folders.  Each folder can
+either contain messages, or contains sub-folders.  Combinations are
+not possible.
+
+=section This implementation
 
 The ol2mbox project (see L<http://sourceforge.net/project/ol2mbox/>)
 has created a C<libdbx> which can read dbx files using nearly any
@@ -247,15 +254,8 @@ to Unix/Linux and the read all the messages from it.
 
 Tassilo von Parseval wrote a Perl wrapper around this C-library,
 and distributes it as M<Mail::Transport::Dbx>.  Although it named in
-one the Mail::Box namespaces, it is a separate product, because it
+one the MailBox namespaces, it is a separate product, because it
 requires a C compiler.  Besides, the module will have its own life.
-
-=section How DBX folders work
-
-The folder structure for dbx starts with a single C<Folders.dbx>
-file.  This folder contains names of sub-folders.  Each folder can
-either contain messages, or contains sub-folders.  Combinations are
-not possible.
 
 =section Converting DBX folders to MBOX
 

@@ -92,7 +92,7 @@ for the mail boxes
                      Mail::Message
 
 
-=section The Manager:  
+=section The Manager
 
 The mailbox manager M<Mail::Box::Manager> encapsulates folder management
 issues. It maintains a set of open mail folders (mailboxes), and provides

@@ -18,7 +18,7 @@ my $distribution = '/tmp/MailBox';
 ##### Other constants
 my $module       = 'Mail::Box';
 my $name         = 'E-mail handling with Mail::Box';
-my $version      = '2.042';         # Change this for each release!!!
+my $version      = '2.043';         # Change this for each release!!!
 
 my $pod_format   = 'pod2';
 #my $pod_format  = 'pod';

@@ -33,43 +33,6 @@ B<ATTENTION!!!> most functionality about e-mail headers is described
 in M<Mail::Message::Head::Complete>, which is a matured header object.
 Other kinds of headers will be translated to that type when time comes.
 
-The header of a MIME message object contains a set of lines, which are
-called I<fields> (by default represented by M<Mail::Message::Field>
-objects).  Dependent on the situation, the knowledge about the fields can
-be in one of three situations, each represented by a sub-class of this
-module:
-
-=over 4
-
-=item * M<Mail::Message::Head::Complete>
-
-In this case, it is sure that all knowledge about the header is available.
-When you M<get()> information from the header and it is not there, it will
-never be there.
-
-=item * M<Mail::Message::Head::Subset>
-
-There is no certainty whether all header lines are known (probably not).  This
-may be caused as result of reading a fast index file, as described in
-M<Mail::Box::MH::Index>.  The object is automatically transformed
-into a M<Mail::Message::Head::Complete> when all header lines must be known.
-
-=item * M<Mail::Message::Head::Partial>
-
-A partial header is like a subset header: probably the header is incomplete.
-The means that you are not sure whether a M<get()> for a field fails because
-the field is not a part of the message or that it fails because it is not
-yet known to the program.  Where the subset header knows where to get the
-other fields, the partial header does not know it.  It cannot hide its
-imperfection.
-
-=item * M<Mail::Message::Head::Delayed>
-
-In this case, there is no single field known.  Access to this header will
-always trigger the loading of the full header.
-
-=back
-
 On this page, the general methods which are available on any header are
 described.  Read about differences in the sub-class specific pages.
 
@@ -365,6 +328,27 @@ sub setField($$) {shift->add(@_)} # compatibility
 
 #------------------------------------------
 
+=method study NAME [,INDEX]
+
+Like M<get()>, but puts more effort in understanding the contents of the
+field.  M<Mail::Message::Field::study()> will be called for the field
+with the specified FIELDNAME, which returns M<Mail::Message::Field::Full>
+objects. In scalar context only the last field with that name is returned.
+When an INDEX is specified, that element is returned.
+
+=cut
+
+sub study($;$)
+{   my $self = shift;
+    return map {$_->study} $self->get(@_)
+       if wantarray;
+
+    my $got  = $self->get(@_);
+    defined $got ? $got->study : undef;
+}
+
+#------------------------------------------
+
 =section About the body
 
 =method guessBodySize
@@ -527,6 +511,59 @@ sub addNoRealize($)
 #------------------------------------------
 
 =section Error handling
+
+=chapter DETAILS
+
+=section Ordered header fields
+
+Many Perl implementations make a big mistake by disturbing the order
+of header fields.  For some fields (especially the I<resent groups>,
+see M<Mail::Message::Head::ResentGroup>) the order shall be
+maintained.
+
+MailBox will keep the order of the fields as they were found in the
+source.  When your add a new field, it will be added at the end.  If
+your replace a field with a new value, it will stay in the original
+order.
+
+=section Head class implementation
+
+The header of a MIME message object contains a set of lines, which are
+called I<fields> (by default represented by M<Mail::Message::Field>
+objects).  Dependent on the situation, the knowledge about the fields can
+be in one of three situations, each represented by a sub-class of this
+module:
+
+=over 4
+
+=item * M<Mail::Message::Head::Complete>
+
+In this case, it is sure that all knowledge about the header is available.
+When you M<get()> information from the header and it is not there, it will
+never be there.
+
+=item * M<Mail::Message::Head::Subset>
+
+There is no certainty whether all header lines are known (probably not).  This
+may be caused as result of reading a fast index file, as described in
+M<Mail::Box::MH::Index>.  The object is automatically transformed
+into a M<Mail::Message::Head::Complete> when all header lines must be known.
+
+=item * M<Mail::Message::Head::Partial>
+
+A partial header is like a subset header: probably the header is incomplete.
+The means that you are not sure whether a M<get()> for a field fails because
+the field is not a part of the message or that it fails because it is not
+yet known to the program.  Where the subset header knows where to get the
+other fields, the partial header does not know it.  It cannot hide its
+imperfection.
+
+=item * M<Mail::Message::Head::Delayed>
+
+In this case, there is no single field known.  Access to this header will
+always trigger the loading of the full header.
+
+=back
 
 =cut
 

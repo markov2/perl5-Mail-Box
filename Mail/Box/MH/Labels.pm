@@ -219,42 +219,6 @@ sub print($@)
 
 =section Error handling
 
-=chapter DETAILS
-
-=section MH labels
-
-Typically, the file which contains the labels is called C<.mh_sequences>.
-The MH messages are numbered from C<1>.  As example content for
-C<.mh_sequences>:
-
- cur: 93
- unseen: 32 35-56 67-80
-
-To generalize labels on messages, two are treated specially:
-
-=over 4
-
-=item * cur
-
-The C<cur> specifies the number of the message where the user stopped
-reading mail from this folder at last access.  Internally in these
-modules referred to as label C<current>.
-
-=item * unseen
-
-With C<unseen> is listed which message was never read.
-This must be a mistake in the design of MH: it must be a source of
-confusion.  People should never use labels with a negation in the
-name:
-
- if($seen)           if(!$unseen)    #yuk!
- if(!$seen)          if($unseen)
- unless($seen)       unless($unseen) #yuk!
-
-So: label C<unseen> is translated into C<seen> for internal use.
-
-=back
-
 =cut
 
 1;

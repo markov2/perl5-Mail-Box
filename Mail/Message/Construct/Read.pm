@@ -3,6 +3,8 @@ use strict;
 
 package Mail::Message;
 
+use Mail::Box::FastScalar;
+
 =chapter NAME
 
 Mail::Message::Construct::Read - read a Mail::Message from a file handle
@@ -25,8 +27,8 @@ handle.
 =c_method read FILEHANDLE|SCALAR|REF-SCALAR|ARRAY-OF-LINES, OPTIONS
 
 Read a message from a FILEHANDLE, SCALAR, a reference to a SCALAR, or
-a reference to an array of LINES.  The OPTIONS are passed to the M<new()>
-of the message which is created.
+a reference to an array of LINES.  Most OPTIONS are passed to the M<new()>
+of the message which is created, but a few extra are defined.
 
 Please have a look at M<build()> and M<buildFromBody()> before thinking about
 this C<read> method.  Use this C<read> only when you have a file-handle
@@ -39,6 +41,19 @@ at stdin, so we only have a filehandle.  In this case, you are stuck
 with this method.  The message is preceeded by a line which can be used
 as message separator in mbox folders.  See the example how to handle
 that one.
+
+This method will remove C<Status> and C<X-Status> fields when they appear
+in the source, to avoid the risk that these fields accidentally interfere
+with your internal administration, which may have security implications.
+
+=option  strip_status_fields BOOLEAN
+=default strip_status_fields <true>
+
+Remove the C<Status> and C<X-Status> fields from the message after
+reading, to lower the risk that received messages from external
+sources interfere with your internal administration.  If you want
+fields not to be stripped (you would like to disable the stripping)
+you probably process folders yourself, which is a Bad Thing!
 
 =examples
 
@@ -62,39 +77,41 @@ that one.
 =cut
 
 sub read($@)
-{   my ($class, $from) = (shift, shift);
+{   my ($class, $from, %args) = @_;
     my ($filename, $file);
     my $ref       = ref $from;
 
-    require IO::Scalar;
-
     if(!$ref)
     {   $filename = 'scalar';
-        $file     = IO::Scalar->new(\$from);
+        $file     = Mail::Box::FastScalar->new(\$from);
     }
     elsif($ref eq 'SCALAR')
     {   $filename = 'ref scalar';
-        $file     = IO::Scalar->new($from);
+        $file     = Mail::Box::FastScalar->new($from);
     }
     elsif($ref eq 'ARRAY')
     {   $filename = 'array of lines';
         my $buffer= join '', @$from;
-        $file     = IO::Scalar->new(\$buffer);
+        $file     = Mail::Box::FastScalar->new(\$buffer);
     }
     elsif($ref eq 'GLOB')
     {   $filename = 'file (GLOB)';
         local $/;
         my $buffer= <$from>;
-        $file     = IO::Scalar->new(\$buffer);
+        $file     = Mail::Box::FastScalar->new(\$buffer);
     }
     elsif($ref && $from->isa('IO::Handle'))
     {   $filename = 'file ('.ref($from).')';
         my $buffer= join '', $from->getlines;
-        $file     = IO::Scalar->new(\$buffer);
+        $file     = Mail::Box::FastScalar->new(\$buffer);
     }
     else
     {   croak "Cannot read from $from";
     }
+
+    my $strip_status = exists $args{strip_status_fields}
+                     ? delete $args{strip_status_fields}
+                     : 1;
 
     require Mail::Box::Parser::Perl;  # not parseable by C parser
     my $parser = Mail::Box::Parser::Perl->new
@@ -103,7 +120,7 @@ sub read($@)
      , trusted   => 1
      );
 
-    my $self = $class->new(@_);
+    my $self = $class->new(%args);
     $self->readFromParser($parser);
     $parser->stop;
 
@@ -111,7 +128,8 @@ sub read($@)
     $head->set('Message-ID' => $self->messageId)
         unless $head->get('Message-ID');
 
-    $self->statusToLabels;
+    $head->delete('Status', 'X-Status') if $strip_status;
+
     $self;
 }
 

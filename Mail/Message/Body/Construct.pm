@@ -6,8 +6,6 @@ use warnings;
 package Mail::Message::Body;
 
 use Carp;
-use IO::Scalar;
-
 use Mail::Message::Body::String;
 use Mail::Message::Body::Lines;
 

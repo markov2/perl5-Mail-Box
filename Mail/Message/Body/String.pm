@@ -5,7 +5,7 @@ package Mail::Message::Body::String;
 use base 'Mail::Message::Body';
 
 use Carp;
-use IO::Scalar;
+use Mail::Box::FastScalar;
 
 =chapter NAME
 
@@ -124,7 +124,7 @@ sub lines()
 
 #------------------------------------------
 
-sub file() { IO::Scalar->new(shift->{MMBS_scalar}) }
+sub file() { Mail::Box::FastScalar->new(shift->{MMBS_scalar}) }
 
 #------------------------------------------
 

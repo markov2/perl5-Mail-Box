@@ -13,10 +13,9 @@ WriteMakefile
   , PREREQ_PM    =>
     { Date::Parse    => 0.0
     , File::Spec     => 0.7
-    , IO::Scalar     => 0.0
     , Errno          => 0.0
     , Scalar::Util   => 1.07
-    , Object::Realize::Later => 0.07
+    , Object::Realize::Later => 0.12
     , Mail::Address  => 0.0
     , MIME::Types    => 1.004
     , Sys::Hostname  => 0.0

@@ -350,4 +350,22 @@ sub shortString()
 
 #-------------------------------------------
 
+=section Cleanup
+
+=method destruct
+
+Removes most of the memory occupied by the message by detaching the header
+and body.  Then, the object changes into a M<Mail::Box::Message::Destructed>
+which will catch all attempts to access the header and body.  Be careful
+with the usage of this method.
+
+=cut
+
+sub destruct()
+{   require Mail::Box::Message::Destructed;
+    Mail::Box::Message::Destructed->coerce(shift);
+}
+
+#-------------------------------------------
+
 1;

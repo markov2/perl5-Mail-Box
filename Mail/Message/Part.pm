@@ -244,4 +244,25 @@ sub isDeleted() { shift->{MMP_deleted} }
 
 #------------------------------------------
 
+=section Cleanup
+
+=method destruct
+
+Message parts can not be destructed per part: only whole messages can
+be forcefully freed from memory.  Of course, you can M<delete()> separate
+parts, which only sets a flag not to write a part again.  Furthermore,
+you may cosider M<rebuild()> to get rit of deleted parts.
+
+=error You cannot destruct message parts, only whole messages
+Message parts can not be destructed per part: only whole messages can
+be forcefully freed from memory. Consider M<delete()> or M<rebuild()>.
+
+=cut
+
+sub destruct()
+{  my $self = shift;
+   $self->log(ERROR =>'You cannot destruct message parts, only whole messages');
+   undef;
+}
+
 1;
