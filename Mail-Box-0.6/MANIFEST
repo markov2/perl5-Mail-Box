@@ -1,8 +1,11 @@
+t/Tools.pm
 t/2mbox1r.t
 t/2mbox2w.t
 t/2mbox3d.t
 t/2mbox4a.t
-t/3mh1w.t
+t/3mh1r.t
+t/3mh2w.t
+t/3mh3a.t
 t/7mgr.t
 t/8tie.t
 t/9lock.t

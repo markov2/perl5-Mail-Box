@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl -w
 
 #
 # Test writing of mbox folders.

@@ -14,9 +14,8 @@ TO BE TESTED (and improved):
   nfs-lock
   sub-folders
   delete folders
-  appending to unopened folders
 
 TO BE IMPLEMENTED:
   Thread lint
   extracting large message-parts into persistent external files
-
+  Many more folder-types

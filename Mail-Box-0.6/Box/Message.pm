@@ -237,13 +237,7 @@ my $unreg_msgid = time;
 sub init($)
 {   my ($self, $args) = @_;
 
-    unless(exists $args->{messageID})
-    {   my $msgid = $self->head->get('message-id');
-        $args->{messageID} = $1 if $msgid && $msgid =~ m/\<(.*?)\>/;
-    }
-
     $self->{MBM_size}      = $args->{size}      || 0;
-    $self->{MBM_messageID} = $args->{messageID} || $unreg_msgid++;
     $self->{MBM_deleted}   = $args->{deleted}   || 0;
     $self->{MBM_modified}  = $args->{modified}  || 0;
     $self->folder($args->{folder}) if $args->{folder};
@@ -383,6 +377,19 @@ sub deleted(;$)
     $folder->messageDeleted($self, $delete);
 
     $self->{MBM_deleted} = ($delete ? time : 0);
+}
+
+#-------------------------------------------
+
+=item seqnr [INTEGER]
+
+Get (add set) the number of this message is the current folder.
+
+=cut
+
+sub seqnr(;$)
+{   my $self = shift;
+    @_ ? $self->{MBM_seqnr} = shift : $self->{MBM_seqnr};
 }
 
 #-------------------------------------------
@@ -615,11 +622,57 @@ sub delayedInit($)
 
     my $message = $args->{message} || return $self;
     @$self{ keys %$message } = values %$message;
+    $self->head->unfold;
 
     $self;
 }
 
 sub isParsed() { 1 }
+
+#-------------------------------------------
+
+=item coerce FOLDER, MESSAGE [,OPTIONS]
+
+(Class method) Coerce a MESSAGE into a Mail::Box::Message.  This method
+is automatically called if you add a strange message-type to a FOLDER.
+You usually do not need to call this yourself.
+
+The coerced message is returned on success, else C<undef>.
+
+Example:
+   my $folder = Mail::Box::Mbox->new;
+   my $entity = MIME::Entity->new(...);
+   Mail::Box::MBox::Message->coerce($inbox, $entity);
+   # now $entity is a Mail::Box::Mbox::Message
+
+It better to use
+   $folder->coerce($entity);
+which does exacty the same, by calling coerce in the right package.
+
+=cut
+
+sub coerce($$@)
+{   my ($class, $folder, $message, %args) = @_;
+    return $message if $message->isa($class);
+
+    # If we get the primitive Mail::Internet type, then we first upgrade
+    # into a MIME::Entity.  It is disappointing that that class does not
+    # have an init() method.  I need to copy some code from the instance
+    # method (new) for MIME::Entity.  Hope that never changes...
+
+    if(ref $message eq 'Mail::Internet')
+    {   $message->{ME_Parts} = [];                 # stolen code.
+    }
+
+    # Re-initialize the message, but with the options as specified by the
+    # creation of this folder, not the folder where the message came from.
+
+    (bless $message, $class)->init(\%args) or return;
+
+    $message->folder($folder);
+    $message->Mail::Box::Message::Runtime::init(\%args);
+}
+
 
 #-------------------------------------------
 
@@ -818,7 +871,7 @@ type of the object.
 
 =item new ARGS
 
-Create a not parsed message.  The message can have a C<not-read-head>,
+Create a not-parsed message.  The message can have a C<not-read-head>,
 which means that only a few of the header-lines are kept, or a
 real MIME::Head to start with.
 
@@ -827,8 +880,12 @@ real MIME::Head to start with.
 sub init($)
 {   my ($self, $args) = @_;
 
-    my $head = $self->{MBM_head} = $args->{head};
-    $head->message($self) if $head->can('message');
+    if(my $head = $args->{head})
+    {   $self->{MBM_head} = $head;
+        $head->message($self) if $head->can('message');
+    }
+
+    $self->{MBM_upgrade_to} = $args->{upgrade_to};
 
     $self->Mail::Box::Message::Runtime::init($args);
     $self->Mail::Box::Thread::init($args);
@@ -853,31 +910,11 @@ otherwise read the message twice.
 our $AUTOLOAD;
 
 sub AUTOLOAD
-{   my $self   = $_[0];
+{   my $self   = shift;
+    (my $call = $AUTOLOAD) =~ s/.*\:\://;
+    my $public = $self->load($self->{MBM_upgrade_to});
 
-#warn "Autoload on message $AUTOLOAD.\n";
-    # Try to avoid double reading caused by old handles to the un-parsed
-    # message info.
-
-    my $folder = $self->folder;
-    my $public = $folder->messageWithId($self->messageID);
-    if($public->isParsed)
-    {   # autoload message which is already parsed, but caller
-        # does not have the right handle yet.
-        $_[0] = $public;
-    }
-    else
-    {   # Autoloading is still required.
-        $_[0] = $public = $self->load($folder->{MB_message_type});
-        $folder->messageWithId($self->messageID, $public);
-    }
-
-    (my $call = $AUTOLOAD)
-        =~ s/$folder->{MB_notparsed_type}/$folder->{MB_message_type}/;
-
-    shift;
     no strict 'refs';
-#   goto $public->$call(@_);
     $public->$call(@_);
 }
 
@@ -980,7 +1017,7 @@ sub get($;$)
         # The header-line was not captured, so we need to load the
         # whole message to look for the field.
         $AUTOLOAD = (ref $self).'::get';
-        goto $self->AUTOLOAD($tag, $index);
+        return $self->AUTOLOAD($tag, $index);
     }
     elsif(ref $self->{$tag})
     {   return wantarray && !defined $index
@@ -1078,8 +1115,9 @@ sub AUTOLOAD
 {   my $self = $_[0];
     (my $method = $AUTOLOAD) =~ s/.*\:\://;
 
-#warn "Load!! for $AUTOLOAD\n";
-    my $head = $self->{MBM_message}->load->head;
+    my $message = $self->{MBM_message};
+    $message->body;     # Trigger message loading.
+    my $head = $message->head;
 
     $_[0]    = $head;   # try to infuence the handle which the caller
                         # has in its hands.
@@ -1101,7 +1139,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.5
+This code is alpha, version 0.6
 
 =cut
 

@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl -w
 
 #
 # Test appending messages on Mbox folders.
@@ -12,7 +13,6 @@ use strict;
 use Mail::Box::Manager;
 
 BEGIN {plan tests => 6}
-#exit 0;
 
 #
 # We will work with a copy of the original to avoid that we write

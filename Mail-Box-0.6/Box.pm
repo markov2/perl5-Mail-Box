@@ -1,7 +1,7 @@
 
 package Mail::Box;
 
-$VERSION = '0.5';
+$VERSION = '0.6';
 use strict;
 
 use v5.6.0;
@@ -232,30 +232,15 @@ Examples:
 
 The Mail::Box::Message manual-page has more on this subject.
 
-=item * take_headers => REF-ARRAY-OF-REGEXPS|REGEXPS|'ALL'|'REAL'
+=item * take_headers => ARRAY-REGEXPS|REGEXP|'ALL'|'REAL'|'DELAY'
 
 When messages are not parsed (as controlled by the C<lazy_extract> parameter),
-and hence stay in their respective files, some header-lines are still to be
+and hence stay in their respective folders, some header-lines are still to be
 taken: for instance you still want access to the subject-field to be able
 to print an index.
 
-If you know your application needs some header-fields frequently, you
-add them to the default list of fields which are already taken by the
-folder-implementation.  No problem if you specify the same name twice.
-
-You can specify a regular expression, although you cannot use parentheses
-in them which do count.  The expressions will be matched always on the
-whole field.  So C<X-.*> will only match lines starting with C<X->.
-You can not used C<X-(ab|cd).*>, but may say C<X-(?:ab|cd).*>.
-
-If you specify too few fields, then all messages will get parsed to
-get the field you missed when you scanned the folder first.  When you
-specify too many fields, your program will consume more memory.
-
-There are two special constants.  With C<ALL> you get all header-lines
-from the message (same as pattern C<.*>)  and C<REAL> will cause headers
-to be read into a real MIME::Header structure (to be more precise: the
-type you specify with C<realhead_type>.)
+See C<registerHeaders()> below, for a detailed explanation.  Please try
+to avoid calling that method when you can do with using this option.
 
 Examples:
    $folder->new( take_headers  => 'ALL');
@@ -372,32 +357,87 @@ sub clone(@)
 
 =item registeredHeaders
 
-See the C<take_header> option of C<new()>.
-The C<registerHeaders> method can be used to specify more header-lines to
-be taken when scanning through a folder.  Its counterpart
-C<registeredHeaders> returns:
+See the C<take_header> option of C<new()>, which is the prefered way
+to specify which way the header should be treated.  Try to avoiding
+C<registerHeaders> directly.
+
+The C<registerHeaders> method can be used to specify more header-lines
+to be taken when scanning through a folder.  Its counterpart
+C<registeredHeaders> returns the current setting.
+
+If you know your application needs some header-fields frequently, you
+add them to the default list of fields which are already taken by the
+folder-implementation.  No problem if you specify the same name twice.
+
+If you specify too few field-names, then all messages will get parsed
+(read from file into memory) to get the field-data you missed.  When you
+specify too many fields, your program will consume considerable more memory.
+
+You can specify a regular expression, although you cannot use parentheses
+in them which do count.  The expressions will be matched always on the
+whole field.  So C<X-.*> will only match lines starting with C<X->.
+You can not used C<X-(ab|cd).*>, but may say C<X-(?:ab|cd).*>.
+
+There are three special constants.  With C<ALL> you get all header-lines
+from the message (same as pattern C<.*>)  and C<REAL> will cause headers
+to be read into a real MIME::Header structure (to be more precise: the
+type you specify with C<realhead_type>.)
+
+Some folder-types (like MH) support C<DELAY>, where headers are to taken
+at all, until a line from the header is required.  This is useful for
+folders where each message has to be read from a seperate source.  In
+this case, we would like to delay even that contact as long as possible.
 
 =over 4
 
 =item * 'ALL' to indicate that all headers should be taken.
 
-=item * 'REAL' to indicated that all headers should be taken and translated into a real MIME::Header.
+=item * 'REAL'
 
-=item * a list over lowercased regular expressions which sprecify the header-line to be taken.
+indicates that all headers should be taken and translated into a
+real MIME::Header.
+
+=item * 'DELAY'
+
+requests for no header at all, unless we accidentally stumble on them.  This
+is default (and only usefull) for all folder-types which store their
+messages in seperate files.  Mail::Box will try to avoid opening those
+files with maximum effort.
+
+In case you need header-lines, and at the same time want to avoid access
+to each file when a folder is opened (for instance, if you want to read
+e-mail in threads), consider using index-files.  Read the manual-page of
+the folder-type you need on whether those is supported for that specific
+type.
+
+=item * a list of regular expressions
+
+which specify the header-lines to be taken.
 
 =back
+
+Examples:
+   $folder->registerHeaders('ALL');
+   $folder->registerHeaders('Subject', 'X-Folder-.*');
 
 =cut
 
 sub registerHeaders(@)
 {   my $self = shift;
 
-    if(grep {$_ eq 'ALL' || $_ eq '^.*$'} @_)
-    {   $self->{MB_take_headers} = 'ALL';
-    }
-    elsif(grep {$_ eq 'REAL'} @_)
+    if(grep {$_ eq 'REAL'} @_)
     {   $self->{MB_take_headers} = 'REAL';
     }
+    elsif(grep {$_ eq 'DELAY'} @_)
+    {   $self->{MB_take_headers} = 'DELAY';
+    }
+    elsif(exists $self->{MB_take_headers} && !ref $self->{MB_take_headers})
+    {  # Already an important constant defined: no change to be made.
+    }
+    elsif(grep {$_ eq 'ALL' || $_ eq '^.*$'} @_)
+    {   $self->{MB_take_headers} = 'ALL';
+    }
+
     elsif(exists $self->{take_headers} && !ref $self->{take_headers})
     {   # Detected a REAL or ALL before.  Don't need to register more.
     }
@@ -689,6 +729,40 @@ sub message(;$) :lvalue
 
 #-------------------------------------------
 
+=item messageID MESSAGE-ID [,MESSAGE]
+
+Returns the message in this folder with the specified MESSAGE-ID.  This
+method returns a not-parsed, parsed, or dummy message.  With the second
+MESSAGE argument, the value is first set.
+
+=cut
+
+sub messageID($;$)
+{   my ($self, $msgid) = (shift, shift);
+
+    return $self->{MB_msgid}{$msgid} unless @_;
+
+    # Define message.
+    my $message = shift;
+
+    # If the message-id was already found in a dummy, then the information
+    # from the dummy has to be copied into the real message.
+
+    my $found = $self->{MB_msgid}{$msgid};
+    if($found && $found->isDummy)
+    {   # Copy information from dummy message into the real message.
+        $message->addFollowUps($found->followUps);
+    }
+    elsif($found && $found ne $message)
+    {   $found->delete(1);
+    }
+
+    # Store the message in the message-id index.
+    $self->{MB_msgid}{$msgid} = $message;
+}
+
+#-------------------------------------------
+
 =item messages
 
 Returns all messages which are I<not> scheduled to be deleted.  In
@@ -742,12 +816,33 @@ Returns a list of I<all> messages in the folder, including
 those which are to be deleted.
 
 Examples:
-    foreach ($folder->allMessages) {...}
+    foreach my $msg ($folder->allMessages)
+    {   $msg->print;
+    }
     my $total_size = $folder->allMessages;
 
 =cut
 
 sub allMessages()   { @{shift->{MB_messages}} }
+
+#-------------------------------------------
+
+=item allMessageIDs
+
+Returns a list of I<all> message-ids in the folder, including
+those which are to be deleted.
+
+For some folder-types (like MH), this method may cause all message-files
+to be read.  See their respective manual-pages.
+
+Examples:
+    foreach my $id ($folder->allMessageIDs)
+    {   $folder->messageID($id)->print;
+    }
+
+=cut
+
+sub allMessageIDs() { keys %{shift->{MB_msgid}} }
 
 #-------------------------------------------
 
@@ -767,30 +862,15 @@ Examples:
 =cut
 
 sub addMessage($)
-{   my $self  = shift;
-    my $msg   = shift || return $self;
+{   my $self    = shift;
+    my $message = shift or return $self;
 
-    # Be sure that the message is of the correct type.
-    $msg      = $self->coerce($msg);
-    my $msgid = $msg->messageID;
+    push @{$self->{MB_messages}}, $message;
 
-    my $found = $self->messageWithId($msgid);
-    if($found && $found->isDummy)
-    {   # Copy information from dummy message into the real message.
-        $msg->addFollowUps($found->followUps);
-    }
-    elsif($found)
-    {   # Detecting the same message for the second time.  We ignore
-        # this one.
-        return $self;
-    }
+    push @{$self->{MB_alive}}, $message
+        unless $message->deleted || !exists $self->{MB_alive};
 
-    $self->messageWithId($msgid, $msg);
-
-    push @{$self->{MB_messages}}, $msg;
-    push @{$self->{MB_alive}}, $msg unless $msg->deleted;
-
-    $self->addToThread($msg);
+    $message->seqnr( @{$self->{MB_messages}} -1);
 
     $self;
 }
@@ -864,27 +944,16 @@ sub coerce($)
 
     # Be sure that the message is loaded, before it is converted
     # to a new type.
-
     $message->can('play_dead_parrot_sketch');
 
-    # If we get the primitive Mail::Internet type, then we first upgrade
-    # into a MIME::Entity.  It is disappointing that that class does not
-    # have an init() method.  I need to copy some code from the instance
-    # method (new) for MIME::Entity.  Hope that never changes...
+    # Convert to the right type for this mailbox.
+    $self->{MB_message_type}->coerce
+       ( $self, $message
+       , @{$self->{MB_message_opts}}
+       , modified => 1
+       );
 
-    if(ref $message eq 'Mail::Internet')
-    {   $message->{ME_Parts} = [];       # stolen code.
-    }
-
-    # Reinitialize the message, but with the options as specified by the
-    # creation of this folder, not the folder where the message came from.
-
-    bless ($message, $self->{MB_message_type})
-       ->init(@{$self->{MB_message_opts}});
-
-    $message->folder($self);
-    $message->modified(1);
-    $message;
+    $self;
 }
 
 #-------------------------------------------
@@ -1110,7 +1179,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.5
+This code is alpha, version 0.6
 
 =cut
 

@@ -1,4 +1,4 @@
-
+#!/usr/local/bin/perl -w
 #
 # Test reading of mbox folders.
 #

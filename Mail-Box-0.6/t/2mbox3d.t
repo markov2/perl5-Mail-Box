@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl -w
 
 #
 # Test delay-loading on mbox folders.
@@ -98,7 +99,7 @@ ok($message->isa('MIME::Entity'));
 ok(!defined $message->head->get('xyz'));
 
 ok(not $folder->message(2)->isParsed);
-ok(defined $folder->message(2)->get('x-mailer'));
+ok(defined $folder->message(2)->head->get('x-mailer'));
 ok($folder->message(2)->isParsed);
 
 unlink $src;

@@ -4,7 +4,7 @@ use v5.6.0;
 
 package Mail::Box::Mbox;
 our @ISA     = 'Mail::Box';
-our $VERSION = v0.5;
+our $VERSION = v0.6;
 
 use Mail::Box;
 
@@ -37,6 +37,55 @@ this is stripped when reading.
 The name of a folder may be an absolute or relative path.  You can also
 preceed the foldername by C<=>, which means that it is relative to the
 I<folderdir> as specified at C<new>.
+
+=head2 Message State Transition
+
+The user of a folder gets it hand on a message-object, and is not bothered
+with the actual data which is stored in the object at that moment.  As
+implementor of a mail-package, you might be.
+
+For trained eyes only:
+
+   read()     !lazy
+   -------> +----------------------------------> Mail::Box::
+            |                                    MH::Message
+            |                                         ^
+            |                                         |
+            |                    NotParsed    load    |
+            |        ALL ,-----> NotReadHead ------>-'|
+            | lazy      /                             |
+            `--------->+                              |
+                        \        NotParsed    load    |
+                    REAL `-----> MIME::Head ------->-'
+
+
+         ,-------------------------+---.
+        |                      ALL |   | regexps && taken
+        v                          |   |
+   NotParsed    head()    get()   /   /
+   NotReadHead --------> ------->+---'
+             \          \         \
+              \ other()  \ other() \regexps && !taken
+               \          \         \
+                \          \         \    load    Mail::Box::
+                 `----->----+---------+---------> MBox::Message
+
+         ,---------------.
+        |                |
+        v                |
+   NotParsed     head()  |
+   MIME::Head -------->--'
+            \                           Mail::Box::
+             `------------------------> MBox::Message
+
+
+Terms: C<lazy> refers to the evaluation of the C<lazy_extract()> option. The
+C<load> and C<load_head> are triggers to the C<AUTOLOAD> mothods.  All
+terms like C<head()> refer to method-calls.  Finally, C<ALL>, C<REAL>,
+and C<regexps> (default) refer to values of the C<take_headers> option
+of C<new()>.
+
+Hm... not that easy...  but relatively simple compared to MH-folder messages.
 
 =head1 PUBLIC INTERFACE
 
@@ -230,6 +279,8 @@ sub readMessages(@)
     # The only thing to do when the line fits is to lowercase the fieldname.
 
     my $mode = $self->registeredHeaders;
+    $mode = 'REAL' if $mode eq 'DELAY';
+
     my ($expect, $take, $take_headers);
 
     if(ref $mode)
@@ -317,7 +368,8 @@ sub readMessages(@)
             else {  $header->setField(split ':', $_, 2) foreach @header }
 
             $message = $self->{MB_notparsed_type}->new
-              ( head => $header
+              ( head       => $header
+              , upgrade_to => $self->{MB_message_type}
               , @options
               );
             $header->message($message);
@@ -330,7 +382,8 @@ sub readMessages(@)
             #
 
             $message = $self->{MB_notparsed_type}->new
-              ( head => MIME::Head->new(\@header)->unfold
+              ( head       => MIME::Head->new(\@header)->unfold
+              , upgrade_to => $self->{MB_message_type}
               , @options
               );
 
@@ -387,6 +440,30 @@ sub writeMessages()
        or warn "Could not replace $filename by $tmpnew, to update $self: $!\n";
 
     $rc;
+}
+
+#-------------------------------------------
+
+=item addMessage MESSAGE
+
+Add a message to the Mbox-folder.  If you specify a message with an
+id which is already in the folder, the message will be ignored.
+
+=cut
+
+sub addMessage($)
+{   my ($self, $message) = @_;
+    $self->coerce($message);
+
+    # Do not add the same message twice.
+    my $msgid = $message->messageID;
+    my $found = $self->messageID($msgid);
+    return $self if $found && !$found->isDummy;
+
+    # The message is accepted.
+    $self->Mail::Box::addMessage($message);
+    $self->messageID($msgid, $message);
+    $self;
 }
 
 #-------------------------------------------
@@ -652,10 +729,19 @@ this line, but this is just how things were invented...
 
 =cut
 
+my $unreg_msgid = time;
+
 sub init($)
 {   my ($self, $args) = @_;
     $self->{MBM_from_line} = $args->{from};
     $self->{MBM_begin}     = $args->{begin};
+
+    unless(exists $args->{messageID})
+    {   my $msgid = $self->head->get('message-id');
+        $args->{messageID} = $1 if $msgid && $msgid =~ m/\<(.*?)\>/;
+    }
+    $self->{MBM_messageID} = $args->{messageID} || 'mbox-'.$unreg_msgid++;
+
     delete @$args{ qw/from begin/ };
 
     $self;
@@ -770,32 +856,37 @@ sub init($)
 
 #-------------------------------------------
 
-=item coerce MESSAGE
+=item coerce FOLDER, MESSAGE [,OPTIONS]
 
-(Class method)
-Coerce a message into a Mail::Box::Mbox::Message.  When any message
-is offered to be stored in the mailbox, it first should have all
-fields which are specific for Mbox-folders (especially the special
-C<From > line.
+(Class method) Coerce a MESSAGE into a Mail::Box::Mbox::Message.  When
+any message is offered to be stored in a mbox FOLDER, it first should have
+all fields which are specific for Mbox-folders.
+
+The coerced message is returned on success, else C<undef>.
 
 Example:
-   my $mh = Mail::Box::MH::Message->new(...);
-   my $Mbox = Mail::Box::Mbox::Message->coerce($mh);
+   my $inbox = Mail::Box::Mbox->new(...);
+   my $mh    = Mail::Box::MH::Message->new(...);
+   Mail::Box::Mbox::Message->coerce($inbox, $mh);
+   # Now, the $mh is ready to be included in $inbox.
+
+However, you can better use
+   $inbox->coerce($mh);
+which will call the right coerce() for sure.
 
 =cut
 
-sub coerce($)
-{   my ($class, $message) = @_;
+sub coerce($$)
+{   my ($class, $folder, $message) = (shift, shift, shift);
     return $message if $message->isa($class);
 
-    Mail::Box::Message->coerce($message);
+    Mail::Box::Message->coerce($folder, $message, @_) or return;
 
     # When I know more what I can save from other types of messages, later,
     # that information will be extracted here, and transfered into arguments
     # for Runtime->init.
 
-    bless $message, $class;
-    $message->Mail::Box::Mbox::Message::Runtime::init;
+    (bless $message, $class)->Mail::Box::Mbox::Message::Runtime::init;
 }
 
 ###
@@ -852,11 +943,15 @@ sub load($)
 
     $folder->fileClose unless $was_open;
     my $message = $folder->parser->parse($if);
+
+    # A pitty that we have to copy data now...
+    @$self{ keys %$message } = values %$message;
+
     my $args    = { message  => $message };
 
     $folder->{MB_delayed_loads}--;
 
-    $_[0]       = (bless $self, $class)->delayedInit($args);
+    (bless $self, $class)->delayedInit($args);
 }
 
 =back
@@ -869,7 +964,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.5
+This code is alpha, version 0.6
 
 =cut
 

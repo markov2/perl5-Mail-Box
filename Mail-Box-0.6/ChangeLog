@@ -52,7 +52,37 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/Box/Manager.pm
 		Mail/Box.pm
 
-version 0.5:   Thu Jan  4 11:07:09 CET 2001
+
+version 0.5:  Thu Jan  4 11:14:05 CET 2001
+	* Installation fixes.
+
+version 0.6:  Thu Jan  4 22:44:30 CET 2001
 
 Mark Overmeer <mark@overmeer.net>
-	* Installation fix: had to remove `our' before $VERSION.
+	* Simplified autoloading (a lot)  The reference to the object
+	  does not change anymore when a message is converted from an
+          Mail::Box::Message::NotParsed into a Mail::Box::Message.
+
+	* Stricter treatment of coercions with coerce().
+
+	* Reimplementation of Threads to be as lazy as possible.
+	  Not Tested Yet!!!
+		Mail/Box/Treads.pm
+
+	* MH folders are even more lazy than they were: by default nothing
+	  at all is read.  Only access of any header-line will cause a
+	  read in a file.
+
+	* Added `DELAY' option to Mail::Box::new(take_headers)
+
+	* Added a message state transition diagram (which is really
+	  complicated for MH folders) and much more other documentation
+	  improvements
+
+	* Added large number of tests (about 40), which all succeed ;)
+
+	Nearly all files got changed, although I managed to keep the method
+	interface rather stable: (by the way: this is still an alpha release!)
+		Mail/Box/Mbox.pm
+		Mail/Box/MH.pm
+		Mail/Box/Message.pm

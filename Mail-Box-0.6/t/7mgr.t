@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl -w
 
 #
 # Test the folder manager
