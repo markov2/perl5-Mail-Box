@@ -1,0 +1,43 @@
+
+INSTALL  Mail::Box
+
+Usually, you install any perl module simply by calling
+
+  #   perl -MCPAN -e 'install Mail::Box'
+
+but if you want to do it manually, then execute the following.
+First unpack the archive:
+
+  #   tar xzf Mail-Box-2*.tar.gz
+  #   cd  Mail-Box-2.*[0-9]
+
+Then
+  #   perl Makefile.PL
+  #   make test
+  #   make install
+
+=== Dependencies
+
+Some modules are not obligatory to Mail::Box, but can improve the
+functionality.  Obligatory are
+
+  Date::Parse         used to parse date info in the header
+  File::Spec          to copy files and construct paths
+  IO::Scalar          only required to run the tests
+  Errno               Mail/Box/Locker/File
+  Scalar::Util        to weaken references
+  Object::Realize::Later implements delay loading
+  Mail::Address       mail address parsing.  Will be replaced later
+  MIME::Types         to find required encoding on data-types.
+
+Optionally, you may want to install
+
+  Net::SMTP           to transport mail without external programs
+  Mail::Internet      when you want to link to packages which require it.
+  MIME::Entity         "
+  HTML::FormatText    to convert HTML to plain text
+  HTML::FormatPS      to convert HTML to PostScript
+
+=== Support
+
+  Mark Overmeer <mailbox@overmeer.net>
