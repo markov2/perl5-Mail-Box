@@ -408,7 +408,7 @@ sub file_test_lock($)
 sub file_unlock($)
 {   my ($self, $folder) = @_;
     return unless $self->hasLock;
-    $self->do_dot_unlock($folder->filehandle);
+    $self->do_file_unlock($folder->filehandle);
 }
 
 #-------------------------------------------
@@ -520,7 +520,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.112
+This code is beta, version 1.113
 
 =cut
 

@@ -236,9 +236,9 @@ sub fileClose()
 {   my $self = shift;
     my $file = $self->{MB_file} or return $self;
 
+    $self->unlock;
     delete $self->{MB_file};
 
-    $self->unlock;
     $file->close;
     $self;
 }
@@ -572,6 +572,20 @@ sub filename() { shift->{MB_filename} }
 
 #-------------------------------------------
 
+=item filehandle
+
+Returns the filehandle related to this folder.
+
+Example:
+
+    print $folder->filehandle;
+
+=cut
+
+sub filehandle() { shift->{MB_file} }
+
+#-------------------------------------------
+
 =item folderToFilename FOLDERNAME, FOLDERDIR, EXTENTION
 
 (class method)  Translate a foldername into a filename, with use of the
@@ -808,7 +822,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.112
+This code is beta, version 1.113
 
 =cut
 

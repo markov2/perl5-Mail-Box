@@ -3,7 +3,15 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
-version 1.112:
+version 1.113: Sun Jun 10 16:06:05 CEST 2001
+
+	by Adam Marks <marks@divinia.com>
+
+        * Fixed using of mbox-locking with file-lock
+
+version 1.112: Thu Jun  7 22:45:00 CEST 2001
+
+        by Eric Cholet <cholet@logilune.com>
 
 	* Changed the detection of "From"-lines again... each Mbox-
           type package formats the line differently.  I hope they
