@@ -325,35 +325,6 @@ sub readMessage($;$)
 
 #-------------------------------------------
 
-=item addMessage MESSAGE
-
-Add a message to the MH-folder.
-
-=cut
-
-sub addMessage($)
-{   my ($self, $message) = @_;
-
-    $self->coerce($message);
-    if($message->headIsRead)
-    {   # Do not add the same message twice.
-        my $msgid = $message->messageID;
-        my $found = $self->messageID($msgid);
-        return $self if $found && !$found->isDummy;
-
-        $self->messageID($msgid, $message);
-    }
-    else
-    {   $message->folder($self);
-    }
-
-    # The message is accepted.
-    $self->SUPER::addMessage($message);
-    $self;
-}
-
-#-------------------------------------------
-
 =item write [OPTIONS]
 
 Write all messages to the folder-file.  Returns the folder when this
@@ -1110,7 +1081,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.311
+This code is beta, version 1.312
 
 =cut
 

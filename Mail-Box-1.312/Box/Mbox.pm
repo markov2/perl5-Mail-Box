@@ -474,30 +474,6 @@ sub writeMessages($)
 
 #-------------------------------------------
 
-=item addMessage MESSAGE
-
-Add a message to the Mbox-folder.  If you specify a message with an
-id which is already in the folder, the message will be ignored.
-
-=cut
-
-sub addMessage($)
-{   my ($self, $message) = @_;
-    $self->coerce($message);
-
-    # Do not add the same message twice.
-    my $msgid = $message->messageID;
-    my $found = $self->messageID($msgid);
-    return $self if $found && !$found->isDummy;
-
-    # The message is accepted.
-    $self->SUPER::addMessage($message);
-    $self->messageID($msgid, $message);
-    $message;
-}
-
-#-------------------------------------------
-
 =item appendMessages OPTIONS
 
 (Class method) Append one or more messages to a folder.  The folder
@@ -545,8 +521,8 @@ sub appendMessages(@)
     foreach (@messages)
     {   # I would like to coerce here, into the correct message type.  However,
         # the folder has not been opened, so what is the correct type?  Instead
-        # of a real conversion, we have hope that each line just starts with a
-        # from-line
+        # of a real conversion, we have hope that each message just starts
+        # with a from-line
         # $class->coerce($_);   # sorry, can't
  
         $file->print( $_->can('formLine')
@@ -854,7 +830,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.311
+This code is beta, version 1.312
 
 =cut
 

@@ -38,7 +38,8 @@ L<details about the implementation|/"IMPLEMENTATION">, but first the use.
 ###
 
 package Mail::Box::Mbox::Message;
-use POSIX ':unistd_h';
+use POSIX 'SEEK_SET';   # avoid :unistd_h, which includes dup() which
+                        # is in conflict with MIME::Enity->dup!!!
 
 #-------------------------------------------
 
@@ -242,7 +243,7 @@ which will call the right coerce() for sure.
 
 sub coerce($$)
 {   my ($class, $folder, $message) = (shift, shift, shift);
-    return $message if $message->isa($class);
+    return $message if $message->isa(__PACKAGE__);
 
     Mail::Box::Message::Parsed->coerce($folder, $message, @_) or return;
 
@@ -416,7 +417,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.311
+This code is beta, version 1.312
 
 =cut
 

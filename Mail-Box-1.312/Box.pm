@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.311';
+$VERSION = '1.312';
 
 use Carp;
 use MIME::Parser;
@@ -980,6 +980,24 @@ sub addMessage($)
 {   my $self    = shift;
     my $message = shift or return $self;
 
+    # Force the message into the right folder-type.
+    $self->coerce($message);
+
+    if($message->headIsRead)
+    {   # Do not add the same message twice.
+        my $msgid = $message->messageID;
+        my $found = $self->messageID($msgid);
+        return $self if $found && !$found->isDummy;
+
+        $self->messageID($msgid, $message);
+    }
+    else
+    {   # Messages where even the header is not known let are still
+        # added to the folder.  However, they need to publish their
+        # message-id themselves at parse-time.
+        $message->folder($self);
+    }
+
     push @{$self->{MB_messages}}, $message;
 
     push @{$self->{MB_alive}}, $message
@@ -1470,7 +1488,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.311
+This code is beta, version 1.312
 
 =cut
 

@@ -163,19 +163,21 @@ my $unreg_msgid = time;
 sub init($)
 {   my ($self, $args) = @_;
 
-    $self->{MBM_size}      = $args->{size}      || 0;
-    $self->{MBM_deleted}   = $args->{deleted}   || 0;
-    $self->{MBM_modified}  = $args->{modified}  || 0;
-    $self->{MBM_messageID} = $args->{messageID}
+    $self->{MBM_size}       = $args->{size}      || 0;
+    $self->{MBM_deleted}    = $args->{deleted}   || 0;
+    $self->{MBM_modified}   = $args->{modified}  || 0;
+    $self->{MBM_messageID}  = $args->{messageID}
         if exists $args->{messageID};
 
-    $self->{MBM_labels}    = {};
+    $self->{MBM_labels}   ||= {};
     $self->folder($args->{folder}) if $args->{folder};
 
-    unless($self->isDummy)
-    {   $self->{MBM_labels}    = { seen => 0 };
-        $self->setLabel(@{$args->{labels}}) if $args->{labels};
-    }
+    return $self if $self->isDummy;
+
+    $self->{MBM_labels} =
+      { seen => 0
+      , ($args->{labels} ? @{$args->{labels}} : ())
+      };
 
     $self;
 }
@@ -617,7 +619,6 @@ which does exacty the same, by calling coerce in the right package.
 
 sub coerce($$@)
 {   my ($class, $folder, $message, %args) = @_;
-    return $message if $message->isa($class);
 
     # If we get the primitive Mail::Internet type, then we first upgrade
     # into a MIME::Entity.  It is disappointing that that class does not
@@ -631,10 +632,20 @@ sub coerce($$@)
     # Re-initialize the message, but with the options as specified by the
     # creation of this folder, not the folder where the message came from.
 
-    (bless $message, $class)->init(\%args) or return;
+    $args{size} ||= 0;          # not available for MIME::Entities
+    $args{folder} = $folder;
+    unless ($message->isa(__PACKAGE__))
+    {   (bless $message, $class)->init(\%args);
+    }
 
-    $message->folder($folder);
-#   $message->Mail::Box::Message::init(\%args);
+    # Now also coerce the parts of the message into a Mail::Box::Message.
+    # Parts are not folder specific.
+
+    foreach my $part (@{$message->{ME_parts}})
+    {   __PACKAGE__->coerce($folder, $part, %args);
+    }
+
+    $class;
 }
 
 #-------------------------------------------
@@ -745,21 +756,13 @@ See L</body> and L</bodyhandle> above.
 
 =cut
 
-sub parts(@) 
-{   my $self = shift;
-
-    # Upgrade the parts to this extended object class.
-    my $parts = 0;
-    map {$self->part_upgrade($_, $parts++)}
-       $self->MIME::Entity::parts( @_ ? [@_] : () );
-}
-
+my $partcount;
 sub part_upgrade($$)   # from MIME::Entity into Mail::Box::Message::Parsed
-{   my ($self, $part, $count) = @_;
+{   my ($self, $part) = @_;
 
     bless $part, ref $self;
-    $part->Mail::Box::Message::init
-      ( { messageID => $self->messageID . '-p$count' }
+    $part->Mail::Box::Message::Parsed::init
+      ( { messageID => $self->messageID . '-p$partcount' }
       );
 
     $part->{MBM_is_part} = 1;
@@ -1228,7 +1231,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.311
+This code is beta, version 1.312
 
 =cut
 
