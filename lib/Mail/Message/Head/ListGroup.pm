@@ -38,7 +38,7 @@ add flexibility and use the powerful MailBox features.
 
 Construct an object which maintains one set of mailing list headers
 
-=option  rfc 'rfc2918'|'rfc2369'
+=option  rfc 'rfc2919'|'rfc2369'
 =default rfc C<undef>
 Defines the mailing list software follows an rfc.
 
@@ -125,6 +125,12 @@ sub from($)
     {   ($software, $version) = $field =~ m/^(\S*)\s*(v[\d.]+)\s*$/;
         $type    = 'Listbox';
     }
+    elsif($field = first { m!LISTSERV-TCP/IP!s } $head->get('Received'))
+    {   # Listserv is hard to recognise
+        ($software, $version) = $field =~
+            m!\( (LISTSERV-TCP/IP) \s+ release \s+ (\S+) \)!xs;
+        $type = 'Listserv';
+    }
     elsif(defined($field = $head->get('X-Mailing-List'))
           && $field =~ m[archive/latest])
     {   $type    = 'Smartlist' }
@@ -157,7 +163,7 @@ sub from($)
 
 When the mailing list software follows the guidelines of one of the dedictated
 RFCs, then this will be returned otherwise C<undef>.  The return values can
-be C<rfc2918>, C<rfc2369>, or C<undef>.
+be C<rfc2919>, C<rfc2369>, or C<undef>.
 
 =cut
 
@@ -167,7 +173,7 @@ sub rfc()
 
    my $head = $self->head;
      defined $head->get('List-Post') ? 'rfc2369'
-   : defined $head->get('List-Id')   ? 'rfc2918'
+   : defined $head->get('List-Id')   ? 'rfc2919'
    :                                    undef;
 }
 
@@ -192,6 +198,8 @@ sub address()
     {   $address = $1 if $field =~ m/\<([^>]+)\>/ }
     elsif($type eq 'YahooGroups')
     {   $address = $head->study('X-Apparently-To') }
+    elsif($type eq 'Listserv')
+    {   $address = $head->get('Sender') }
 
     $address ||= $head->get('List-Post') || $head->get('Reply-To')
              || $head->get('Sender');
@@ -273,7 +281,7 @@ or too many fields are included.
 
 my $list_field_names
   = qr/ ^ (?: List|X-Envelope|X-Original ) - 
-      | ^ (?: Precedence|Mailing-List ) $
+      | ^ (?: Precedence|Mailing-List|Approved-By ) $
       | ^ X-(?: Loop|BeenThere|Sequence|List|Sender|MLServer ) $
       | ^ X-(?: Mailman|Listar|Egroups|Encartis|ML ) -
       | ^ X-(?: Archive|Mailing|Original|Mail|ListServer ) -
@@ -337,7 +345,7 @@ rare.
 Numerous fields in a header are addded when the message is passed
 through a mailing list server.  Each list software has defined its own
 fields, sometimes woth conflicting definitions.  There are also two
-RFCs about mailing list: C<rfc2918> and C<rfc2369>.
+RFCs about mailing list: C<rfc2919> and C<rfc2369>.
 
 The following lists are currently detected.  Between parenthesis is
 the string returned by M<type()> when that differs from the software
@@ -345,7 +353,7 @@ name.
 
 =over 4
 =item * CommuniGate Pro (CommuniGate)
-Commercial rfc2918 compliant implementation by Stalker Software Inc.
+Commercial rfc2919 compliant implementation by Stalker Software Inc.
 L<http://www.stalker.com>
 
 =item * Ecartis
@@ -377,6 +385,10 @@ L<http://www.procmail.org/>.
 
 =item * Yahoo! Groups (YahooGroups)
 Mailing lists defined at L<http://groups.yahoo.com>.
+
+=item * Listserv
+Commercial mailing list manager, produced by L-Soft. See
+L<http://www.lsoft.com/>.
 
 =back
 

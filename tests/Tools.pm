@@ -92,6 +92,8 @@ sub copy_dir($$)
 
     foreach my $name (map { !m/^\.\.?$/ && m/(.*)/ ? $1 : () } readdir ORIG)
     {   my $from = File::Spec->catfile($orig, $name);
+        next if -d $from;
+
         my $to   = File::Spec->catfile($dest, $name);
         copy($from, $to) or die "Couldn't copy $from,$to: $!\n";
     }

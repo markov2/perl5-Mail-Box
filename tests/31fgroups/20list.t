@@ -23,7 +23,7 @@ warn $@;
        exit 0;
    }
    else
-   {   plan tests => 101;
+   {   plan tests => 113;
    }
 }
 
@@ -146,7 +146,7 @@ my @expect =
    , address => 'London.pm Perl M[ou]ngers <london-pm@london.pm.org>'
    , listname=> 'London.pm Perl M[ou]ngers <london.pm.london.pm.org>'
    , details => 'Mailman at london.pm@london.pm.org (2.0.1), 6 fields'
-   , rfc     => 'rfc2918'
+   , rfc     => 'rfc2919'
    }
  , { type    => 'Ecartis'
    , software=> 'Ecartis'
@@ -162,7 +162,7 @@ my @expect =
    , address => 'Mail-ListDetector@gunzel.org'
    , listname=> 'Mail-ListDetector.gunzel.org'
    , details => 'CommuniGate at Mail-ListDetector@gunzel.org (CommuniGate Pro 4.0.6), 4 fields'
-   , rfc     => 'rfc2918'
+   , rfc     => 'rfc2919'
    }
  , { type    => 'FML'
    , software=> 'fml'
@@ -186,7 +186,7 @@ my @expect =
    , address => 'sample@v2.listbox.com'
    , listname=> 'sample'
    , details => 'Listbox at sample@v2.listbox.com, 5 fields'
-   , rfc     => 'rfc2918'
+   , rfc     => 'rfc2919'
    }
  , { type    => 'Listbox'             # based on List-Software
    , software=> 'listbox.com'
@@ -194,7 +194,23 @@ my @expect =
    , address => 'sample@v2.listbox.com'
    , listname=> 'sample'
    , details => 'Listbox at sample@v2.listbox.com (listbox.com v2.0), 6 fields'
-   , rfc     => 'rfc2918'
+   , rfc     => 'rfc2919'
+   }
+ , { type    => 'Listserv'
+   , software=> 'LISTSERV-TCP/IP'
+   , version => '1.8e'
+   , address => '"EXAMPLE Discussion" <EXAMPLE@LISTSERV.EXAMPLE.COM>'
+   , listname=> 'EXAMPLE Discussion'
+   , details => 'Listserv at "EXAMPLE Discussion" <EXAMPLE@LISTSERV.EXAMPLE.COM> (LISTSERV-TCP/IP 1.8e), 1 fields'
+   , rfc     => undef
+   }
+ , { type    => 'Listserv'
+   , software=> 'LISTSERV-TCP/IP'
+   , version => '1.8d'
+   , address => '"Comedy Company" <COCO@LISTSERV.EXAMPLE.COM>'
+   , listname=> 'Comedy Company'
+   , details => 'Listserv at "Comedy Company" <COCO@LISTSERV.EXAMPLE.COM> (LISTSERV-TCP/IP 1.8d), 1 fields'
+   , rfc     => undef
    }
  );
 

@@ -11,6 +11,26 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.050: Tue Sep 30 18:27:11 CEST 2003
+
+	Fixes:
+
+	- Due to an (unintended) change of behaviour in Text::MagicTemplate
+	  (which is used to produce the POD and HTML) made all produced
+	  manuals exactly the same.
+
+	Improvements:
+
+	- [Mathew Walker] contributed various improvements to the ListGroup
+	  detection and documentation.  Detection for Listserv software
+	  was added, and rfc2918 should have been rfc2919.
+
+	- [Mathew Walker] made test/Tools::copy_dir() skip directories.
+
+	- Implementation of Mail::Message::Replace::MailInternet and
+	  ::MailHeader, as drop-in replacements for Mail::Internet and
+	  Mail::Header.  Very alpha! not tested yet!
+
 version 2.049: Mon Sep 29 13:32:47 CEST 2003
 
 	Fixes:

@@ -91,7 +91,7 @@ an array of scalars (each providing one line).
 =examples
 
  # all arguments are M<Mail::Message::Body>'s.
- my $sum = $body->concatenate($preamble, $body, $epilogue, "--\n" , $sig);
+ my $sum = $body->concatenate($preamble, $body, $epilogue, "-- \n" , $sig);
 
 =cut
 
@@ -222,10 +222,13 @@ Specify C<undef> to remove the limit.
 
 =examples
 
- my $stripped = $message->decoded;
- my $stripped = $body->decoded;
- my ($stripped, $signature) = $message->decoded
-    ->stripSignature(max_lines => 5, pattern => '-*-*-');
+ my $start = $message->decoded;
+ my $start = $body->decoded;
+
+ my $stripped = $start->stripSignature;
+
+ my ($stripped, $sign) = $start->stripSignature
+     (max_lines => 5, pattern => '-*-*-');
 
 =cut
 

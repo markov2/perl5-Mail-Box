@@ -95,7 +95,7 @@ own option.  The signature will be added after the postlude when the
 reply is INLINEd.
 
 =option  quote CODE|STRING
-=default quote '=E<gt> '
+=default quote 'E<gt> '
 
 Mangle the lines of an C<INLINE>d reply with CODE, or by prepending a
 STRING to each line.  The routine specified by CODE is called when the

@@ -944,3 +944,69 @@ Archives at http://archives.listbox.com/sample/current/
 To unsubscribe, change your address, or temporarily deactivate your
 ubscription,
 please go to http://v2.listbox.com/member/?listname=sample@v2.listbox.com
+
+From adm-bounce@oasys.net Mon Jun  4 06:41:14 2001
+Received: from lmailexample1.example.com ([10.22.163.233] verified)
+  by example.com.au (CommuniGate Pro SMTP 4.1)
+  with ESMTP id 946911982 for matthew@EXAMPLE.COM.AU;
+  Wed, 12 Aug 2001 21:49:00 0000
+Received: from LISTSERV.EXAMPLE.COM (tem01.mx.example.com) by
+  lmailexample1.example.com (LSMTP for Windows NT v1.1b) with SMTP id
+  <0.940293@lmailexample1.example.com>; Wed, 12 Aug 2001 21:29:46 +0400
+Received: from LISTSERV.EXAMPLE.COM by LISTSERV.EXAMPLE.COM (LISTSERV-TCP/IP
+  release 1.8e) with spool id 8932592 for EXAMPLE@LISTSERV.EXAMPLE.COM;
+  Wed, 12 Aug 2001 20:58:31 +0400
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Message-ID:  <DEADCAFE.3289872@example.net>
+Date:         Wed, 12 Aug 2001 20:58:11 -0200
+Reply-To:     EXAMPLE Discussion <EXAMPLE@LISTSERV.EXAMPLE.COM>
+Sender:       EXAMPLE Discussion <EXAMPLE@LISTSERV.EXAMPLE.COM>
+From:         I. EXAMPLE <iiiii@EXAMPLE.NET>
+Subject: Boring sample message
+To:           EXAMPLE@LISTSERV.EXAMPLE.COM
+In-Reply-To:  <7834BADFE3125E.90301@example.com>
+Precedence: list
+
+This is a really boring example Listserv message.
+
+--
+EXAMPLE - http://www.example.com/
+
+To Remove yourself from this list, simply send an email to
+<listserv@listserv.example.com> with the
+body of "SIGNOFF EXAMPLE" in the email message. You can leave the Subject:
+field of your email blank.
+
+From adm-bounce@oasys.net Mon Jun  4 06:41:14 2001
+Return-Path: <>
+Received: from listserv.example.com (listserv.example.com
+    [10.51.0.6]) by listserv.example.com (8.11.6p2/8.11.6) with ESMTP
+    id h32hgds039; Wed, 10 Apr 2001 20:48:08 -0500 (EST)
+Received: from LISTSERV.EXAMPLE.COM by LISTSERV.EXAMPLE.COM
+    (LISTSERV-TCP/IP release 1.8d) with spool id 137738 for
+    COCO@LISTSERV.EXAMPLE.COM; Wed, 10 Apr 2001 19:13:57 -0500
+Approved-BY: spcadmin@EXAMPLE.COM
+Received: from relay.example.com (relay.example.com
+    [10.51.0.1]) by listserv.example.com (8.11.6p2/8.11.6) with ESMTP
+    id h31L8r26559 for <coco@listserv.example.net>; Wed,
+    1 Apr 2003 16:52:55 -0500 (EST)
+Received: from cp.example.com (cp.example.com [10.51.0.1]) by
+    relay.example.com (Switch-2.2.6/Switch-2.2.5) with ESMTP id
+    htyLqsv14600 for <coco@example.com>; Wed, 10 Apr 2001 15:26:55
+    -0500 (EST)
+Received: (from nobody@localhost) by cp.example.com (8.11.6/8.11.6) id
+    h31LqsX16086; Wed, 10 Apr 2001 15:25:54 -0500 (EST)
+Message-Id: <200104102125.h31LqsX16086@cp.example.com>
+Date: Wed, 10 Apr 2001 15:25:54 -0500
+Reply-To: vibrant_newsletters@EXAMPLE.NET
+Sender: Comedy Company <COCO@LISTSERV.EXAMPLE.COM>
+From: Comedy Company <spcadmin@EXAMPLE.COM>
+Subject: Another boring sample message
+To: COCO@LISTSERV.EXAMPLE.COM
+Status: U
+
+And here's another one but the Reply-To is not set to the list.
+
+

@@ -1186,8 +1186,8 @@ sub headIsRead() { not shift->head->isa('Mail::Message::Delayed') }
 =method readFromParser PARSER, [BODYTYPE]
 
 Read one message from file.  The PARSER is opened on the file.  First
-readHeader() is called, and the head is stored in the message.  Then
-readBody() is called, to produce a body.  Also the body is added to
+M<readHead()> is called, and the head is stored in the message.  Then
+M<readBody()> is called, to produce a body.  Also the body is added to
 the message without decodings being done.
 
 The optional BODYTYPE may be a body class or a reference to a code
@@ -1218,8 +1218,7 @@ sub readFromParser($;$)
 =method readHead PARSER [,CLASS]
 
 Read a head into an object of the specified CLASS.  The CLASS defaults to
-the C<head_type> option specified at creation of the message (see new()).
-The PARSER is the access to the folder's file.
+M<new(head_type)>.  The PARSER is the access to the folder's file.
 
 =cut
 

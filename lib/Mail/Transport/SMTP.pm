@@ -38,8 +38,8 @@ C<sendmail>, C<mail>, or other programs on the local host.
 Simulate transmission: the SMTP protocol output will be sent to your
 screen.
 
-=option  helo_domain HOST
-=default helo_domain <from Net::Config>
+=option  helo HOST
+=default helo <from Net::Config>
 
 The fully qualified name of the sender's host (your system) which
 is used for the greeting message to the receiver.  If not specified,
