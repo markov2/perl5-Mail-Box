@@ -469,6 +469,7 @@ sub init($)
     my $folderdir = $self->folderdir($args->{folderdir});
     $self->{MB_trusted}      = exists $args->{trusted} ? $args->{trusted}
       : substr($foldername, 0, 1) eq '='               ? 1
+      : !defined $folderdir                            ? 0
       : substr($foldername, 0, length $folderdir) eq $folderdir;
 
     if(exists $args->{manager})
@@ -727,19 +728,19 @@ ERROR
     my $coerced = $self->coerce($message);
     $coerced->folder($self);
 
-    unless($message->head->isDelayed)
+    unless($coerced->head->isDelayed)
     {   # Do not add the same message twice, unless keep_dups.
-        my $msgid = $message->messageId;
+        my $msgid = $coerced->messageId;
 
         unless($self->{MB_keep_dups})
         {   if(my $found = $self->messageId($msgid))
-            {   $message->label(deleted => 1);
+            {   $coerced->label(deleted => 1);
                 return $found;
             }
         }
 
-        $self->messageId($msgid, $message);
-        $self->toBeThreaded($message);
+        $self->messageId($msgid, $coerced);
+        $self->toBeThreaded($coerced);
     }
 
     $self->storeMessage($coerced);
@@ -1327,12 +1328,15 @@ sub messages($;$)
 
     if(@_==2)   # range
     {   my ($begin, $end) = @_;
-        $begin += $nr if $begin < 0;
-        $begin = 0    if $begin < 0;
-        $end   += $nr if $end < 0;
-        $end   = $nr  if $end > $nr;
+        $begin += $nr   if $begin < 0;
+        $begin  = 0     if $begin < 0;
+        $end   += $nr   if $end < 0;
+        $end    = $nr-1 if $end >= $nr;
 
-        return $begin > $end ? () : @{$self->{MB_messages}}[$begin..$end];
+        return () if $begin > $end;
+
+        my @range = @{$self->{MB_messages}}[$begin..$end];
+        return @range;
     }
 
     my $what = shift;

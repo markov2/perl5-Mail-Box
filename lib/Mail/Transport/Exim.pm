@@ -41,6 +41,7 @@ sub init($)
 
     $self->{MTS_program}
       = $args->{proxy}
+     || ( -x '/usr/sbin/exim4' ? '/usr/sbin/exim4' : undef)
      || $self->findBinary('exim', '/usr/exim/bin')
      || return;
 

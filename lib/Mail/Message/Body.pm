@@ -280,11 +280,11 @@ sub init($)
     {
         if(!ref $data)
         {   my @lines = split /^/, $data;
-            $lines[-1] .= "\n" if @lines && substr($lines[-1], -1) ne "\n";
             $self->_data_from_lines(\@lines)
         }
         elsif(ref $data eq 'ARRAY')
-        {   $self->_data_from_lines($data) or return }
+        {   $self->_data_from_lines($data) or return;
+        }
         else
         {   croak "Illegal datatype for data option." }
     }

@@ -421,7 +421,7 @@ sub open(@)
     #
 
     eval "require $class";
-    croak if $@;
+    croak $@ if $@;
 
     push @defaults, manager => $self;
     my $folder = $class->new(@defaults, %args);

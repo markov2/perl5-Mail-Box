@@ -11,6 +11,44 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.054: Fri Feb  6 21:52:54 CET 2004
+
+	Fixes:
+
+	- Reverted the change made in 2.049, which automatically added
+	  a new-line to a body... a Mail::Message::Body object may
+	  contain binary data!
+
+	- [Phil Hagen] found a typo in Mail::Transport::Qmail, causing
+	  the display of undisclosed fields (Bcc) when using qmail.
+
+	- [Brett Dikeman] showed that $mgr->open sometimes complained
+	  with a warning when no folderdir was specified.
+
+	- [Erik A Johnson] patched Mail::Box->coerce(message) to work
+	  better with foreign messages.
+
+	- [Erik A Johnson] found that Mail::Internet objects where converted
+	  by the MIME::Entity converter and vice-versa.  This does usually
+	  not cause too many problems because MIME::Entity extends
+	  Mail::Internet.
+
+	- [David Phillips] got an undef warning in POP3 after delete(). Fixed
+
+	- [Mike J. Vincelette] reported error in $folder->messages(0, 20)
+	  The bounds were not checked correctly and slicing with 1..20
+	  behaves unexpectedly in subroutine scalar context.
+
+	Improvements:
+
+	- $msg->size returns a value which may be a few percent off the
+	  real value (depends on the action which follows).  The warning
+	  in the documentation about this has been strengthened after some
+	  discussion with [Mike Mimic]
+
+	- Mail::Transport::Exim takes exim4 binary with preference over
+	  usual exim MTA, on request by [Mike Mimic]
+
 version 2.053: Thu Dec  4 00:13:50 CET 2003
 
 	Fixes:
@@ -521,7 +559,7 @@ version 2.042: Tue May 20 14:32:05 CEST 2003
         - Added message-id to the wrong side of the Reference field
           in reply() and forward().  Fix by [Mike Mimic]
 
-        - [Tassilo v Parsival] reported an error when HTML::FormatText
+        - [Tassilo v Parseval] reported an error when HTML::FormatText
           was not installed.
 
         - [Alex Liberman] found that searching nested messages failed,
@@ -1906,7 +1944,7 @@ version 2.008: Mon Feb 18 16:11:52 CET 2002
 
         Fixes:
 
-        - [Alam Kelm] proved me that the other perl modules are wrong,
+        - [Alan Kelm] proved me that the other perl modules are wrong,
           wrapping the header-lines more often than the RFC permits.  So,
           wrapping on ';' and '.' is removed.  Wrapped headers are always
           accepted, so there is no difference when reading a folder.
@@ -2098,7 +2136,7 @@ version 2.00_19: Wed Dec 12 22:13:56 CET 2001
         - Removed Tassilo's header parser optimization in favor of
           split again, because it breaks on empty fields.
 
-        - [Tassilo v Parsival] added some 'binmode OUT' lines to
+        - [Tassilo v Parseval] added some 'binmode OUT' lines to
           make 98% of the tests succeed on Windows!!  But I am not
           sure that is the right answer.  More on that later.
 
@@ -2138,7 +2176,7 @@ version 2.00_18: Mon Dec 10 22:19:44 CET 2001
 
         - Added POSIX fcntl locking.
 
-        - [Tassilo v Parsival] demonstrated the fastest way to split
+        - [Tassilo v Parseval] demonstrated the fastest way to split
           a header, determined by benchmarking 6 variations on the theme.
           Used in Mail::Box::Parser::Perl.pm
 
@@ -2159,7 +2197,7 @@ version 2.00_17: Sat Dec  8 23:10:06 CET 2001
         - Extra checks for From-line in mbox folders, to help incorrectly
           formatted folders.
 
-        - [Tassilo v Parsival] discovered the problematic recovery for
+        - [Tassilo v Parseval] discovered the problematic recovery for
           erroneous headers.  Some recovery is tried.
 
 version 2.00_16:  Sat Dec  8 16:56:53 CET 2001

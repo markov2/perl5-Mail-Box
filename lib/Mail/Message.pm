@@ -226,7 +226,7 @@ sub coerce($)
         {   eval {require Mail::Message::Convert::MimeEntity};
                 confess "Install MIME::Entity" if $@;
 
-            $mime_entity_converter = Mail::Message::Convert::MailInternet->new;
+            $mime_entity_converter = Mail::Message::Convert::MimeEntity->new;
         }
 
         $message = $mime_entity_converter->from($message)
@@ -238,7 +238,7 @@ sub coerce($)
         {   eval {require Mail::Message::Convert::MailInternet};
             confess "Install Mail::Internet" if $@;
 
-            $mail_internet_converter = Mail::Message::Convert::MimeEntity->new;
+           $mail_internet_converter = Mail::Message::Convert::MailInternet->new;
         }
 
         $message = $mail_internet_converter->from($message)
@@ -488,13 +488,18 @@ sub send(@)
 
 =method size
 
-Returns the size of the whole message in bytes.  This does assume that each
-line ending is represented by one character (like UNIX, MacOS, and sometimes
-Cygwin), and not two characters (like Windows and sometimes Cygwin).
+Returns an estimated size of the whole message in bytes.  In many occasions,
+the functions which process the message further, for instance M<send()>
+or M<print()> will need to add/change header lines or add CR characters,
+so the size is only an estimate with a few percent margin of the real
+result.
 
-If you write the message to file on a system which uses CR and LF to end a
-single line (all Windows versions), the result in file will be M<nrLines()>
-larger than this method returns.
+The computation assumes that each line ending is represented by one
+character (like UNIX, MacOS, and sometimes Cygwin), and not two characters
+(like Windows and sometimes Cygwin).  If you write the message to file on
+a system which uses CR and LF to end a single line (all Windows versions),
+the result in that file will be at least M<nrLines()> larger than this
+method returns.
 
 =cut
 

@@ -7,6 +7,7 @@ use base 'Mail::Reporter';
 use Carp;
 use Mail::Address;
 use POSIX      'strftime';
+use IO::Handle;
 
 our %_structured;  # not to be used directly: call isStructured!
 my $default_wrap_length = 78;

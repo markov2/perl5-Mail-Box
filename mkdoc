@@ -1,4 +1,4 @@
-#!/usr/bin/perl5.8.0
+#!/usr/bin/perl
 # Create the documentation for the Mail::Box module.
 # This script can be called as part of the mkdist procedure, but also
 # on its own.
