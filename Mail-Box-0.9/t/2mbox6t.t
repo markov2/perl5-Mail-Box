@@ -13,7 +13,7 @@ use lib '..';
 
 use Mail::Box::Mbox;
 
-BEGIN {plan tests => 1}
+BEGIN {plan tests => 13}
 
 #
 # We will work with a copy of the original to avoid that we write
@@ -32,15 +32,61 @@ my $folder = Mail::Box::Mbox->new
   , take_headers => 'REAL'
   , access       => 'rw'
   , save_on_exit => 0
+# , thread_timespan => 'EVER'
   );
+ok($folder);
 
 die "Couldn't read $src." unless $folder;
+# First try message which is single.
+my $single = $folder->messageID(
+   '<200010041822.e94IMZr19712@mystic.es.dupont.com>');
+ok($single);
+my $start = $single->thread;
+ok($start);
+ok($single->messageID eq $start->messageID);
+
+my $message = $folder->messageID(
+    '<NDBBJJFDMKFOAIFBEPPJIELLCBAA.cknoos@atg.com>');
+ok($message);
+
+$start = $message->thread;
+ok($start->isa('Mail::Box::Message::Runtime'));
+ok($start);
+ok($start->messageID ne $message->messageID);
+ok($start->threadToString, <<'START');
+2.9K *- Problem resizing images through perl script
+1.5K |  `- Re: Problem resizing images through perl script
+3.1K |     `- RE: Problem resizing images through perl script
+1.6K |        `- Re: Problem resizing images through perl script
+3.3K `- Re: Convert HTM, HTML files to the .jpg format
+START
+
+ok($message->threadToString, <<'MIDDLE');
+2.9K Problem resizing images through perl script
+1.5K `- Re: Problem resizing images through perl script
+3.1K    `- RE: Problem resizing images through perl script
+1.6K       `- Re: Problem resizing images through perl script
+MIDDLE
+
+$message->folded(1);
+ok($start->threadToString, <<'FOLDED');
+     *- [4] Problem resizing images through perl script
+3.3K `- Re: Convert HTM, HTML files to the .jpg format
+FOLDED
+
+$message->folded(0);
+ok($start->threadToString, <<'START');
+2.9K *- Problem resizing images through perl script
+1.5K |  `- Re: Problem resizing images through perl script
+3.1K |     `- RE: Problem resizing images through perl script
+1.6K |        `- Re: Problem resizing images through perl script
+3.3K `- Re: Convert HTM, HTML files to the .jpg format
+START
 
 my $out;
 foreach (sort {$a->messageID cmp $b->messageID} $folder->threads)
 {   $out .= $_->threadToString;
 }
-print $out;
 
 ok($out eq <<'DUMP');
 3.1K *- Re: converts new sharpen factors

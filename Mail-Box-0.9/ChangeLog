@@ -111,3 +111,20 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/t/2mbox6t.t
 		Mail/t/3mh6t.t
 
+version 0.9:
+
+Mark Overmeer <mark@overmeer.net>
+	* More tests on threads, which resulted in quite some fixes.
+	  I am sure that some things may be improved, still.
+		Mail/Box/Threads.pm
+		Mail/Box.pm
+		Mail/Box/Messages.pm
+
+	* The .mh_sequences file gave only little fight, so passes
+	  the tests now.
+		Mail/Box/MH.pm
+		Mail/Box/Messages.pm
+		Mail/t/3mh7s.t
+
+	The number of tests grew to over 100, so it is starting to
+	look as if all trics are working.

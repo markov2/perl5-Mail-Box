@@ -3,7 +3,7 @@ package Mail::Box::Locker;
 
 use strict;
 use 5.006;
-our $VERSION = v0.8;
+our $VERSION = v0.9;
 
 use Fcntl         qw/:DEFAULT :flock/;
 use IO::File;
@@ -319,8 +319,6 @@ sub dot_lock
     while($timer != $end)
     {   return 1 if $self->try_dot_lock($lockfile);
 
-warn "Failed $lockfile.\n";
-
         if(   -e $lockfile
            && -A $lockfile > ($self->{MBL_timeout}/86400)
            && unlink $lockfile
@@ -512,7 +510,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.8
+This code is alpha, version 0.9
 
 =cut
 

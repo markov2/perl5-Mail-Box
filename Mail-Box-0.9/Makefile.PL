@@ -7,5 +7,6 @@ WriteMakefile(
     VERSION_FROM => 'Box.pm', # finds $VERSION
     PREREQ_PM    => { Mail::Internet => 1.33
                     , MIME::Tools    => 5.406
+                    , Date::Parse    => 2.20
                     }
 );

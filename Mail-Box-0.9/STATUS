@@ -6,7 +6,10 @@ please check for a new version: new programs often get many changes
 in their first months.
 
 The release status is   ***** ALPHA *****
-as long as not all methods are tested intensively.
+as long as not all methods are tested intensively.  Mbox folders are
+better tested than MH-folders, especially because the AUTOLOAD-trics
+are simpler for Mboxes.
+
 Other folder-types will be implemented only when the beta phase is
 reached: when the Mbox and MH implementation seem complete and stable.
 
@@ -22,13 +25,15 @@ Mbox-folders:
    2mbox2w.t          writing
    2mbox3d.t          delay loading
    2mbox4a.t          appending to opened and unopened folders
+   2mbox5c.t          folders and sub-folders
    2mbox6t.t          test threads
 
 MH-folders:
    3mh1r.t            reading
    3mh2w.t            writing
    3mh3a.t            appending to opened and unopened folders
-   2mh6t.t            test threads
+   3mh6t.t            test threads
+   3mh7s.t            mh_sequences and labels.
 
 Folder manager:
    7mgr.t             locating/opening/closing folders.
@@ -43,9 +48,7 @@ Locking:
 NOT Tested  (but implemented)
 ==========
 
-creating/removing of folders
-listing of folders
-sub-folders (emulated in mbox)
+MH creating/removing of folders
+MH listing of folders
+MH sub-folders (emulated in mbox)
 MH index-file
-MH sequences
-labels

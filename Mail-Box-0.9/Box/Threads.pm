@@ -3,7 +3,7 @@ package Mail::Box::Threads;
 
 use strict;
 use 5.006;
-our $VERSION = v0.8;
+our $VERSION = v0.9;
 
 use Mail::Box::Message;
 
@@ -159,12 +159,12 @@ sub init($)
     $self->{MBT_thread_body}     = $args->{thread_body}        || 0;
 
     for($args->{thread_timespan} || '3 days')
-    {   $self->{MBT_thread_timespan}
-            = $_ eq 'EVER' ? 2000000000 : $self->timespan2seconds($_);
+    {   $self->{MBT_timespan}
+            = $_ eq 'EVER' ? $_ : $self->timespan2seconds($_);
     }
 
     for($args->{thread_window} || 10)
-    {   $self->{MBT_thread_window} = $_ eq 'ALL'  ? -1 : $_;
+    {   $self->{MBT_window} = $_ eq 'ALL'  ? -1 : $_;
     }
 
     $self;
@@ -213,7 +213,11 @@ to build solid knowledge about the thread where this message is in.
 sub thread($)
 {   my ($self, $message) = @_;
 
-    my $top = $message->thread;
+    # Search for the top of this message's thread.
+    my $top = $message;
+    while(my $parent = $top->repliedTo)
+    {   $top = $self->messageID($parent);
+    }
 
     # Ready when whole folder has been processed.
     return $top if exists $self->{MBT_last_parsed}
@@ -223,7 +227,7 @@ sub thread($)
     return $top if $top->threadFilled;             # fast bail-out.
 
     my %missing;
-    $self->recurseThread
+    $top->recurseThread
     ( sub { my $message = shift;
             return 0 if $message->threadFilled;    # don't visit kids
             $missing{$message->messageID}++ if $message->isDummy;
@@ -237,9 +241,10 @@ sub thread($)
     # messages before this one.
 
     my $start    = ($self->{MBT_last_parsed} || $self->allMessages) -1;
-    my $end      = $self->{MBT_thread_window} eq 'ALL' ? 0
-                 : $message->seqnr - $self->{MBT_thread_window};
-    my $earliest = $message->timestamp - $self->{MBT_timespan};
+    my $end      = $self->{MBT_window} eq 'ALL' ? 0
+                 : $message->seqnr - $self->{MBT_window};
+    my $earliest = $self->{MBT_timespan} eq 'EVER' ? 0
+                 : $message->timestamp - $self->{MBT_timespan};
 
     for(my $msgnr = $start; $msgnr >= $end; $msgnr--)
     {   my $add  = $self->message($msgnr);
@@ -250,10 +255,10 @@ sub thread($)
             last unless keys %missing;
         }
 
-        last if $add->timestamp < $earliest;
+        last if $earliest && $add->timestamp < $earliest;
     }
 
-    $self;
+    $top;
 }
 
 
@@ -464,8 +469,7 @@ Example:
 
 sub thread()
 {   my $self = shift;
-    $self->detectThread;
-    exists $self->{MBT_parent} ? $self->{MBT_parent}->thread : $self;
+    $self->folder->thread($self);
 }
 
 #-------------------------------------------
@@ -744,14 +748,13 @@ sub threadToString(;$$)
 {   my ($self, $first, $other) = (shift, shift || '', shift || '');
 
     my @follows = $self->followUps;
-    my $size    = $self->shortSize;
 
     my @out;
 
     if($self->folded)
     {   my $subject = $self->head->get('subject');
         chomp $subject if $subject;
-        return "$size$first [" . $self->nrMessages . '] '. ($subject||'')."\n";
+        return "    $first [" . $self->nrMessages . '] '. ($subject||'')."\n";
     }
     elsif($self->isDummy)
     {   $first .= $first ? '-*-' : ' *-';
@@ -763,6 +766,7 @@ sub threadToString(;$$)
     }
     else
     {   my $subject = $self->head->get('subject');
+        my $size    = $self->shortSize;
         chomp $subject if $subject;
         @out = "$size$first ". ($subject || ''). "\n";
         push @out, (shift @follows)->threadToString( "$other |-", "$other | " )
@@ -785,7 +789,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.8
+This code is alpha, version 0.9
 
 =cut
 

@@ -146,23 +146,25 @@ As example, the next scheme uses Mbox, however there are more
 parallel extentions of Mail::Box::Message (in the future).
 
      ::Message::Mbox             ::Message::Mbox
-          |     \                  / ::NotParsed
+          |     ^                  ^ ::NotParsed
           |      \                /         |
           |       \              /          |
-          |        ::Message::Mbox          |
+          ^        ::Message::Mbox          ^
           |              ::Runtime          |
           |                                 |
-          v                                 v
+          |                                 |
      ::Message         ::Dummy          ::Message
-          |   \           |           ::NotParsed
-          |    \          |           /
-          |     \         v          /
+          |   ^           |           ::NotParsed
+          |    \          ^           ^
+          ^     \         |          /
+          |      \        |         /
           |       ::Message::Runtime
-          v
-     MIME::Entity
+          |               |
+     MIME::Entity         ^
+          |               |
+          ^           ::Thread
           |
           |
-          v
      Mail::Internet
 
 The rest of this manual-page describes the functionalities of each
@@ -175,6 +177,9 @@ single class.
 ###
 
 package Mail::Box::Message::Runtime;
+use Date::Parse;
+
+our @ISA = 'Mail::Box::Thread';
 
 =head1 Mail::Box::Message::Runtime
 
@@ -238,6 +243,8 @@ my $unreg_msgid = time;
 
 sub init($)
 {   my ($self, $args) = @_;
+
+    $self->SUPER::init($args);
 
     $self->{MBM_size}      = $args->{size}      || 0;
     $self->{MBM_deleted}   = $args->{deleted}   || 0;
@@ -320,6 +327,17 @@ sub isDummy() { 0 }
 
 #-------------------------------------------
 
+=item headIsRead
+
+Checks if the head of the message is read.  This is true for fully
+parsed messages and messages where the header was accessed once.
+
+=cut
+
+sub headIsRead() { 1 }
+
+#-------------------------------------------
+
 =item modified [BOOL]
 
 Check (or set, when an argument is supplied) that the message-contents has
@@ -396,6 +414,33 @@ Get (add set) the number of this message is the current folder.
 sub seqnr(;$)
 {   my $self = shift;
     @_ ? $self->{MBM_seqnr} = shift : $self->{MBM_seqnr};
+}
+
+#-------------------------------------------
+
+=item timestamp
+
+Returns an indication on the moment that the message was originally
+sent.  The exact value which is returned is operating-system dependent,
+but on UNIX systems will be in seconds since 1 January 1970.
+
+=cut
+
+sub timestamp()
+{   my $self = shift;
+    return undef if $self->isDummy;
+
+    if(my $date = $self->head->get('date'))
+    {   my $stamp = str2time($date, 'GMT');
+        return $stamp if $stamp;
+    }
+
+    foreach ($self->head->get('received'))
+    {   my $stamp = str2time($_, 'GMT');
+        return $stamp if $stamp;
+    }
+
+    undef;
 }
 
 #-------------------------------------------
@@ -534,7 +579,6 @@ sub shortString()
 package Mail::Box::Message;
 use Carp;
 our @ISA = ( 'Mail::Box::Message::Runtime'
-           , 'Mail::Box::Thread'
            , 'MIME::Entity'
            );
 
@@ -583,7 +627,6 @@ sub init($)
     $self->delayedInit($args) || return $self;
 
     $self->Mail::Box::Message::Runtime::init($args);
-    $self->Mail::Box::Thread::init($args);
 }
 
 sub delayedInit($)
@@ -768,9 +811,7 @@ sub isPart() { shift->{MBM_is_part} || 0 }
 ###
 
 package Mail::Box::Message::Dummy;
-our @ISA = ( 'Mail::Box::Message::Runtime'
-           , 'Mail::Box::Thread'
-           );
+our @ISA = 'Mail::Box::Message::Runtime';
 
 #-------------------------------------------
 
@@ -799,11 +840,10 @@ Examples:
 
 sub new($) { shift->SUPER::new(messageID => shift, deleted => 1) }
  
-sub init($)
-{   my ($self, $args) = @_;
-    $self->Mail::Box::Message::Runtime::init($args);
-    $self->Mail::Box::Thread::init($args);
-}
+#sub init($)
+#{   my ($self, $args) = @_;
+#    $self->SUPER::init($args);
+#}
 
 sub isDummy() { 1 }
 
@@ -821,9 +861,7 @@ sub shortString()
 ###
 
 package Mail::Box::Message::NotParsed;
-our @ISA = ( 'Mail::Box::Message::Runtime'
-           , 'Mail::Box::Thread'
-           );
+our @ISA = 'Mail::Box::Message::Runtime';
 
 #-------------------------------------------
 
@@ -859,8 +897,7 @@ sub init($)
 
     $self->{MBM_upgrade_to} = $args->{upgrade_to};
 
-    $self->Mail::Box::Message::Runtime::init($args);
-    $self->Mail::Box::Thread::init($args);
+    $self->SUPER::init($args);
     $self;
 }
 
@@ -1111,7 +1148,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.8
+This code is alpha, version 0.9
 
 =cut
 

@@ -4,7 +4,7 @@ use 5.006;
 
 package Mail::Box::Mbox;
 our @ISA     = 'Mail::Box';
-our $VERSION = v0.8;
+our $VERSION = v0.9;
 
 use Mail::Box;
 
@@ -26,17 +26,41 @@ Mail::Box::Mbox - Handle folders with many messages per file.
 This manual-page describes Mail::Box::Mbox and Mail::Box::Mbox::*
 packages.  Read Mail::Box::Manager and Mail::Box first.
 
-Handle file-based folders, where many messages are stored in one
-file.
+=head2 How Mbox-folders work
 
-A File-based folder is a plain text-file where the start of a message
-is detected by scanning for the word C<From >.  Lines which do accedentally
-start with a C<From> are in the file preceeded by `>', however,
-this is stripped when reading.
+Mbox folders store many messages in one file (let's call this a
+`file-based' folder, in contrary to a `directory-based' foldertype
+like MH).
+
+In file-based folders, each message is preceeded by a line which starts
+with the word C<From >.  Lines inside a message which do accedentally
+start with C<From> are, in the file, preceeded by `>'.  This character is
+stripped when the message is read.
 
 The name of a folder may be an absolute or relative path.  You can also
 preceed the foldername by C<=>, which means that it is relative to the
 I<folderdir> as specified at C<new>.
+
+=head2 simulation sub-folders
+
+File-based folders do not really have a sub-folder idea, as directory-based
+folders have, but this module tries to simulate them.  In this implementation
+a directory like
+
+   Mail/subject1/
+
+is taken as an empty folder C<Mail/subject1>, with the folders in that
+directory as sub-folders for it.
+
+You may also use
+   Mail/subject1
+   Mail/subject1.d/
+
+where C<Mail/subject1> is a folder, and the folders in the C<Mail/subject1.d>
+directory are used as sub-folders.
+
+Because of these simulated sub-folders, the folder-manager does not need to
+distiguish between file- and directory-based folders in this respect.
 
 =head2 Message State Transition
 
@@ -160,6 +184,7 @@ can be changed using this option.
 =cut
 
 my $default_folder_dir = $ENV{HOME} . '/Mail';
+my $default_extention  = '.d';
 
 sub init($)
 {   my ($self, $args) = @_;
@@ -170,12 +195,17 @@ sub init($)
 
     $self->SUPER::init($args);
 
+    my $extention               = $self->{MB_sub_ext}
+       = $args->{subfolder_extention} || $default_extention;
+
     my $filename                = $self->{MB_filename}
-       = (ref $self)->folderToFilename($self->name, $self->folderdir);
+       = (ref $self)->folderToFilename
+           ( $self->name
+           , $self->folderdir
+           , $extention
+           );
 
     $self->registerHeaders( qw/status x-status/ );
-
-    $self->{MB_sub_ext}         = $args->{subfolder_extention} || '.d';
 
     my $lockdir  = $filename;
     $lockdir     =~ s!/([^/]*)$!!;
@@ -234,10 +264,8 @@ sub fileOpen()
     my $access = $self->{MB_access} || 'r';
     $access = 'r+' if $access eq 'rw';
 
-    unless($file = FileHandle->new($source, $access))
-    {   warn "Where did the folder-file $self (file $source) go?\n";
-        return;
-    }
+    return undef
+       unless $file = FileHandle->new($source, $access);
 
     $self->{MB_file} = $file;
 
@@ -275,7 +303,13 @@ reason.
 
 sub readMessages(@)
 {   my $self = shift;
-    my $file = $self->fileOpen or return;
+    my $file = $self->fileOpen;
+
+    # New folder.
+    unless($file)
+    {   $self->{MB_delayed_loads} = 0;
+        return $self;
+    }
 
     # Prepare to scan for headers we want.  To speed things up, we create
     # a regular expression which will only fit exact on the right headers.
@@ -422,15 +456,23 @@ that file.
 sub writeMessages()
 {   my Mail::Box::Mbox $self = shift;
     my $filename = $self->filename;
-    my $tmpnew   = $self->tmpNewFolder($filename);
 
+    # Is there was a sub-folder, but without extention used (as in subdirs
+    # created by other mail-packages, we move that one.
+    rename $filename, $filename . $self->{MB_sub_ext}
+        if -d $filename;
+
+    my $tmpnew   = $self->tmpNewFolder($filename);
     my $was_open = $self->fileIsOpen;
-    $self->fileOpen || return;  # for delayed messages.
+    if($self->{MB_delayed_loads} && ! $self->fileOpen)
+    {   warn "Where did the folder-file $self (file $filename) go?\n";
+        return 0;
+    }
 
     my $new = FileHandle->new($tmpnew, 'w');
     unless($new)
     {   warn "Unable to write to file $tmpnew for folder $self: $!\n";
-        $self->fileClose;
+        $self->fileClose unless $was_open;
         return 0;
     }
 
@@ -524,16 +566,28 @@ sub filename() { shift->{MB_filename} }
 
 #-------------------------------------------
 
-=item folderToFilename FOLDERNAME ,FOLDERDIR
+=item folderToFilename FOLDERNAME, FOLDERDIR, EXTENTION
 
 (class method)  Translate a foldername into a filename, with use of the
 FOLDERDIR to replace a leading C<=>.
 
 =cut
 
-sub folderToFilename($$)
-{   my ($class, $name, $folderdir) = @_;
-    $name =~ /^=(.*)/ ? "$folderdir/$1" : $name;
+sub folderToFilename($$$)
+{   my ($class, $name, $folderdir, $extention) = @_;
+    $name =~ s#^=#$folderdir/#;
+    my @parts = split m!/!, $name;
+    my $real  = shift @parts;
+
+    while(@parts)
+    {   my $next = shift @parts;
+        $real = -e "$real/$next"                     ? "$real/$next"
+              : -e "$real$extention/$next"           ? "$real$extention/$next"
+              : -e "$real$extention/$next$extention" ? "$real$extention/$next"
+              : -d "$real$extention"                 ? "$real$extention/$next"
+              :                                        "$real/$next";
+    }
+    $real;
 }
 
 sub tmpNewFolder($) { shift->filename . '.tmp' }
@@ -560,6 +614,8 @@ on the request.  For this class, we use (if defined):
 
 =item * folderdir => DIRECTORY
 
+=item * subfolder_extention => STRING
+
 =back
 
 Example:
@@ -573,7 +629,8 @@ Example:
 sub foundIn($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
-    my $filename  = $class->folderToFilename($name, $folderdir);
+    my $extention = $args{subfolder_extention} || $default_extention;
+    my $filename  = $class->folderToFilename($name, $folderdir, $extention);
     return 0 unless -f $filename;
     return 1 if -z $filename;      # empty folder is ok
 
@@ -592,9 +649,13 @@ sub foundIn($@)
 
 =item listFolders [OPTIONS]
 
-List the folders in a certain directory.
+List the folders in a certain directory.  Folders will not start with
+a dot.  When a directory with the sub-folder extention is found, then
+an empty folder is presumed.
 
 =over 4
+
+=item * folder => FOLDERNAME
 
 =item * folderdir => DIRECTORY
 
@@ -602,25 +663,31 @@ List the folders in a certain directory.
 
 =item * skip_empty => BOOL
 
+=item * subfolder_extention => STRING
 =back
 
 =cut
 
 sub listFolders(@)
 {   my ($class, %args)  = @_;
-    my $dir             = defined $args{folderdir}
-                        ? $args{folderdir}
-                        : $default_folder_dir;
 
-    $args{skip_empty} ||= 0;
-    $args{check}      ||= 0;
+    my $skip_empty = $args{skip_empty} || 0;
+    my $check      = $args{check}      || 0;
+    my $extent     = $args{subfolder_extention} || $default_extention;
 
-    return () unless -d $dir && opendir DIR, $dir;
+    my $folder     = exists $args{folder} ? $args{folder} : '=';
+    my $folderdir  = exists $args{folderdir}
+                   ? $args{folderdir}
+                   : $default_folder_dir;
+    my $dir        = $class->folderToFilename($folder, $folderdir, $extent);
+
+    my $real       = -d $dir ? $dir : "$dir$extent";
+    return () unless opendir DIR, $real;
 
     # Some files have to be removed because they are created by all
     # kinds of programs, but are no folders.
 
-    my @files = grep { ! m/.lock$/ && ! m/^\./ } readdir DIR;
+    my @entries = grep { ! m/.lock$/ && ! m/^\./ } readdir DIR;
     closedir DIR;
 
     # Look for files in the folderdir.  They should be readible to
@@ -628,43 +695,30 @@ sub listFolders(@)
     # the size too, we avoid a syscall especially to get the size
     # of the file by performing that check immediately.
 
-    @files = $args{skip_empty}
-           ? grep { -f "$dir/$_" && -r _ && -s _ } @files
-           : grep { -f "$dir/$_" && -r _ } @files;
+    my %folders;  # hash to immediately un-double names.
 
-    # Check if the files we want to return are really folders.
+    foreach (@entries)
+    {   next unless -r "$real/$_";
+        if( -f _ )
+        {   next if $args{skip_empty} && ! -s _;
+            next if $args{check} && !$class->foundIn("$real/$_");
+            $folders{$_}++;
+        }
+        elsif( -d _ )
+        {   # Directories may create fake folders.
+            if($args{skip_empty})
+            {   opendir DIR, "$real/$_" or next;
+                my @sub = grep !/^\./, readdir DIR;
+                closedir DIR;
+                next unless @sub;
+            }
 
-    $args{check}
-    ? grep { $class->foundIn("$dir/$_") } @files
-    : @files;
-}
+            (my $folder = $_) =~ s/$extent$//;
+            $folders{$folder}++;
+        }
+    }
 
-#-------------------------------------------
-
-=item subFolders [OPTIONS]
-
-Returns the subfolders to a folder.  Although file-type folders do not
-have a natural form of sub-folders, we can simulate them.  The
-C<subfolder_extention> option of the constructor (C<new()>) defines
-how sub-folders can be recognized.
-
-=over 4
-
-=item * check => BOOL
-
-=item * skip_empty => BOOL
-
-=back
-
-=cut
-
-sub subFolders(@)
-{  my $self = shift;
-
-   (ref $self)->listFolders
-     ( folderdir => $self->filename . $self->{MB_sub_ext}
-     , @_
-     );
+    keys %folders;
 }
 
 #-------------------------------------------
@@ -682,15 +736,7 @@ Example:
 
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    my $extention = $self->{MB_sub_ext};
-    my $dir       = $self->filename . $extention;
-
-    unless(-d $dir || mkdir $dir)
-    {   warn "Cannot create subfolder $name for $self: $!\n";
-        return;
-    }
-
-    $self->clone( folder => "$self$extention/$name", @_ );
+    $self->clone( folder => $self->name . '/' .$name, @_ );
 }
 
 ###
@@ -795,7 +841,7 @@ sub print()
 
     my $folder   = $self->folder;
     my $was_open = $folder->fileIsOpen;
-    my $file     = $folder->fileOpen || return 0;
+    my $file     = $folder->fileOpen;
 
     if($self->modified)
     {   # Modified messages are printed as they were in memory.  This
@@ -967,7 +1013,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.8
+This code is alpha, version 0.9
 
 =cut
 

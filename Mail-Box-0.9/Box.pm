@@ -2,7 +2,7 @@
 package Mail::Box;
 use 5.006;
 
-$VERSION = '0.8';
+$VERSION = '0.9';
 use strict;
 
 use Mail::Box::Message;
@@ -571,7 +571,7 @@ sub close(@)
 
     if($write && !$self->writeable)
     {   unless($args{force} || 0)
-        {   warn "$self is write protected.\n";
+        {   warn "No changes made to read-only folder.\n";
             return 1;
         }
         $self->{MB_access} = 'rw';
@@ -741,6 +741,8 @@ MESSAGE argument, the value is first set.
 sub messageID($;$)
 {   my ($self, $msgid) = (shift, shift);
 
+use Carp;
+confess unless $msgid;
     return $self->{MB_msgid}{$msgid} unless @_;
 
     # Define message.
@@ -1017,6 +1019,35 @@ sub folderdir(;$)
 
 #-------------------------------------------
 
+=item current [NR|MESSAGE|MESSAGE-ID]
+
+Returns the current message (when specified, after setting it to a new
+values.  You may specify a NUMBER, to specify that that message-number
+is to be selected as current, or a MESSAGE/MESSAGE-ID (as long as you
+are sure that the header is already loaded, otherwise they are not
+recognized).
+
+Examples:
+   $folder->current(0);
+   $folder->current($message);
+
+=cut
+
+sub current(;$)
+{   my $self = shift;
+    return $self->{MB_current} || $self->message(-1)
+        unless @_;
+
+    my $next = shift;
+    if(my $previous = $self->{MB_current})
+    {    $previous->setLabel(current => 0);
+    }
+
+    ($self->{MB_current} = $next)->setLabel(current => 1);
+}
+
+#-------------------------------------------
+
 =item DESTROY
 
 This method is called by Perl when an folder-object is not accessible
@@ -1198,7 +1229,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.8
+This code is alpha, version 0.9
 
 =cut
 
