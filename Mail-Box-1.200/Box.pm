@@ -2,17 +2,16 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.113';
-@ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
+$VERSION = '1.200';
+
+use Carp;
+use MIME::Parser;
 
 use Mail::Box::Message;
 use Mail::Box::Threads;
 use Mail::Box::Locker;
-use Mail::Box::Tie;
 
 use strict;
-
-use MIME::Parser;
 
 =head1 NAME
 
@@ -34,8 +33,15 @@ Mail::Box - Manage a message-folder.
 Tied-interface:
 
    use Mail::Box;
-   tie my @inbox, 'Mail::Box', folder => $ENV{MAIL};
+   my $mgr   = new Mail::Box::Manager;
+   my $inbox = $mgr->open(folder => '/tmp/inbox');
+   
+   tie my(@inbox), $inbox;
+   $inbox[3]->print        # equiv to $folder->message(3)->print
+   tie my(%inbox), $inbox;
+   $inbox{$msgid}->print   # equiv to $folder->messageID($msgid)->print
    # See Mail::Box::Tied
+
 
 =head1 DESCRIPTION
 
@@ -50,10 +56,6 @@ This class extends:
 =item * Mail::Box::Threads
 
 implements thread detection and simplified access to the threads found.
-
-=item * Mail::Box::Locker
-
-implements various locking algorithms
 
 =item * Mail::Box::Tie
 
@@ -96,18 +98,20 @@ manual-pages)
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          <no default>
  lazy_extract      Mail::Box          10kb
- lockfile          Mail::Box::Locker  foldername.'.lock'
- lock_method       Mail::Box::Locker  'dotlock'
+ lock_file         Mail::Box::Locker  foldername.'.lock'
+ lock_method       Mail::Box::Locker  'DOTLOCK'
  lock_timeout      Mail::Box::Locker  1 hour
  lock_wait         Mail::Box::Locker  10 seconds
  manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::Message::Parsed'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::Message::NotParsed'
+ organization      Mail::Box          'FILE'
  realhead_type     Mail::Box          'MIME::Head'
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  take_headers      Mail::Box          <specify everything you need>
+ threader          Mail::Box::Threads undef
  thread_body       Mail::Box::Threads 0
  thread_timespan   Mail::Box::Threads '3 days'
  thread_window     Mail::Box::Threads 10
@@ -143,6 +147,10 @@ this directory.
 What kind of message-objects are stored in this type of folder.  The
 default is Mail::Box::Message (which is a sub-class of MIME::Entity).
 The class you offer must be an extention of Mail::Box::Message.
+
+=item * organization =E<gt> 'FILE' | 'DIRECTORY'
+
+Tells whether a folder is one file containing many messages (like Mbox-folders) or one directory per folder, a message per file (like MH-folders).
 
 =item * save_on_exit =E<gt> BOOL
 
@@ -309,6 +317,7 @@ sub init($)
     $self->{MB_messages}     = [];
     $self->{MB_modifications}= 0;
     $self->{MB_save_on_exit} = $args->{save_on_exit}      || 1;
+    $self->{MB_organization} = $args->{organization}      || 'FILE';
     $self->{MB_manager}      = $args->{manager}
         if exists $args->{manager};
 
@@ -342,8 +351,45 @@ sub init($)
                           : $args->{take_headers}
                           ) if exists $args->{take_headers};
 
-    $self->Mail::Box::Locker::init($args)
-         ->Mail::Box::Threads::init($args);
+    #
+    # Create a locker.
+    #
+
+    my $locker = $args->{lock_method};
+    if($locker && ref $locker)
+    {   confess "No locker object passed."
+            unless $locker->isa('Mail::Box::Locker');
+        $self->{MB_locker} = $locker;
+    }
+    else
+    {   $self->{MB_locker} = Mail::Box::Locker->new
+            ( folder      => $self
+            , lock_method => $locker
+            , lock_timeout=> $args->{lock_timeout}
+            , lock_wait   => $args->{lock_wait}
+            , lock_file   => $args->{lockfile} || $args->{lock_file}
+            );
+    }
+
+    #
+    # Create a thread-maintainer.
+    #
+
+    my $threader = $args->{threader};
+    if($threader && ref $threader)
+    {   confess "No locker object passed."
+            unless $locker->isa('Mail::Box::Threads');
+        $self->{MB_threader} = $threader;
+    }
+    else
+    {   $self->{MB_threader} = Mail::Box::Threads->new
+            ( folder      => $self
+            , dummy_type  => $args->{dummy_type}
+            , thread_body => $args->{thread_body}
+            , timespan    => $args->{thread_timespan}
+            , window      => $args->{thread_window}
+            );
+    }
 
     $self;
 }
@@ -558,8 +604,7 @@ Save messages which where flagged to be deleted.  The flag is conserved
 =cut
 
 sub write(@)
-{   my $self = shift;
-    my %args = @_;
+{   my ($self, %args) = @_;
 
     unless($args{force} || $self->writeable)
     {   warn "Folder $self is opened read-only.\n";
@@ -649,7 +694,7 @@ sub close(@)
            ? $self->write(force => $force)
            : 1;
 
-    $self->unlock;
+    $self->{MB_locker}->unlock;
     undef $self;
     $rc;
 }
@@ -784,6 +829,17 @@ sub message(;$)
 
 #-------------------------------------------
 
+=item organization
+
+Return whether a folder is organized as one 'FILE' with many messages or
+a 'DIRECTORY' with one message per file.
+
+=cut
+
+sub organization() { shift->{MB_organization} }
+
+#-------------------------------------------
+
 =item messageID MESSAGE-ID [,MESSAGE]
 
 Returns the message in this folder with the specified MESSAGE-ID.  This
@@ -855,8 +911,7 @@ sub as_row()
 =item activeMessage INDEX [,MESSAGE]
 
 Returns the message indicated by INDEX from the list of non-deleted
-messages.  This is useful for the tied-folder interface, where we only
-see the non-deleted messages, but not for other purposes.
+messages.
 
 =cut
 
@@ -1132,10 +1187,11 @@ sub DESTROY
     warn "Changes to folder `", $self->name, "' not written.\n"
        if !$self->{MB_is_closed} && $self->modified && $self->writeable;
 
-    $self->unlock;  # if still keeping lock.
-
     # Remove internal references to accomplish memory-cleanup.
     undef $self->{MB_messages};
+
+    # The folder-locks will autodestruct.
+
     $self;
 }
 
@@ -1272,6 +1328,29 @@ sub parser()
 
 #-------------------------------------------
 
+# Call locking methods.
+
+sub lock()         { shift->{MB_locker}->lock    }
+sub unlock()       { shift->{MB_locker}->unlock  }
+sub isLocked()     { shift->{MB_locker}->isLocked}
+sub hasLock()      { shift->{MB_locker}->hasLock }
+sub lockMethod()   { shift->{MB_locker}->name    }
+sub lockFilename() { shift->{MB_locker}->filename}
+
+#-------------------------------------------
+
+# Call threading methods.
+
+sub toBeThreaded(@)   { shift->{MB_threader}->toBeThreaded(@_) }
+sub toBeUnthreaded(@) { shift->{MB_threader}->toBeUnthreaded(@_) }
+sub inThread(@)       { shift->{MB_threader}->inThread(@_) }
+sub outThread(@)      { shift->{MB_threader}->outThread(@_) }
+sub thread(@)         { shift->{MB_threader}->thread(@_) }
+sub threads(@)        { shift->{MB_threader}->threads(@_) }
+sub knownThreads(@)   { shift->{MB_threader}->knownThreads(@_) }
+
+#-------------------------------------------
+
 =back
 
 =head1 AUTHOR
@@ -1282,7 +1361,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.113
+This code is beta, version 1.200
 
 =cut
 

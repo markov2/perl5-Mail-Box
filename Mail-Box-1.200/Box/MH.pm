@@ -13,6 +13,7 @@ use FileHandle;
 use File::Copy;
 use File::Spec;
 use File::Basename;
+use Carp;
 
 =head1 NAME
 
@@ -58,17 +59,19 @@ see below, but first the full list.
  labels_filename   Mail::Box::MH      foldername.'/.mh_sequence'
  lazy_extract      Mail::Box          10000   (10kB)
  lockfile          Mail::Box::Locker  foldername.'/.lock'
- lock_method       Mail::Box::Locker  'dotlock'
+ lock_method       Mail::Box::Locker  'DOTLOCK'
  lock_timeout      Mail::Box::Locker  3600    (1 hour)
  lock_wait         Mail::Box::Locker  10      (seconds)
  manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::MH::Message'
  notreadhead_type  Mail::Box          'Mail::Box::MH::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::MH::NotParsed'
+ organization      Mail::Box          'DIRECTORY'
  realhead_type     Mail::Box          'MIME::Head'
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  take_headers      Mail::Box          'DELAY'
+ threader          Mail::Box::Threads undef
  thread_body       Mail::Box::Threads 0
  thread_timespan   Mail::Box::Threads '3 days'
  thread_window     Mail::Box::Threads 10
@@ -98,6 +101,7 @@ sub init($)
     $args->{keep_index}       ||= 0;
     $args->{folderdir}        ||= $default_folder_dir;
     $args->{take_headers}     ||= 'DELAY';
+    $args->{organization}     ||= 'DIRECTORY';
 
     $self->Mail::Box::init($args);
 
@@ -112,6 +116,10 @@ sub init($)
     }
 
     $self->Mail::Box::Index::init($args);
+
+    my $lockmethod = $self->lockMethod;
+    croak "Lock-method $lockmethod is not (yet) implemented for ".(ref $self)
+        . " folders." if $lockmethod eq 'FILE';
 
     for($args->{lockfile} || undef)
     {   $self->lockFilename
@@ -638,7 +646,7 @@ sub messageID($;$)
     if(@_)
     {   if(my $message = shift)
         {   # Define loaded message.
-            $self->Mail::Box::messageID($msgid, $message);
+            $self->SUPER::messageID($msgid, $message);
             $self->toBeThreaded($message);
             return $self->{MB_msgid}{$msgid};
         }
@@ -1112,7 +1120,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.113
+This code is beta, version 1.200
 
 =cut
 

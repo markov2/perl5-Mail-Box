@@ -23,7 +23,7 @@ unlink "$src.lock";
 
 my $folder = new Mail::Box::Mbox
   ( folder       => $src
-  , lock_method  => 'dotlock'
+  , lock_method  => 'NFS'
   , lazy_extract => 'ALWAYS'
   );
 

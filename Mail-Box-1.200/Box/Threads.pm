@@ -5,6 +5,8 @@ package Mail::Box::Threads;
 use Mail::Box::Message;
 use Mail::Box::Thread;
 
+use Carp;
+
 =head1 NAME
 
 Mail::Box::Threads - maintain threads within a folder
@@ -26,20 +28,25 @@ reply on that message.  And the messages with replied the messages
 which replied the original message.  And so on.  Some threads are only
 one message (never replied to), some threads are very long.
 
-
 =head1 METHODS
 
 =over 4
 
 =item new ARGS
 
-C<Mail::Box::Threads> is sub-classed always by C<Mail::Box>.  This object is
-not meant to be instantiated itself: do not call C<new> on it (you'll
-see it even fails because there is no C<new()>!).
+An Mail::Box::Threads-object is created by a Mail::Box folder upon
+creation.  The pameters specified here are passed on from the flags
+at folder creation.
 
 The construction of thread administration accepts the following options:
 
 =over 4
+
+=item * threader =E<gt> OBJECT
+
+Handled by Mail::Box itself: a prepared object which can handle the
+thread-calls.  This object shall be an instance of something
+derived from Mail::Box::Threads.
 
 =item * dummy_type =E<gt> CLASS
 
@@ -85,21 +92,29 @@ NOT USED YET.  Defaults to FALSE.
 
 =cut
 
+sub new(@)
+{   my ($class, %args) = @_;
+    (bless {}, $class)->init(\%args);
+}
+
 sub init($)
 {   my ($self, $args) = @_;
 
-    $self->registerHeaders(qw/message-id in-reply-to references/);
+    my $folder = $self->{MBT_folder} = $args->{folder}
+        or confess "No folder specified at creation lock-object.";
+  
+    $folder->registerHeaders(qw/message-id in-reply-to references/);
 
     $self->{MBT_dummy_type}  = $args->{dummy_type}
                                || 'Mail::Box::Message::Dummy';
     $self->{MBT_thread_body} = $args->{thread_body} || 0;
 
-    for($args->{thread_timespan} || '3 days')
+    for($args->{timespan} || '3 days')
     {   $self->{MBT_timespan}
             = $_ eq 'EVER' ? $_ : $self->timespan2seconds($_);
     }
 
-    for($args->{thread_window} || 10)
+    for($args->{window} || 10)
     {   $self->{MBT_window} = $_ eq 'ALL'  ? -1 : $_;
     }
 
@@ -160,10 +175,12 @@ the folder (yet).
 
 sub createDummy($)
 {   my ($self, $msgid) = @_;
-    my $dummy = $self->{MBT_dummy_type}->new($msgid);
-    $dummy->folder($self);
-    $self->{MB_dummies}{$msgid} = $dummy;
-    $self->messageID($msgid, $dummy);
+    my $folder = $self->{MBT_folder};
+    my $dummy  = $self->{MBT_dummy_type}->new($msgid);
+    $dummy->folder($folder);
+    $self->{MBT_dummies}{$msgid} = $dummy;
+    $folder->messageID($msgid, $dummy);
+    $dummy;
 }
 
 #-------------------------------------------
@@ -202,6 +219,7 @@ to build solid knowledge about the thread where this message is in.
 
 sub thread($)
 {   my ($self, $message) = @_;
+    my $folder = $self->{MBT_folder};
 
     $self->inThread($message);
     $self->processDelayedThreading;
@@ -209,7 +227,7 @@ sub thread($)
     # Search for the top of this message's thread.
     my $top = $message;
     while(my $parent = $top->repliedTo)
-    {   $top = $self->messageID($parent);
+    {   $top = $folder->messageID($parent);
     }
 
     # Ready when whole folder has been processed.
@@ -230,17 +248,19 @@ sub thread($)
     );
     return $top unless keys %missing;              # slow bail-out.
 
-    # Go back through the messages from the folder for max thread_window
-    # messages before this one.
+    # Pull a headers of a few more messages in, to resolve some more
+    # holes in threads.  This will consume resources in MH and IMAP
+    # folders, so we should overdo this.  However, it is nice to have
+    # some kind of thread-based message reading for these folder too.
 
-    my $start    = ($self->{MBT_last_parsed} || $self->allMessages) -1;
+    my $start    = ($self->{MBT_last_parsed} || $folder->allMessages) -1;
     my $end      = $self->{MBT_window} eq 'ALL' ? 0
                  : $message->seqnr - $self->{MBT_window};
     my $earliest = $self->{MBT_timespan} eq 'EVER' ? 0
                  : $message->timestamp - $self->{MBT_timespan};
 
     for(my $msgnr = $start; $msgnr >= $end; $msgnr--)
-    {   my $add  = $self->message($msgnr);
+    {   my $add  = $folder->message($msgnr);
 
         unless($add->headIsRead)                 # pull next message in.
         {   $self->inThread($add);
@@ -299,19 +319,20 @@ sub inThread($)
     # If a dummy was holding information for this message-id, we have
     # to take the information stored in it.
 
-    if(my $dummy = $self->{MB_dummies}{$msgid})
+    if(my $dummy = $self->{MBT_dummies}{$msgid})
     {   $message->followedBy($dummy->followUpIDs);
         $message->follows($dummy->repliedTo);
-        delete $self->{MB_dummies}{$msgid};
+        delete $self->{MBT_dummies}{$msgid};
     }
 
     # Handle the `In-Reply-To' message header.
     # This is the most secure relationship.
 
+    my $folder = $self->{MBT_folder};
     if($replies)
     {   $message->follows($replies, 'REPLY');
         delete $self->{MBT_threads}{$msgid};  # am reply, so not a start.
-        my $from  = $self->messageID($replies) || $self->createDummy($replies);
+        my $from = $folder->messageID($replies) || $self->createDummy($replies);
         $from->followedBy($msgid);
     }
 
@@ -324,11 +345,11 @@ sub inThread($)
     if(@refs)
     {   push @refs, $msgid;
         my $start = shift @refs;
-        my $from  = $self->messageID($start) || $self->createDummy($start);
+        my $from  = $folder->messageID($start) || $self->createDummy($start);
         $self->registerThread($from);
 
         while(my $child = shift @refs)
-        {   my $to = $self->messageID($child) || $self->createDummy($child);
+        {   my $to = $folder->messageID($child) || $self->createDummy($child);
             $to->follows($start, 'REFERENCE');
             delete $self->{MBT_threads}{$child}; # not a start
             $from->followedBy($child);
@@ -390,11 +411,12 @@ because is will enforce parsing of message-bodies.
 =cut
 
 sub threads()
-{   my $self = shift;
-    my $last = ($self->{MBT_last_parsed} || $self->allMessages) - 1;
+{   my $self   = shift;
+    my $folder = $self->{MBT_folder};
+    my $last   = ($self->{MBT_last_parsed} || $folder->allMessages) - 1;
 
     if($last > 0)
-    {   $self->inThread($_) foreach ($self->allMessages)[0..$last];
+    {   $self->inThread($_) foreach ($folder->allMessages)[0..$last];
         $self->{MBT_last_parsed} = 0;
     }
 
@@ -493,7 +515,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.113
+This code is beta, version 1.200
 
 =cut
 

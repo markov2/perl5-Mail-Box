@@ -3,15 +3,67 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
-version 1.113: Sun Jun 10 16:06:05 CEST 2001
+version 1.200: Sat Jun 23 23:44:59 CEST 2001
 
-	by Adam Marks <marks@divinia.com>
+	**** SERIOUS CHANGES **** (mainly internal)
+	The internal implementation of thread-detection will be modified
+	in the next release.
 
-        * Fixed using of mbox-locking with file-lock
+	* Added `organization' method to folder to see how a folder is
+	  organized.  Returns 'FILE' or 'DIRECTORY'
+
+	* Fixed reading of indexes in MH-folders.
+
+	Re-implementation of Mail::Box::Tie.  Really incompatible, but
+	simple to fix: see the manpage.
+
+	* Added "tie to hash" to Mail::Box::Tie.  This replaces
+	  functionality offered by the Mail::TieFolder package.
+
+	* Fixed many inconsistencies in Mail::Box::Tie description.
+	  Tied as array, it will now keep on showing all messages,
+	  also the deleted, which means that the index of a message
+	  in the tied-array will not change anymore.
+
+	Re-implementation of Mail::Box::Locker, which originally was
+	was a super-class of Mail::Box, into a seperate object which
+	is instantiated by a folder.  This way, you can create own
+	lockers.  The only thing what really has changed is the
+	result of   $folder->isa('Mail::Box::Locker')   which may
+	be a good thing.
+
+	* Locking method names now are case insensitive (uppercase
+	  became my favorit).  Added some tests for file-based locking,
+	  but I'am not sure it is trustable.
+
+	* Preferred name for locking-methods now in capitals, although
+	  lowercase will still work.
+
+	* Added `lockMethod' method to folder to see what way a folder
+	  is locked.  Returns 'DOTLOCK', 'FILE', 'NFS', or 'NONE'.
+
+        * Fixed mbox-locking with file-lock, by [Adam Marks]
+
+	* Locking method 'FILE' may work now for Mboxes (added some
+	  tests, but need more).  Implementation details for MH
+	  locking based on 'FILE' are not clear yet.
+
+	* Locking method 'NFS' may work too.
+
+version 1.114: Fri Jun 22 10:21:01 MEST 2001
+
+        * Fixed copying messages file-to-file, which resulted in errors
+          on delayloading reading parts.  Thanks to Jim Tseng for his
+          detailed description of the circumstances.
+
+version 1.113: Thu Jun 21 11:00:00 MEST 2001
+
+        * Patch blessing in $folder->parts.  Thanks to [Jens Wiesecke] for
+          helping me tracking down the problem.
 
 version 1.112: Thu Jun  7 22:45:00 CEST 2001
 
-        by Eric Cholet <cholet@logilune.com>
+        by [Eric Cholet]
 
 	* Changed the detection of "From"-lines again... each Mbox-
           type package formats the line differently.  I hope they
@@ -19,7 +71,7 @@ version 1.112: Thu Jun  7 22:45:00 CEST 2001
 
 version 1.111: Sat Apr 28 16:15:52 CEST 2001
 
-	by Jochen Lutz <jlu@gmx.de>:
+	by [Jochen Lutz]
 
 	* readMessage accepts \r at end of `^From' line for the sake
 	  of folders written on Win*  in Mail::Box::Mbox
@@ -77,25 +129,32 @@ version 1.100: Mrt 4 2001
 
 version 1.004: Fri Feb 23 19:11:45 CET 2001
 
-	With even more help of David Coppit:
+	With even more help of [David Coppit]
+
 	* (hopefully) fixed the last problems with deletion of folders
 	  on NFS systems.  May solve the Win32 problems, too, but waiting
 	  for someone to test it.
+
 	* Warning if you want to instantiate a Mail::Box (use
           Mail::Box::Manager if you need auto-detection)
+
 	* A $folder->close actively tries to set $folder to undef to
 	  cause "use of undefined" errors when someone tries to do anything
 	  with the folder after it was closed.
+
 	* No interface change.
 
 version 1.003: Thu Feb 22 00:08:47 CET 2001
 
-	With help of David Coppit:
+	With help of [David Coppit]
+
 	* Optimized folder deletion (a bit).  It will only cause
 	  parsing of messages when this is needed for the type of
           message.
+
 	* Close folder-file access before removing the file is needed
 	  for some OS'es and for NFS.
+
 	* No changes to methods needed.
 
 version 1.002: Fri Feb 16 23:50:14 CET 2001
@@ -103,36 +162,47 @@ version 1.002: Fri Feb 16 23:50:14 CET 2001
 	* Better error messages for die and warn during tests.  Hope
 	  to figure-out why Windows still gives some problems, but
 	  I do not want to go out and look a machine with it :(
+
 	* No changes to methods needed.
 
 version 1.001: Sun Feb 11 17:20:35 CET 2001
 
 	* Fixed documention on creation of Mail::Box::Message-s: don't!
 	  You should do $folder->addMessage( <some MIME::Entity> )
+
 	* Added $! to some error-messages.  I hope it helps in the
 	  compilation reports of perl-testers, so I can see why the
 	  Win* tests do not work.
+
 	* No changes to methods needed.
 
 version 1.000: Mon Feb  5 22:36:11 CET 2001
 
 	* BETA!!!!
+
 	* Using File::Spec everywhere where directories and sub-
 	  directories are involved, so that the package may work
 	  on Win*
+
 	* Removed O_NONBLOCK for dotlock-files on Win*  Hope it
 	  works.  Can anyone improve the port to Windows?
+
 	* No changes on method-calls needed.
 
 version 0.94: Sat Feb  3 13:09:00 CET 2001
 
 	* Extracted Mail::Box::Mbox::Message* into a seperate file.
+
 	* Extracted Mail::Box::MH::Message* into a seperate file.
+
 	* Extracted Mail::Box::Tread into a seperate file.
+
 	* The objects Mail::Box::{Mbox::MH}::Message::Runtime are renamed
 	  to the slightly briever Mail::Box::{Mbox::MH}::Runtime.
+
 	* The objects Mail::Box::{Mbox::MH}::Message::NotParsed are renamed
 	  to the slightly briever Mail::Box::{Mbox::MH}::NotParsed.
+
 	* Moved around with the text in manuals *a lot* to make access
 	  easier.  Many pod improvements (I hope)
 
@@ -143,9 +213,13 @@ version 0.93: Fri Feb  2 16:16:09 CET 2001
 version 0.92: Tue Jan 30 21:22:57 CET 2001
 
 	* Tested (and changed) creation of folders.
+
 	* Tested (and changed) deletion of folders.
+
 	* Added the `create' flag to open() in Manager.
+
 	* Removed synchronize(), because it is covered by write()
+
 	* listFolders() can be called as class and as instance method.
 
 	Changed files:

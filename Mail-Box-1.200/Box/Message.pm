@@ -630,7 +630,6 @@ sub coerce($$@)
     # Re-initialize the message, but with the options as specified by the
     # creation of this folder, not the folder where the message came from.
 
-    
     (bless $message, $class)->init(\%args) or return;
 
     $message->folder($folder);
@@ -757,13 +756,12 @@ sub parts(@)
 sub part_upgrade($$)   # from MIME::Entity into Mail::Box::Message::Parsed
 {   my ($self, $part, $count) = @_;
 
+    bless $part, ref $self;
     $part->Mail::Box::Message::init
       ( { messageID => $self->messageID . '-p$count' }
       );
 
     $part->{MBM_is_part} = 1;
-
-#   bless $part, ref $self;    # shouldn't be necessary
     $self;
 }
  
@@ -1235,7 +1233,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.113
+This code is beta, version 1.200
 
 =cut
 

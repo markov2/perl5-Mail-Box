@@ -38,10 +38,13 @@ Folder manager:
    7mgr.t             locating/opening/closing folders.
 
 Ties:
-   8tie.t             accessing folder as array.
+   8tieary.t          accessing folder as array.
+   8tiehash.t         accessing folder as hash.
 
 Locking:
-   9lock.t            dotlock mechanism
+   9dotlock.t         dotlock mechanism
+   9filelck.t         locking based on file-handle
+   9nfslock.t         dotlocking over NFS
 
 
 NOT Tested

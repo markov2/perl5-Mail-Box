@@ -108,8 +108,9 @@ ok(cmplists [ sort Mail::Box::Mbox->listFolders
 #
 
 my $folder = Mail::Box::Mbox->new
-  ( folderdir => $top
-  , folder    => '=f4/f4f2'
+  ( folderdir   => $top
+  , folder      => '=f4/f4f2'
+  , lock_method => 'NONE'
   );
 
 ok($folder);
@@ -125,9 +126,10 @@ Mail::Box::Mbox->create('=f4/newfolder', folderdir => $top);
 ok(-f File::Spec->catfile($top, "f4.d", "newfolder"));
 
 $folder = Mail::Box::Mbox->new
-  ( folderdir => $top
-  , folder    => '=f4/newfolder'
-  , access    => 'rw'
+  ( folderdir   => $top
+  , folder      => '=f4/newfolder'
+  , access      => 'rw'
+  , lock_method => 'NONE'
   );
 
 ok($folder);
@@ -151,9 +153,10 @@ ok(-s File::Spec->catfile($top, 'f4.d', 'newfolder'));
 #
 
 $folder = Mail::Box::Mbox->new
-  ( folderdir => $top
-  , folder    => '=f4'
-  , access    => 'rw'
+  ( folderdir   => $top
+  , folder      => '=f4'
+  , access      => 'rw'
+  , lock_method => 'NONE'
   );
 
 ok(-f File::Spec->catfile($top, "f4"));
@@ -176,9 +179,10 @@ ok(-f $sub1);
 ok(-z $sub1); 
 
 $folder = Mail::Box::Mbox->new
-  ( folderdir => $top
-  , folder    => '=sub1'
-  , access    => 'rw'
+  ( folderdir   => $top
+  , folder      => '=sub1'
+  , access      => 'rw'
+  , lock_method => 'NONE'
   );
 
 $folder->addMessage($msg);

@@ -17,9 +17,8 @@ Although the implementation of Mail::Box is young, it has already
 a large number of features.
 
 See the file STATUS to see what has been tested and what isn't.
-Version 0.92 contained 172 tests, but that is certainly not
+Version 1.200 contained 293 tests, but that is certainly not
 sufficient call the module `well tested'.
-
 
 ===== Features
 

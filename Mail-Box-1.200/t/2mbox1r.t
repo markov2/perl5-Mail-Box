@@ -9,7 +9,7 @@ use strict;
 use lib '..';
 use File::Spec;
 
-BEGIN {plan tests => 8}
+BEGIN {plan tests => 9}
 
 use Mail::Box::Mbox;
 
@@ -31,6 +31,7 @@ my $folder = new Mail::Box::Mbox
 
 ok(defined $folder);
 ok($folder->messages == 45);
+ok($folder->organization eq 'FILE');
 
 #
 # Extract one message.

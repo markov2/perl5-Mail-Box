@@ -17,7 +17,7 @@ use Mail::Box::Mbox;
 
 use Tools;
 
-BEGIN {plan tests => 26}
+BEGIN {plan tests => 27}
 
 my $orig = File::Spec->catfile('t', 'mbox.src');
 my $src  = File::Spec->catfile('t', 'mh.src');
@@ -40,6 +40,7 @@ ok(defined $folder);
 # distrub things.
 
 ok($folder->messages==45);
+ok($folder->organization eq 'DIRECTORY');
 
 #
 # No single head should be read now, because take_headers==DELAY

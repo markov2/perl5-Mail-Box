@@ -11,6 +11,7 @@ use FileHandle;
 use File::Copy;
 use File::Spec;
 use POSIX ':unistd_h';
+use Carp;
 
 =head1 NAME
 
@@ -85,18 +86,20 @@ description of Mbox specific options.
  lazy_extract      Mail::Box          10kb
  lockfile          Mail::Box::Locker  foldername.lock-extention
  lock_extention    Mail::Box::Mbox    '.lock'
- lock_method       Mail::Box::Locker  'dotlock'
+ lock_method       Mail::Box::Locker  'DOTLOCK'
  lock_timeout      Mail::Box::Locker  1 hour
  lock_wait         Mail::Box::Locker  10 seconds
  manager           Mail::Box          undef
  message_type      Mail::Box          'Mail::Box::Mbox::Message'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::Mbox::NotParsed'
+ organization      Mail::Box          'FILE'
  realhead_type     Mail::Box          'MIME::Head'
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  subfolder_extention Mail::Box::Mbox  '.d'
  take_headers      Mail::Box          <quite some>
+ threader          Mail::Box::Threads undef
  thread_body       Mail::Box::Threads 0
  thread_timespan   Mail::Box::Threads <not used>
  thread_window     Mail::Box::Threads <not used>
@@ -143,6 +146,7 @@ sub init($)
 {   my ($self, $args) = @_;
     $args->{notreadhead_type} ||= 'Mail::Box::Message::NotReadHead';
     $args->{folderdir}        ||= $default_folder_dir;
+    $args->{organization}     ||= 'FILE';
 
     $self->SUPER::init($args);
 
@@ -385,7 +389,9 @@ sub readMessages(@)
     $self->{MB_source_mtime}  = (stat $file)[9];
     $self->{MB_delayed_loads} = $delayed;
 
-    $self->fileClose unless $delayed;
+    $self->fileClose
+        unless $delayed || $self->lockMethod eq 'FILE';
+
     $self;
 }
  
@@ -473,7 +479,7 @@ sub addMessage($)
     return $self if $found && !$found->isDummy;
 
     # The message is accepted.
-    $self->Mail::Box::addMessage($message);
+    $self->SUPER::addMessage($message);
     $self->messageID($msgid, $message);
     $self->toBeThreaded($message);
 }
@@ -758,7 +764,7 @@ sub listFolders(@)
     # Some files have to be removed because they are created by all
     # kinds of programs, but are no folders.
 
-    my @entries = grep { ! m/.lock$/ && ! m/^\./ } readdir DIR;
+    my @entries = grep { ! m/\.lo?ck$/ && ! m/^\./ } readdir DIR;
     closedir DIR;
 
     # Look for files in the folderdir.  They should be readible to
@@ -822,7 +828,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.113
+This code is beta, version 1.200
 
 =cut
 

@@ -97,7 +97,7 @@ specified.
 =cut
 
 sub writeIndex(@)
-{   my $self = shift;
+{   my $self  = shift;
     my $index = $self->indexFilename or return $self;
 
     # Remove empty index-file.
@@ -138,8 +138,7 @@ sub readIndex(;$)
     my @index;
     until(eof INDEX)
     {   my $head    = $type->read(\*INDEX);
-        my $message = $type->new( head => $head );
-        push @index, $message;
+        push @index, $head;
     }
 
     close INDEX;
@@ -156,7 +155,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.113
+This code is beta, version 1.200
 
 =cut
 

@@ -101,8 +101,9 @@ ok(cmplists [ sort Mail::Box::MH->listFolders(folderdir  => "$top/f4") ]
 #
 
 my $folder = Mail::Box::MH->new
-  ( folderdir => $top
-  , folder    => '=f4/f4f2'
+  ( folderdir   => $top
+  , folder      => '=f4/f4f2'
+  , lock_method => 'NONE'
   );
 
 ok($folder);
@@ -119,10 +120,11 @@ Mail::Box::MH->create('=f4/newfolder', folderdir  => $top);
 ok(-d $newfolder);
 
 $folder = Mail::Box::MH->new
-  ( folderdir  => $top
-  , folder     => '=f4/newfolder'
-  , access     => 'rw'
-  , keep_index => 1
+  ( folderdir   => $top
+  , folder      => '=f4/newfolder'
+  , access      => 'rw'
+  , keep_index  => 1
+  , lock_method => 'NONE'
   );
 
 ok($folder);
@@ -159,9 +161,11 @@ ok($seq[0],"unseen: 1\n");
 #
 
 $folder = Mail::Box::MH->new
-  ( folderdir => $top
-  , folder    => '=f4'
-  , access    => 'rw'
+  ( folderdir   => $top
+  , folder      => '=f4'
+  , access      => 'rw'
+  , lock_method => 'NONE'
+  , keep_index  => 1
   );
 
 ok(-d $f4);

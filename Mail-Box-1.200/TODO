@@ -39,11 +39,12 @@ Plans for the (near?) future:
   knowledge on how they work is insufficient.
 
 * Make everything autoloading (of perl-code, this time).
-  Mail::Box::MH, ::Mbox, ::Thread, and ::Tie could easily be made
-  autoloading.
+  Mail::Box::MH, ::Mbox, and ::Thread, could be made autoloading....
+  however, I didn't make work it yet.  All modules are designed to
+  minimize their dependency, so I should work well.
 
   For the message-folders, only foundIn() should be kept outside the
   loading mechanism.
 
-  All modules are designed to minimize their dependency, so I should
-  work well.
+* Basic message reading and writing in C
+  This will boost performance.  Actually, I'm working on it.
