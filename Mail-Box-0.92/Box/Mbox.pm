@@ -137,6 +137,7 @@ Mail::Box::Mbox is an extention of.  Read below for a detailed
 description of Mbox specific options.
 
  access            Mail::Box          'r'
+ create            Mail::Box          0
  dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          $ENV{HOME}.'/Mail'
@@ -154,10 +155,10 @@ description of Mbox specific options.
  remove_when_empty Mail::Box          1
  save_on_exit      Mail::Box          1
  subfolder_extention Mail::Box::Mbox  '.d'
- take_headers      Mail::Box          <specify everything you need>
+ take_headers      Mail::Box          <quite some>
  thread_body       Mail::Box::Threads 0
- thread_timespan   Mail::Box::Threads '3 days'
- thread_window     Mail::Box::Threads 10
+ thread_timespan   Mail::Box::Threads <not used>
+ thread_window     Mail::Box::Threads <not used>
  <none>            Mail::Box::Tie
 
 Mbox specific options:
@@ -315,13 +316,7 @@ reason.
 
 sub readMessages(@)
 {   my $self = shift;
-    my $file = $self->fileOpen;
-
-    # New folder.
-    unless($file)
-    {   $self->{MB_delayed_loads} = 0;
-        return $self;
-    }
+    my $file = $self->fileOpen || return;
 
     # Prepare to scan for headers we want.  To speed things up, we create
     # a regular expression which will only fit exact on the right headers.
@@ -458,7 +453,7 @@ sub readMessages(@)
 
 =item write
 
-Write all messages to the folder-file.  Returns whether this
+Write all messages to the folder-file.  Returns the folder when this
 was successful.  If you want to write to a different file, you
 first create a new folder, then move the messages, and then write
 that file. As options you may specify (see C<Mail::Box> for explanation)
@@ -469,6 +464,8 @@ that file. As options you may specify (see C<Mail::Box> for explanation)
 
 =item * save_deleted => BOOL
 
+=item * remove_when_empty => BOOL
+
 =back
 
 =cut
@@ -477,34 +474,42 @@ sub writeMessages($)
 {   my ($self, $args) = @_;
     my $filename = $self->filename;
 
-    # Is there was a sub-folder, but without extention used (as in subdirs
-    # created by other mail-packages, we move that one.
-    rename $filename, $filename . $self->{MB_sub_ext}
-        if -d $filename;
+    my @messages = @{$args->{messages}};
+
+    if(!@messages && $self->{MB_remove_empty})
+    {   unlink $filename
+            or warn "Couldn't remove folder $self (file $filename).\n";
+
+        # Can the sub-folder directory be removed?  Don't mind if this
+        # doesn't work.
+        rmdir $filename . $self->{MB_sub_ext};
+
+        return $self;
+    }
 
     my $tmpnew   = $self->tmpNewFolder($filename);
     my $was_open = $self->fileIsOpen;
     if($self->{MB_delayed_loads} && ! $self->fileOpen)
     {   warn "Where did the folder-file $self (file $filename) go?\n";
-        return 0;
+        return;
     }
 
     my $new = FileHandle->new($tmpnew, 'w');
     unless($new)
     {   warn "Unable to write to file $tmpnew for folder $self: $!\n";
         $self->fileClose unless $was_open;
-        return 0;
+        return;
     }
 
-    $_->migrate($new) foreach @{$args->{messages}};
+    $_->migrate($new) foreach @messages;
 
     $new->close;
     $self->fileClose unless $was_open;
 
-    my $rc = move $tmpnew, $filename
+    move $tmpnew, $filename
        or warn "Could not replace $filename by $tmpnew, to update $self: $!\n";
 
-    $rc;
+    $self;
 }
 
 #-------------------------------------------
@@ -533,11 +538,23 @@ sub addMessage($)
 
 #-------------------------------------------
 
-=item appendMessages LIST-OF-OPTIONS
+=item appendMessages OPTIONS
 
-(Class method) Append one or more messages to this folder.  See
-the manual-page of Mail::Box for explantion of the options.  The folder
-will not be opened.  Returns the list of written messages on success.
+(Class method) Append one or more messages to a folder.  The folder
+will not be read, but messages are just appended to the folder-file.
+This also means that double messages can exist in a folder.
+
+If the folder does not exist, C<undef> (or FALSE) is returned.
+
+=over 4
+
+=item * folder => FOLDERNAME
+
+=item * message => MESSAGE
+
+=item * messages => ARRAY-OF-MESSAGES
+
+=back
 
 Example:
 
@@ -559,9 +576,10 @@ sub appendMessages(@)
                  : return ();
 
     my $folder = $class->new(@_, access => 'a');
+    my $file   = $folder->fileOpen or return;
+
     $folder->lock;
 
-    my $file   = $folder->fileOpen or return ();
     seek $file, 0, SEEK_END;
 
     $_->print($file) foreach @messages;
@@ -569,7 +587,7 @@ sub appendMessages(@)
     $folder->fileClose;
     $folder->close;
 
-    @messages;
+    $class;
 }
 
 #-------------------------------------------
@@ -651,6 +669,8 @@ Example:
 
 sub foundIn($@)
 {   my ($class, $name, %args) = @_;
+    $name ||= $args{folder} || return;
+
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $extention = $args{subfolder_extention} || $default_extention;
     my $filename  = $class->folderToFilename($name, $folderdir, $extention);
@@ -670,11 +690,52 @@ sub foundIn($@)
 
 #-------------------------------------------
 
+=item create FOLDERNAME [, OPTIONS]
+
+(Class method) Create a folder.  If the folder already exists, it will
+be left untouched.  As options, you may specify:
+
+=over 4
+
+=item * folderdir => DIRECTORY
+
+=back
+
+=cut
+
+sub create($@)
+{   my ($class, $name, %args) = @_;
+    my $folderdir = $args{folderdir} || $default_folder_dir;
+    my $extention = $args{subfolder_extention} || $default_extention;
+    my $filename  = $class->folderToFilename($name, $folderdir, $extention);
+
+    return $class if -f $filename;
+
+    if(-d $filename)
+    {   # sub-dir found, start simulate sub-folders.
+        move $filename, $filename . $extention;
+    }
+
+    unless(open CREATE, ">$filename")
+    {   warn "Cannot create folder $name: $!\n";
+        return;
+    }
+
+    close CREATE;
+    $class;
+}
+
+#-------------------------------------------
+
 =item listFolders [OPTIONS]
 
-List the folders in a certain directory.  Folders will not start with
-a dot.  When a directory with the sub-folder extention is found, then
-an empty folder is presumed.
+(Class OR Instance method) List the folders in a certain directory.  This
+method can be called on the class, in which case you specify the base
+folder where the sub-folders must be retreived from as name.  When used
+on an instance, the sub-folders of the instance are returned.
+
+Folders will not start with a dot.  When a directory without the sub-folder
+extention is found, then an empty folder is presumed.
 
 =over 4
 
@@ -693,7 +754,8 @@ an empty folder is presumed.
 =cut
 
 sub listFolders(@)
-{   my ($class, %args)  = @_;
+{   my ($thingy, %args)  = @_;
+    my $class      = ref $thingy || $thingy;
 
     my $skip_empty = $args{skip_empty} || 0;
     my $check      = $args{check}      || 0;
@@ -703,7 +765,10 @@ sub listFolders(@)
     my $folderdir  = exists $args{folderdir}
                    ? $args{folderdir}
                    : $default_folder_dir;
-    my $dir        = $class->folderToFilename($folder, $folderdir, $extent);
+
+    my $dir        = ref $thingy  # Mail::Box::Mbox
+                   ? $thingy->filename
+                   : $class->folderToFilename($folder, $folderdir, $extent);
 
     my $real       = -d $dir ? $dir : "$dir$extent";
     return () unless opendir DIR, $real;
@@ -761,7 +826,7 @@ Example:
 
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    $self->clone( folder => $self->name . '/' .$name, @_ );
+    $self->clone(folder => $self->name . '/' .$name, @_);
 }
 
 ###
@@ -1060,7 +1125,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.91
+This code is alpha, version 0.92
 
 =cut
 

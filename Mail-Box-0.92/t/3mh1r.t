@@ -22,6 +22,7 @@ my $src = 't/mh.src';
 
 unpack_mbox($orig, $src);
 
+warn "   * MH status BETA\n";
 ok(Mail::Box::MH->foundIn($src));
 
 my $folder = new Mail::Box::MH

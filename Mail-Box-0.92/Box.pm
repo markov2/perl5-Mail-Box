@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '0.91';
+$VERSION = '0.92';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -82,7 +82,7 @@ practices.
 
 =item new ARGS
 
-(Class method) Create a new folder.  The ARGS is a list of labeled parameters
+(Class method) Open a new folder.  The ARGS is a list of labeled parameters
 defining what to do.  Each sub-class of Mail::Box will add different
 options to this method.  See their manual-pages.
 
@@ -91,6 +91,7 @@ specific options see below, for the other options their respective
 manual-pages)
 
  access            Mail::Box          'r'
+ create            Mail::Box          0
  dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          <no default>
@@ -263,11 +264,12 @@ use overload 'cmp' => sub {$_[0]->name cmp $_[1]->name};
 sub new(@)
 {   my $self    = bless {}, shift;
 
-    $self->{MB_init_options} = [ @_ ];  # for synchronize and clone
+    $self->{MB_init_options} = [ @_ ];  # for clone
     my %args    = @_;
 
-    $self->init(\%args);
-    $self->read if $self->readable;
+    $self->init(\%args) or return;
+    $self->read         or return if $self->readable;
+
     $self;
 }
 
@@ -281,8 +283,6 @@ sub init($)
 
     $self->{MB_message_opts} = $args->{message_options}   || [];
     delete $args->{message_options};
-
-    $self->{MB_folder_opts}  = [ %$args ];   # for sync() and clone()
 
     $self->{MB_foldername}   = $args->{folder}            || $ENV{MAIL};
     $self->{MB_access}       = $args->{access}            || 'r';
@@ -499,14 +499,16 @@ Example read folder into folder:
 sub read(@)
 {   my $self = shift;
     $self->{MB_open_time}  = time;
-    $self->readMessages(@_);
+
+    # Read from existing folder.
+    return $self if $self->readMessages(@_);
 }
 
 #-------------------------------------------
 
 =item write [OPTIONS]
 
-Write the data to disk.  It return true when this succeeded.  If you
+Write the data to disk.  It returns the folder when this succeeded.  If you
 want to write to a different file, you first create a new folder, then
 move the messages, and then write that file.
 
@@ -558,9 +560,9 @@ sub write(@)
 
         $self->{MB_messages}      = [ @keep ];
         $self->{MB_alive}         = [ @keep ];
-        $self->{MB_modifications} = 0
     }
 
+    $self->{MB_modifications} = 0;
     $args{messages}
         = $args{save_deleted} ? [ $self->allMessages ] : [ $self->messages ];
 
@@ -629,32 +631,6 @@ sub close(@)
 
 #-------------------------------------------
 
-=item synchronize
-
-Write the messages to disk, and then read it back again.  This will create
-a new folder structure, so you have to catch the result.
-
-Example:
-    $folder = $folder->synchronize;
-
-=cut
-
-sub synchronize()
-{   my $self       = shift;
-    return unless $self->modified;
-
-    $self->write or return $self;
-
-    my $name       = $self->name;
-    my @options    = @{$self->{MB_init_options}};
-    my $type       = ref $self;
-
-    $self->close;
-    $type->new(@options);
-}
-
-#-------------------------------------------
-
 =item delete
 
 Remove the specified folder-file or folder-directory (dependent on
@@ -681,17 +657,21 @@ sub delete()
     }
 
     # Sub-directories need to be removed first.
-    foreach ($self->subFolders)
-    {   my $sub = $self->openSubFolder($_, remove_when_empty => 1);
+    foreach ($self->listFolders)
+    {   my $sub = $self->openSubFolder($_);
         next unless $sub;
         $sub->delete;
+        $sub->close;
     }
 
     # A lock may protect destruction from interference.
     $self->lock;
     $_->delete foreach $self->messages;
     $self->{MB_remove_empty} = 1;
-    $self->write->unlock;
+
+    my $rc = $self->write(keep_deleted => 0);
+    $self->unlock;
+    $rc;
 }
 
 #-------------------------------------------
@@ -786,16 +766,20 @@ MESSAGE argument, the value is first set.
 sub messageID($;$)
 {   my ($self, $msgid) = (shift, shift);
 
-use Carp;
-confess unless $msgid;
     return $self->{MB_msgid}{$msgid} unless @_;
 
     my $message = shift;
 
+    # Undefine message?
+    unless($message)
+    {   delete $self->{MB_msgid}{$msgid};
+        return;
+    }
+
     # Auto-delete doubles.
     if(my $double = $self->{MB_msgid}{$msgid})
     {   $message->delete unless $double->isa('Mail::Box::Dummy');
-        return $self;
+        return $message;
     }
 
     $self->{MB_msgid}{$msgid} = $message;
@@ -926,7 +910,7 @@ sub addMessages(@)
 
 #-------------------------------------------
 
-=item appendMessages LIST-OF-OPTIONS
+=item appendMessages OPTIONS
 
 (Class method) Append one or more messages to an unopened folder.
 Usually, this method is called by the Mail::Box::Manager (its method
@@ -1108,7 +1092,7 @@ sub DESTROY
     # If you use the Mail::Box::Manager, you should never get this message
     # because that `END' will close all folders first.
 
-    warn "Changes to folder $self not written.\n"
+    warn "Changes to folder `", $self->name, "' not written.\n"
        if !$self->{MB_is_closed} && $self->modified && $self->writeable;
 
     $self->unlock;  # if still keeping lock.
@@ -1155,20 +1139,49 @@ name is to be found is this default DIRECTORY.
 
 sub foundIn($@)
 {   my ($class, $folder, @options) = @_;
-    die "$class could not autodetect for $folder.";
+    die "$class could not autodetect type of $folder.";
+}
+
+#-------------------------------------------
+
+=item create FOLDERNAME [, OPTIONS]
+
+(Class method) Create a folder.  If the folder already exists, it will
+be left untouched.  As options, you may specify:
+
+=over 4
+
+=item * folderdir => DIRECTORY
+
+When the foldername is preceeded by a C<=>, the C<folderdir> directory
+will be searched for the named folder.
+
+=back
+
+=cut
+
+sub create($@)
+{   my ($class, $name, @options) = @_;
+    die "$class cannot create a folder named $name.\n";
 }
 
 #-------------------------------------------
 
 =item listFolders [OPTIONS]
 
-(class method) List all folders which belong to a certain class of
-folders.  Each class should extent this method.
+(Class and Instance method) List all folders which belong to a certain class of
+folders.  Each class shall extent this method.  As class method, the C<folder>
+option is usually used (defaults to the top folderdir).  This method will return
+the sub-folders of the opened folder when called as instance method.
 
 At least the following options are supported, but refer to the manpage
 of the various folder-classes to see more options.
 
 =over 4
+
+=item * folder => FOLDERNAME
+
+The folder of which the sub-folders should be listed.
 
 =item * folderdir => DIRECTORY
 
@@ -1186,39 +1199,20 @@ to save to.
 
 =back
 
+Examples:
+
+   my $folder = $mgr->open('=in/new');
+   my @subs = $folder->listFolders;
+
+   my @subs = Mail::Box::Mbox->listFolders(folder => '=in/new');
+   my @subs = Mail::Box::Mbox->listFolders; # toplevel folders.
+
 =cut
 
 sub listFolders(@)
 {   my ($class, @options) = @_;
     die "$class cannot list folders.";
 }
-
-#-------------------------------------------
-
-=item subFolders [OPTIONS]
-
-Returns a list with sub-folder I<names> for the specified folder.  Some
-folder-types do not have real sub-folders, but that can be simulated.
-
-Different folder-types may carry different OPTIONS, but the following
-are commonly known:
-
-=over 4
-
-=item * check => 1
-
-Check all returned folder-names thorrowly.  This will cost some
-performance.
-
-=back
-
-Example:
-   my @subfolders = $folder->subFolders(check => 1);
-   if($folder->subFolders) { ... }
-
-=cut
-
-sub subFolders { () }
 
 #---- convenience methods for accessing MIME::Parser
 
@@ -1251,7 +1245,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.91
+This code is alpha, version 0.92
 
 =cut
 

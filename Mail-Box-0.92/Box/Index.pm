@@ -12,7 +12,7 @@ Mail::Box::Index - Keep indexfiles on messages.
 =head1 SYNOPSIS
 
    $folder->readIndex(...)
-   $folder->printIndex(...)
+   $folder->writeIndex(...)
 
 =head1 DESCRIPTION
 
@@ -100,11 +100,16 @@ sub writeIndex(@)
 {   my $self = shift;
     my $index = $self->indexFilename or return $self;
 
+    # Remove empty index-file.
+    unless(@_)
+    {   unlink $index;
+        return $self;
+    }
+
     open INDEX, ">$index" or return $self;
-
     $_->printIndex(\*INDEX) foreach @_;
-
     close INDEX;
+
     $self;
 }
 
@@ -151,7 +156,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.91
+This code is alpha, version 0.92
 
 =cut
 

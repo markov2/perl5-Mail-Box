@@ -18,9 +18,9 @@ Mail::Box::Manager - Manage a set of folders
 
 =head1 DESCRIPTION
 
-THIS CODE IS ALPHA!!!  THE TESTS SHOULD WORK, BUT MUCH IS EVEN NOT
-TESTED ONCE!!!  SO: ONLY FOR THE BRAVEST.  Please contribute tests
-and patches.
+This code is striving for a beta classification, but is not there
+yet.  Please contribute tests and patches.  Read the STATUS file
+for more details.
 
 The folder manager maintains a set of folders (mail-boxes).  Those
 folders may be of different types.  Most folder-types can be detected
@@ -225,26 +225,39 @@ Examples:
    $manager->open(folder => '=jack', type => 'mbox');
    $manager->open(type => 'Mail::Box::Mbox');
 
+=item * create => BOOL
+
+Create the folder when it does not exist.  By default, this is not done.
+The C<type>-option specifies which type of folder is created.
+
 =back
 
 =cut
 
 sub open(@)
 {   my ($self, %args) = @_;
-    my $name          = $args{folder} || $ENV{MAIL};
+    my $name          = $args{folder} ||= $ENV{MAIL};
 
     # Do not open twice.
     my ($folder) = grep {$name eq "$_"} $self->openFolders;
-    return $folder if $folder;
+    if($folder)
+    {   warn "Folder $name is already open.\n";
+        return;
+    }
 
-    # Set general folder options.
     # User-specified foldertype prevails.
     if(defined $args{type})
     {   foreach (@{$self->{MBM_folder_types}})
         {   my ($type, $class, @options) = @$_;
             push @options, manager => $self;
-            return $self->addOpenFolder($class->new(@options, %args))
-                if $args{type} eq $type || $args{type} eq $class;
+            next unless $args{type} eq $type || $args{type} eq $class;
+
+            my $folder = $class->new(@options, %args);
+            $folder = $class->create($name, @options, %args)
+                if !$folder && $args{create};
+
+            $self->addOpenFolder($folder) if $folder;
+            return $folder;
         }
         warn "I do not know foldertype $args{type}: autodecting.";
     }
@@ -257,18 +270,22 @@ sub open(@)
     {   my ($type, $class, @options) = @$_;
         push @options, manager => $self;
         next unless $class->foundIn($name, @find_options);
-        return $self->addOpenFolder($class->new(@options, %args))
+        return $self->addOpenFolder($class->new(@options, %args));
     }
 
     # Open read-only only for folders which exist.
     if(exists $args{mode} && $args{mode} ne 'rw')
-    {   warn "Couldn't autodetect type of folder $name.\n";
+    {   warn "Couldn't detect type of folder $name.\n";
         return;
     }
 
     # Create a new folder.
+
+    return unless $args{create};
+
     my $retry = $self->{MBM_default_type} || $self->{MBM_folder_types}[0][1];
-    $self->open(%args, type => $retry, manager => $self);
+    $retry->create($name, %args) or return;
+    $self->open(%args, type => $retry);  # retry to open.
 }
 
 #-------------------------------------------
@@ -435,6 +452,25 @@ sub appendMessage($@)
 
 #-------------------------------------------
 
+=item delete FOLDERNAME [,OPTIONS]
+
+Remove the named folder, including all its sub-folders.  The OPTIONS
+are those of C<open()>.
+
+To accomplish a full removal, all folders have to be opened first, while
+Mail::Box messages may have parts of them stored in external files, which
+must be removed too.
+
+=cut
+
+sub delete($@)
+{   my ($self, $name, @options) = @_;
+    my $folder = $self->open(folder => $name, @options) or return;
+    $folder->delete;
+}
+
+#-------------------------------------------
+
 =head1 AUTHOR
 
 Mark Overmeer (F<Mark@Overmeer.net>).
@@ -443,7 +479,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.91
+This code is alpha, version 0.92
 
 =cut
 

@@ -3,7 +3,7 @@ package Mail::Box::MH;
 
 use Mail::Box;
 use Mail::Box::Index;
-@ISA     = qw/Mail::Box Mail::Box::Index/;
+@ISA = qw/Mail::Box Mail::Box::Index/;
 
 use strict;
 
@@ -189,6 +189,7 @@ objects.  For some, different options are set.  For MH-specific options
 see below, but first the full list.
 
  access            Mail::Box          'r'
+ create            Mail::Box          0
  dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
  folder            Mail::Box          $ENV{MAIL}
  folderdir         Mail::Box          <no default>
@@ -243,7 +244,7 @@ sub init($)
     $self->Mail::Box::init($args);
 
     my $directory                 = $self->{MB_directory}
-       = (ref $self)->folderTodirectory($self->name, $self->folderdir);
+       = (ref $self)->folderToDirectory($self->name, $self->folderdir);
 
     for($args->{index_filename})
     {  $args->{index_filename}
@@ -274,15 +275,9 @@ sub init($)
 
     # Check if we can write to the folder, if we need to.
 
-    if($self->writeable && ! -w $directory)
-    {   if(-e $directory)
-        {   warn "Folder $directory is write-protected.\n";
-            $self->{MB_access} = 'r';
-        }
-        elsif(!mkdir $directory, 0700)
-        {   warn "Couldnot create folder in $directory.\n";
-            return undef;
-        }
+    if($self->writeable && -e $directory && ! -w $directory)
+    {   warn "Folder $directory is write-protected.\n";
+        $self->{MB_access} = 'r';
     }
 
     $self;
@@ -300,7 +295,11 @@ reason.
 
 sub readMessages()
 {   my $self = shift;
-    $self->lock;
+
+    my $directory = $self->directory;
+    return unless -d $directory;
+
+    $self->lock or return;
 
     # Prepare the labels.  The labels are related to the message-numbers,
     # but there may be some messages lacking (f.i. manually removed), which
@@ -329,8 +328,6 @@ sub readMessages()
     # Select the messages from the directory (folder)
     # Each message is a file, where a sequence-number is
     # its name.
-
-    my $directory    = $self->directory;
 
     opendir DIR, $directory or return;
     my @msgnrs = grep { -f "$directory/$_" && -r _ }
@@ -502,7 +499,7 @@ sub addMessage($)
 
 =item write [OPTIONS]
 
-Write all messages to the folder-file.  Returns whether this
+Write all messages to the folder-file.  Returns the folder when this
 was successful.  As options you may specify (see C<Mail::Box>
 for explanation)
 
@@ -524,9 +521,7 @@ unknown reason, you may be thinking that messages should not be renumbered.
 sub writeMessages($)
 {   my ($self, $args) = @_;
 
-    $self->lock;
-
-    # Write each message.  Two things complicate things:
+    # Write each message.  Two things complicate life:
     #   1 - we may have a huge folder, which should not be on disk twice
     #   2 - we may have to replace a message, but it is unacceptable
     #       to remove the original before we are sure that the new version
@@ -535,23 +530,19 @@ sub writeMessages($)
     my $writer = 0;
     my %labeled;
 
-    my @messages = @{$args->{messages}};
-    my $renumber = exists $args->{renumber} ? $args->{renumber} : 1;
-    my $delete   = $args->{keep_deleted} || 0;
+    $self->lock;
+
+    my $renumber  = exists $args->{renumber} ? $args->{renumber} : 1;
+    my $directory = $self->directory;
+    my @messages  = @{$args->{messages}};
 
     foreach my $message (@messages)
     {
-        # Remove deleted messages.
-        if($delete && $message->deleted)
-        {   unlink $message->filename;
-            next;
-        }
-
         my $filename = $message->filename;
 
         my $newfile;
         if($renumber || !$filename)
-        {    $newfile = $self->directory . '/' . ++$writer;
+        {    $newfile = $directory . '/' . ++$writer;
         }
         else
         {    $newfile = $filename;
@@ -599,20 +590,22 @@ sub writeMessages($)
             unless $labels->{seen} || 0;
     }
 
-    #
-    # Write the labels
-    #
+    # Write the labels- and the index-file.
 
     $self->writeLabels(\%labeled);
-
-    #
-    # Write the index-file.
-    #
-
     $self->writeIndex(@messages);
     $self->unlock;
 
-    1;
+    # Remove an empty folder.  This is done last, because the code before
+    # in this method will have cleared the contents of the directory.
+
+    if(!@messages && $self->{MB_remove_empty})
+    {   # If something is still in the directory, this will fail, but I
+        # don't mind.
+        rmdir $directory;
+    }
+
+    $self;
 }
 
 #-------------------------------------------
@@ -634,11 +627,22 @@ sub readAllHeaders()
 
 #-------------------------------------------
 
-=item appendMessages LIST-OF-OPTIONS
+=item appendMessages OPTIONS
 
-(Class method) Append one or more messages to this folder.  See
-the manual-page of Mail::Box for explantion of the options.  The folder
-will not be opened.  Returns the list of written messages on success.
+(Class method) Append one or more messages to this folder.  The folder
+will not be opened.
+
+If the folder does not exist, C<undef> (or FALSE) is returned.
+
+=over 4
+
+=item * folder => FOLDERNAME
+
+=item * message => MESSAGE
+
+=item * messages => ARRAY-OF-MESSAGES
+
+=back
 
 Example:
 
@@ -659,8 +663,11 @@ sub appendMessages(@)
                  : exists $args{messages} ? @{$args{messages}}
                  : return ();
 
-    my $self   = $class->new(@_, access => 'a');
-    $self->lock;
+    my $self     = $class->new(@_, access => 'a');
+    my $directory= $self->directory;
+    return unless -d $directory;
+
+    $self->lock or return;
 
     # Get labels from existing messages.
     my @labels  = $self->readLabels;
@@ -673,7 +680,7 @@ sub appendMessages(@)
     my $msgnr  = $self->highestMessageNumber +1;
     foreach my $message (@messages)
     {
-        my $new = FileHandle->new($self->directory . '/' . $msgnr, 'w')
+        my $new = FileHandle->new("$directory/$msgnr", 'w')
             or next;
 
         $message->print($new);
@@ -714,14 +721,14 @@ sub directory() { shift->{MB_directory} }
 
 #-------------------------------------------
 
-=item folderTodirectory FOLDERNAME, FOLDERDIR
+=item folderToDirectory FOLDERNAME, FOLDERDIR
 
 (class method)  Translate a foldername into a filename, with use of the
 FOLDERDIR to replace a leading C<=>.
 
 =cut
 
-sub folderTodirectory($$)
+sub folderToDirectory($$)
 {   my ($class, $name, $folderdir) = @_;
     $name =~ /^=(.*)/ ? "$folderdir/$1" : $name;
 }
@@ -767,18 +774,27 @@ its header.  The headers are read from back to front in the folder.
 =cut
 
 sub messageID($;$)
-{   my ($self, $msgid, $message) = @_;
-    if($message)
-    {   # Define loaded message.
-        $self->Mail::Box::messageID($msgid, $message);
-        $self->toBeThreaded($message);
+{   my ($self, $msgid) = (shift, shift);
+
+    # Set or remove message-id
+    if(@_)
+    {   if(my $message = shift)
+        {   # Define loaded message.
+            $self->Mail::Box::messageID($msgid, $message);
+            $self->toBeThreaded($message);
+            return $self->{MB_msgid}{$msgid};
+        }
+        else
+        {   delete $self->{MB_msgid}{$msgid};
+            return;
+        }
     }
-    else
-    {   # Trigger autoload until the message-id appears.
-        $self->message($self->{MB_last_untouched}--)->head
-            while $self->{MB_last_untouched} >= 0
-               && !exists $self->{MB_msgid}{$msgid};
-    }
+
+    # Message-id not found yet.
+    # Trigger autoload until the message-id appears.
+    $self->message($self->{MB_last_untouched}--)->head
+        while $self->{MB_last_untouched} >= 0
+           && !exists $self->{MB_msgid}{$msgid};
 
     $self->{MB_msgid}{$msgid};
 }
@@ -917,6 +933,12 @@ sub writeLabels($)
 {   my ($self, $labeled) = @_;
     my $filename = $self->labelsFilename || return;
 
+    # Remove empty label-file.
+    unless(keys %$labeled)
+    {   unlink $filename;
+        return $self;
+    }
+
     my $seq      = FileHandle->new($filename, 'w') or return;
     my $oldout   = select $seq;
 
@@ -981,7 +1003,7 @@ Example:
 sub foundIn($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
-    my $directory   = $class->folderTodirectory($name, $folderdir);
+    my $directory = $class->folderToDirectory($name, $folderdir);
 
     return 0 unless -d $directory;
     return 1 if -f "$directory/1";
@@ -1000,11 +1022,43 @@ sub foundIn($@)
     0;
 }
 
+
+#-------------------------------------------
+
+=item create FOLDERNAME [, OPTIONS]
+
+(Class method) Create a folder.  If the folder already exists, it will
+be left untouched.  As options, you may specify:
+
+=over 4
+
+=item * folderdir => DIRECTORY
+
+=back
+
+=cut
+
+sub create($@)
+{   my ($class, $name, %args) = @_;
+    my $folderdir = $args{folderdir} || $default_folder_dir;
+    my $directory = $class->folderToDirectory($name, $folderdir);
+
+    return $class if -d $directory;
+    unless(mkdir $directory, 0700)
+    {   warn "Cannot create directory $directory: $!\n";
+        return;
+    }
+
+    $class;
+}
+
 #-------------------------------------------
 
 =item listFolders [OPTIONS]
 
-List the folders in a certain directory.
+(Class and Instance method) List the folders in a certain directory.  As
+class method, you will use the C<folder> option to indicate which folder
+to list.  As instance method, the sub-folders of that folder are returned.
 
 =over 4
 
@@ -1021,10 +1075,17 @@ List the folders in a certain directory.
 =cut
 
 sub listFolders(@)
-{   my ($class, %args)  = @_;
-    my $folder          = $args{folder}    || '=';
-    my $folderdir       = $args{folderdir} || $default_folder_dir;
-    my $dir             = $class->folderTodirectory($folder, $folderdir);
+{   my ($class, %args) = @_;
+    my $dir;
+    if(ref $class)
+    {   $dir   = $class->directory;
+        $class = ref $class;
+    }
+    else
+    {   my $folder    = $args{folder}    || '=';
+        my $folderdir = $args{folderdir} || $default_folder_dir;
+        $dir   = $class->folderToDirectory($folder, $folderdir);
+    }
 
     $args{skip_empty} ||= 0;
     $args{check}      ||= 0;
@@ -1321,6 +1382,14 @@ sub coerce($$)
     (bless $message, $class)->Mail::Box::MH::Message::Runtime::init;
 }
 
+#-------------------------------------------
+
+sub diskDelete()
+{   my $self = shift;
+    $self->Mail::Box::Message::diskDelete;
+    unlink $self->filename;
+    $self;
+}
 
 ###
 ### Mail::Box::MH::Message::NotParsed

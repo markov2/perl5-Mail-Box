@@ -12,11 +12,18 @@ use File::Copy;
 use lib '..', 't';
 use Tools;
 
+use Mail::Box::Mbox;
 use Mail::Box::MH;
 
-BEGIN {plan tests => 15}
+BEGIN {plan tests => 19}
 
+my $src = 't/mbox.src';
 my $top = 't/Mail';
+
+my $mbox = Mail::Box::Mbox->new
+  ( folder      => $src
+  , lock_method => 'NONE'
+  );
 
 #
 # Create a nice structure which looks like a set of MH folders.
@@ -27,6 +34,7 @@ sub folder($;@)
     mkdir $dirname, 0700 || die unless -d $dirname;
     foreach (@_)
     {   open CREATE, ">$dirname/$_" or die;
+        $mbox->message($_)->print(\*CREATE) if m/^\d+$/;
         close CREATE;
     }
 }
@@ -96,6 +104,10 @@ $folder->close;
 # Open a new folder.
 #
 
+ok(! -d "$top/f4/newfolder");
+Mail::Box::MH->create('=f4/newfolder', folderdir  => $top);
+ok(-d "$top/f4/newfolder");
+
 $folder = Mail::Box::MH->new
   ( folderdir  => $top
   , folder     => '=f4/newfolder'
@@ -128,5 +140,20 @@ open SEQ, "$top/f4/newfolder/.mh_sequences" or die;
 my @seq = <SEQ>;
 ok(@seq==1);
 ok($seq[0],"unseen: 1\n");
+
+#
+# Delete a folder.
+#
+
+$folder = Mail::Box::MH->new
+  ( folderdir => $top
+  , folder    => '=f4'
+  , access    => 'rw'
+  );
+
+ok(-d "$top/f4");
+$folder->delete;
+$folder->close;
+ok(! -d "$top/f4");
 
 clean_dir $top;

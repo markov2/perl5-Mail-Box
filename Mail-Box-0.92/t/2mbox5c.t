@@ -14,7 +14,7 @@ use Tools;
 
 use Mail::Box::Mbox;
 
-BEGIN {plan tests => 17}
+BEGIN {plan tests => 24}
 
 my $top = 't/Mail';
 my $real = 't/mbox.src';
@@ -31,13 +31,13 @@ sub dir($)
 
 sub folder($;$)
 {   my $filename = shift;
-    my $content  = shift || 'Makefile';
+    my $content  = shift || $real;
     copy $content, $filename || die;
 }
 
 dir $top;
-folder "$top/f1";
-folder "$top/f2", $real;         # only real folder
+folder "$top/f1", 'Makefile';
+folder "$top/f2";         # only real folder
 folder "$top/f3", "/dev/null";   # empty file
 dir "$top/sub1";
 folder "$top/sub1/s1f1";
@@ -47,7 +47,7 @@ dir "$top/sub2";                 # empty dir
 folder "$top/f4";
 dir "$top/f4.d";                 # fake subfolder
 folder "$top/f4.d/f4f1";
-folder "$top/f4.d/f4f2", $real;
+folder "$top/f4.d/f4f2";
 folder "$top/f4.d/f4f3";
 
 ok(cmplists [ sort Mail::Box::Mbox->listFolders(folderdir => $top) ]
@@ -105,6 +105,10 @@ $folder->close;
 # Open a new folder.
 #
 
+ok(! -f "$top/f4/newfolder");
+Mail::Box::Mbox->create('=f4/newfolder', folderdir => $top);
+ok(-f "$top/f4.d/newfolder");
+
 $folder = Mail::Box::Mbox->new
   ( folderdir => $top
   , folder    => '=f4/newfolder'
@@ -128,9 +132,31 @@ $folder->close;
 ok(-s "$top/f4.d/newfolder");
 
 #
+# Delete a folder.
+#
+
+$folder = Mail::Box::Mbox->new
+  ( folderdir => $top
+  , folder    => '=f4'
+  , access    => 'rw'
+  );
+
+ok(-f "$top/f4");
+$folder->delete;
+$folder->close;
+ok(! -f "$top/f4");
+ok(!-d "$top/f4.d");
+
+#
 # Write a folder, but at the same place is a subdir.  The subdir should
 # be moved to a name ending on `.d'
 #
+
+ok(-d "$top/sub1");
+Mail::Box::Mbox->create('=sub1', folderdir => $top);
+ok(-d "$top/sub1.d");
+ok(-f "$top/sub1");
+ok(-z "$top/sub1");
 
 $folder = Mail::Box::Mbox->new
   ( folderdir => $top
@@ -142,8 +168,6 @@ $folder->addMessage($msg);
 $folder->modifications(+1);
 ok($folder->messages==1);
 $folder->close;
-ok(-d "$top/sub1.d");
 ok(-s "$top/sub1");
-ok(-f "$top/sub1");
 
 clean_dir $top;
