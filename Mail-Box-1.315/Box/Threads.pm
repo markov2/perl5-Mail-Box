@@ -1155,7 +1155,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.314
+This code is beta, version 1.315
 
 =cut
 

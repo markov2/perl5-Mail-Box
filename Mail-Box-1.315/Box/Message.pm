@@ -490,8 +490,8 @@ sub shortSize(;$)
     : $size < 1_000      ? "$size "
     : $size < 10_000     ? sprintf "%3.1fK", $size/1024
     : $size < 100_000    ? sprintf "%3.0fK", $size/1024
-    : $size < 1_000_000  ? sprintf "%3.2fM", $size/1024
-    : $size < 10_000_000 ? sprintf "%3.1fM", $size/1024
+    : $size < 1_000_000  ? sprintf "%3.2fM", $size/(1024*1024)
+    : $size < 10_000_000 ? sprintf "%3.1fM", $size/(1024*1024)
     :                      sprintf "%3.0fM", $size/(1024*1024);
 }
 
@@ -1231,7 +1231,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.314
+This code is beta, version 1.315
 
 =cut
 

@@ -3,6 +3,20 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.315: Sat Jul 14 01:34:31 CEST 2001
+
+	* Synopsis in Mail::Box starts with Mail::Box::Manager now.
+
+	* [Tassilo von Parseval]'s messages are not MBs is size, but
+	  only kBs. fixed Mail::Box::Message::sortSize().
+
+	* t/19filelck.t on Solaris cannot work, because exclusive
+	  file-rights can only be got for writable files (which is
+	  stupid)  Open file 'rw' in that case, or fail when there
+          are no writing rights. Mail::Box::Mbox.pm.
+          Reported by [Jost Krieger]
+
+
 version 1.314: Thu Jul 12 22:41:56 CEST 2001
 
 	* Added initial Mail::Message::Body to the distribution.

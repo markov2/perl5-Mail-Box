@@ -215,8 +215,25 @@ sub fileOpen()
     my $access = $self->{MB_access} || 'r';
     $access = 'r+' if $access eq 'rw';
 
+    if($^O eq 'solaris' && $self->lockMethod eq 'FILE' && $access eq 'r')
+    {   # An Solaris, excl lock can only be done on file which is opened
+        # read-write.
+
+        unless(-w $source)
+        {   warn <<'SOLARIS';
+ERROR: On Solaris, a file must be writable to lock exclusively.  Please
+add write-permission to $source or change locking mode to anything
+different from FILE.
+SOLARIS
+
+            return undef;
+        }
+
+        $access = 'rw';
+    }
+
     return undef
-       unless $file = FileHandle->new($source, $access);
+        unless $file = FileHandle->new($source, $access);
 
     $self->{MB_file} = $file;
 
@@ -830,7 +847,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.314
+This code is beta, version 1.315
 
 =cut
 

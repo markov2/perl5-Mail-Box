@@ -28,10 +28,10 @@ my $folder = new Mail::Box::Mbox
   );
 
 ok(defined $folder);
-ok($folder->hasLock);
+ok($folder && $folder->hasLock);
 
 # Already got lock, so should return immediately.
-ok($folder->lock);
+ok($folder && $folder->lock);
 
-$folder->unlock;
-ok(not $folder->hasLock);
+$folder->unlock if $folder;
+ok($folder && not $folder->hasLock);

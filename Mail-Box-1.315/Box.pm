@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.314';
+$VERSION = '1.315';
 
 use Carp;
 use MIME::Parser;
@@ -18,8 +18,10 @@ Mail::Box - Manage a message-folder.
 
 =head1 SYNOPSIS
 
-   use Mail::Box;
-   my $folder = new Mail::Box::Mbox folder => $ENV{MAIL}, ...;
+   use Mail::Box::Manager;
+   my $mgr    = Mail::Box::Manager->new;
+   my $folder = $mgr->open(folder => $ENV{MAIL}, ...);
+   print $folder->name;
    print $folder->message(0)->head->get('subject');  # See Mail::Box::Message
    $folder->message(3)->deleted(1);
    my $emails = $folder->messages;          # amount
@@ -1489,7 +1491,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.314
+This code is beta, version 1.315
 
 =cut
 
