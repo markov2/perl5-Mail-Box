@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.319';
+$VERSION = '1.320';
 
 use Carp;
 use MIME::Parser;
@@ -765,7 +765,7 @@ INCR value can be negative to undo effects.
 
 =cut
 
-sub modified($)       { shift->{MB_modifications} }
+sub modified()        { shift->{MB_modifications} }
 sub modifications(;$) { shift->{MB_modifications} += shift||1 }
 
 #-------------------------------------------

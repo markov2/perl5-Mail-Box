@@ -277,7 +277,8 @@ sub modified(;$)
     return $self->{MBM_modified} unless @_;
 
     my $change = shift;
-    $self->folder->modifications($change - $self->{MBM_modified});
+    my $folder = $self->folder;
+    $folder->modifications($change - $self->{MBM_modified}) if $folder;
     $self->{MBM_modified} = $change;
 }
 
@@ -625,9 +626,7 @@ sub coerce($$@)
     # have an init() method.  I need to copy some code from the instance
     # method (new) for MIME::Entity.  Hope that never changes...
 
-    if(ref $message eq 'Mail::Internet')
-    {   $message->{ME_Parts} = [];                 # stolen code.
-    }
+    $message->{ME_Parts} ||= [];
 
     # Re-initialize the message, but with the options as specified by the
     # creation of this folder, not the folder where the message came from.
@@ -646,6 +645,33 @@ sub coerce($$@)
     }
 
     $class;
+}
+
+sub make_multipart(@)
+{   my $self    = shift;
+    my $options =
+     { deleted  => $self->{MBM_deleted}
+     , modified => 1
+     , labels   => [ %{$self->{MBM_labels}} ]
+     , folder   => $self->{MBM_folder}
+     };
+
+    if($self->SUPER::make_multipart(@_) eq 'DONE')
+    {   $self->modified(1);
+        $self->init($options);
+        my $part = $self->parts(0);
+        $part->init($options);
+    }
+    $self;
+}
+
+sub add_part(@)
+{   my ($self, $part) = @_;
+    $part->folder($self->folder);
+    $part->{ME_Parts} ||= [];
+    $self->SUPER::add_part($part);
+    $part->modified(1);
+    $part;
 }
 
 #-------------------------------------------

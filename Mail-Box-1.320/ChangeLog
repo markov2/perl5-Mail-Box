@@ -3,6 +3,13 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
+version 1.320: Wed Oct 10 15:38:12 CEST 2001
+
+	* make_multipart and add_part of MIME::Entity do some
+	  dirty things, which must be hacked to be extended.
+	  Details reported by [Nikolaus Rath], changes in
+	  Mail::Box::Message.pm
+
 version 1.319: Tue Aug  7 22:13:33 CEST 2001
 
 	* Doc-fix copyTo in Mail::Box::Message [Marcel de Boer]
