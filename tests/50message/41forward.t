@@ -6,16 +6,16 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
+
+use Test::More tests => 24;
+use Mail::Address;
+
 use Mail::Message;
 use Mail::Message::Head;
 use Mail::Message::Body::Lines;
 use Mail::Message::Construct::Forward;
-
-use Test::More;
-use Mail::Address;
-
-BEGIN {plan tests => 24}
 
 #
 # First produce a message to forward to.

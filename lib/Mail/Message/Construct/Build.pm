@@ -6,6 +6,7 @@ package Mail::Message;
 use Mail::Message::Head::Complete;
 use Mail::Message::Body::Lines;
 use Mail::Message::Body::Multipart;
+use Mail::Message::Field;
 
 use Mail::Address;
 use Carp;
@@ -43,9 +44,15 @@ ways to add data simply.
 The CONTENT is a list of key-value pairs and header field objects.
 The keys which start with a capital are used as header-lines.  Lower-cased
 fields are used for other purposes as listed below.  Each field may be used
-more than once.  If more than one C<data>, C<file>, and C<attach> is
-specified, a multi-parted message is created.  Pairs where the value is
-C<undef> are ignored.
+more than once.  Pairs where the value is C<undef> are ignored.
+
+If more than one C<data>, C<file>, and C<attach> is specified, a multi-parted
+message is created.  The C<Content-Type> field is treated separately: to
+set the type of the produced message body after it has been created.  For
+instance, to explicitly state that you wish a C<multipart/alternative>
+in stead of the default C<multipart/mixed>.  If
+you wish to specify the type per datum, you need to start playing with
+M<Mail::Message::Body> objects yourself.
 
 This C<build> method will use M<buildFromBody()> when the body object has
 been constructed.  Together, they produce your message.
@@ -75,7 +82,9 @@ to create a M<Mail::Message::Body>.
 
  file => 'picture.jpg'                   # filename
  file => \*MYINPUTFILE                   # file handle
- file => $in                             # IO::Handle
+ file => $in                             # any IO::Handle
+
+ open my $in, '<', '/etc/passwd';        # alternative for IO::File
 
 =option  files ARRAY-OF-FILE
 =default files C<[ ]>
@@ -109,6 +118,12 @@ Start with a prepared header, otherwise one is created.
   , attach => $signature
   );
 
+ my $msg = Mail::Message->build
+  ( To     => 'you'
+  , 'Content-Type' => 'text/html'
+  , data   => "<html></html>"
+  );
+
 =cut
 
 sub build(@)
@@ -120,37 +135,47 @@ sub build(@)
       : $_[0]->isa('Mail::Message::Body') ? shift
       :               ();
 
-    my ($head, @headerlines);
+    my ($head, $type, @headerlines);
     while(@_)
     {   my $key = shift;
         if(ref $key && $key->isa('Mail::Message::Field'))
-        {   push @headerlines, $key;
+        {   if($key->name eq 'content-type') { $type = $key }
+            else { push @headerlines, $key }
             next;
         }
 
         my $value = shift;
         next unless defined $value;
 
+        my @data;
+
         if($key eq 'head')
         {   $head = $value }
         elsif($key eq 'data')
-        {   push @parts, Mail::Message::Body->new(data => $value) }
+        {   @data = Mail::Message::Body->new(data => $value) }
         elsif($key eq 'file')
-        {   push @parts, Mail::Message::Body->new(file => $value) }
+        {   @data = Mail::Message::Body->new(file => $value) }
         elsif($key eq 'files')
-        {   push @parts, map {Mail::Message::Body->new(file => $_) } @$value }
+        {   @data = map {Mail::Message::Body->new(file => $_) } @$value }
         elsif($key eq 'attach')
-        {   push @parts, ref $value eq 'ARRAY' ? @$value : $value }
+        {   @data = ref $value eq 'ARRAY' ? @$value : $value }
+        elsif(lc $key eq 'content-type')
+        {   $type = Mail::Message::Field->new($key, $value) }
         elsif($key =~ m/^[A-Z]/)
         {   push @headerlines, $key, $value }
         else
         {   croak "Skipped unknown key $key in build." } 
+
+        push @parts, grep {defined $_} @data if @data;
     }
 
     my $body
        = @parts==0 ? Mail::Message::Body::Lines->new()
        : @parts==1 ? $parts[0]
        : Mail::Message::Body::Multipart->new(parts => \@parts);
+
+    # Setting the type explicitly, only after the body object is finalized
+    $body->type($type) if defined $type;
 
     $class->buildFromBody($body, $head, @headerlines);
 }

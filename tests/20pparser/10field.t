@@ -4,15 +4,16 @@
 # This also doesn't cover reading headers from file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN { plan tests => 15 }
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 15;
 
 use Mail::Message::Field;
 use Mail::Box::Parser::Perl;
-use Tools;
 
 # Explictly ask for the Perl parser to fold lines.
 

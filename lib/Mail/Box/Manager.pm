@@ -53,7 +53,6 @@ more portable and safer code if you do use it.
 
 =option  folder_types NEW-TYPE | ARRAY-OF-NEW-TYPES
 =default folder_types <all standard types>
-
 Add one or more new folder types to the list of known types.  The order is
 important: when you open a file without specifying its type, the
 manager will start trying the last added list of types, in order.
@@ -63,16 +62,22 @@ defaults for options which overrule the usual defaults.  You may specify
 folder-specific defaults as OPTIONS.  They override the settings of
 the manager.
 
+=option  autodetect TYPE|ARRAY-OF-TYPES
+=default autodetect C<undef>
+Select only a subset of the folder types which are implemented by MailBox
+to be detected automatically.  This may improve the auto-detection of
+folder types.  Normally, all folder types will be tried when a folder's
+name is incorrect, but this option limits the types which are checked
+and therefore may respond faster.
+
 =option  default_folder_type NAME|CLASS
 =default default_folder_type C<'mbox'>
-
 Specifies the default folder type for newly created folders.  If this
 option is not specified, the most recently registered type is used (see
 M<registerType()> and the M<new(folder_types)> option.
 
 =option  folderdir DIRECTORY
 =default folderdir C<[ '.' ]>
-
 The default directory, or directories, where folders are
 located.  C<Mail::Box::Manager> can autodetect the existing folder-types.
 There may be different kinds of folders opened at the same time, and
@@ -100,15 +105,21 @@ sub init($)
 
     # Register all folder-types.  There may be some added later.
 
-    my @types;
+    my @new_types;
     if(exists $args->{folder_types})
-    {   @types = ref $args->{folder_types}[0]
-               ? @{$args->{folder_types}}
-               : $args->{folder_types};
+    {   @new_types = ref $args->{folder_types}[0]
+                   ? @{$args->{folder_types}}
+                   : $args->{folder_types};
+    }
+
+    my @basic_types = reverse @basic_folder_types;
+    if(my $basic = $args->{autodetect})
+    {   my %types = map { ( $_ => 1) } (ref $basic ? @$basic : ($basic));
+        @basic_types = grep { $types{$_->[0]} } @basic_types;
     }
 
     $self->{MBM_folder_types} = [];
-    $self->registerType(@$_) foreach @types, reverse @basic_folder_types;
+    $self->registerType(@$_) foreach @new_types, @basic_types;
 
     $self->{MBM_default_type} = $args->{default_folder_type};
 
@@ -285,8 +296,9 @@ this warning will be produced as well.
 
 The manager tried to open a folder of the specified type.  It may help
 to explicitly state the type of your folder with the C<type> option.
-There will probable be another warning or error message which is related
-to this report, and provides more details.
+There will probably be another warning or error message which is related
+to this report and provides more details about its cause.  You may also
+have a look at M<new(autodetect)> and M<new(folder_types)>.
 
 =warning Folder $name is already open.
 You cannot ask the manager for a folder which is already open. In some
@@ -376,7 +388,7 @@ sub open(@)
         foreach (@{$self->{MBM_folder_types}})
         {   (my $abbrev, $class, @defaults) = @$_;
 
-            eval "require $class";
+            eval("require $class");
             next if $@;
 
             if($class->foundIn($name, @defaults, %args))
@@ -716,7 +728,7 @@ sub copyMessage(@)
 
     # hidden option, do not use it: it's designed to optimize moveMessage
     if($options{_delete})
-    {   $_->delete foreach @messages;
+    {   $_->label(deleted => 1) foreach @messages;
     }
 
     @coerced;

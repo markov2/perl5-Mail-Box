@@ -5,16 +5,16 @@
 # from file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message::Body::String;
+use lib qw(. .. tests);
 use Tools;
 
 use IO::Scalar;
+use Test::More tests => 30;
 
-BEGIN {plan tests => 30}
+use Mail::Message::Body::String;
 
 # Test to read a scalar from file.
 # Let's fake the file, for simplicity.

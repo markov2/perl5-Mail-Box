@@ -4,18 +4,18 @@
 # Test reading of MH folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::MH;
-use Mail::Box::Mbox;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More tests => 27;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 27}
+use Mail::Box::MH;
+use Mail::Box::Mbox;
 
 my $mhsrc = File::Spec->catfile('folders', 'mh.src');
 

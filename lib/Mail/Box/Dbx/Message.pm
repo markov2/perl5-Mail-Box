@@ -6,7 +6,6 @@ package Mail::Box::Dbx::Message;
 use base 'Mail::Box::File::Message';
 
 use Carp;
-use IO::File;
 use File::Copy qw/move/;
 
 use Mail::Message::Body::String;

@@ -6,12 +6,14 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
+
+use Test::More tests => 13;
+
 use Mail::Box::Mbox;
 use Mail::Box::Tie::ARRAY;
 use Mail::Message::Construct;
-
-use Test::More tests => 13;
 
 #
 # The folder is read.

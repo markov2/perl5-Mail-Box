@@ -7,8 +7,14 @@ use Mail::Box::Maildir::Message;
 
 use Carp;
 use File::Copy;
-use File::Spec;
+use File::Basename 'basename';
 use Sys::Hostname;
+
+# Maildir is only supported on UNIX, because the filenames probably
+# do not work on other platforms.  Since MailBox 2.052, the use of
+# File::Spec to create filenames has been removed: benchmarks showed
+# that catfile() consumed 20% of the time of a folder open().  And
+# '/' file separators work on Windows too!
 
 =chapter NAME
 
@@ -102,7 +108,7 @@ sub foundIn($@)
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $directory = $class->folderToDirectory($name, $folderdir);
 
-    -d File::Spec->catdir($directory, 'cur');
+    -d "$directory/cur";
 }
 
 #-------------------------------------------
@@ -138,7 +144,7 @@ sub listSubFolders(@)
     while(my $d = readdir DIR)
     {   next if $d =~ m/^(new|tmp|cur|\.\.?)$/;
 
-        my $dir = File::Spec->catfile($dir,$d);
+        my $dir = "$dir/$d";
         push @dirs, $d if -d $dir && -r _;
     }
 
@@ -146,7 +152,7 @@ sub listSubFolders(@)
 
     # Skip empty folders.
 
-    @dirs = grep {!$class->folderIsEmpty(File::Spec->catfile($dir, $_))} @dirs
+    @dirs = grep {!$class->folderIsEmpty("$dir/$_")} @dirs
         if $args{skip_empty};
 
     # Check if the files we want to return are really folders.
@@ -154,14 +160,14 @@ sub listSubFolders(@)
     @dirs = map { m/(.*)/ && $1 } @dirs;  # untaint
     return @dirs unless $args{check};
 
-    grep { $class->foundIn(File::Spec->catfile($dir,$_)) } @dirs;
+    grep { $class->foundIn("$dir/$_") } @dirs;
 }
 
 #-------------------------------------------
 
 sub nameOfSubFolder($)
 {   my ($self, $name) = @_;
-    File::Spec->catfile($self->directory, $name);
+    $self->directory.'/'.$name;
 }
 
 #-------------------------------------------
@@ -192,14 +198,12 @@ sub coerce($)
     my $is_native = $message->isa('Mail::Box::Maildir::Message');
     my $coerced   = $self->SUPER::coerce($message);
 
-    my $basename
-      = $is_native
-      ? (split m!/!, $message->filename)[-1]
-      : $message->timestamp .'.'. hostname .'.'. $uniq++;
+    my $basename  = $is_native ? basename($message->filename)
+      : ($message->timestamp || time) .'.'. hostname .'.'. $uniq++;
 
     my $dir = $self->directory;
-    my $tmp = File::Spec->catfile($dir, tmp => $basename);
-    my $new = File::Spec->catfile($dir, new => $basename);
+    my $tmp = "$dir/tmp/$basename";
+    my $new = "$dir/new/$basename";
 
     if($coerced->create($tmp) && $coerced->create($new))
          {$self->log(PROGRESS => "Added Maildir message in $new") }
@@ -240,15 +244,15 @@ sub createDirs($)
     $thing->log(ERROR => "Cannot create Maildir folder directory $dir: $!\n"), return
         unless -d $dir || mkdir $dir;
 
-    my $tmp = File::Spec->catdir($dir, 'tmp');
+    my $tmp = "$dir/tmp";
     $thing->log(ERROR => "Cannot create Maildir folder subdir $tmp: $!\n"), return
         unless -d $tmp || mkdir $tmp;
 
-    my $new = File::Spec->catdir($dir, 'new');
+    my $new = "$dir/new";
     $thing->log(ERROR => "Cannot create Maildir folder subdir $new: $!\n"), return
         unless -d $new || mkdir $new;
 
-    my $cur = File::Spec->catdir($dir, 'cur');
+    my $cur = "$dir/cur";
     $thing->log(ERROR =>  "Cannot create Maildir folder subdir $cur: $!\n"), return
         unless -d $cur || mkdir $cur;
 
@@ -273,7 +277,7 @@ sub folderIsEmpty($)
     return 1 unless -d $dir;
 
     foreach (qw/tmp new cur/)
-    {   my $subdir = File::Spec->catfile($dir, $_);
+    {   my $subdir = "$dir/$_";
         next unless -d $subdir;
 
         opendir DIR, $subdir or return 0;
@@ -305,7 +309,7 @@ sub readMessageFilenames
 
     # unsorted list of untainted filenames.
     my @files = map { /^(\d[\w.:,=\-]+)$/
-                      && -f File::Spec->catfile($dirname, $1) ? $1 : () }
+                      && -f "$dirname/$1" ? $1 : () }
                    readdir DIR;
     closedir DIR;
 
@@ -317,7 +321,7 @@ sub readMessageFilenames
     my %unified;
     m/^(\d+)/ and $unified{ ('0' x (9-length($1))).$_ } = $_ foreach @files;
 
-    map { File::Spec->catfile($dirname, $unified{$_}) }
+    map { "$dirname/$unified{$_}" }
         sort keys %unified;
 }
 
@@ -333,10 +337,10 @@ sub readMessages(@)
     # Read all messages
     #
 
-    my $curdir  = File::Spec->catdir($directory, 'cur');
+    my $curdir  = "$directory/cur";
     my @cur     = map { [$_, 1] } $self->readMessageFilenames($curdir);
 
-    my $newdir  = File::Spec->catfile($directory, 'new');
+    my $newdir  = "$directory/new";
     my @new     = map { [$_, 0] } $self->readMessageFilenames($newdir);
     my @log     = $self->logSettings;
 
@@ -391,7 +395,7 @@ sub writeMessages($)
     my $directory = $self->directory;
     my @messages  = @{$args->{messages}};
 
-    my $tmpdir    = File::Spec->catfile($directory, 'tmp');
+    my $tmpdir    = "$directory/tmp";
     die "Cannot create directory $tmpdir: $!"
         unless -d $tmpdir || mkdir $tmpdir;
 
@@ -399,14 +403,14 @@ sub writeMessages($)
     {   next unless $message->isModified;
 
         my $filename = $message->filename;
-        my $basename = (File::Spec->splitpath($filename))[2];
+        my $basename = basename $filename;
 
-        my $newtmp   = File::Spec->catfile($directory, 'tmp', $basename);
-        my $new      = IO::File->new($newtmp, 'w')
+        my $newtmp   = "$directory/tmp/$basename";
+        open my $new, '>', $newtmp
            or croak "Cannot create file $newtmp: $!";
 
         $message->write($new);
-        $new->close;
+        close $new;
 
         unlink $filename;
         move $newtmp, $filename
@@ -419,10 +423,10 @@ sub writeMessages($)
     if(!@messages && $self->{MB_remove_empty})
     {   # If something is still in the directory, this will fail, but I
         # don't mind.
-        rmdir File::Spec->catfile($directory, 'cur');
-        rmdir File::Spec->catfile($directory, 'tmp');
-        rmdir File::Spec->catfile($directory, 'new');
-        rmdir File::Spec->catfile($directory);
+        rmdir "$directory/cur";
+        rmdir "$directory/tmp";
+        rmdir "$directory/new";
+        rmdir $directory;
     }
 
     $self;
@@ -451,7 +455,7 @@ sub appendMessages(@)
     my $directory= $self->directory;
     return unless -d $directory;
 
-    my $tmpdir   = File::Spec->catfile($directory, 'tmp');
+    my $tmpdir   = "$directory/tmp";
     croak "Cannot create directory $tmpdir: $!", return
         unless -d $tmpdir || mkdir $tmpdir;
 
@@ -459,14 +463,12 @@ sub appendMessages(@)
     {   my $is_native = $message->isa('Mail::Box::Maildir::Message');
         my $coerced   = $self->SUPER::coerce($message);
 
-        my $basename
-         = $is_native
-         ? (split m!/!, $message->filename)[-1]
-         : $message->timestamp .'.'. hostname .'.'. $uniq++;
+        my $basename  = $is_native ? basename($message->filename)
+         : ($message->timestamp || time) .'.'. hostname .'.'. $uniq++;
 
        my $dir = $self->directory;
-       my $tmp = File::Spec->catfile($dir, tmp => $basename);
-       my $new = File::Spec->catfile($dir, new => $basename);
+       my $tmp = "$dir/tmp/$basename";
+       my $new = "$dir/new/$basename";
 
        if($coerced->create($tmp) && $coerced->create($new))
             {$self->log(PROGRESS => "Appended Maildir message in $new") }

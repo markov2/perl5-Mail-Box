@@ -6,18 +6,18 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 5;
+use IO::Scalar;
+use Mail::Address;
+
 use Mail::Message;
 use Mail::Message::Construct;
 use Mail::Message::Body::Lines;
 use Mail::Message::Body::Multipart;
 use Mail::Message::Body::Nested;
-use Tools;
-
-use Test::More;
-use IO::Scalar;
-use Mail::Address;
-
-BEGIN {plan tests => 5}
 
 my $p1 = Mail::Message::Body::Lines->new
  ( data      => [ "line of text in part 1" ]

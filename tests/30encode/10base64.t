@@ -4,15 +4,16 @@
 # Could use some more tests....
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message::Body::Lines;
-use Mail::Message::TransferEnc::Base64;
+use lib qw(. .. tests);
 use Tools;
 
-BEGIN { plan tests => 11 }
+use Test::More tests => 11;
+
+use Mail::Message::Body::Lines;
+use Mail::Message::TransferEnc::Base64;
 
 my $decoded = <<DECODED;
 This text is used to test base64 encoding and decoding.  Let

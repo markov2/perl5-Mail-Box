@@ -3,22 +3,20 @@
 use warnings;
 use strict;
 
-use lib qw(./lib ../lib tests);
-use lib qw(/home/markov/shared/perl/UserIdentity/lib);
-use lib qw(/home/markov/shared/perl/MimeTypes/lib);
-
 use File::Spec;
 use File::Basename;
-use POSIX 'getcwd';
 
+use lib 'tests';
+use Config;
 use Tools;             # test tools
-use IO::Dir;
 
-my $skip_tests = -f 'skiptests';
+use IO::Dir;
+use Test::Harness qw($verbose);
+
 chdir 'tests'    ##### CHANGE DIR TO tests
    or die "Cannot go to test scripts directory: $!\n";
 
-my $verbose = 0;
+$verbose = 0;
 if(@ARGV && $ARGV[0] eq '-v')
 {   $verbose = 1;
     shift @ARGV;
@@ -30,6 +28,16 @@ if(@ARGV)
     $select_tests   = qr/$pat/o;
 }
 
+# The versions of the following packages are reported to help understanding
+# the environment in which the tests are run.  This is certainly not a
+# full list of all installed modules.
+my @show_versions = defined $select_tests ? ()
+ : qw/Mail::Box Mail::Box::Parser::C
+      User::Identity Object::Realize::Later MIME::Types
+      Test::Harness Encode
+     /;
+
+my $skip_tests = -f 'skiptests';
 sub package_of($);
 sub testnames($);
 sub run_in_harness(@);
@@ -64,6 +72,20 @@ warn <<'WARN' unless $select_tests;
 
 WARN
 
+warn "Running on $^O ($Config{archname} $Config{osvers}), with Perl $]\n";
+
+foreach my $package (@show_versions)
+{   eval "require $package";
+
+    my $report
+      = !$@                    ? "version ". ($package->VERSION || 'unknown')
+      : $@ =~ m/^Can't locate/ ? "not installed"
+      : "reports error";
+
+    warn "$package $report\n";
+}
+warn "\n";
+
 #
 # Get all the test-sets.
 #
@@ -78,7 +100,6 @@ my @sets = sort grep { /^\d/ && -d File::Spec->catfile($testdir, $_) }
 
 $setdir->close;
 
-my @inc = map { "-I$_" } @INC;
 my (%success, %skipped);
 my $tests_run = 0;
 
@@ -89,7 +110,6 @@ foreach my $set (@sets)
     eval "require '$script'";
     if($@)
     {   warn "Errors while requiring $script:\n$@";
-        warn "why am i here??? ",getcwd;
         next;
     }
 
@@ -157,17 +177,8 @@ sub run_in_harness(@)
 {   my @files = @_;
     return 1 unless @files;
 
-#   $ENV{PERL_DL_NONLAZY} = 1;
-    my @inc = map { "-I$_" } @INC;
-
-    system $^X, @inc
-      , -e => 'use Test::Harness qw(&runtests $verbose);
-               $verbose = shift @ARGV;
-               my ($tot, $failed) = Test::Harness::_run_all_tests(@ARGV);
-               exit not Test::Harness::_all_ok($tot);'
-      , $verbose, @files;
-    
-    return $?==0;
+    my ($tot, $failed) = Test::Harness::_run_all_tests(@files);
+    Test::Harness::_all_ok($tot);
 }
 
 #

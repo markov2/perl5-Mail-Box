@@ -6,11 +6,13 @@
 use strict;
 use warnings;
 
-use Mail::Box::Manager;
+use lib qw(. .. tests);
 use Tools;
 
-use File::Spec;
 use Test::More tests => 14;
+use File::Spec;
+
+use Mail::Box::Manager;
 
 my $new  = File::Spec->catfile('folders', 'create');
 unlink $new;

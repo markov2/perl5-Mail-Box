@@ -5,7 +5,8 @@ use warnings;
 package Mail::Transport::IMAP4;
 use base 'Mail::Transport::Receive';
 
-my $CRLF = $^O eq 'MSWin32' ? "\n" : "\015\012";
+use Digest::HMAC_MD5;   # only availability check for CRAM_MD5
+use Mail::IMAPClient;
 
 =chapter NAME
 
@@ -27,7 +28,7 @@ verious asynchronous actions.  The main document describing IMAP is
 rfc3501 (which obsoleted the original specification of protocol 4r1
 in rfc2060 in March 2003).
 
-This package, as part of Mail::Box, does not implement the actual
+This package, as part of MailBox, does not implement the actual
 protocol itself but uses M<Mail::IMAPClient> to do the work.  The task
 for this package is to hide as many differences between that module's
 interface and the common M<Mail::Box> folder types.  Multiple
@@ -42,20 +43,32 @@ Create the IMAP connection to the server.  IMAP servers can handle
 multiple folders for a single user, which means that connections
 may get shared.  This is sharing is hidden for the user.
 
+When an C<imap_client> is specified, then the options C<hostname>,
+C<port>, C<username>, and C<password> are extracted from it.
+
 =default port 143
 =default via  C<'imap'>
 
-=option  authenticate 'PLAIN'|'CRAM-MD5'|'NTLM'|'AUTO'|CODE
+=option  authenticate TYPE|ARRAY-OF-TYPES
 =default authenticate C<'AUTO'>
+Authenthication method to M<login()>, which will be passed to
+L<Mail::IMAPClient> method authenticate().  See the latter method for
+the available types.
 
-Authenthication method.  C<AUTO> will try all known methods.
-The NTLM authentication requires M<Authen::NTLM> to be installed.  If this
-module is not installed, it will be skipped by AUTO.
+=option  domain WINDOWS_DOMAIN
+=default domain <server_name>
+Used for NTLM authentication.
 
-You can also specify your own mechan$^O eq 'MSWin32' ? "\n" : ism as CODE reference.  The
-M<Mail::IMAPClient> documentation refers to this code as I<Authcallback>.
-In case you have your own implementation, please consider to contribute
-it to Mail::Box.
+=option  imap_client OBJECT|CLASS
+=default imap_client L<Mail::IMAPClient|Mail::IMAPClient>
+When an OBJECT is supplied, that client will be used for the implementation
+of the IMAP4 protocol. Information about server and such are extracted from
+the OBJECT to have the accessors to produce correct results. The OBJECT
+shall be a L<Mail::IMAPClient|Mail::IMAPClient>.
+
+When a CLASS is given, an object of that type is created for you.  The created
+object can be retreived via M<imapClient()>, and than configured as
+defined by L<Mail::IMAPClient|Mail::IMAPClient>.
 
 =error module Authen::NTLM is not installed
 You try to establish an IMAP4 connection which explicitly uses NTLM
@@ -66,19 +79,31 @@ not installed on your system.
 
 sub init($)
 {   my ($self, $args) = @_;
-    $args->{via}    = 'imap4';
-    $args->{port} ||= 143;
+
+    my $imap = $args->{imap_client} || 'Mail::IMAPClient';
+    if(ref $imap)
+    {   $args->{port}     = $imap->Port;
+        $args->{hostname} = $imap->Server;
+	$args->{username} = $imap->User;
+	$args->{password} = $imap->Password;
+    }
+    else
+    {   $args->{port}   ||= 143;
+    }
+
+    $args->{via}          = 'imap4';
 
     $self->SUPER::init($args) or return;
 
-    my $auth = $self->{MTI_auth} = $args->{authenticate} || 'AUTO';
-    eval "require Authen::NTML";
-    $self->log(ERROR => 'module Authen::NTLM is not installed')
-       if $auth eq 'NTLM' && $@;
+    $self->authentication($args->{authenticate} || 'AUTO');
+    $self->{MTI_domain} = $args->{domain};
 
-    return unless $self->socket;   # establish connection
-
-    $self;
+    unless(ref $imap)
+    {   $imap = $self->createImapClient($imap) or return undef;
+    }
+ 
+    $self->imapClient($imap);
+    $self->login or return undef;
 }
 
 #------------------------------------------
@@ -98,231 +123,91 @@ sub url()
 
 #------------------------------------------
 
-=section Exchanging Information
+=section Attributes
 
-=method ids
+=method authentication ['AUTO'|TYPE|LIST-OF-TYPES]
+Returned is a list of pairs (ref arrays) each describing one possible
+way to contact the server. Each pair contains a mechanism name and
+a challange callback (which may be C<undef>).
 
-Returns a list (in list context) or a reference to a list (in scalar context)
-of all ID's which are known by the server on this moment.
+The settings are used by M<login()> to get server access.  The initial
+value origins from M<new(authenticate)>, but may be changed later.
 
-=cut
+Available basic TYPES are C<CRAM-MD5> and C<PLAIN>.  The latter is sending
+username and password in plain text, and is therefore tried as last
+resort.
 
-sub ids(;@)
-{   my $self = shift;
-    return unless $self->socket;
-    wantarray ? @{$self->{MTI_n2uidl}} : $self->{MTI_n2uidl};
-}
+The C<NTLM> authentication requires M<Authen::NTLM> to be installed.  Other
+methods may be added later.  Besides, you may also specify a CODE
+reference which implements some authentication.
 
-#------------------------------------------
+When C<AUTO> is given, then C<CRAM-MD5>, C<NTLM> and C<PLAIN> are tried,
+in that specific order.  When the M<Authen::NTLM> is not installed it
+will silently be skipped.  Be warned that, because of C<PLAIN>, erroneous
+username/password combinations will be passed readible as last attempt!
 
-=method messages
+An ARRAY as TYPE can be used to specify both mechanism as callback.  When
+no array is used, callback of the pair is set to C<undef>.  See
+L<Mail::IMAPCleint/authenticate> for the gory details.
 
-Returns (in scalar context only) the number of messages that are known
-to exist in the mailbox.
+=examples
+ $transporter->authentication('CRAM-MD5', [MY_AUTH => \&c], 'PLAIN');
 
-=error Cannot get the messages of imap4 via messages()
-
-It is not possible to retreive all messages on a remote IMAP4 folder
-at once: each shall be taken separately.  The IMAP4 folder will hide this
-for you.
-
-=cut
-
-sub messages()
-{   my $self = shift;
-
-    $self->log(ERROR =>"Cannot get the messages of imap4 via messages()."), return ()
-       if wantarray;
-
-    $self->{MTI_messages};
-}
-
-#------------------------------------------
-
-=method folderSize
-
-Returns the total number of octets used by the mailbox on the remote server.
+ foreach my $pair ($transporter->authentication)
+ {   my ($mechanism, $challange) = @$pair;
+     ...
+ }
 
 =cut
 
-sub folderSize() { shift->{MTI_total} }
+our $ntml_installed;
 
-#------------------------------------------
+sub authentication(@)
+{   my ($self, @types) = @_;
+    return @{$self->{MTI_auth}} unless @types;
 
-=method header ID, [BODYLINES]
-
-Returns a reference to an array which contains the header of the message
-with the specified ID.  C<undef> is returned if something has gone wrong.
-
-The optional integer BODYLINES specifies the number of lines from the body
-which should be added, by default none.
-
-=example
-
- my $ref_lines = $imap4->header($uidl);
- print @$ref_lines;
-
-=cut
-
-sub header($;$)
-{   my ($self, $uidl) = (shift, shift);
-    return unless $uidl;
-    my $bodylines = shift || 0;;
-
-    my $socket    = $self->socket      or return;
-    my $n         = $self->id2n($uidl) or return;
-
-    $self->sendList($socket, "TOP $n $bodylines$CRLF");
-}
-
-#------------------------------------------
-
-=method message ID
-
-Returns a reference to an array which contains the lines of the
-message with the specified ID.  Returns C<undef> if something has gone
-wrong.
-
-=example
-
- my $ref_lines = $imap->message($uidl);
- print @$ref_lines;
-
-=cut
-
-sub message($;$)
-{   my ($self, $uidl) = @_;
-    return unless $uidl;
-
-    my $socket  = $self->socket      or return;
-    my $n       = $self->id2n($uidl) or return;
-    my $message = $self->sendList($socket, "RETR $n$CRLF");
-
-    return unless $message;
-
-    # Some IMAP4 servers add a trailing empty line
-    pop @$message if @$message && $message->[-1] =~ m/^[\012\015]*$/;
-
-    return if exists $self->{MTI_nouidl};
-
-    $self->{MTI_fetched}{$uidl} = undef; # mark this ID as fetched
-    $message;
-}
-
-#------------------------------------------
-
-=method messageSize ID
-
-Returns the size of the message which is indicated by the ID, in octets.
-If the message has been deleted on the remote server, this will return
-C<undef>.
-
-=cut
-
-sub messageSize($)
-{   my ($self, $uidl) = @_;
-    return unless $uidl;
-
-    my $list;
-    unless($list = $self->{MTI_n2length})
-    {   my $socket = $self->socket or return;
-        my $raw = $self->sendList($socket, "LIST$CRLF") or return;
-        my @n2length;
-        foreach (@$raw)
-        {   m#^(\d+) (\d+)#;
-            $n2length[$1] = $2;
-        }   
-        $self->{MTI_n2length} = $list = \@n2length;
+    unless(defined $ntml_installed)
+    {   eval "require Authen::NTML";
+        die "NTML errors:\n$@" if $@ && $@ !~ /Can't locate/;
+        $ntml_installed = ! $@;
     }
 
-    my $n = $self->id2n($uidl) or return;
-    $list->[$n];
+    if(@types == 1 && $types[0] eq 'AUTO')
+    {   @types = ('CRAM-MD5', ($ntml_installed ? 'NTLM' : ()), 'PLAIN');
+    }
+
+    my @auth;
+    foreach my $auth (@types)
+    {   push @auth,
+             ref $auth eq 'ARRAY' ? $auth
+           : $auth eq 'NTLM'      ? [NTLM  => \&Authen::NTLM::ntlm ]
+           :                        [$auth => undef];
+    }
+
+    $self->log(WARNING => 'module Authen::NTLM is not installed')
+        if grep { !ref $_ &&  $_ eq 'NTLM' } @auth;
+
+    $self->{MTI_auth} = \@auth;
 }
 
 #------------------------------------------
 
-=method deleted BOOLEAN, ID's
-
-Either mark the specified message(s) to be deleted on the remote server or
-unmark them for deletion (if the first parameter is false).  Deletion of
-messages will take place B<only> when the connection is specifically
-disconnected or the last reference to the object goes out of scope.
+=method domain [DOMAIN]
+Used in NTLM authentication to define the Windows domain which is
+accessed.  Initially set by M<new(domain)> and defaults to the
+server's name.
 
 =cut
 
-sub deleted($@)
-{   my $dele = shift->{MTI_dele} ||= {};
-    (shift) ? @$dele{ @_ } = () : delete @$dele{ @_ };
-}
-
-
-#------------------------------------------
-
-=method deleteFetched
-
-Mark all messages that have been fetched with message() for deletion.  See
-fetched().
-
-=cut
-
-sub deleteFetched()
+sub domain(;$)
 {   my $self = shift;
-    $self->deleted(1, keys %{$self->{MTI_fetched}});
+    return $self->{MTI_domain} = shift if @_;
+    $self->{MTI_domain} || ($self->remoteHost)[0];
 }
 
 #------------------------------------------
 
-=method disconnect
-
-Break contact with the server, if that (still) exists.  Returns true if
-successful.  Please note that even if the disconnect was not successful,
-all knowledge of messages etc. will be removed from the object: the object
-basically has reverted to the state in which it was before anything was done
-with the mail box.
-
-=cut
-
-sub disconnect()
-{   my $self = shift;
-}
-
-#------------------------------------------
-
-=method fetched
-
-Returns a reference to a list of ID's that have been fetched using the
-message() method.  This can be used to update a database of messages that
-were fetched (but maybe not yet deleted) from the mailbox.
-
-Please note that if the IMAP4 server did not support the UIDL command, this
-method will always return undef because it is not possibly to reliably
-identify messages between sessions (other than looking at the contents of
-the messages themselves).
-
-See also deleteFetched().
-
-=cut
-
-sub fetched(;$)
-{   my $self = shift;
-    return if exists $self->{MTI_nouidl};
-    $self->{MTI_fetched};
-}
-
-#------------------------------------------
-
-=method id2n ID
-
-Translates the unique ID of a message into a sequence number which
-represents the message as long a this connection to the IMAP4 server
-exists.  When the message has been deleted for some reason, C<undef>
-is returned.
-
-=cut
-
-sub id2n($;$) { shift->{MTI_uidl2n}{shift()} }
-
-#------------------------------------------
+=section Exchanging Information
 
 =section Protocol [internals]
 
@@ -333,140 +218,51 @@ by a normal user of this class.
 
 #------------------------------------------
 
-=method socket
+=method imapClient
 
-Returns a connection to the IMAP4 server.  If there was no connection yet,
-it will be created transparently.  If the connection with the IMAP4 server
-was lost, it will be reconnected and the assures that internal
-state information (STAT and UID) is up-to-date in the object.
+Returns the object which implements the IMAP4 protocol, an instance
+of a M<Mail::IMAPClient>, which is logged-in and ready to use.
 
-If the contact to the server was still present, or could be established,
-an M<IO::Socket::INET> object is returned.  Else, C<undef> is returned and
+If the contact to the server was still present or could be established,
+an M<Mail::IMAPClient> object is returned.  Else, C<undef> is returned and
 no further actions should be tried on the object.
 
-=error Cannot re-connect reliably to server which doesn't support UID.
+=cut
 
-The connection to the remote IMAP4 was lost, and cannot be re-established
-because the server's protocol implementation lacks the necessary information.
+sub imapClient(;$)
+{   my $self = shift;
+    @_ ? ($self->{MTI_client} = shift) : $self->{MTI_client};
+}
+
+#------------------------------------------
+
+=method createImapClient CLASS
+Create an object of CLASS, which extends L<Mail::IMAPClient>.
 
 =cut
 
-sub socket(;$)
-{   my $self = shift;
+sub createImapClient($)
+{   my ($self, $class) = @_;
 
-    my $socket = $self->_connection;
-    return $socket if $socket;
+    my ($host, $port) = $self->remoteHost;
 
-    unless(exists $self->{MTI_nouidl})
-    {   $self->log(ERROR =>
-           "Can not re-connect reliably to server which doesn't support UIDL");
-        return;
+    my $debug_level = $self->logPriority('DEBUG')+0;
+    my @debug;
+    if($self->log <= $debug_level || $self->trace <= $debug_level)
+    {   tie *dh, 'Mail::IMAPClient::Debug', $self;
+        @debug = (Debug => 1, Debug_fh => \*dh);
     }
 
-    return unless $socket = $self->login;
-    return unless $self->_status( $socket );
+    my $client = $class->new
+     ( Server => $host, Port => $port
+     , User   => undef, Password => undef   # disable auto-login
+     , Uid    => 1                          # Safer
+     , Peek   => 1                          # Don't set \Seen automaticly
+     , @debug
+     );
 
-# Save socket in the object and return it
-
-    $self->{MTI_socket} = $socket;
-}
-
-#------------------------------------------
-
-=method send SOCKET, data
-
-Send data to the indicated socket and return the first line read from
-that socket.  Logs an error if either writing to or reading from socket failed.
-
-This method does B<not> attempt to reconnect or anything: if reading or
-writing the socket fails, something is very definitely wrong.
-
-=error Cannot read IMAP4 from socket: $!
-
-It is not possible to read the success status of the previously given IMAP4
-command.  Connection lost?
-
-=error Cannot write IMAP4 to socket: $@
-
-It is not possible to send a protocol command to the IMAP4 server.  Connection
-lost?
-
-=cut
-
-sub send($$)
-{   my $self = shift;
-    my $socket = shift;
-    my $response;
-   
-    if(eval {print $socket @_})
-    {   $response = <$socket>;
-        $self->log(ERROR => "Cannot read IMAP4 from socket: $!")
-	   unless defined $response;
-    }
-    else
-    {   $self->log(ERROR => "Cannot write IMAP4 to socket: $@");
-    }
-    $response;
-}
-
-#------------------------------------------
-
-=method sendList SOCKET, COMMAND
-
-Sends the indicated COMMAND to the specified socket, and retrieves the
-response.  It returns a reference to an array with all the lines that
-were reveived after the first C<+OK> line and before the end-of-message
-delimiter (a single dot on a line).  Returns C<undef>
-whenever something has gone wrong.
-
-=cut
-
-sub sendList($$)
-{   my $self     = shift;
-    my $socket   = shift;
-    my $response = $self->send($socket, @_) or return;
-
-    return unless OK($response);
-
-    my @list;
-    local $_; # make sure we don't spoil it for the outside world
-    while(<$socket>)
-    {   last if m#^\.\r?$CRLF#s;
-        s#^\.##;
-	push @list, $_;
-    }
-
-    \@list;
-}
-
-#------------------------------------------
-
-sub OK($;$) { substr(shift || '', 0, 3) eq '+OK' }
-
-#------------------------------------------
-
-sub _connection(;$)
-{   my $self = shift;
-   my $socket = $self->{MTI_socket} or return undef;
-
-    # Check if we (still) got a connection
-    eval {print $socket "NOOP$CRLF"};
-    if($@ || ! <$socket> )
-    {   delete $self->{MTP_socket};
-        return undef;
-    }
-
-    $socket;
-}
-
-#------------------------------------------
-
-sub _reconnectok
-{   my $self = shift;
-
-# See if we are allowed to reconnect
-
-    0;
+    $self->log(ERROR => $@), return undef if $@;
+    $client;
 }
 
 #------------------------------------------
@@ -475,219 +271,359 @@ sub _reconnectok
 
 Establish a new connection to the IMAP4 server, using username and password.
 
-=error IMAP4 requires a username and password
-=error Cannot connect to $host:$port for IMAP4: $!
+=error  IMAP4 requires a username and password
+=error  IMAP4 username $username requires a password
+=error  Cannot connect to $host:$port for IMAP4: $!
+=notice IMAP4 authenication $mechanism to $host:$port successful
+=error  IMAP cannot connect to $host: $@
 
 =cut
 
 sub login(;$)
 {   my $self = shift;
+    my $imap = $self->imapClient;
 
-# Check if we can make a TCP/IP connection
+    return $self if $imap->IsAuthenticated;
 
-    local $_; # make sure we don't spoil it for the outside world
     my ($interval, $retries, $timeout) = $self->retry;
+
     my ($host, $port, $username, $password) = $self->remoteHost;
-    unless($username and $password)
+    unless(defined $username)
     {   $self->log(ERROR => "IMAP4 requires a username and password");
         return;
     }
-
-    my $socket = eval {IO::Socket::INET->new("$host:$port")};
-    unless($socket)
-    {   $self->log(ERROR => "Cannot connect to $host:$port for IMAP4: $!");
+    unless(defined $password)
+    {   $self->log(ERROR => "IMAP4 username $username requires a password");
         return;
     }
 
-# Check if it looks like a POP server
+    while(1)
+    {
+        foreach my $auth ($self->authentication)
+        {   my ($mechanism, $challange) = @$auth;
 
-    my $connected;
-    my $authenticate = $self->{MTI_auth};
-    my $welcome = <$socket>;
-    unless(OK($welcome))
-    {   $self->log(ERROR =>
-           "Server at $host:$port does not seem to be talking IMAP4");
-        return;
-    }
+            $imap->User(undef);
+            $imap->Password(undef);
+            $imap->Authmechanism(undef);   # disable auto-login
+            $imap->Authcallback(undef);
 
-# Check APOP login if automatic or APOP specifically requested
+            unless($imap->connect)
+	    {   $self->log(ERROR => "IMAP cannot connect to $host: "
+	                          , $imap->LastError);
+		return undef;
+	    }
 
-    if($authenticate eq 'AUTO' or $authenticate eq 'APOP')
-    {   if($welcome =~ m#^\+OK (<\d+\.\d+\@[^>]+>)#)
-        {   my $md5 = Digest::MD5::md5_hex($1.$password);
-            my $response = $self->send($socket, "APOP $username $md5$CRLF")
-	     or return;
-            $connected = OK($response);
-        }
-    }
+            if($mechanism eq 'NTLM')
+            {   Authen::NTLM::ntlm_reset();
+                Authen::NTLM::ntlm_user($username);
+                Authen::NTLM::ntlm_domain($self->domain);
+                Authen::NTLM::ntlm_password($password);
+            }
 
-# Check USER/PASS login if automatic and failed or LOGIN specifically requested
+            $imap->User($username);
+            $imap->Password($password);
+            $imap->Authmechanism($mechanism) unless $mechanism eq 'PLAIN';
+            $imap->Authcallback($challange) if defined $challange;
 
-    unless($connected)
-    {   if($authenticate eq 'AUTO' or $authenticate eq 'LOGIN')
-        {   my $response = $self->send($socket, "USER $username$CRLF") or return;
-            if(OK($response))
-	    {   $response = $self->send($socket, "PASS $password$CRLF") or return;
-                $connected = OK($response);
+            if($imap->login)
+            {
+	       $self->log(NOTICE =>
+        "IMAP4 authenication $mechanism to $username\@$host:$port successful");
+                return $self;
             }
         }
+
+        $self->log(ERROR => "Couldn't contact to $username\@$host:$port")
+            , return undef if $retries > 0 && --$retries == 0;
+
+        sleep $interval if $interval;
     }
 
-# If we're still not connected now, we have an error
-
-    unless($connected)
-    {   $self->log(ERROR => $authenticate eq 'AUTO' ?
-         "Could not authenticate using any login method" :
-         "Could not authenticate using '$authenticate' method");
-        return;
-    }
-    $socket;
+    undef;
 }
 
 #------------------------------------------
 
-sub _status($;$)
-{   my ($self,$socket) = @_;
-
-# Check if we can do a STAT
-
-    my $stat = $self->send($socket, "STAT$CRLF") or return;
-    if($stat =~ m#^\+OK (\d+) (\d+)#)
-    {   @$self{qw(MTI_messages MTI_total)} = ($1,$2);
-    }
-    else
-    {   delete $self->{MTI_messages};
-        delete $self->{MTI_size};
-        $self->log(ERROR => "Could not do a STAT");
-        return;
-    }
-
-# Check if we can do a UIDL
-
-    my $uidl = $self->send($socket, "UIDL$CRLF") or return;
-    $self->{MTI_nouidl} = undef;
-    delete $self->{MTI_uidl2n}; # lose the reverse lookup: UIDL -> number
-    if(OK($uidl))
-    {   my @n2uidl;
-        $n2uidl[$self->{MTI_messages}] = undef; # optimization, sets right size
-        while(<$socket>)
-        {   last if substr($_, 0, 1) eq '.';
-            s#\r?$CRLF$##; m#^(\d+) (.+)#;
-            $n2uidl[$1] = $2;
-        }
-        shift @n2uidl; # make message 1 into index 0
-        $self->{MTI_n2uidl} = \@n2uidl;
-        delete $self->{MTI_n2length};
-        delete $self->{MTI_nouidl};
-    }
-
-# We can't do UIDL, we need to fake it
-
-    else
-    {   my $list = $self->send($socket, "LIST$CRLF") or return;
-        my @n2length;
-        my @n2uidl;
-        if(OK($list))
-        {   my $messages = $self->{MTI_messages};
-            my ($host, $port) = $self->remoteHost;
-            $n2length[$messages] = $n2uidl[$messages] = undef; # optimization
-            while(<$socket>)
-            {   last if substr($_, 0, 1) eq '.';
-                m#^(\d+) (\d+)#;
-                $n2length[$1] = $2;
-                $n2uidl[$1] = "$host:$port:$1"; # fake UIDL, for id only
-            }
-            shift @n2length; shift @n2uidl; # make 1st message in index 0
-        }
-        $self->{MTI_n2length} = \@n2length;
-        $self->{MTI_n2uidl} = \@n2uidl;
-    }
-
-    my $i = 1;
-    my %uidl2n;
-    foreach(@{$self->{MTI_n2uidl}})
-    {   $uidl2n{$_} = $i++;
-    }
-    $self->{MTI_uidl2n} = \%uidl2n;
-    1;
-}
-
-#------------------------------------------
-
-=method askSubfolderSeparator
-
-Returns the separator which is used on the server side to indicate
-sub-folders.
-
+=method folder [FOLDERNAME]
+Be sure that the specific FOLDER is the current one selected.
+If the folder is already selected, no IMAP traffic will be produced.
+The imap connection is returned on succes
 =cut
 
-sub askSubfolderSeparator()
+sub folder(;$)
 {   my $self = shift;
+    return $self->{MTI_folder} unless @_;
 
-    # $self->send(A000 LIST "" "")
-    # receives:  * LIST (\Noselect) "/" ""
-    #                                ^ $SEP
-    # return $SEP    [exactly one character)
+    my $name = shift;
+    return $name if $name eq ($self->{MTI_folder} || '/');
 
-    $self->notImplemented;
+    my $imap = $self->imapClient or return;
+    $imap->select($name)         or return;
+    $self->{MTI_folder} = $name;
+    $imap;
 }
 
 #------------------------------------------
 
-=method askSubfoldersOf NAME
-
-Returns a list of subfolders for this server.
-
+=method folders [FOLDERNAME]
+Returns a list of folder names which are sub-folders of the specified
+FOLDERNAME.  Without FOLDERNAME, the top-level foldernames are returned.
 =cut
 
-sub askSubfoldersOf($)
-{   my ($self, $name) = @_;
-    
-    # $imap->send(LIST "$name" %)
-    # receives multiple lines
-    #     * LIST (.*?) NAME
-    # return list of NAMEs
-
-    $self->notImplemented;
+sub folders(;$)
+{   my $self = shift;
+    my $imap = $self->imapClient or return ();
+    my @top  = @_ && $_[0] eq '/' ? () : shift;
+    $imap->folders(@top);
 }
 
 #------------------------------------------
 
-=method getFlags ID
+=method ids
+Returns a list of UIDs which are defined by the IMAP server.
+=cut
+
+sub ids($)
+{   my $self = shift;
+    my $imap = $self->imapClient or return ();
+    $imap->messages;
+}
+
+#------------------------------------------
+
+=method getFlags FOLDER, ID
 
 Returns the values of all flags which are related to the message with the
 specified ID.  These flags are translated into the names which are
-standard for the Mail::Box suite
+standard for the MailBox suite.  Names which do not appear will also provide
+a value in the return list: the negative for the value is it was present.
 
 =cut
 
-# Explanation in Mail::Box::IMAP::Message chapter DETAILS
-my %systemflags =
- ( '\Seen'     => 'seen'
- , '\Answered' => 'replied'
- , '\Flagged'  => 'flagged'
- , '\Deleted'  => 'deleted'
- , '\Draft'    => 'draft'
- , '\Recent'   => 'old'       #  NOT old
+# Explanation in Mail::Box::IMAP4::Message chapter DETAILS
+my %flags2labels =
+ ( '\Seen'     => [seen     => 1]
+ , '\Answered' => [replied  => 1]
+ , '\Flagged'  => [flagged  => 1]
+ , '\Deleted'  => [deleted  => 1]
+ , '\Draft'    => [draft    => 1]
+ , '\Recent'   => [old      => 0]
  );
 
-sub getLabel($$)
-{   my ($self, $id, $label) = @_;
+my %labels2flags;
+while(my ($k, $v) = each %flags2labels)
+{  $labels2flags{$v->[0]} = [ $k => $v->[1] ];
+}
 
-    $self->notImplemented;
+# where IMAP4 supports requests for multiple flags at once, we here only
+# request one set of flags a time (which will be slower)
+
+sub getFlags($$)
+{   my ($self, $id) = @_;
+    my $imap  = $self->imapClient or return ();
+
+    my %flags;
+    $flags{$_}++ foreach $imap->flags($id);
+
+    my @labels;
+    while(my ($k, $v) = each %flags2labels)
+    {   my ($label, $positive) = @$v;
+        push @labels, $label => (exists $flags{$k} ? $positive : !$positive);
+    }
+
+    @labels;
 }
 
 #------------------------------------------
 
 =method setFlags ID, LABEL, VALUE, [LABEL, VALUE], ...
 
+Change the flags on the message which are represented by the label.  The
+value which can be related to the label will be lost, because IMAP only
+defines a boolean value, where MailBox labels can contain strings.
+
+Returned is a list of LABEL=>VALUE pairs which could not be send to
+the IMAP server.  These values may be cached in a different way.
+
 =cut
 
+# Mail::IMAPClient can only set one value a time, however we do more...
 sub setFlags($@)
 {   my ($self, $id) = (shift, shift);
-    my @flags = @_;  # etc
 
-    $self->notImplemented;
+    my $imap = $self->imapClient or return ();
+    my (@set, @unset, @nonstandard);
+
+    while(@_)
+    {   my ($label, $value) = (shift, shift);
+        if(my $r = $labels2flags{$label})
+        {   my $flag = $r->[0];
+            $value = $value ? $r->[1] : !$r->[1];
+	        # exor can not be used, because value may be string
+            $value ? (push @set, $flag) : (push @unset, $flag);
+        }
+	else
+	{   push @nonstandard, ($label => $value);
+        }
+    }
+
+    $imap->set_flag($_, $id)   foreach @set;
+    $imap->unset_flag($_, $id) foreach @unset;
+
+    @nonstandard;
+}
+
+#------------------------------------------
+
+=ci_method labelsToFlags HASH|PAIRS
+Convert MailBox labels into IMAP flags.  Returned is a string.  Unsupported
+labels are ignored.
+=cut
+
+sub labelsToFlags(@)
+{   my $thing = shift;
+    my @set;
+    if(@_==1)
+    {   my $labels = shift;
+        while(my ($label, $value) = each %$labels)
+        {   if(my $r = $labels2flags{$label})
+            {   push @set, $r->[0] if ($value ? $r->[1] : !$r->[1]);
+            }
+        }
+    }
+    else
+    {   while(@_)
+        {   my ($label, $value) = (shift, shift);
+            if(my $r = $labels2flags{$label})
+            {   push @set, $r->[0] if ($value ? $r->[1] : !$r->[1]);
+            }
+        }
+    }
+
+    join(" ", @set);
+}
+
+#------------------------------------------
+
+=method getFields UID, NAME, [NAME, ...]
+Get the records with the specified NAMES from the header.  The header
+fields are returned as list of M<Mail::Message::Field::Fast> objects.
+When the name is C<ALL>, the whole header is returned.
+=cut
+
+sub getFields($@)
+{   my ($self, $id) = (shift, shift);
+    my $imap   = $self->imapClient or return ();
+    my $parsed = $imap->parse_headers($id, @_) or return ();
+
+    my @fields;
+    while(my($n,$c) = each %$parsed)
+    {   push @fields, map { Mail::Message::Field::Fast->new($n, $_) } @$c;
+    }
+
+    @fields;
+}
+
+#------------------------------------------
+
+=method getMessageAsString MESSAGE|UID
+Returns the whole text of the specified message: the head and the body.
+=cut
+
+sub getMessageAsString($)
+{   my $imap = shift->imapClient or return;
+    my $uid = ref $_[0] ? shift->unique : shift;
+    $imap->message_string($uid);
+}
+
+#------------------------------------------
+
+=method fetch ARRAY-OF-MESSAGES, INFO
+Get some INFO about the MESSAGES from the server.  The specified messages
+shall extend M<Mail::Box::Net::Message>, Returned is a list
+of hashes, each info about one result.  The contents of the hash
+differs per INFO, but at least a C<message> field will be present, to
+relate to the message in question.
+
+The right folder should be selected before this method is called. When
+the connection was lost, C<undef> is returned.  Without any
+messages, and empty array is returned.  The retrieval is done by
+L<Mail::IMAPClient|Mail::IMAPClient> method C<fetch()>, which is then
+parsed.
+
+=cut
+
+sub fetch($@)
+{   my ($self, $msgs, @info) = @_;
+    return () unless @$msgs;
+    my $imap   = $self->imapClient or return ();
+
+    my %msgs   = map { ($_->unique => {message => $_} ) } @$msgs;
+    my $lines  = $imap->fetch( [keys %msgs], @info );
+
+    # It's a pity that Mail::IMAPClient::fetch_hash cannot be used for
+    # single messages... now I had to reimplement the decoding...
+    while(@$lines)
+    {   my $line = shift @$lines;
+        next unless $line =~ /\(.*?UID\s+(\d+)/i;
+	my $id   = $+;
+	my $info = $msgs{$id} or next;  # wrong uid
+
+        if($line =~ s/^[^(]* \( \s* //x )
+        {   while($line =~ s/(\S+)   # field
+	                     \s+
+                             (?:     # value
+                                 \" ( (?:\\.|[^"])+ ) \"
+                               | \( ( (?:\\.|[^)])+ ) \)
+                               |  (\w+)
+                             )//xi)
+            {   $info->{uc $1} = $+;
+            }
+
+	    if( $line =~ m/^\s* (\S+) [ ]*$/x )
+	    {   # Text block expected
+	        my ($key, $value) = (uc $1, '');
+	        while(@$lines)
+		{   my $extra = shift @$lines;
+		    $extra =~ s/\r\n$/\n/;
+		    last if $extra eq ")\n";
+		    $value .= $extra;
+		}
+		$info->{$key} = $value;
+            }
+        }
+
+    }
+
+    values %msgs;
+}
+
+#------------------------------------------
+
+=method appendMessage MESSAGE, FOLDERNAME
+Write the message to the server.
+=cut
+
+sub appendMessage($$)
+{   my ($self, $message, $foldername) = @_;
+    my $imap   = $self->imapClient or return ();
+
+    $imap->append_string
+     ( $foldername, $message->string
+     , $self->labelsToFlags($message->labels)
+     );
+}
+
+#------------------------------------------
+
+=method destroyDeleted
+Command the server to delete for real all messages which are flagged to
+be deleted.
+=cut
+
+sub destroyDeleted()
+{   my $imap = shift->imapClient or return ();
+    $imap->expunge;
 }
 
 #------------------------------------------
@@ -698,15 +634,33 @@ sub setFlags($@)
 
 =method DESTROY
 
-The connection is cleanly terminated when the program is cleanly
+The connection is cleanly terminated when the program is
 terminated.
 
 =cut
 
 sub DESTROY()
 {   my $self = shift;
+    my $imap = $self->imapClient;
+
     $self->SUPER::DESTROY;
-    $self->disconnect if $self->{MTI_socket}; # only do if not already done
+    $imap->logout if defined $imap;
+}
+
+#------------------------------------------
+
+package Mail::IMAPClient::Debug;
+
+# Tied filehandle translates IMAP's debug system into Mail::Reporter
+# calls.
+sub TIEHANDLE($)
+{   my ($class, $logger) = @_;
+    bless \$logger, $class;
+}
+
+sub PRINT(@)
+{   my $logger = ${ (shift) };
+    $logger->log(DEBUG => @_);
 }
 
 1;

@@ -752,8 +752,12 @@ sub addSpamGroup($)
 
 =method timestamp
 
-Will return a good indication of about when the message was send, with as
-little guessing as possible.  The timestamp is encoded as C<time> is
+Returns an indication about when the message was sent, with as
+little guessing as possible.  In this case, the date as specified by the
+sender is trusted.  See M<recvstamp()> when you do not want to trust the
+sender.
+
+The timestamp is encoded as C<time> is
 on your system (see perldoc -f time), and as such usable for the C<gmtime>
 and C<localtime> methods.
 
@@ -764,10 +768,58 @@ sub timestamp() {shift->guessTimestamp || time}
 
 #------------------------------------------
 
+=method recvstamp
+
+Returns an indication about when the message was sent, but only using the
+C<Date> field in the header as last resort: we do not trust the sender of
+the message to specify the correct date.  See M<timestamp()> when you do
+trust the sender.
+
+Many spam producers fake a date, which mess up the order of receiving
+things.  The timestamp which is produced is derived from the Received
+headers, if they are present, and C<undef> otherwise.
+
+The timestamp is encoded as C<time> is on your system (see perldoc -f
+time), and as such usable for the C<gmtime> and C<localtime> methods.
+
+=example of time-sorting folders with received messages
+ my $folder = $mgr->open('InBox');
+ my @messages = sort {$a->recvstamp <=> $b->recvstamp}
+                   $folder->messages;
+
+=example of time-sorting messages of mixed origin
+ my $folder = $mgr->open('MyFolder');
+
+ # Pre-calculate timestamps to be sorted (for speed)
+ my @stamps = map { [ ($_->timestamp || 0), $_ ] }
+                     $folder->messages;
+
+ my @sorted
+   = map { $_->[1] }      # get the message for the stamp
+       sort {$a->[0] <=> $b->[0]}   # stamps are numerics
+          @stamps;
+
+=cut
+
+sub recvstamp()
+{   my $self = shift;
+
+    return $self->{MMH_recvstamp} if exists $self->{MMH_recvstamp};
+
+    my $recvd = $self->get('received', 0) or
+        return $self->{MMH_recvstamp} = undef;
+
+    my $stamp = Mail::Message::Field->dateToTimestamp($recvd->comment);
+
+    $self->{MMH_recvstamp} = $stamp > 0 ? $stamp : undef;
+}
+
+#------------------------------------------
+
 =method guessTimeStamp
 
 Make a guess about when the message was origanally posted, based on the
-information found in the header.
+information found in the header's C<Date> field.
 
 For some kinds of folders, M<Mail::Message::guessTimestamp()> may produce
 a better result, for instance by looking at the modification time of the
@@ -778,7 +830,7 @@ supply that information.
 
 sub guessTimestamp()
 {   my $self = shift;
-    return $self->{MMH_timestamp} if $self->{MMH_timestamp};
+    return $self->{MMH_timestamp} if exists $self->{MMH_timestamp};
 
     my $stamp;
     if(my $date = $self->get('date'))
@@ -792,7 +844,7 @@ sub guessTimestamp()
         }
     }
 
-    $self->{MBM_timestamp} = $stamp;
+    $self->{MMH_timestamp} = $stamp > 0 ? $stamp : undef;
 }
 
 #------------------------------------------

@@ -7,13 +7,13 @@
 use strict;
 use warnings;
 
-use Mail::Box::Manager;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More;
+use Test::More tests => 11;
 use File::Spec;
 
-BEGIN {plan tests => 11}
+use Mail::Box::Manager;
 
 my $mhsrc = File::Spec->catfile('folders', 'mh.src');
 my $seq   = File::Spec->catfile($mhsrc, '.mh_sequences');

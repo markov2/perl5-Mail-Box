@@ -6,11 +6,13 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-use Mail::Box::Locker::DotLock;
 
-use File::Spec;
 use Test::More tests => 7;
+use File::Spec;
+
+use Mail::Box::Locker::DotLock;
 
 my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 

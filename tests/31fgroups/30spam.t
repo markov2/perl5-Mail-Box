@@ -6,14 +6,15 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
+use Tools;
+
+use File::Spec;
 use Test::More tests => 75;
 
 use Mail::Message::Head::Complete;
 use Mail::Message::Head::SpamGroup;
 use Mail::Box::Mbox;
-
-use Tools;
-use File::Spec;
 
 #
 # Creation of a group

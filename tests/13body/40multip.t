@@ -3,18 +3,18 @@
 # Test processing of multipart message bodies.
 #
 
-use Test::More;
 use strict;
 use warnings;
+
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 29;
+use IO::Scalar;
 
 use Mail::Message::Body::Lines;
 use Mail::Message::Body::Multipart;
 use Mail::Message::Head::Complete;
-use Tools;
-
-use IO::Scalar;
-
-BEGIN {plan tests => 29}
 
 my $body = Mail::Message::Body::Multipart->new
  ( transfer_encoding => '8bit'

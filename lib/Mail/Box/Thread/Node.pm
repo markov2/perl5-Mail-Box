@@ -147,7 +147,7 @@ list.
 
 sub addMessage($)
 {   my ($self, $message) = @_;
-    
+ 
     return $self->{MBTN_messages} = [ $message ]
         if $self->isDummy;
 
@@ -179,7 +179,6 @@ listed in this node will have the same ID.
 =cut
 
 sub messageId() { shift->{MBTN_msgid} }
-sub messageID() { shift->messageID } # compatibility
 
 #-------------------------------------------
 
@@ -479,8 +478,8 @@ sub startTimeEstimate()
     foreach ($self->followUps)
     {   my $stamp = $_->startTimeEstimate;
 
-        $earliest = $stamp if    !defined $earliest
-                              || (defined $stamp && $stamp < $earliest);
+        $earliest = $stamp
+	    if !defined $earliest || (defined $stamp && $stamp < $earliest);
     }
 
     $earliest;

@@ -7,16 +7,16 @@
 use strict;
 use warnings;
 
-use Mail::Box::Mbox;
-use Mail::Box::MH;
-use Mail::Message::Construct;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More;
+use Test::More tests => 20;
 use File::Copy;
 use File::Spec;
 
-BEGIN {plan tests => 20}
+use Mail::Box::Mbox;
+use Mail::Box::MH;
+use Mail::Message::Construct;
 
 my $top = File::Spec->catfile('folders', 'Mail');
 clean_dir $top;

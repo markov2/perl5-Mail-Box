@@ -6,16 +6,16 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
+
+use Test::More tests => 2;
+use IO::Scalar;
+
 use Mail::Message;
 use Mail::Message::Head;
 use Mail::Message::Body::Lines;
 use Mail::Message::Construct::Bounce;
-
-use Test::More;
-use IO::Scalar;
-
-BEGIN {plan tests => 2}
 
 #
 # First produce a message to reply to.

@@ -54,9 +54,8 @@ sub filename(;$)
      , flagged => ($flags{F} || 0)
      , replied => ($flags{R} || 0)
      , seen    => ($flags{S} || 0)
+     , deleted => ($flags{T} || 0)
      );
-
-    $self->SUPER::deleted($flags{T} || 0);
 
     if(defined $oldname)
     {   move $oldname, $newname
@@ -82,19 +81,7 @@ sub guessTimestamp()
     my $timestamp   = $self->SUPER::guessTimestamp;
     return $timestamp if defined $timestamp;
 
-    $self->filename =~ m/(\d+)/ ? $1 : undef;
-}
-
-#-------------------------------------------
-
-sub deleted($)
-{   my $self = shift;
-    return $self->SUPER::deleted unless @_;
-
-    my $set  = shift;
-    $self->SUPER::deleted($set);
-    $self->labelsToFilename;
-    $set;
+    $self->filename =~ m/^(\d+)/ ? $1 : undef;
 }
 
 #-------------------------------------------
@@ -132,11 +119,11 @@ sub labelsToFilename()
       = $old =~ m!(.*)/(new|cur|tmp)/([^:]*)(\:[^:]*)?$!;
 
     my $newflags    # alphabeticly ordered!
-      = ($labels->{draft}        ? 'D' : '')
-      . ($labels->{flagged}      ? 'F' : '')
-      . ($labels->{replied}      ? 'R' : '')
-      . ($labels->{seen}         ? 'S' : '')
-      . ($self->SUPER::isDeleted ? 'T' : '');
+      = ($labels->{draft}   ? 'D' : '')
+      . ($labels->{flagged} ? 'F' : '')
+      . ($labels->{replied} ? 'R' : '')
+      . ($labels->{seen}    ? 'S' : '')
+      . ($labels->{deleted} ? 'T' : '');
 
     my $newset = $labels->{accepted} ? 'cur' : 'new';
     if($set ne $newset)

@@ -6,12 +6,12 @@
 use strict;
 use warnings;
 
-use Mail::Message::Construct::Forward;
-
-use Test::More;
+use lib qw(. .. tests);
 use Tools;
 
-BEGIN {plan tests => 7}
+use Test::More tests => 7;
+
+use Mail::Message::Construct::Forward;
 
 is(Mail::Message->forwardSubject('subject'), 'Forw: subject');
 is(Mail::Message->forwardSubject('Re: subject'), 'Forw: Re: subject');

@@ -4,18 +4,18 @@
 # Test creation/deletion and listing of folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::Mbox;
-use Mail::Message::Construct;
-
+use lib qw(. .. tests);
 use Tools;
+
+use Test::More tests => 28;
 use File::Copy;
 use File::Spec;
 
-BEGIN {plan tests => 28}
+use Mail::Box::Mbox;
+use Mail::Message::Construct;
 
 my $top  = File::Spec->catdir('folders', 'Mail');
 clean_dir $top;

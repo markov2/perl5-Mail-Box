@@ -4,18 +4,18 @@
 # Test appending messages on Mbox folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::Manager;
-use Mail::Message::Construct;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More tests => 32;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 32}
+use Mail::Box::Manager;
+use Mail::Message::Construct;
 
 #
 # We will work with a copy of the original to avoid that we write

@@ -6,13 +6,15 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 7;
+
 use Mail::Message;
 use Mail::Message::Head::Complete;
 use Mail::Message::Field::Fast;
 use Mail::Message::Convert::Html;
-use Tools;
-
-use Test::More tests => 7;
 
 my $html  = Mail::Message::Convert::Html->new;
 my $xhtml = Mail::Message::Convert::Html->new(produce => 'XHTML');

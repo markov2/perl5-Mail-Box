@@ -3,14 +3,16 @@
 # Test processing of unstructured fields
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use lib qw(. t);
-
 package Mail::Message::Field::Unstructured;   # define package name
 package main;
+
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More;
 
 BEGIN {
    if($] < 5.007003)
@@ -20,17 +22,13 @@ BEGIN {
 
    eval 'require Mail::Message::Field::Unstructured';
    if($@)
-   {
-warn $@;
-       plan skip_all => 'Extended attributes not available (install Encode?)';
+   {   plan skip_all => 'Extended attributes not available (install Encode?)';
        exit 0;
    }
    else
    {   plan tests => 28;
    }
 }
-
-use Tools;
 
 my $mmff = 'Mail::Message::Field::Full';
 my $mmfu = 'Mail::Message::Field::Unstructured';

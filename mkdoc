@@ -13,6 +13,7 @@ use lib '../UserIdentity/lib';  # latest version of User::Identity
 use lib '../MimeTypes/lib';     # latest version of MIME::Types
 use lib '../ORL/lib';           # latest version of Object::Realize::Later
 
+use Mail::Box::IMAP4::Head;
 use OODoc;
 
 my $verbose      = $ARGV[0] || 0;

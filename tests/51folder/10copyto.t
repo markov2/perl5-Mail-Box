@@ -6,12 +6,14 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-use Mail::Box::Manager;
-use File::Copy;
 
-use IO::Scalar;
 use Test::More tests => 28;
+use File::Copy;
+use IO::Scalar;
+
+use Mail::Box::Manager;
 
 copy $src, $cpy or die "Copy failed";
 

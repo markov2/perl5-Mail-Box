@@ -4,15 +4,17 @@
 # Test writing of maildir folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::Maildir;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More;
 use File::Compare;
 use File::Copy;
+
+use Mail::Box::Maildir;
 
 BEGIN {
    if($windows)

@@ -3,14 +3,17 @@
 # Test processing of full fields, the most complex (and slowest) kind of fields.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use utf8;
-
 package Mail::Message::Field::Structured;   # define package name
 package main;
+
+use lib qw(. .. tests);
+use Tools;
+
+use utf8;
+use Test::More;
 
 BEGIN {
    if($] < 5.007003)
@@ -20,9 +23,7 @@ BEGIN {
 
    eval 'require Mail::Message::Field::Structured';
    if($@)
-   {
-warn $@;
-       plan skip_all => 'Extended attributes not available (install Encode?)';
+   {   plan skip_all => 'Extended attributes not available (install Encode?)';
        exit 0;
    }
    else
@@ -31,7 +32,6 @@ warn $@;
    }
 }
 
-use Tools;
 
 my $mmfs = 'Mail::Message::Field::Structured';
 

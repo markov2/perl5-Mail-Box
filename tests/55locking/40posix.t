@@ -6,11 +6,13 @@
 use strict;
 use warnings;
 
-use Mail::Box::Locker::POSIX;
+use lib qw(. .. tests);
 use Tools;
 
-use File::Spec;
 use Test::More;
+use File::Spec;
+
+use Mail::Box::Locker::POSIX;
 
 BEGIN
 {   if($windows)

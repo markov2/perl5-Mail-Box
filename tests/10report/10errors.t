@@ -3,15 +3,15 @@
 # Test reporting warnings, errors and family.
 #
 
-use Test::More;
-
 use strict;
 use warnings;
 
-use Mail::Reporter;
+use lib qw(. .. tests);
 use Tools;
 
-BEGIN {plan tests => 85}
+use Test::More tests => 85;
+
+use Mail::Reporter;
 
 #
 # Dualvar logPriority

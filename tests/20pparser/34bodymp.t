@@ -3,17 +3,18 @@
 # Test the reading from file of message bodies which are multiparts
 #
 
-use Test::More;
 use strict;
 use warnings;
+
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 313;
 
 use Mail::Box::Parser::Perl;
 use Mail::Message::Body::Lines;
 use Mail::Message::Body::Multipart;
 use Mail::Message::Head;
-use Tools;
-
-BEGIN { plan tests => 313 }
 
 my $getbodytype = sub {'Mail::Message::Body::Lines'};
 

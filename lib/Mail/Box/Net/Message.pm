@@ -39,11 +39,7 @@ sub init($)
 
     $self->SUPER::init($args);
 
-    my $unique = $args->{unique}
-        or croak "No unique keys for this net message.";
-
-    $self->unique($unique);
-
+    $self->unique($args->{unique});
     $self;
 }
 
@@ -51,7 +47,7 @@ sub init($)
 
 =section The message
 
-=method unique [STRING]
+=method unique [STRING|undef]
 
 Returns the name of the file in which this message is actually stored.  This
 will return C<undef> when the message is not stored in a file.  When a STRING

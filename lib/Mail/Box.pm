@@ -11,7 +11,7 @@ use File::Spec;
 
 use Carp;
 use Scalar::Util 'weaken';
-use List::Util   'sum';
+use List::Util   qw/sum first/;
 
 #-------------------------------------------
 # Clean exist required to remove lockfiles and to save changes.
@@ -489,7 +489,7 @@ sub init($)
     $self->{MB_field_type}          = $args->{field_type};
 
     my $headtype     = $self->{MB_head_type}
-        = $args->{MB_head_type}     || 'Mail::Message::Head::Complete';
+        = $args->{head_type}        || 'Mail::Message::Head::Complete';
 
     my $extract  = $args->{extract} || 'extractDefault';
     $self->{MB_extract}
@@ -733,7 +733,7 @@ ERROR
 
         unless($self->{MB_keep_dups})
         {   if(my $found = $self->messageId($msgid))
-            {   $message->delete;
+            {   $message->label(deleted => 1);
                 return $found;
             }
         }
@@ -843,7 +843,7 @@ sub _copy_to($@)
         "Copying ".@select." messages from $self to $to.");
 
     foreach my $msg (@select)
-    {   if($msg->copyTo($to)) { $msg->delete if $delete }
+    {   if($msg->copyTo($to)) { $msg->label(deleted => 1) if $delete }
         else { $self->log(ERROR => "Copying failed for one message.") }
     }
 
@@ -1229,7 +1229,7 @@ sub messageId($;$)
         my $to2   = $head2->get('to') || '';
 
         # Auto-delete doubles.
-        return $message->delete
+        return $message->label(deleted => 1)
             if $subj1 eq $subj2 && $to1 eq $to2;
 
         $self->log(WARNING => "Different messages with id $msgid.");
@@ -1388,8 +1388,22 @@ that the header is already loaded, otherwise they are not recognized).
 
 sub current(;$)
 {   my $self = shift;
-    return $self->{MB_current} || $self->message(-1)
-        unless @_;
+
+    unless(@_)
+    {   return $self->{MB_current}
+           if exists $self->{MB_current};
+	
+        # Which one becomes current?
+	my $current
+	  = $self->findFirstLabeled(current => 1)
+	 || $self->findFirstLabeled(seen    => 0)
+	 || $self->message(-1)
+	 || return undef;
+
+        $current->label(current => 1);
+        $self->{MB_current} = $current;
+	return $current;
+    }
 
     my $next = shift;
     if(my $previous = $self->{MB_current})
@@ -1488,6 +1502,37 @@ sub scanForMessages($$$$)
 
     $self->{MBM_last} = $last;
     keys %search;
+}
+
+#-------------------------------------------
+
+=method findFirstLabeled LABEL, [BOOLEAN, [ARRAY-OF-MSGS]]
+Find the first message which has this LABEL with the correct setting. The
+BOOLEAN indicates whether any true value or any false value is to
+be found.  By default, a true value is searched for.  When a message
+does not have the requested label, it is taken as false.
+
+=examples looking for a labeled message
+ my $current = $folder->findFirstLabeled('current');
+
+ my $first   = $folder->findFirstLabeled(seen => 0);
+
+ my $last    = $folder->findFirstLabeled(seen => 0,
+                 [ reverse $self->messages('ACTIVE') ] )
+                 
+=cut
+
+sub findFirstLabeled($;$$)
+{   my ($self, $label, $set, $msgs) = @_;
+
+    if(!defined $set || $set)
+    {   my $f = first { $_->label($label) }
+           (defined $msgs ? @$msgs : $self->messages);
+    }
+    else
+    {   return first { not $_->label($label) }
+           (defined $msgs ? @$msgs : $self->messages);
+    }
 }
 
 #-------------------------------------------
@@ -1631,13 +1676,6 @@ sub read(@)
     if($self->{MB_modified})
     {   $self->log(INTERNAL => "Modified $self->{MB_modified}");
         $self->{MB_modified} = 0;  #after reading, no changes found yet.
-    }
-
-    # Which one becomes current?
-    foreach ($self->messages)
-    {   next unless $_->label('current') || 0;
-        $self->current($_);
-        last;
     }
 
     $self;

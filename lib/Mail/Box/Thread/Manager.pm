@@ -388,9 +388,11 @@ sub sortedKnown(;$$)
 {   my $self    = shift;
     my $prepare = shift || sub {shift->startTimeEstimate||0};
     my $compare = shift || sub {(shift) <=> (shift)};
-
-    my %value   = map { ($prepare->($_) => $_) } $self->known; 
-    map { $value{$_} } sort {$compare->($a, $b)} keys %value;
+ 
+    # Special care for double keys.
+    my %value;
+    push @{$value{$prepare->($_)}}, $_  foreach $self->known; 
+    map { @{$value{$_}} } sort {$compare->($a, $b)} keys %value;
 }
 
 # When a whole folder is removed, many threads can become existing
@@ -486,6 +488,7 @@ sub inThread($)
            );
         $self->{MBTM_ids}{$msgid} = $node;
     }
+
     $self->{MBTM_delayed}{$msgid} = $node; # removes doubles.
 }
 

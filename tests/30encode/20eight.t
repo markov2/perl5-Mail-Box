@@ -3,15 +3,16 @@
 # Encoding and Decoding of 8bit
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message::Body::Lines;
-use Mail::Message::TransferEnc::EightBit;
+use lib qw(. .. tests);
 use Tools;
 
-BEGIN { plan tests => 6 }
+use Test::More tests => 6;
+
+use Mail::Message::Body::Lines;
+use Mail::Message::TransferEnc::EightBit;
 
 my $decoded = <<DECODED;
 yefoiuhéòsjhkw284ÊÈÓUe\000iouoi\013wei

@@ -3,16 +3,16 @@
 # Test reading of mbox folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::Mbox;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More tests => 151;
 use File::Compare;
 
-BEGIN {plan tests => 149}
+use Mail::Box::Mbox;
 
 my @src = (folder => "=$fn", folderdir => 'folders');
 
@@ -41,6 +41,7 @@ is($folder->organization, 'FILE',     'folder organization FILE');
 my $message = $folder->message(2);
 ok(defined $message,                   'take one message');
 isa_ok($message, 'Mail::Box::Message');
+isa_ok($message, 'Mail::Box::Mbox::Message');
 
 #
 # Extract a few messages.
@@ -84,6 +85,7 @@ cmp_ok($end+$blank, "==",  -s $folder->filename);
 # Try to delete a message
 #
 
+ok(!$folder->message(2)->deleted,       'msg2 not yet deleted');
 $folder->message(2)->delete;
 ok($folder->message(2)->deleted,        'flag msg for deletion');
 cmp_ok($folder->messages , "==",  45,   'deletion not performed yet');

@@ -4,16 +4,16 @@
 # in a file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message::Body::File;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More tests => 33;
 use IO::Scalar;
 
-BEGIN {plan tests => 33}
+use Mail::Message::Body::File;
 
 # Test to read a Lines from file.
 # Let's fake the file, for simplicity.

@@ -6,11 +6,13 @@
 use strict;
 use warnings;
 
-use Mail::Message;
-use Mail::Message::Convert::MailInternet;
+use lib qw(. .. tests);
 use Tools;
 
 use Test::More;
+
+use Mail::Message;
+use Mail::Message::Convert::MailInternet;
 
 BEGIN
 {   eval {require Mail::Internet};

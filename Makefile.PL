@@ -6,6 +6,27 @@ require 5.006_001;
 
 use IO::Handle;
 
+# Usually, Scalar::Util is installed (in core since perl 5.8.0)
+# However, sometimes it is (incorrectly) installed without XS, but as
+# plain module.  In that case, Scalar::Util must be reinstalled.
+
+eval { require Scalar::Util };
+unless($@)
+{   eval "Scalar::Util->import('dualvar')";
+    if($@ =~ m/only.*XS/)
+    {   warn <<'WARN';
+
+!!!! WARNING !!!! On your system, the module Scalar::Util is installed
+!!!! WARNING !!!! without use of XS.  This means that critical functionality
+!!!! WARNING !!!! is missing.  Reinstall the module and be sure to get the
+!!!! WARNING !!!! correct installation.
+!!!! WARNING !!!!    perl -MCPAN -e 'shell'
+!!!! WARNING !!!!       > force install Scalar::Util
+
+WARN
+    }
+}
+
 my @optional =
 ( 
   [ Mail::Box::Parser::C => '3.001'
@@ -39,6 +60,10 @@ can install it later.  When your CPAN cache is small, this may
 break your Mail::Box installing process.
 WARN
 
+, [ Mail::IMAPClient => '2.2.8', reason => <<'REASON' ]
+Required for IMAP4 support.
+REASON
+
 , [ Mail::Internet => '1.0', distr => 'MailTools', reason  => <<'REASON' ]
 Many existing e-mail applications use Mail::Internet objects.  If
 you want automatic conversions for compatibility, you need this.
@@ -59,14 +84,13 @@ REASON
 , [ HTML::FormatText => '2.01', distr => 'HTML::Format', reason => <<'REASON' ]
 Plug-in which converts HTML to Postscript or plain text.
 REASON
-
 );
 
 my %prereq =
  ( Date::Parse    => 0.0
  , File::Spec     => 0.7
  , Errno          => 0.0
- , Scalar::Util   => 1.07
+ , Scalar::Util   => 1.13
  , Object::Realize::Later => 0.14
  , Mail::Address  => 0.0
  , MIME::Types    => 1.004
@@ -76,9 +100,10 @@ my %prereq =
  , MIME::Base64   => 0.0
  , URI            => 1.23
  , IO::Scalar     => 0.0
- , Digest::MD5    => 0.0
+ , Digest::HMAC_MD5 => 0.0
  , User::Identity => 0.07
  , Time::Zone     => 0.0
+ , Mail::IMAPClient => 2.2
  );
 
 my $has_readkey;
@@ -173,15 +198,21 @@ foreach my $optional (@optional)
     print "\n";
     eval "require $module";
     if($@)
-    {   print "**** Optional $module failed:\n$@\n";
+    {   if($@ =~ m/^Can't locate /)
+             { print "**** Optional $module is not installed\n"        }
+        else { print "**** Optional $module compilation failed:\n$@\n" }
     }
     elsif($module->VERSION < $version )
     {   print "**** Optional $module too old: requires $version but is ",
             $module->VERSION,"\n";
     }
     else
-    {   print "**** Found optional $module version ", $module->VERSION,
-             " (required is $version)\n";
+    {   my $v = $module->VERSION;
+        my $r = $v eq $version ? ''
+              : $version == 0  ? " (any version will do)"
+              :                  " (at least $version required)";
+
+        print "**** Found optional $module version $v$r\n";
         next;
     }
 
@@ -224,11 +255,11 @@ else
 {   unlink "skiptests";
 }
 
-print <<'DONE';
+print <<'MAKEFILE';
 
 **** Writing Makefile
 
-DONE
+MAKEFILE
 
 WriteMakefile
  ( NAME	 => 'Mail::Box'
@@ -237,3 +268,9 @@ WriteMakefile
  , ABSTRACT     => 'E-mail handling'
  , PREREQ_PM    => \%prereq
  );
+
+print <<'DONE';
+
+**** Done
+
+DONE

@@ -7,13 +7,14 @@
 use strict;
 use warnings;
 
-use Mail::Box::Manager;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More;
+use Test::More tests => 5;
 use File::Spec;
+use List::Util 'sum';
 
-BEGIN {plan tests => 4}
+use Mail::Box::Manager;
 
 my $mhsrc = File::Spec->catfile('folders', 'mh.src');
 
@@ -34,15 +35,17 @@ my $threads = $mgr->threads(folder => $folder);
 cmp_ok($threads->known , "==",  0);
 
 my @all = $threads->sortedAll;
-cmp_ok(@all , "==",  28);
+cmp_ok(scalar(@all) , "==",  28);
+my $msgs = sum map {$_->numberOfMessages} @all;
+cmp_ok($msgs, "==", scalar($folder->messages));
 
 my $out = join '', map {$_->threadToString} @all;
 
-my @lines = split "\n", $out;
-pop @lines;
-ok(@lines = $folder->messages);
+my @lines = split /^/, $out;
+cmp_ok(@lines, '==', $folder->messages);
+$out      = join '', sort @lines;
 
-compare_thread_dumps($out, <<'DUMP', 'sort thread full dump');
+my $dump = <<'DUMP';
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF
@@ -66,15 +69,15 @@ compare_thread_dumps($out, <<'DUMP', 'sort thread full dump');
 1.0K 
 1.4K `- Re: your mail
 1.9K    `- Re: your mail
-2.0K 
 152  Re: your mail
 686  `- Re: your mail
 189  Re: your mail
+2.0K 
 670  Re: your mail
 4.4K `- Re: your mail
 552  mailing list archives
-1.5K printing solution for UW 7.1
 1.4K delegates.mgk set-up for unixware printing
+1.5K printing solution for UW 7.1
 1.4K *- Re: converts new sharpen factors
 1.2K New ImageMagick mailing list
  27  subscribe
@@ -90,4 +93,6 @@ compare_thread_dumps($out, <<'DUMP', 'sort thread full dump');
 1.6K Font metrics
 DUMP
 
+$dump = join '', sort split /^/, $dump;
+compare_thread_dumps($out, $dump, 'sort thread full dump');
 clean_dir $mhsrc;

@@ -3,12 +3,16 @@
 # Test processing of general parsing of fields
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 package Mail::Message::Field::Full;   # define package name
 package main;
+
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More;
 
 BEGIN {
    if($] < 5.007003)
@@ -28,7 +32,6 @@ warn $@;
    }
 }
 
-use Tools;
 
 my $mmff = 'Mail::Message::Field::Full';
 

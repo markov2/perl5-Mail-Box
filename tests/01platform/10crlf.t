@@ -4,17 +4,15 @@
 # so only has LF line-terminations.  In this script, this is
 # translated.  The Content-Length of the messages is updated too.
 
-use Test::More;
-
 use strict;
 use warnings;
-use FileHandle;
 
+use lib qw(. .. tests);
 use Tools;
 
-BEGIN {
-   plan tests => 1;
-}
+use Test::More tests => 1;
+
+use FileHandle;
 
 my $crlf = "\015\012";
 

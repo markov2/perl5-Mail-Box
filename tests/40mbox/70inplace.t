@@ -4,17 +4,17 @@
 # Test writing of mbox folders using the inplace policy.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::Mbox;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More tests => 116;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 116}
+use Mail::Box::Mbox;
 
 #
 # We will work with a copy of the original to avoid that we write

@@ -39,7 +39,6 @@ sub label(@)
 {   my $self   = shift;
     $self->loadHead;    # be sure the status fields have been read
     my $return = $self->SUPER::label(@_);
-    $self->labelsToStatus if @_ > 1;
     $return;
 }
 

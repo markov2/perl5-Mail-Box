@@ -6,8 +6,11 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-#use Mail::Box::Manager;
 
 use Test::More tests => 1;
+
+#use Mail::Box::Manager;
+
 pass("   * Multi-folder threads status ALPHA (not tested)");

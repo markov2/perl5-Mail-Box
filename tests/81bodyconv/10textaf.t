@@ -6,10 +6,12 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-use Mail::Message;
 
 use Test::More;
+
+use Mail::Message;
 
 BEGIN {
     eval 'require Text::Autoformat';

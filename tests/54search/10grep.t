@@ -6,13 +6,15 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-use Mail::Box::Manager;
-use Mail::Box::Search::Grep;
+
+use Test::More tests => 58;
+use IO::Scalar;
 use File::Copy;
 
-use IO::Scalar;
-use Test::More tests => 58;
+use Mail::Box::Manager;
+use Mail::Box::Search::Grep;
 
 copy $src, $cpy
     or die "Cannot create test folder: $!\n";

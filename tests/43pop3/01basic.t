@@ -3,6 +3,7 @@
 use warnings;
 use strict;
 
+use lib qw(. .. tests);
 use Tools;
 
 use Test::More tests => 14;

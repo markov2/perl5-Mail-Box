@@ -8,9 +8,12 @@ use Mail::Box::MH::Message;
 use Mail::Box::MH::Labels;
 
 use Carp;
-use IO::File;
 use File::Spec;
 use File::Basename;
+
+# Since MailBox 2.052, the use of File::Spec is reduced to the minimum,
+# because it is too slow.  The '/' directory separators do work on
+# Windows too.
 
 =chapter NAME
 
@@ -101,9 +104,9 @@ sub init($)
     $self->{MBM_index_type}  = $args->{index_type} || 'Mail::Box::MH::Index';
     for($args->{index_filename})
     {  $self->{MBM_index_filename}
-          = !defined $_ ? File::Spec->catfile($directory, '.index') # default
-          : File::Spec->file_name_is_absolute($_) ? $_              # absolute
-          :               File::Spec->catfile($directory, $_);      # relative
+          = !defined $_ ? "$directory/.index"          # default
+          : File::Spec->file_name_is_absolute($_) ? $_ # absolute
+          :               "$directory/$_";             # relative
     }
 
     # About labels
@@ -112,9 +115,9 @@ sub init($)
     $self->{MBM_labels_type} = $args->{labels_type} || 'Mail::Box::MH::Labels';
     for($args->{labels_filename})
     {   $self->{MBM_labels_filename}
-          = !defined $_ ? File::Spec->catfile($directory, '.mh_sequences')
-          : File::Spec->file_name_is_absolute($_) ? $_               # absolute
-          :               File::Spec->catfile($directory, $_);       # relative
+          = !defined $_ ? "$directory/.mh_sequences"
+          : File::Spec->file_name_is_absolute($_) ? $_   # absolute
+          :               "$directory/$_";               # relative
     }
 
     $self;
@@ -160,7 +163,7 @@ sub foundIn($@)
     my $directory = $class->folderToDirectory($name, $folderdir);
 
     return 0 unless -d $directory;
-    return 1 if -f File::Spec->catfile($directory, "1");
+    return 1 if -f "$directory/1";
 
     # More thorough search required in case some numbered messages
     # disappeared (lost at fsck or copy?)
@@ -204,7 +207,7 @@ sub listSubFolders(@)
 
     return () unless -d $dir && opendir DIR, $dir;
 
-    my @dirs = grep { !/^\d+$|^\./ && -d File::Spec->catfile($dir,$_) && -r _ }
+    my @dirs = grep { !/^\d+$|^\./ && -d "$dir/$_" && -r _ }
                    readdir DIR;
 
     closedir DIR;
@@ -215,13 +218,13 @@ sub listSubFolders(@)
     {    my @not_empty;
 
          foreach my $subdir (@dirs)
-         {   if(-f File::Spec->catfile($dir,$subdir, "1"))
+         {   if(-f "$dir/$subdir/1")
              {   # Fast found: the first message of a filled folder.
                  push @not_empty, $subdir;
                  next;
              }
 
-             opendir DIR, File::Spec->catfile($dir,$subdir) or next;
+             opendir DIR, "$dir/$subdir" or next;
              my @entities = grep !/^\./, readdir DIR;
              closedir DIR;
 
@@ -231,7 +234,7 @@ sub listSubFolders(@)
              }
 
              foreach (@entities)
-             {   next unless -d File::Spec->catfile($dir,$subdir,$_);
+             {   next unless -d "$dir/$subdir/$_";
                  push @not_empty, $subdir;
                  last;
              }
@@ -246,14 +249,14 @@ sub listSubFolders(@)
     @dirs = map { m/(.*)/ && $1 ? $1 : () } @dirs;   # untaint
     return @dirs unless $args{check};
 
-    grep { $class->foundIn(File::Spec->catfile($dir,$_)) } @dirs;
+    grep { $class->foundIn("$dir/$_") } @dirs;
 }
 
 #-------------------------------------------
 
 sub nameOfSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    File::Spec->catfile($self->directory, $name);
+    $self->directory . '/' . $name;
 }
 
 #-------------------------------------------
@@ -313,9 +316,10 @@ sub appendMessages(@)
     my $msgnr    = $self->highestMessageNumber +1;
 
     foreach my $message (@messages)
-    {   my $filename = File::Spec->catfile($directory,$msgnr);
+    {   my $filename = "$directory/$msgnr";
         $message->create($filename)
-          or $self->log(ERROR => "Unable to write message for $self to $filename: $!\n");
+           or $self->log(ERROR =>
+	           "Unable to write message for $self to $filename: $!\n");
 
         $msgnr++;
     }
@@ -404,7 +408,7 @@ sub readMessageFilenames
     # list of numerically sorted, untainted filenames.
     my @msgnrs
        = sort {$a <=> $b}
-            map { /^(\d+)$/ && -f File::Spec->catfile($dirname,$1) ? $1 : () }
+            map { /^(\d+)$/ && -f "$dirname/$1" ? $1 : () }
                readdir DIR;
 
     closedir DIR;
@@ -443,7 +447,7 @@ sub readMessages(@)
 
     foreach my $msgnr (@msgnrs)
     {
-        my $msgfile = File::Spec->catfile($directory, $msgnr);
+        my $msgfile = "$directory/$msgnr";
 
         my $head;
         $head       = $index->get($msgfile) if $index;

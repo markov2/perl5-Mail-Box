@@ -3,14 +3,16 @@
 # Test processing a message/rfc822
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message;
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 2;
 use IO::Scalar;
 
-BEGIN {plan tests => 2}
+use Mail::Message;
 
 #
 # Reading a very complicate message from scalar

@@ -7,13 +7,15 @@
 use strict;
 use warnings;
 
-use Mail::Box::Manager;
-use Mail::Message::Construct;
+use lib qw(. .. tests);
 use Tools;
 
 use Test::More;
 use File::Compare;
 use File::Copy;
+
+use Mail::Box::Manager;
+use Mail::Message::Construct;
 
 BEGIN {
    if($windows)

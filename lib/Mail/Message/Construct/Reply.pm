@@ -427,7 +427,8 @@ sub replyPrelude($)
 {   my ($self, $who) = @_;
  
     my $user
-     = !ref $who                         ? (Mail::Address->parse($who))[0]
+     = !defined $who                     ? undef
+     : !ref $who                         ? (Mail::Address->parse($who))[0]
      : $who->isa('Mail::Message::Field') ? ($who->addresses)[0]
      :                                     $who;
 

@@ -4,8 +4,8 @@ use strict;
 package Mail::Box::Locker::NFS;
 use base 'Mail::Box::Locker';
 
-use IO::File;
 use Sys::Hostname;
+use IO::File;
 use Carp;
 
 =chapter NAME

@@ -4,7 +4,6 @@ use strict;
 package Mail::Box::Locker::Multi;
 use base 'Mail::Box::Locker';
 
-use IO::File;
 use Carp;
 
 =chapter NAME

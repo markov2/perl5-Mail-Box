@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
+
 use Test::More tests => 7;
 
 BEGIN { use_ok('Mail::Transport::POP3') }

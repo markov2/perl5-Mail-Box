@@ -6,15 +6,15 @@
 use strict;
 use warnings;
 
-use Mail::Box::MH;
-use Mail::Box::Mbox;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More;
+use Test::More tests => 54;
 use File::Compare;
 use File::Copy;
 
-BEGIN {plan tests => 54}
+use Mail::Box::MH;
+use Mail::Box::Mbox;
 
 my $mhsrc = File::Spec->catfile('folders', 'mh.src');
 

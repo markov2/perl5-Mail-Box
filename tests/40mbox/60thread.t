@@ -4,16 +4,16 @@
 # Test threading on Mbox folders.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Box::Manager;
+use lib qw(. .. tests);
 use Tools;
 
+use Test::More tests => 23;
 use File::Copy;
 
-BEGIN {plan tests => 23}
+use Mail::Box::Manager;
 
 #
 # We will work with a copy of the original to avoid that we write
@@ -101,11 +101,11 @@ START
 
 my $out   = join '', map {$_->threadToString} $threads->sortedKnown;
 
-my @lines = split "\n", $out;
-pop @lines;
+my @lines = sort split "\n", $out;
 ok(@lines = $folder->messages);
+$out      = join '', @lines;
 
-compare_thread_dumps($out, <<'DUMP', 'sorted full dump');
+my $dump = <<'DUMP';
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF
@@ -129,15 +129,15 @@ compare_thread_dumps($out, <<'DUMP', 'sorted full dump');
 1.0K 
 1.4K `- Re: your mail
 1.9K    `- Re: your mail
-2.0K 
 152  Re: your mail
 686  `- Re: your mail
 189  Re: your mail
+2.0K 
 670  Re: your mail
 4.4K `- Re: your mail
 552  mailing list archives
-1.5K printing solution for UW 7.1
 1.4K delegates.mgk set-up for unixware printing
+1.5K printing solution for UW 7.1
 1.4K *- Re: converts new sharpen factors
 1.2K New ImageMagick mailing list
  27  subscribe
@@ -152,3 +152,6 @@ compare_thread_dumps($out, <<'DUMP', 'sorted full dump');
 1.0K `- Re: Core Dump on ReadImage
 1.6K Font metrics
 DUMP
+
+$dump = join '', sort split /^/, $out;
+compare_thread_dumps($out, $dump , 'sorted full dump');

@@ -5,15 +5,16 @@
 # headers from file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 68}
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 68;
 
 use Mail::Message::Field::Fast;
 use Mail::Address;
-use Tools;
 
 #
 # Processing unstructured lines.

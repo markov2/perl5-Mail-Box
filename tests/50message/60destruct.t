@@ -6,10 +6,12 @@
 use strict;
 use warnings;
 
-use Mail::Box::Mbox;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 59;
+use Test::More tests => 58;
+
+use Mail::Box::Mbox;
 
 my @src = (folder => "=$fn", folderdir => 'folders');
 
@@ -44,8 +46,6 @@ isa_ok($folder->message(0), 'Mail::Box::Message::Destructed', 'first');
 my $msg0 = $folder->message(0);
 ok($msg0->isDeleted,   'destructed is deleted');
 ok($msg0->delete,      'delete is allowed');
-$msg0->label(spam => 1);
-ok($msg0->label('spam'), 'labeled as spam');
 ok($msg0->messageId, 'has message id');
 
 $folder->close(write => 'NEVER');

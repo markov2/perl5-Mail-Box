@@ -6,11 +6,13 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-use Mail::Box::Manager;
 
-use File::Spec;
 use Test::More tests => 16;
+use File::Spec;
+
+use Mail::Box::Manager;
 
 my $mgr = Mail::Box::Manager->new;
 

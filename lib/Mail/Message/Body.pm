@@ -280,7 +280,7 @@ sub init($)
     {
         if(!ref $data)
         {   my @lines = split /^/, $data;
-            $lines[-1] .= "\n" if substr($lines[-1], -1) ne "\n";
+            $lines[-1] .= "\n" if @lines && substr($lines[-1], -1) ne "\n";
             $self->_data_from_lines(\@lines)
         }
         elsif(ref $data eq 'ARRAY')
@@ -552,12 +552,13 @@ sub mimeType()
     return $self->{MMB_mime} if exists $self->{MMB_mime};
 
     my $field = $self->{MMB_type};
+    my $body  = defined $field ? $field->body : '';
+
+    return $self->{MMB_mime} = $mime_plain
+       unless length $body;
+
     $self->{MMB_mime}
-      = defined $field
-      ? (   $mime_types->type($field->body)
-         || MIME::Type->new(type => $field->body)
-        )
-      : $mime_plain;
+       = $mime_types->type($body) || MIME::Type->new(type => $body);
 }
 
 #------------------------------------------

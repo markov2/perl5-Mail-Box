@@ -6,11 +6,14 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
+
+use Test::More;
+
 use Mail::Message;
 use Mail::Message::Construct::Rebuild;
 
-use Test::More;
 my $has_htmlFormatText;
 
 BEGIN {

@@ -3,16 +3,17 @@
 # Test the reading from file of message bodies which have their content
 # stored in a single string.
 
-use Test::More;
 use strict;
 use warnings;
+
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 945;
 
 use Mail::Box::Parser::Perl;
 use Mail::Message::Body::String;
 use Mail::Message::Head;
-use Tools;
-
-BEGIN { plan tests => 945 }
 
 ###
 ### First carefully read the first message

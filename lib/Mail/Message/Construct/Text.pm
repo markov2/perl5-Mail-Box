@@ -113,7 +113,7 @@ sub printStructure(;$$)
 
     my $type    = $self->get('Content-Type') || '';
     my $size    = $self->size;
-    my $deleted = $self->can('isDeleted') && $self->isDeleted ? ', deleted' : '';
+    my $deleted = $self->label('deleted') ? ', deleted' : '';
 
     my $text    = "$indent$type$subject ($size bytes$deleted)\n";
     ref $fh eq 'GLOB' ? (print $fh $text) : $fh->print($text);

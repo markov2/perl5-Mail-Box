@@ -6,11 +6,12 @@
 use strict;
 use warnings;
 
-use Mail::Message::Construct::Reply;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More;
-BEGIN {plan tests => 21}
+use Test::More tests => 21;
+
+use Mail::Message::Construct::Reply;
 
 is(Mail::Message->replySubject('subject'), 'Re: subject');
 is(Mail::Message->replySubject('Re: subject'), 'Re[2]: subject');

@@ -3,15 +3,16 @@
 # Encoding and Decoding quoted-print bodies
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message::Body::Lines;
-use Mail::Message::TransferEnc::QuotedPrint;
+use lib qw(. .. tests);
 use Tools;
 
-BEGIN { plan tests => 10 }
+use Test::More tests => 10;
+
+use Mail::Message::Body::Lines;
+use Mail::Message::TransferEnc::QuotedPrint;
 
 my $src = <<SRC;
 In the source text, there are a few \010\r strange characters,

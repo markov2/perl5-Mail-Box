@@ -7,12 +7,14 @@
 use strict;
 use warnings;
 
-use Mail::Box::Mbox;
-use Mail::Box::Tie::HASH;
-use Mail::Message::Construct;
+use lib qw(. .. tests);
 use Tools;
 
 use Test::More tests => 101;
+
+use Mail::Box::Mbox;
+use Mail::Box::Tie::HASH;
+use Mail::Message::Construct;
 
 #
 # The folder is read.

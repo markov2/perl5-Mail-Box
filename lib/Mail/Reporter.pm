@@ -472,6 +472,4 @@ Cleanup the object.
 
 sub DESTROY {shift}
 
-#-------------------------------------------
-
 1;

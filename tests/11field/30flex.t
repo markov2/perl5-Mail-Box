@@ -4,15 +4,16 @@
 #  not whole headers.  This also doesn't cover reading headers from file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 44}
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 44;
 
 use Mail::Message::Field::Flex;
 use Mail::Address;
-use Tools;
 
 #
 # Processing unstructured lines.

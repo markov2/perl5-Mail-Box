@@ -188,62 +188,6 @@ sub readFromParser($;$)
 
 #------------------------------------------
 
-=section Flags
-
-=method delete
-
-Do not print or send this part of the message anymore.  See M<deleted()>.
-The time stamp of the moment of deletion is stored as value.  When the same
-message is deleted more than once, the first time stamp will stay.
-
-=examples
-
- $message->part(2)->delete;
- $part->deleted(1);
- delete $part;
-
-=cut
-
-sub delete() { shift->{MMP_deleted} ||= time }
-
-#------------------------------------------
-
-=method deleted [BOOLEAN]
-
-Set the delete flag for this part of the multipart message body.  Without
-argument, the method returns the same is the M<isDeleted()> method, which is
-prefered.  When a true value is given, M<delete()> is called.
-
-=cut
-
-sub deleted(;$)
-{   my $self = shift;
-      ! @_      ? $self->isDeleted   # compat 2.036
-    : ! (shift) ? ($self->{MMP_deleted} = undef)
-    :             $self->delete;
-}
-
-#------------------------------------------
-
-=method isDeleted
-
-Returns the moment (as the time function returns) when the message part was
-flagged for deletion, or C<undef> when the part is not deleted.
-
-=examples
-
- next if $part->isDeleted;
-
- if(my $when = $part->isDeleted) {
-    print scalar localtime $when;
- }
-
-=cut
-
-sub isDeleted() { shift->{MMP_deleted} }
-
-#------------------------------------------
-
 =section Cleanup
 
 =method destruct

@@ -4,11 +4,16 @@
 # Mail::Message::Field.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More;
+
 use Mail::Message::Field::Fast;
+
 my $mmf = 'Mail::Message::Field::Fast';
 
 BEGIN {
@@ -28,7 +33,6 @@ BEGIN {
    }
 }
 
-use Tools;
 
 # A user's identity
 

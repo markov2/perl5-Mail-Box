@@ -6,10 +6,12 @@
 use strict;
 use warnings;
 
-use Mail::Message::Body::Lines;
+use lib qw(. .. tests);
 use Tools;
 
 use Test::More;
+
+use Mail::Message::Body::Lines;
 
 BEGIN {
    

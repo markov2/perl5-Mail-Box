@@ -49,7 +49,6 @@ sub init($)
 sub coerce($)
 {   my ($self, $message) = @_;
     return $message if $message->isa(__PACKAGE__);
-
     $self->SUPER::coerce($message)->labelsToStatus;
 }
 

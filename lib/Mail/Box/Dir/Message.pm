@@ -6,7 +6,6 @@ package Mail::Box::Dir::Message;
 use base 'Mail::Box::Message';
 
 use Carp;
-use IO::File;
 use File::Copy qw/move/;
 
 =chapter NAME
@@ -85,10 +84,10 @@ sub print(;$)
 
     my $filename = $self->filename;
     if($filename && -r $filename)
-    {   if(my $in = IO::File->new($filename, "r"))
+    {   if(open my $in, '<', $filename)
         {    local $_;
-             $out->print($_) while <$in>;
-             $in->close;
+             print $out $_ while <$in>;
+             close $in;
              return $self;
         }
     }

@@ -97,10 +97,15 @@ messages.  It returns true when the transmission was successfully completed.
 =option  retry INTEGER
 =default retry M<new(retry)>
 
+=option  to STRING
+=default to C<undef>
+Overrules the destination(s) of the message, which is by default taken
+from the (Resent-)To, (Resent-)Cc, and (Resent-)Bcc.
+
 =cut
 
 sub send($@)
-{   my ($self, $message) = (shift, shift);
+{   my ($self, $message, %args) = @_;
 
     unless($message->isa('Mail::Message'))  # avoid rebless.
     {   $message = Mail::Message->coerce($message);
@@ -108,17 +113,16 @@ sub send($@)
             unless defined $message;
     }
 
-    return 1 if $self->trySend($message);
+    return 1 if $self->trySend($message, %args);
     return 0 unless $?==EAGAIN;
 
-    my %args     = @_;
     my ($interval, $retry) = $self->retry;
     $interval = $args{interval} if exists $args{interval};
     $retry    = $args{retry}    if exists $args{retry};
 
     while($retry!=0)
     {   sleep $interval;
-        return 1 if $self->trySend($message);
+        return 1 if $self->trySend($message, %args);
         return 0 unless $?==EAGAIN;
         $retry--;
     }
@@ -191,6 +195,24 @@ If no ADDRESS is specified, the message is scanned for resent groups
 found in the first (is latest added) group are used.  If no resent groups
 are found, the normal C<To>, C<Cc>, and C<Bcc> lines are taken.
 
+=warning Resent group does not specify a destination
+The message which is sent is the result of a bounce (for instance
+created with M<Mail::Message::bounce()>), and therefore starts with a
+C<Received> header field.  With the C<bounce>, the new destination(s)
+of the message are given, which should be included as C<Resent-To>,
+C<Resent-Cc>, and C<Resent-Bcc>.
+
+The C<To>, C<Cc>, and C<Bcc> header information is only used if no
+C<Received> was found.  That seems to be the best explanation of the RFC.
+
+As alternative, you may also specify the C<to> option to some of the senders
+(for instance M<Mail::Transport::SMTP::send(to)> to overrule any information
+found in the message itself about the destination.
+
+=warning Message has no destination
+It was not possible to figure-out where the message is intended to go
+to.
+
 =cut
 
 sub destinations($;$)
@@ -204,12 +226,12 @@ sub destinations($;$)
     }
     elsif(my @rgs = $message->head->resentGroups)
     {   @to = $rgs[0]->destinations;
-        $self->log(ERROR => "Resent group does not specify a destination"), return ()
+        $self->log(WARNING => "Resent group does not specify a destination"), return ()
             unless @to;
     }
     else
     {   @to = $message->destinations;
-        $self->log(ERROR => "Message has no destination"), return ()
+        $self->log(WARNING => "Message has no destination"), return ()
             unless @to;
     }
 

@@ -3,16 +3,17 @@
 # Test the processing of resent groups.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 26}
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 26;
+use IO::Scalar;
 
 use Mail::Message::Head::ResentGroup;
 use Mail::Message::Head::Complete;
-use Tools;
-use IO::Scalar;
 
 #
 # Creation of a group

@@ -3,14 +3,16 @@
 # Test the reading from file of message bodies which are multiparts
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use Mail::Message;
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 66;
 use IO::File;
 
-BEGIN {plan tests => 66}
+use Mail::Message;
 
 #
 # From scalar

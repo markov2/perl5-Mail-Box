@@ -3,11 +3,19 @@
 # Test the processing of list groups.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-use lib qw(../UserIdentity/lib ../../UserIdentity/lib);
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More;
+use IO::Scalar;
+use File::Spec;
+
+use Mail::Message::Head::Complete;
+use Mail::Message;
+use Mail::Box::Mbox;
 
 BEGIN {
    if($] < 5.007003)
@@ -17,23 +25,13 @@ BEGIN {
 
    eval 'require Mail::Message::Head::ListGroup';
    if($@)
-   {
-warn $@;
-       plan skip_all => 'Extended attributes not available (install Encode?)';
+   {   plan skip_all => 'Extended attributes not available (install Encode?)';
        exit 0;
    }
    else
    {   plan tests => 119;
    }
 }
-
-use Mail::Message::Head::Complete;
-use Mail::Message;
-use Mail::Box::Mbox;
-
-use Tools;
-use IO::Scalar;
-use File::Spec;
 
 #
 # Creation of a group

@@ -3,15 +3,16 @@
 # Test the removing fields in partial headers.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 15}
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 15;
+use IO::Scalar;
 
 use Mail::Message::Head::Complete;
-use Tools;
-use IO::Scalar;
 
 my $h = Mail::Message::Head::Complete->build
  ( Subject => 'this is a test'

@@ -121,10 +121,14 @@ fields of the header are used.  An address is a string or a Mail::Address
 object.
 
 =option  from ADDRESS
-=default from []
+=default from E<lt> E<gt>
 
 Your own identification.  This may be fake.  If not specified, it is
-taken from the C<From> field in the header.
+taken from M<Mail::Message::sender()>, which means the content of the
+C<Sender> field of the message or the first address of the C<From>
+field.  This defaults to "E<lt> E<gt>", which represents "no address".
+
+=notice No addresses found to send the message to, no connection made
 
 =cut
 
@@ -132,15 +136,22 @@ sub trySend($@)
 {   my ($self, $message, %args) = @_;
 
     # From whom is this message.
-    my $from = $args{from} || $message->sender;
-    $from = $from->address if $from->isa('Mail::Address');
+    my $from = $args{from} || $message->sender || '<>';
+    $from = $from->address if ref $from && $from->isa('Mail::Address');
 
     # Who are the destinations.
-    $self->log(ERROR =>
-        "Use option `to' to overrule the destination: `To' would refer to a field")
-            if defined $args{To};
+    if(defined $args{To})
+    {   $self->log(WARNING =>
+   "Use option `to' to overrule the destination: `To' would refer to a field");
+    }
 
     my @to = map {$_->address} $self->destinations($message, $args{to});
+
+    unless(@to)
+    {   $self->log(NOTICE =>
+            'No addresses found to send the message to, no connection made');
+        return 1;
+    }
 
     # Prepare the header
     my @header;
@@ -190,7 +201,8 @@ sub trySend($@)
         unless $server->mail($from);
 
     foreach (@to)
-    {     next if $server->to($_);
+    {
+          next if $server->to($_);
 # must we be able to disable this?
 # next if $args{ignore_erroneous_destinations}
           $server->quit;

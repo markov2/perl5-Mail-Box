@@ -7,11 +7,13 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
-use Mail::Box::Locker::Flock;
 
-use File::Spec;
 use Test::More;
+use File::Spec;
+
+use Mail::Box::Locker::Flock;
 
 BEGIN
 {   if($windows)

@@ -91,6 +91,9 @@ sub init($)
     $self->{MBN_hostname} = $args->{server_name};
     $self->{MBN_port}     = $args->{server_port};
 
+    $self->log(WARNING => "The term 'hostname' is confusing wrt folder. You probably need 'server_name'")
+         if exists $args->{hostname};
+
     $self;
 }
 

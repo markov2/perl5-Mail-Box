@@ -3,12 +3,16 @@
 # Test processing of addresses
 #
 
-use Test::More;
 use strict;
 use warnings;
 
 package Mail::Message::Field::Addresses;   # define package name
 package main;
+
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More;
 
 BEGIN {
    if($] < 5.007003)
@@ -18,17 +22,13 @@ BEGIN {
 
    eval 'require Mail::Message::Field::Addresses';
    if($@)
-   {
-warn $@;
-       plan skip_all => 'Extended attributes not available (install Encode?)';
+   {   plan skip_all => 'Extended attributes not available (install Encode?)';
        exit 0;
    }
    else
    {   plan tests => 96;
    }
 }
-
-use Tools;
 
 my $mmfa  = 'Mail::Message::Field::Address';
 my $mmfag = 'Mail::Message::Field::AddrGroup';

@@ -6,13 +6,13 @@
 use strict;
 use warnings;
 
-use Mail::Message::Body::Construct;
-use Mail::Message::Body;
+use lib qw(. .. tests);
 use Tools;
 
-use Test::More;
+use Test::More tests => 37;
 
-BEGIN {plan tests => 37}
+use Mail::Message::Body::Construct;
+use Mail::Message::Body;
 
 #
 # No strip possible

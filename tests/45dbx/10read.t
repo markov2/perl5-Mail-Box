@@ -6,6 +6,7 @@
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
 use Tools;
 
 use Test::More;

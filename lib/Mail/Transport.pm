@@ -77,7 +77,7 @@ with a password.
 =option  proxy PATH
 =default proxy undef
 
-The name of the proxy software (the mail handler).  This must be
+The name of the proxy software (the protocol handler).  This must be
 the name (preferable the absolute path) of your mail delivery
 software.
 
@@ -173,7 +173,7 @@ sub init($)
     $self->{MT_timeout}  = $args->{timeout}  || 120;
     $self->{MT_proxy}    = $args->{proxy};
 
-    if(my $exec = $args->{executable})
+    if(my $exec = $args->{executable} || $args->{proxy})
     {   $self->{MT_exec} = $exec;
 
         $self->log(WARNING => "Avoid program abuse: specify an absolute path for $exec.")

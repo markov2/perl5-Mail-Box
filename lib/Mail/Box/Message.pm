@@ -47,11 +47,6 @@ If the body of a message is used delay-loaded, the message must what type
 of message to become when it finally gets parsed.  The folder which is
 delaying the load must specify the algorithm to determine that type.
 
-=option  deleted BOOLEAN
-=default deleted <false>
-
-Is the file deleted from the start?
-
 =option  size INTEGER
 =default size undef
 
@@ -63,8 +58,6 @@ message separators which may be used by the folder type.
 sub init($)
 {   my ($self, $args) = @_;
     $self->SUPER::init($args);
-
-    $self->{MBM_deleted}    = $args->{deleted}   || 0;
 
     $self->{MBM_body_type}  = $args->{body_type}
         if exists $args->{body_type};
@@ -93,9 +86,7 @@ sub coerce($)
     return bless $message, $class
         if $message->isa(__PACKAGE__);
 
-    my $coerced = $class->SUPER::coerce($message);
-    $coerced->{MBM_deleted} = 0;
-    $coerced;
+    $class->SUPER::coerce($message);
 }
 
 #-------------------------------------------
@@ -195,78 +186,9 @@ destination folder) is returned.
 sub moveTo($)
 {   my ($self, $folder) = @_;
     my $added = $folder->addMessage($self->clone);
-    $self->delete;
+    $self->label(deleted => 1);
     $added;
 }
-
-#-------------------------------------------
-
-=section Flags
-
-=method delete
-
-Flag the message to be deleted.  The real deletion only takes place on
-a synchronization of the folder.  See M<deleted()> as well.
-
-The time stamp of the moment of deletion is stored as value.  When the same
-message is deleted more than once, the first time stamp will stay.
-
-=examples
-
- $message->delete;
- $message->deleted(1);  # exactly the same
- delete $message;
-
-=cut
-
-sub delete() { shift->{MBM_deleted} ||= time }
-
-#-------------------------------------------
-
-=method deleted [BOOLEAN]
-
-Set the delete flag for this message.  Without argument, the method
-returns the same as M<isDeleted()>, which is prefered.  When a true
-value is given, M<delete()> is called.
-
-=examples
-
- $message->deleted(1);          # delete
- $message->delete;              # delete (prefered)
-
- $message->deleted(0);          # undelete
-
- if($message->deleted) {...}    # check
- if($message->isDeleted) {...}  # check (prefered)
-
-=cut
-
-sub deleted(;$)
-{   my $self = shift;
-
-      ! @_      ? $self->isDeleted   # compat 2.036
-    : ! (shift) ? ($self->{MBM_deleted} = undef)
-    :             $self->delete;
-}
-
-#-------------------------------------------
-
-=method isDeleted
-
-Returns the moment (as the time function returns) when the message was
-flagged for deletion, or C<undef> when the message is not deleted.
-
-=examples
-
- next if $message->isDeleted;
-
- if(my $when = $message->isDeleted) {
-    print scalar localtime $when;
- }
-
-=cut
-
-sub isDeleted() { shift->{MBM_deleted} }
 
 #-------------------------------------------
 
@@ -301,7 +223,7 @@ sub readBody($$;$)
 =method diskDelete
 
 Remove a message from disk.  This is not from the folder, but everything
-else, like parts of the message which are stored externally from the
+else, like parts of the message which are stored outside from the
 folder.
 
 =cut

@@ -4,16 +4,17 @@
 # from a file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 16;
+
+use Mail::Message;
 use Mail::Message::Head;
 use Mail::Box::Parser::Perl;
-use Tools;
-use Mail::Message;
-
-BEGIN { plan tests => 16 }
 
 my $h = Mail::Message::Head->new;
 ok(defined $h);

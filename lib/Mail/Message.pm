@@ -114,9 +114,12 @@ Is this message from a trusted source?  If not, the content must be
 checked before use.  This checking will be performed when the
 body data is decoded or used for transmission.
 
+=option  deleted BOOLEAN
+=default deleted <false>
+Is the file deleted from the start?
+
 =option  labels ARRAY|HASH
 =default labels {}
-
 Initial values of the labels.  In case of M<Mail::Box::Message>'s, this
 shall reflect the state the message is in.  For newly constructed
 M<Mail::Message>'s, this may be anything you want, because M<coerce()>
@@ -129,9 +132,8 @@ sub init($)
     $self->SUPER::init($args);
 
     # Field initializations also in coerce()
-    $self->{MM_modified}  = $args->{modified}  || 0;
-    $self->{MM_trusted}   = $args->{trusted}   || 0;
-    $self->{MM_labels}    = {};
+    $self->{MM_modified} = $args->{modified}  || 0;
+    $self->{MM_trusted}  = $args->{trusted}   || 0;
 
     # Set the header
 
@@ -157,7 +159,9 @@ sub init($)
        if defined $args->{field_type};
 
     my $labels = $args->{labels} || [];
-    $self->{MM_labels} = { ref $labels eq 'ARRAY' ? @$labels : %$labels };
+    my @labels = ref $labels eq 'ARRAY' ? @$labels : %$labels;
+    push @labels, deleted => $args->{deleted} if exists $args->{deleted};
+    $self->{MM_labels} = { @labels };
 
     $self;
 }
@@ -247,7 +251,6 @@ sub coerce($)
     }
 
     $message->{MM_modified}  ||= 0;
-
     bless $message, $class;
 }
 
@@ -287,7 +290,10 @@ sub clone()
      , $self->logSettings
      );
 
-    my %labels = %{$self->{MM_labels}};
+    my $labels = $self->labels;
+    my %labels = %$labels;
+    delete $labels{deleted};
+
     $clone->{MM_labels} = \%labels;
     $clone;
 }
@@ -447,6 +453,10 @@ is short (but little less flexibile) for
  $mailer->send($message, @sendopts);
 
 See examples/send.pl in the distribution of M<Mail::Box>.
+
+=example
+
+ $message->send(via => 'sendmail')
 
 =error No default mailer found to send message.
 
@@ -740,7 +750,7 @@ C<received> lines.  For MBox-like folders you may get the date from
 the from-line as well.
 
 This method may return C<undef> if the header is not parsed or only
-partially known.  If you require a time, then use the timestamp()
+partially known.  If you require a time, then use the M<timestamp()>
 method, described below.
 
 =example using guessTimestamp() to get a transmission date
@@ -755,12 +765,22 @@ sub guessTimestamp() {shift->head->guessTimestamp}
 
 =method timestamp
 
-Get a timestamp, doesn't matter how much work it is.  If it is impossible
-to get a time from the header-lines, the current time-of-living is taken.
+Get a timestamp for the message, doesn't matter how much work it is.
+In these days, the timestamp as supplied by the message (in the C<Date>
+field) is not trustable at all: many spammers produce illegal or
+unreal dates to influence their location in the displayed folder.
+
+To start, the received headers are tried for a date (see
+M<Mail::Message::Head::Complete::recvstamp()>) and only then the C<Date>
+field.  When no date was found, C<undef> will be returned.  This may be
+very usual, because MailBox message constructors add a Date automatically.
 
 =cut
 
-sub timestamp() {shift->head->timestamp}
+sub timestamp()
+{   my $head = shift->head or return;
+    $head->recvstamp || $head->timestamp;
+}
 
 #------------------------------------------
 
@@ -938,7 +958,8 @@ sub isNested() {shift->body->isNested}
 Returns the I<parts> of this message. Usually, the term I<part> is used
 with I<multipart> messages: messages which are encapsulated in the body
 of a message.  To abstract this concept: this method will return you
-all header-body combinations which are stored within this message.
+all header-body combinations which are stored within this message
+B<except> the multipart and message/rfc822 wrappers.
 Objects returned are C<Mail::Message>'s and M<Mail::Message::Part>'s.
 
 The option default to 'ALL', which will return the message itself for
@@ -1040,15 +1061,14 @@ sub isModified()
 
 #------------------------------------------
 
-=method label LABEL [,VALUE [LABEL, VALUE] ]
+=method label LABEL|PAIRS
 
-Return the value of the LABEL, optionally after setting it to VALUE.  If
-the VALUE is C<undef> then the label is removed.  You may specify a list
-of LABEL-VALUE pairs at once.  In the latter case, the first VALUE is returned.
+Return the value of the LABEL, optionally after setting some values.  In
+case of setting values, you specify key-value PAIRS.
 
 Labels are used to store knowledge about handling of the message within
 the folder.  Flags about whether a message was read, replied to, or
-(in some cases) scheduled for deletion.
+scheduled for deletion.
 
 Some labels are taken from the header's C<Status> and C<X-Status> lines,
 however folder types like MH define a separate label file.
@@ -1059,6 +1079,7 @@ however folder types like MH define a separate label file.
  if($message->label('seen')) {...};
  $message->label(seen => 1);
 
+ $message->label(deleted => 1);  # same as $message->delete
 =cut
 
 sub label($;$)
@@ -1093,16 +1114,79 @@ sub labels()
 #------------------------------------------
 
 =method isDeleted
+Short-cut for
+ $msg->label('deleted')
 
-A plain C<Mail::Message> is never deleted, but messages in folders and
-message parts (both extensions of this message base class) can be.  For
-simplicity, this method will always return C<false>: no we are not
-deleted.
+For some folder types, you will get the time of deletion in return.  This
+depends on the implementation.
+
+=examples
+
+ next if $message->isDeleted;
+
+ if(my $when = $message->isDeleted) {
+    print scalar localtime $when;
+ }
 
 =cut
 
-# needed for parts('ACTIVE'|'DELETED') on non-folder messages.
-sub isDeleted() {0}
+sub isDeleted() { shift->label('deleted') }
+
+#-------------------------------------------
+
+=method delete
+
+Flag the message to be deleted, which is a shortcut for
+ $msg->label(deleted => time);
+The real deletion only takes place on a synchronization of the folder.
+See M<deleted()> as well.
+
+The time stamp of the moment of deletion is stored as value, but that
+is not always preserved in the folder (depends on the implementation).
+When the same message is deleted more than once, the first time stamp
+will stay.
+
+=examples
+
+ $message->delete;
+ $message->deleted(1);  # exactly the same
+ $message->label(deleted => 1);
+ delete $message;
+
+=cut
+
+sub delete()
+{  my $self = shift;
+   my $old = $self->label('deleted');
+   $old || $self->label(deleted => time);
+}
+
+#-------------------------------------------
+
+=method deleted [BOOLEAN]
+
+Set the delete flag for this message.  Without argument, the method
+returns the same as M<isDeleted()>, which is prefered.  When a true
+value is given, M<delete()> is called.
+
+=examples
+
+ $message->deleted(1);          # delete
+ $message->delete;              # delete (prefered)
+
+ $message->deleted(0);          # undelete
+
+ if($message->deleted) {...}    # check
+ if($message->isDeleted) {...}  # check (prefered)
+
+=cut
+
+sub deleted(;$)
+{   my $self = shift;
+
+    @_ ? $self->label(deleted => shift)
+       : $self->label('deleted')   # compat 2.036
+}
 
 #-------------------------------------------
 
@@ -1145,7 +1229,6 @@ sub labelsToStatus()
 #-------------------------------------------
 
 =method statusToLabels
-
 Update the labels according the status lines in the header.  See the
 description in the DETAILS chapter.
 
@@ -1156,13 +1239,19 @@ sub statusToLabels()
     my $head    = $self->head;
 
     if(my $status  = $head->get('status'))
-    {   $self->{MM_labels}{seen} = ($status  =~ /R/ ? 1 : 0);
-        $self->{MM_labels}{old}  = ($status  =~ /O/ ? 1 : 0);
+    {   $status = $status->foldedBody;
+        $self->label
+         ( seen    => (index($status, 'R') >= 0)
+         , old     => (index($status, 'O') >= 0)
+	 );
     }
 
     if(my $xstatus = $head->get('x-status'))
-    {   $self->{MM_labels}{replied} = ($xstatus  =~ /A/ ? 1 : 0);
-        $self->{MM_labels}{flagged} = ($xstatus  =~ /F/ ? 1 : 0);
+    {   $xstatus = $xstatus->foldedBody;
+        $self->label
+         ( replied => (index($xstatus, 'A') >= 0)
+         , flagged => (index($xstatus, 'F') >= 0)
+	 );
     }
 
     $self;
@@ -1566,8 +1655,9 @@ header fields, MH uses a C<.mh-sequences> file, MAILDIR encodes the flags
 in the message's filename, and IMAP has flags as part of the protocol.
 
 Besides, some folder types can store labels with user defined names,
-where other lack that feature.  Read all about the specifics in the
-manual page of the message type you actually have.
+where other lack that feature.  Some folders have case-insensitive
+labels, other don't. Read all about the specifics in the manual page of
+the message type you actually have.
 
 =subsection Predefined labels
 
@@ -1580,12 +1670,13 @@ of messages:
 =item * deleted
 
 This message is flagged to be deleted once the folder closes.  Be very
-careful about the concept of 'delete' in a folder context (yes, also the
-M<Mail::Box::Message::delete()> and M<Mail::Box::Message::deleted()>
-methods): it is only a flag, and does not involve immediate action!
-This means, for instance, that the memory which is used by Perl to
-store the message is not released immediately (see M<destruct()> if you
-need to).
+careful about the concept of 'delete' in a folder context : it is only a
+flag, and does not involve immediate action!  This means, for instance,
+that the memory which is used by Perl to store the message is not released
+immediately (see M<destruct()> if you need to).
+
+The methods M<delete()>, M<deleted()>, and M<isDeleted()> are only
+short-cuts for managing the C<delete> label (as of MailBox 2.052).
 
 =item * draft
 

@@ -9,7 +9,6 @@ use Object::Realize::Later
     realize        => 'load',
     believe_caller => 1;
 
-use Carp;
 use Date::Parse;
 
 =chapter NAME

@@ -9,8 +9,6 @@ use Object::Realize::Later
     realize          => 'load',
     believe_caller   => 1;
 
-use Carp;
-use Date::Parse;
 use Scalar::Util 'weaken';
 
 =chapter NAME
@@ -117,7 +115,7 @@ sub guessBodySize() {undef}
 
 =method guessTimeStamp
 
-Make a guess about when the message was origanally posted.
+Make a guess about when the message was originally posted.
 On a delayed head, this returns C<undef>.
 For messages in directory or network organized folders,
 M<Mail::Message::timestamp()> usually will give a figure without much cost.

@@ -4,15 +4,16 @@
 # specified by rfc2822.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 54}
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 54;
 
 use Mail::Message::Field::Fast;
 use Mail::Address;
-use Tools;
 
 my @tests =
 ( 'aap noot mies'                              => 'aap noot mies'

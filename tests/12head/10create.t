@@ -4,15 +4,16 @@
 # header from file.
 #
 
-use Test::More;
 use strict;
 use warnings;
 
-BEGIN {plan tests => 25}
+use lib qw(. .. tests);
+use Tools;
+
+use Test::More tests => 25;
+use IO::Scalar;
 
 use Mail::Message::Head::Complete;
-use Tools;
-use IO::Scalar;
 
 my $h = Mail::Message::Head::Complete->new;
 {  my @o = $h->names;
