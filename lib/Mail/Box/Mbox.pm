@@ -103,14 +103,14 @@ sub foundIn($@)
     }
 
     return 0 unless -f $filename;
-    return 1 if -z $filename;      # empty folder is ok
+    return 1 if -z $filename;               # empty folder is ok
 
     my $file = IO::File->new($filename, 'r') or return 0;
     local $_;
     while(<$file>)
-    {   next if /^\s*$/;           # skip empty lines
+    {   next if /^\s*$/;                    # skip empty lines
         $file->close;
-        return m/^From /;          # found Mbox separator?
+        return substr($_, 0, 5) eq 'From '; # found Mbox separator?
     }
 
     return 1;

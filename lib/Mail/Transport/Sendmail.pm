@@ -31,6 +31,12 @@ this module supports postfix as well.
 
 =default via C<'sendmail'>
 
+=option  sendmail_options ARRAY
+=default sendmail_options []
+Add to the command-line of the started sendmail MTU a list of
+separate words.  So say C< [ '-f', $file ] > and not C< [ "-f $file" ] >,
+because the latter will be taken by sendmail as one word only.
+
 =cut
 
 sub init($)
@@ -45,6 +51,7 @@ sub init($)
      || $self->findBinary('sendmail')
      || return;
 
+    $self->{MTS_opts} = $args->{sendmail_options} || [];
     $self;
 }
 
@@ -66,12 +73,13 @@ sub trySend($@)
 
     my $program = $self->{MTS_program};
     if(open(MAILER, '|-')==0)
-    {   { exec $program, '-it'; }  # {} to avoid warning
+    {   my $options = $args{sendmail_options} || [];
+        { exec $program, '-it', @{$self->{MTS_opts}}; }  # {} to avoid warning
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
         return 0;
     }
  
-    $self->putContent($message, \*MAILER);
+    $self->putContent($message, \*MAILER, undisclosed => 1);
 
     unless(close MAILER)
     {   $self->log(NOTICE => "Errors when closing sendmail mailer $program: $!");

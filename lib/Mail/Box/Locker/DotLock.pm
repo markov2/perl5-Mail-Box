@@ -64,7 +64,7 @@ sub _try_lock($)
                  :  O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK;
 
     my $lock     = IO::File->new($lockfile, $flags, 0600)
-        or return 0;
+       or return 0;
 
     close $lock;
     1;

@@ -834,12 +834,13 @@ sub _copy_to($@)
 {   my ($self, $to, @options) = @_;
     my ($select, $flatten, $recurse, $delete) = @options;
 
-    $self->log(ERROR => "Destination folder $to is not writable."), return
-        unless $to->writable;
+    $self->log(ERROR => "Destination folder $to is not writable."),
+        return unless $to->writable;
 
     # Take messages from this folder.
     my @select = $self->messages($select);
-    $self->log(PROGRESS => "Copying ".@select." messages from $self to $to.");
+    $self->log(PROGRESS =>
+        "Copying ".@select." messages from $self to $to.");
 
     foreach my $msg (@select)
     {   if($msg->copyTo($to)) { $msg->delete if $delete }
@@ -892,17 +893,18 @@ Close the folder, which usually implies writing the changes.  This will
 return C<false> when writing is required but fails.  Please do check this
 result.
 
-WARNING: When moving messages from one folder to another, be sure to write the
-destination folder before writing and closing the source folder.  Otherwise
-you may lose data if the system crashes or if there are software problems.
+WARNING: When moving messages from one folder to another, be sure to
+write the destination folder before writing and closing the source
+folder.  Otherwise you may lose data if the system crashes or if there
+are software problems.
 
 =option  write 'ALWAYS'|'NEVER'|'MODIFIED'
 =default write C<MODIFIED>
 
 Specifies whether the folder should be written.  As could be expected,
-C<ALWAYS> means always (even if there are no changes), C<NEVER> means that
-changes to the folder will be lost, and C<MODIFIED>
-only saves the folder if there are any changes.
+C<ALWAYS> means always (even if there are no changes), C<NEVER> means
+that changes to the folder will be lost, and C<MODIFIED> only saves the
+folder if there are any changes.
 
 =option  force BOOLEAN
 =default force <false>
@@ -943,14 +945,12 @@ sub close(@)
 {   my ($self, %args) = @_;
     my $force = $args{force} || 0;
 
-    return if $self->{MB_is_closed};
-    $self->{MB_is_closed} = 1;
+    return 1 if $self->{MB_is_closed};
+    $self->{MB_is_closed}++;
 
     # Inform manager that the folder is closed.
-    $self->{MB_manager}->close($self)
-        if defined $self->{MB_manager} && !$args{close_by_manager};
-
-    delete $self->{MB_manager};
+    my $manager = delete $self->{MB_manager};
+    $manager->close($self) if defined $manager && !$args{close_by_manager};
 
     my $write;
     for($args{write} || 'MODIFIED')
@@ -963,7 +963,8 @@ sub close(@)
     if($write && !$force && !$self->writable)
     {   $self->log(WARNING => "Changes not written to read-only folder $self.
 Suggestion: \$folder->close(write => 'NEVER')");
-
+        $self->locker->unlock;
+        $self->{MB_messages} = [];    # Boom!
         return 0;
     }
 
@@ -973,7 +974,8 @@ Suggestion: \$folder->close(write => 'NEVER')");
                , save_deleted => $args{save_deleted} || 0
                );
 
-    $self->{MB_messages} = [];   # Boom!
+    $self->locker->unlock;
+    $self->{MB_messages} = [];    # Boom!
     $rc;
 }
 
@@ -1537,10 +1539,10 @@ sub listSubFolders(@) { () }   # by default no sub-folders
 
 =method openRelatedFolder OPTIONS
 
-Open a folder (usually a sub-folder) with the same options as this one.  If
-there is a folder manager in use, it will be informed about this new folder.
-OPTIONS overrule the options which where used for the folder this method
-is called upon.
+Open a folder (usually a sub-folder) with the same options as this one.
+If there is a folder manager in use, it will be informed about this new
+folder.  OPTIONS overrule the options which where used for the folder
+this method is called upon.
 
 =cut
 
@@ -1549,8 +1551,8 @@ sub openRelatedFolder(@)
     my @options = (%{$self->{MB_init_options}}, @_);
 
     $self->{MB_manager}
-    ?  $self->{MB_manager}->open(@options)
-    :  (ref $self)->new(@options);
+    ? $self->{MB_manager}->open(@options)
+    : (ref $self)->new(@options);
 }
 
 #-------------------------------------------
@@ -1577,8 +1579,8 @@ sub openSubFolder($@)
 
 =method nameOfSubFolder NAME
 
-Returns the constructed name of the folder with NAME, which is a sub-folder
-of this current one.
+Returns the constructed name of the folder with NAME, which is a
+sub-folder of this current one.
 
 =cut
 
@@ -1878,7 +1880,7 @@ Returns the locking object.
 
 =cut
 
-sub locker() { shift->{MB_locker}}
+sub locker() { shift->{MB_locker} }
 
 #-------------------------------------------
 

@@ -8,7 +8,7 @@ use Carp;
 
 =chapter NAME
 
-Mail::Message::Convert::Html - Format messages from or to HTML
+Mail::Message::Convert::Html - Format messages in HTML
 
 =chapter SYNOPSIS
 
@@ -36,7 +36,7 @@ which do require extra packages to be installed.
 Whether to replace e-mail addresses in some header lines with links.
 
 =option  produce 'HTML'|'XHTML'
-=default produce C<'HTML'>
+=default produce C<HTML>
 
 Produce HTML or XHTML output.  The output is slightly different, even
 html browsers will usually accept the XHTML data.
@@ -49,15 +49,11 @@ sub init($)
     $self->SUPER::init($args);
 
     my $produce = $args->{produce} || 'HTML';
-    if($produce eq 'HTML')
-    {   $self->{MMCH_tail} = '>';
-    }
-    elsif($produce eq 'XHTML')
-    {   $self->{MMCH_tail} = ' />';
-    }
-    else
-    {   croak "Produce XHTML or HTML, not $produce.";
-    }
+
+    $self->{MMCH_tail}
+     = $produce eq 'HTML'  ?   '>'
+     : $produce eq 'XHTML' ? ' />'
+     : carp "Produce XHTML or HTML, not $produce.";
 
     $self;
 }

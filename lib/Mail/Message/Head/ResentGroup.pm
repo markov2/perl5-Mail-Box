@@ -161,7 +161,7 @@ sub from($@)
                           ->new($field, message_head => $head);
             push @groups, $group;
 
-            group->add($delivered_to) if defined $delivered_to;
+            $group->add($delivered_to) if defined $delivered_to;
             undef $delivered_to;
 
             $group->add($return_path) if defined $return_path;

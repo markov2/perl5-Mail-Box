@@ -26,6 +26,10 @@ in rfc1939.  This object hides much of the complications in the protocol and
 recovers broken connections automatically.  Although it is part of the
 MailBox distribution, this object can be used separately.
 
+You probably should B<not use this> module, but M<Mail::Box::POP3>.  This
+module is the interface to POP3, whereas M<Mail::Box::POP3> hides the
+protocol weirdness and works as any other mail folder.
+
 =chapter METHODS
 
 =c_method new OPTIONS

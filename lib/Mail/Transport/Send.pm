@@ -75,7 +75,10 @@ known to have exploitable security breaches.
 
 sub new(@)
 {   my $class = shift;
-    $class->SUPER::new(via => 'sendmail', @_);
+    return $class->SUPER::new(@_) if $class ne __PACKAGE__;
+
+    require Mail::Transport::Sendmail;
+    Mail::Transport::Sendmail->new(@_);
 }
 
 #------------------------------------------

@@ -8,6 +8,8 @@ use base 'Mail::Reporter';
 use Carp;
 
 use MIME::Types;
+use File::Basename 'basename';
+
 my MIME::Types $mime_types;
 
 =chapter NAME
@@ -298,6 +300,56 @@ text.
 =cut
 
 sub isText() { not shift->isBinary }
+
+#------------------------------------------
+
+=method dispositionFilename DIRECTORY
+Returns the name which can be used as filename to store the information
+in the indicated DIRECTORY. To get a filename, various fields are searched
+for C<filename> and C<name> attributes.
+
+Only the basename of the found name will be used, for security reasons:
+otherwise, it may be possible to access other directories than the
+one indicated.  If no name was found, or the name is already in use,
+then an unique name is generated.
+
+=cut
+
+sub dispositionFilename($)
+{   my ($self, $dir) = @_;
+    my $raw;
+
+    my $field;
+    if($field = $self->disposition)
+    {   $raw  = $field->attribute('filename')
+             || $field->attribute('file')
+             || $field->attribute('name');
+    }
+
+    if(!defined $raw && ($field = $self->type))
+    {   $raw  = $field->attribute('filename')
+             || $field->attribute('file')
+             || $field->attribute('name');
+    }
+
+    my $filename = '';
+    if(defined $raw)
+    {   $filename = basename $raw;
+        $filename =~ s/[^\w.-]//;
+    }
+
+    unless(length $filename)
+    {   my $ext    = ($self->mimeType->extensions)[0] || 'raw';
+        my $unique;
+        for($unique = 'part-0'; 1; $unique++)
+        {   my $out = File::Spec->catfile($dir, "$unique.$ext");
+            open IN, "<", $out or last;  # does not exist: can use it
+            close IN;
+        }
+        $filename = "$unique.$ext";
+    }
+    File::Spec->catfile($dir, $filename);
+}
 
 #------------------------------------------
 

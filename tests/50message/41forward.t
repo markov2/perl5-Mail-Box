@@ -15,7 +15,7 @@ use Mail::Message::Construct::Forward;
 use Test::More;
 use Mail::Address;
 
-BEGIN {plan tests => 22}
+BEGIN {plan tests => 24}
 
 #
 # First produce a message to forward to.
@@ -76,7 +76,7 @@ is(@f, @g);
 #$forward->print(\*STDERR);
 
 #
-# Create a real forward
+# Create a real forward, which defaults to INLINE
 #
 
 my $dest = 'dest@test.org (Destination)';
@@ -104,7 +104,7 @@ Date: Wed, 9 Feb 2000 15:44:05 -0500
 EXPECT
 
 #
-# Another complicated forward
+# Complicated forward
 #
 
 my $postlude = Mail::Message::Body::Lines->new
@@ -259,3 +259,54 @@ Content-Transfer-Encoding: 8bit
 this is the first
 --boundary-<removed>--
 ATTACH
+
+#
+# Binary message used with inline, which becomes an attach
+#
+
+$body = Mail::Message::Body->new
+ ( mime_type => 'application/octet-stream'
+ , data => [ "line 1\n", "line2\n" ] 
+ );
+ok($body->isBinary);
+
+$msg     = Mail::Message->buildFromBody($body, To => 'you');
+#$msg->print(\*STDERR);
+
+my $fwd4 = $msg->forwardInline
+ ( prelude  => "Prelude\n"
+ , postlude => "Postlude\n"
+#, is_attached => "My own text\n"
+ , To       => 'everyone'
+ );
+
+#$fwd4->print(\*STDERR);
+is(reproducable_text($fwd4->string), <<'EXPECTED');
+From: you
+To: everyone
+Subject: Forwarded
+References: <removed>
+Content-Type: multipart/mixed; boundary="boundary-<removed>"
+Content-Length: <removed>
+Lines: 18
+Message-Id: <removed>
+Date: <removed>
+MIME-Version: 1.0
+
+--boundary-<removed>
+Content-Type: text/plain; charset="us-ascii"
+Content-Length: <removed>
+Lines: 3
+
+Prelude
+[The forwarded message is attached]
+Postlude
+--boundary-<removed>
+Content-Type: application/octet-stream
+Content-Length: <removed>
+Lines: 1
+Content-Transfer-Encoding: base64
+
+bGluZSAxCmxpbmUyCg==
+--boundary-<removed>--
+EXPECTED

@@ -288,6 +288,13 @@ to explicitly state the type of your folder with the C<type> option.
 There will probable be another warning or error message which is related
 to this report, and provides more details.
 
+=warning Folder $name is already open.
+You cannot ask the manager for a folder which is already open. In some
+older releases (before MailBox 2.049), this was permitted, but then
+behaviour changed, because many nasty side-effects are to be expected.
+For instance, an M<Mail::Box::update()> on one folder handle would
+influence the second, probably unexpectedly.
+
 =error Don't know which folder I should open: no name
 
 =cut
@@ -340,8 +347,8 @@ sub open(@)
 
     # Do not open twice.
     if(my $folder = $self->isOpenFolder($name))
-    {   $self->log(NOTICE => "Folder $name is already open.\n");
-        return $folder;
+    {   $self->log(WARNING => "Folder $name is already open.\n");
+        return undef;
     }
 
     #

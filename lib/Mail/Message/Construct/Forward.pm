@@ -143,28 +143,9 @@ sub forward(@)
     my $include = $args{include} || 'INLINE';
     return $self->forwardInline(@_) if $include eq 'INLINE';
 
-    # prelude and postlude are especially useful when the message
-    # is INLINEd.  In all other cases, we would like to have one
-    # preamble.  Let's create a preamble, it it is not present yet.
-
     my $preamble = $args{preamble};
-    if(!defined $preamble)
-    {   my $prelude = $args{prelude} || $self->forwardPrelude;
-        $prelude    = Mail::Message::Body->new(data => $prelude)
-            if defined $prelude && ! blessed $prelude;
-        my @pieces  = ($prelude, [ "\n", "[Your message is attached]\n" ] );
- 
-        if(my $postlude = $args{postlude})
-        {    $postlude = Mail::Message::Body->new(data => $postlude)
-                 unless blessed $postlude;
-             push @pieces, $postlude;
-        }
-
-        push @_, preamble => $prelude->concatenate(@pieces);
-    }
-    elsif(!ref $preamble)
-    {   push @_, preamble => Mail::Message::Body->new(data => $preamble);
-    }
+    push @_, preamble => Mail::Message::Body->new(data => $preamble)
+        if defined $preamble && ! ref $preamble;
 
     return $self->forwardAttach(@_)      if $include eq 'ATTACH';
     return $self->forwardEncapsulate(@_) if $include eq 'ENCAPSULATE';
@@ -285,6 +266,15 @@ line is in C<$_>.
 By default, nothing is added before each line.  This option is processed
 after the body has been decoded.
 
+=option  is_attached STRING
+=default is_attached C<"[The forwarded message is attached]\n">
+A forward on binary messages can not be inlined.  Therefore, they are
+automatically translated into an attachment, as made by M<forwardAttach()>.
+The obligatory preamble option to that method may be specified as option
+to this method, to be used in case of such a forward of a binary, but
+is otherwise constructed from the prelude, the value of this option, and
+the postlude.
+
 =option  strip_signature REGEXP|STRING|CODE
 =default strip_signature C<qr/^--\s/>
 
@@ -300,13 +290,35 @@ sub forwardInline(@)
 
     my $body     = $self->body;
 
-    if($body->isMultipart)
-    {   if($body->parts==1) { $body = $body->part(0) }
-        else                { return $self->forwardAttach(%args) }
+    while(1)    # simplify
+    {   if($body->isMultipart && $body->parts==1)
+                               { $body = $body->part(0)->body }
+        elsif($body->isNested) { $body = $body->nested->body }
+        else                   { last }
     }
-    while($body->isNested)  { $body = $body->nested->body };
 
-    return $self->forwardAttach(%args) if $body->isBinary;
+    # Prelude must be a real body, otherwise concatenate will not work
+    my $prelude = exists $args{prelude} ? $args{prelude}
+       : $self->forwardPrelude;
+
+    $prelude     = Mail::Message::Body->new(data => $prelude)
+        if defined $prelude && ! blessed $prelude;
+ 
+    # Postlude
+    my $postlude = exists $args{postlude} ? $args{postlude}
+       : $self->forwardPostlude;
+ 
+    # Binary bodies cannot be inlined, therefore they will be rewritten
+    # into a forwardAttach... preamble must replace prelude and postlude.
+
+    if($body->isMultipart || $body->isBinary)
+    {   $args{preamble} ||= $prelude->concatenate
+           ( $prelude
+           , ($args{is_attached} || "[The forwarded message is attached]\n")
+           , $postlude
+           );
+        return $self->forwardAttach(%args);
+    }
     
     $body        = $body->decoded;
     my $strip    = (!exists $args{strip_signature} || $args{strip_signature})
@@ -321,20 +333,6 @@ sub forwardInline(@)
     {   my $quoting = ref $quote ? $quote : sub {$quote . $_};
         $body = $body->foreachLine($quoting);
     }
-
-    # Prelude
-    my $prelude = exists $args{prelude} ? $args{prelude}
-       : $self->forwardPrelude;
-
-    $prelude     = Mail::Message::Body->new(data => $prelude)
-        if defined $prelude && ! blessed $prelude;
- 
-    # Postlude
-    my $postlude = exists $args{postlude} ? $args{postlude}
-       : $self->forwardPostlude;
-
-    $postlude    = Mail::Message::Body->new(data => $postlude)
-        if defined $postlude && ! blessed $postlude;
 
     #
     # Create the message.

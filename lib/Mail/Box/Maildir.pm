@@ -136,7 +136,7 @@ sub listSubFolders(@)
 
     my @dirs;
     while(my $d = readdir DIR)
-    {   next if $d =~ m/^(new$|tmp$|cur$|\.)/;
+    {   next if $d =~ m/^(new|tmp|cur|\.\.?)$/;
 
         my $dir = File::Spec->catfile($dir,$d);
         push @dirs, $d if -d $dir && -r _;

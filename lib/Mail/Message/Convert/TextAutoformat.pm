@@ -48,10 +48,6 @@ sub init($)
 
 =section Converting
 
-=cut
-
-#------------------------------------------
-
 =method autoformatBody BODY
 
 Formats a single message body (a M<Mail::Message::Body> object)

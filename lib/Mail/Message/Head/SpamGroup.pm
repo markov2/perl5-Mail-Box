@@ -109,9 +109,11 @@ sub collectFields($)
 
 =ci_method isSpamGroupFieldName NAME
 =cut
+
 sub isSpamGroupFieldName($)
 {  local $_ = $_[1];
-   $_ =~ $spam_assassin_names || $_ =~ $habeas_swe_names;
+    my $about_spam = ($_ =~ $spam_assassin_names || $_ =~ $habeas_swe_names);
+    $about_spam;
 }
 
 #------------------------------------------

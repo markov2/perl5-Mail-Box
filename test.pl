@@ -4,7 +4,7 @@ use warnings;
 use strict;
 
 use lib qw(./lib ../lib tests);
-#use lib qw(/home/markov/shared/perl/UserIdentity/lib);
+use lib qw(/home/markov/shared/perl/UserIdentity/lib);
 use lib qw(/home/markov/shared/perl/MimeTypes/lib);
 
 use File::Spec;

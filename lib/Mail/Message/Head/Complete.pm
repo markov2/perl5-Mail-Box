@@ -189,7 +189,7 @@ sub names() {shift->knownNames}
 
 =method grepNames [NAMES|ARRAY-OF-NAMES|REGEXS]
 
-Filter from all header names the names which start will any of the
+Filter from all header fields the names which start will any of the
 specified list.  When no names are specified, all names will be returned.
 The list is ordered as they where read from file, or added later.
 

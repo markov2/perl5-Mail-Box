@@ -19,6 +19,9 @@ BEGIN {
     }
 
     require Mail::Message::Convert::TextAutoformat;
+    require Text::Autoformat;
+    Text::Autoformat->import('break_wrap');
+
     plan tests => 3;
 }
 
@@ -35,7 +38,8 @@ my $body = Mail::Message::Body->new
  , data  => $content
  );
 
-my $af = Mail::Message::Convert::TextAutoformat->new;
+my $af = Mail::Message::Convert::TextAutoformat
+  ->new( options => {break => break_wrap} );
 ok($af);
 
 my $dump = $af->autoformatBody($body);

@@ -250,7 +250,7 @@ kind of folders, you can only read and delete messages.
 =item M<Mail::Box::Thread::Manager>
 
 Maintains a set of message-threads over one or more folders.  A
-message-tread is a start message with all the replies on it.  And the
+message-thread is a start message with all the replies on it.  And the
 replies on replies, and so on.  This object is used to construct the
 thread for a set of open folders.
 

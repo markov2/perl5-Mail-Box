@@ -11,6 +11,65 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.049: Mon Sep 29 13:32:47 CEST 2003
+
+	Fixes:
+
+	- [Liz Mattijsen] Makefile.PL requires IO::Handle in some
+	  environments.
+
+	- [Terrence Brennon] found a doc and a code mistake in
+	  example/strip-attachement.pl
+
+	- [Ron Savage] showed that the Text::Autoformat module produces
+	  different output on different machines, caused by breaking
+	  words.  Breaking now disabled the for the tests, so test
+	  should result in the same everywhere.
+
+	- Some Mail::Transport::* senders did not pass-on the Bcc field
+	  to their application.  Reported by [Phil Hagen].
+
+	- [Stefan Wolfsheimer] and [Mark Scarton] report a missing $ in
+	  ::ResentGroup, which broke the "delivered-to" field in resent
+	  groups.
+
+	- [Jason Woodward] reported that there were still some problems
+	  with $msg->forward().  Hope to have fixed them, this time.
+
+	- $msg->send now really has a default which will be loaded
+	  automatically as well.
+
+	- When you try to open the same folder twice, using the manager
+	  (as you should), the second time will fail.  This is needed,
+	  because there are too many complications, like locking.
+
+	Improvements:
+
+	- Mail::Box::Parser::Perl used $sep =~ m/^From / to recognize the
+	  MBOX separator.  Now it uses $sep eq 'From ', which is faster.
+
+	- Mail::Message::Body::new(data) now corrects scalars values
+	  which do not end on a "\n".  Convinced by [Mike Mimic]
+
+	- Object::Realize::Later v0.14 required
+
+	- Mail::Box::File::updateMessages() implemented, for instance for
+	  $mbox->update calls.  Test in tests/40mbox/80update.t
+
+	- Maildir subfolder names can start with a dot, as reported by
+	  [Paul Simons].
+
+	- Ability to add options to the command-line of sendmail when
+	  started as MTU.  Saw this need in a script of [Adam Augustine]
+
+	- Test-script of MIME::Entity conversion purges the M::E objects
+	  after being used, otherwise trashing files are left in the tests
+	  directory.
+
+	- Added Mail::Message::Body(::Encode)::dispositionFilename and
+	  Mail::Message::Body::write() which will help to export data
+	  found in a message(-part) to the file-system.
+
 version 2.048: Tue Aug 26 19:50:06 CEST 2003
 
 	Fixes:
@@ -59,8 +118,6 @@ version 2.048: Tue Aug 26 19:50:06 CEST 2003
 
 	- Moved detection of mailinglist type in Mail::Message::Head::Listgroup
 	  from method type() to from().
-
-	- Added examples for a procmail set-up with MailBox
 
 	- Added Mail::Report::addReport, to merge reports from one object
 	  into an other, require by [Matthew Lockner]

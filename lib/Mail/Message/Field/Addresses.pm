@@ -137,7 +137,7 @@ using the OPTIONS.  The group is returned.
 sub addGroup(@)
 {   my $self  = shift;
     my $group = @_ == 1 ? shift
-              : Mail::Message::Field::AddrGroup->new(name => '', @_);
+              : Mail::Message::Field::AddrGroup->new(@_);
 
     push @{$self->{MMFF_groups}}, $group;
     $group;

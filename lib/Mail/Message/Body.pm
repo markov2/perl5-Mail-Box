@@ -279,7 +279,10 @@ sub init($)
     elsif(defined(my $data = $args->{data}))
     {
         if(!ref $data)
-        {   $self->_data_from_lines( [split /^/, $data] ) }
+        {   my @lines = split /^/, $data;
+            $lines[-1] .= "\n" if substr($lines[-1], -1) ne "\n";
+            $self->_data_from_lines(\@lines)
+        }
         elsif(ref $data eq 'ARRAY')
         {   $self->_data_from_lines($data) or return }
         else
@@ -762,6 +765,41 @@ sub printEscapedFrom($) {shift->notImplemented}
 
 #------------------------------------------
 
+=method write OPTIONS
+
+Write the content of the body to a file.  Be warned that you may want to
+decode the body before writing it!
+
+=requires filename FILENAME
+
+=example write the data to a file
+ use File::Temp;
+ my $fn = tempfile;
+ $message->decoded->write(filename => $fn)
+    or die "Couldn't write to $fn: $!\n";
+
+=example using the content-disposition information to write
+ use File::Temp;
+ my $dir = tempdir; mkdir $dir or die;
+ my $fn  = $message->body->dispositionFilename($dir);
+ $message->decoded->write(filename => $fn)
+    or die "Couldn't write to $fn: $!\n";
+
+=cut
+
+sub write(@)
+{   my ($self, %args) = @_;
+    my $filename = $args{filename};
+    die "No filename for write() body" unless defined $filename;
+
+    open OUT, '>', $filename or return;
+    $self->print(\*OUT);
+    close OUT or return undef;
+    $self;
+}
+
+#------------------------------------------
+
 =section Internals
 
 =method read PARSER, HEAD, BODYTYPE [,CHARS [,LINES]]
@@ -916,7 +954,8 @@ will be produced.
 
 =cut
 
-my @in_encode = qw/check encode encoded eol isBinary isText unify/;
+my @in_encode = qw/check encode encoded eol isBinary isText unify
+                   dispositionFilename/;
 my %in_module = map { ($_ => 'encode') } @in_encode;
 
 sub AUTOLOAD(@)

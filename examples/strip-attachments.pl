@@ -12,21 +12,33 @@
 # 16K to a folder (./attachments/). Next it deletes the attachment from
 # the E-mail and writes it to a file named $ARG1.stripped.
 #
-# NOTE: In this version the attachments are still encoded. You can decode
-#       these using the UNIX 'uudeview' utility.
-#
 # By Pjotr Prins <pjotr@pckassa.com>, $Date: 2002/11/30 12:14:01 $
 #
 # This code can be used and modified without restriction.
 # Code based on example by Mark Overmeer, <mailbox@overmeer.net>, 9 nov 2001
 
+# In this example, the stripped data is written to a different folder.
+# You may not need that (but please be careful: test your script well!)
+# Simply remove everything related to $outbox and $outfilename, and open
+# the source folder with access => 'rw'
+
+# You may want to have a look at Mail::Message::Convert::Rebuild, which
+# the provides the $msg->rebuild() method.
+
+# BE WARNED: when different messages specify the same filename for a part,
+# they will overwrite another... you may want a message sequency number in
+# the path of the output file.
+
 use warnings;
 use strict;
 use lib '..', '.';
 
-use Mail::Box::Manager 2.00;
+use Mail::Box::Manager;    # everything else will auto-compile when used
 
-my $ATTACHMENTS='attachments';
+use File::Basename 'basename';
+use File::Spec;
+
+my $attachments = 'attachments';
 
 #
 # Get the command line arguments.
@@ -41,7 +53,9 @@ my $filename = shift @ARGV;
 # Create Attachments directory if non existent
 #
 
-mkdir $ATTACHMENTS if (! -d $ATTACHMENTS);
+   -d $attachments
+or mkdir $attachments
+or die "Cannot create directory $attachments\n";
 
 #
 # Open the folders
@@ -57,8 +71,7 @@ die "Cannot open $filename: $!\n"
     unless defined $folder;
 
 my $outfilename = "$filename.stripped";
-
-# die "File $outfilename exists!" if (-e $outfilename);
+# die "File $outfilename exists!" if -e $outfilename;
 
 my $outbox = $mgr->open
   ( $outfilename
@@ -80,35 +93,37 @@ foreach my $message (@messages)
     $message->printStructure;
     my $m = $message->clone;
 
-    # ---- Test for large attachments
-    if ($m->isMultipart)
-      {
-        foreach my $part ($m->parts)
-	  {
-             # Strip attachments larger than 16K. Another example would be:
-             #   if ($part->body->mimeType ne 'text/plain')
+    unless($m->isMultipart)
+    {   $outbox->addMessage($m);
+        next;
+    }
 
-             if ($part->body->size > 16384)
-	       {
-                  print "\n**** Stripping Attachment "; # ,$part->head,"\n";
-                  $part->head =~ /name=\"(.+)\"/g;
-                  my $disp     = $part->body->disposition;
-                  my $filename = $disp->attribute('filename')
-                              || $disp->attribute('name');
+    foreach my $part ($m->parts)
+    {
+         # Strip attachments larger than 16K. Another example would be:
+         #   if ($part->body->mimeType ne 'text/plain')
+         next unless $part->body->size > 16384;
 
-                  my $attachment = "$ATTACHMENTS/$filename";
-                  print $attachment,"\n";
-                  if (! -f $attachment)
-		  {
-                    # ---- Write attachment to file
-                    open(FH, ">$attachment.enc");
-                    print FH $part->decoded;
-                    close(FH);
-                  }
-                  $part->delete;
-	       }
-	  }
-      }
+         print "\n**** Stripping Attachment "; # ,$part->head,"\n";
+         my $disp     = $part->body->disposition;
+         my $name     = $disp->attribute('filename')
+                     || $disp->attribute('name');
+
+         # a major security hole if you accept any path!
+         $filename    = basename $name;
+
+         my $attachment = File::Spec->catfile($attachments, $filename);
+         print $attachment,"\n";
+
+         unless(-f $attachment)     #  Write attachment to file
+         {   open(FH, ">$attachment");
+             $part->decoded->print(\*FH);
+             close(FH);
+         }
+
+         $part->delete;
+    }
+
     $outbox->addMessage($m);
 }
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 #
 # Test reading of dbx folders.
 #
@@ -25,9 +25,24 @@ BEGIN
        exit 0;
    }
 
-   plan tests => 21;
+   plan tests => 22;
 }
 
+my $test = 'MBOX';   # folder to copy to
+#my $test = 'MH';
+
+my $temp = 'dbxtest';
+
+sub be_sure_its_clean()
+{
+    if($test eq 'MH') { clean_dir $temp }
+    else
+    {   unlink $temp;
+        clean_dir "$temp.d";
+    }
+}
+
+be_sure_its_clean;
 my @src = (folderdir => '45dbx/testfolders');
 
 ok(Mail::Box::Dbx->foundIn('Folder.dbx'), 'check foundIn');
@@ -76,8 +91,6 @@ ok(! $folder->isModified);
 
 #$message->print;
 
-my $test = 'MBOX';
-my $temp = 'dbxtest';
 my $out;
 
 if($test eq 'MH')
@@ -88,25 +101,19 @@ if($test eq 'MH')
 else
 {   require Mail::Box::Mbox;
     $out  = Mail::Box::Mbox->new(folder => $temp, create => 1,
-        access => 'w');
+        access => 'w', log => 'DEBUG');
 }
 
-die "Cannot create temporary $temp: $!\n" unless defined $out;
+die "Cannot create temporary folder $temp: $!\n" unless defined $out;
 
-$folder->copyTo($out);
+ok($folder->copyTo($out), "Copy succesful");
 cmp_ok(scalar $out->messages, '==', scalar $folder->messages);
 cmp_ok(scalar $out->messages, '==', 0);
 ok(!$folder->isModified);
 ok(!$comp->isModified);
+$comp->close;
 $out->close;
+$folder->close;
 
-#warn `ls -l $temp*`;
-if($test eq 'MH')
-{   clean_dir $temp;
-}
-else
-{   unlink $temp;
-    clean_dir "$temp.d";
-}
-
+be_sure_its_clean;
 exit 0;

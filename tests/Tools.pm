@@ -304,7 +304,7 @@ sub start_pop3_server($;$)
    # untainted for perl5.6.1, but not for the other Perl's.
    my $perl   = $^X;
    unless(File::Spec->file_name_is_absolute($perl))
-   {   my @path = split /\:/, $ENV{PATH};
+   {   my @path = split /\:|\;/, $ENV{PATH};
        $perl    = first { -x $_ }
                       map { File::Spec->catfile($_, $^X) }
                            @path;

@@ -464,8 +464,8 @@ sub send(@)
     require Mail::Transport::Send;
 
     my $mailer
-       = ref $_[0] && $_[0]->isa('Mail::Transport::Send') ? shift
-       : !@options && defined $default_mailer             ? $default_mailer
+       = (ref $_[0] && $_[0]->isa('Mail::Transport::Send')) ? shift
+       : (!@options && defined $default_mailer)             ? $default_mailer
        : ($default_mailer = Mail::Transport::Send->new(@options));
 
     $self->log(ERROR => "No default mailer found to send message."), return

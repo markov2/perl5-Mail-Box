@@ -72,7 +72,7 @@ sub trySend($@)
         return 0;
     }
 
-    $self->putContent($message, \*MAILER);
+    $self->putContent($message, \*MAILER, undisclosed => 1);
 
     unless(close MAILER)
     {   $self->log(ERROR => "Errors when closing Exim mailer $program: $!");

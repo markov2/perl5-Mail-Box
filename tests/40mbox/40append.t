@@ -73,7 +73,7 @@ isa_ok($appended[0], 'Mail::Box::Message');
 
 cmp_ok($mgr->openFolders, "==", 1);
 $mgr->close($folder);
-cmp_ok($mgr->openFolders, "==", 0,               "folder is closed");
+cmp_ok($mgr->openFolders, "==", 0,              "folder is closed");
 
 my $msg2 = Mail::Message->build
   ( From      => 'me_too@example.com'

@@ -13,7 +13,7 @@ use Tools;
 use Test::More;
 use File::Spec;
 
-BEGIN {plan tests => 10}
+BEGIN {plan tests => 11}
 
 my $mhsrc = File::Spec->catfile('folders', 'mh.src');
 my $seq   = File::Spec->catfile($mhsrc, '.mh_sequences');
@@ -44,6 +44,7 @@ my $folder = $mgr->open
   );
 
 die "Couldn't read $mhsrc: $!\n" unless $folder;
+isa_ok($folder, 'Mail::Box::MH');
 
 ok($folder->message(1)->label('seen'));
 ok(not $folder->message(2)->label('seen'));

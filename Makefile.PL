@@ -4,6 +4,8 @@ use ExtUtils::MakeMaker;
 
 require 5.006_001;
 
+use IO::Handle;
+
 my @optional =
 ( 
   [ Mail::Box::Parser::C => '3.001'
@@ -65,7 +67,7 @@ my %prereq =
  , File::Spec     => 0.7
  , Errno          => 0.0
  , Scalar::Util   => 1.07
- , Object::Realize::Later => 0.12
+ , Object::Realize::Later => 0.14
  , Mail::Address  => 0.0
  , MIME::Types    => 1.004
  , Sys::Hostname  => 0.0
@@ -75,7 +77,7 @@ my %prereq =
  , URI            => 1.23
  , IO::Scalar     => 0.0
  , Digest::MD5    => 0.0
- , User::Identity => 0.05
+ , User::Identity => 0.07
  , Time::Zone     => 0.0
  );
 
@@ -90,7 +92,8 @@ sub ask($$)
     print "---> $text [$default] ";
     my $key;
 
-    if($has_readkey)
+    if(! -t STDIN) { $key = $default }
+    elsif($has_readkey)
     {   Term::ReadKey->import;
         ReadMode(3);   # cbreak mode
         $key = ReadKey(0) until defined($key);

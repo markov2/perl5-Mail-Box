@@ -65,7 +65,7 @@ sub trySend($@)
         return 0;
     }
  
-    $self->putContent($message, \*MAILER);
+    $self->putContent($message, \*MAILER, undislosed => 1);
 
     unless(close MAILER)
     {   $self->log(ERROR => "Errors when closing Qmail mailer $program: $!");

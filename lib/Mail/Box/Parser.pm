@@ -259,7 +259,7 @@ are ignored.
 
 The return are two scalars, where the first gives the location of the
 separator in the file, and the second the line which is found as
-separator.  A new separator is activated using the pushSeparator() method.
+separator.  A new separator is activated using M<pushSeparator()>.
 
 =cut
 

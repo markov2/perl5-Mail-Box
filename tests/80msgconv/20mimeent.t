@@ -87,6 +87,8 @@ ok($body);
 @lines = $body->as_lines;
 cmp_ok(@lines, "==", 6);
 
+$me->purge;
+
 #
 # and now: MULTIPARTS!  Convert MIME::Entity to Mail::Message
 #
@@ -116,6 +118,8 @@ cmp_ok($body->preamble->nrLines, "==", 2);
 cmp_ok($body->epilogue->nrLines, "==", 2);
 #$msg->print;
 
+$me->purge;
+
 #
 # Convert MULTIPART message back to a MIME::Entity
 #
@@ -128,6 +132,8 @@ ok($me->is_multipart);
 cmp_ok(@parts, "==", 2);
 isa_ok($parts[0], 'MIME::Entity');
 isa_ok($parts[1], 'MIME::Entity');
+
+$me->purge;
 
 1;
 

@@ -158,3 +158,5 @@ $doc->create
       [
       ]
   );
+
+print "* Ready\n" if $verbose;

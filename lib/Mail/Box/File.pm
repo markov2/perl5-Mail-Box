@@ -121,7 +121,8 @@ sub init($)
        if(-e $filename) {;}    # Folder already exists
     elsif(   $args->{create} && $class->create($args->{folder}, %$args)) {;}
     else
-    {   $self->log(PROGRESS => "File $filename for folder $self does not exist.");
+    {   $self->log(PROGRESS =>
+                      "File $filename for folder $self does not exist.");
         return;
     }
 
@@ -137,7 +138,7 @@ sub init($)
         $lockdir      =~ s!/([^/]*)$!!;
         my $extension = $args->{lock_extension} || '.lock';
 
-        $self->locker->filename
+        $locker->filename
           ( File::Spec->file_name_is_absolute($extension) ? $extension
           : $extension =~ m!^\.!  ? "$filename$extension"
           :                         File::Spec->catfile($lockdir, $extension)
@@ -257,8 +258,12 @@ sub close(@)
 
 =c_method appendMessages OPTIONS
 
-=error Cannot append messages to folder file $filename: $!
+Appending messages to a file based folder which is not opened is a little
+risky.  In practice, this is often done without locking the folder.  So,
+an other application may write to the folder at the same time... :(  Hopefully,
+all goes fast enough that the chance on collition is small.
 
+=error Cannot append messages to folder file $filename: $!
 Appending messages to a not-opened file-organized folder may fail when the
 operating system does not allow write access to the file at hand.
 
@@ -360,31 +365,74 @@ sub parser()
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
-    my $filename = $self->filename;
-
-    # On a directory, simulate an empty folder with only subfolders.
-    return $self if -d $filename;
-
-    my @msgopts  =
-     ( $self->logSettings
+    $self->messageCreateOptions
+     ( $args{message_type}
+     , $self->logSettings
      , folder     => $self
      , head_type  => $args{head_type}
      , field_type => $args{field_type}
      , trusted    => $args{trusted}
      );
 
-    my $parser   = $self->parser
-       or return;
+    $self->updateMessages;
+}
+ 
+#-------------------------------------------
+
+=method updateMessages OPTIONS
+For file based folders, the file handle stays open until the folder
+is closed.  Update is therefore rather simple: move to the end
+of the last known message, and continue reading...
+
+=cut
+
+sub updateMessages(@)
+{   my ($self, %args) = @_;
+    my $parser   = $self->parser or return;
+
+    # On a directory, simulate an empty folder with only subfolders.
+    my $filename = $self->filename;
+    return $self if -d $filename;
+
+    if(my $last  = $self->message(-1))
+    {  (undef, my $end) = $last->fileLocation;
+       $parser->filePosition($end);
+    }
+
+    my ($type, @msgopts) = $self->messageCreateOptions;
+    my $count    = 0;
 
     while(1)
-    {   my $message = $args{message_type}->new(@msgopts);
+    {   my $message = $type->new(@msgopts);
         last unless $message->readFromParser($parser);
         $self->storeMessage($message);
+        $count++;
     }
+
+    $self->log(PROGRESS => "Found $count new messages in $filename")
+        if $count;
 
     $self;
 }
- 
+
+#-------------------------------------------
+
+=method messageCreateOptions [TYPE, CONFIG]
+Returns a key-value list of options to be used each time a new message
+is read from a file.  The list is preceeded by the TYPE of message which
+has to be created.
+
+This data is used by M<readMessages()> and M<updateMessages()>.  With
+TYPE and CONFIG, a new configuration is set.
+
+=cut
+
+sub messageCreateOptions(@)
+{   my $self = shift;
+    $self->{MBF_create_options} = [ @_ ] if @_;
+    @{$self->{MBF_create_options}};
+}
+
 #-------------------------------------------
 
 =method moveAwaySubFolder DIRECTORY, EXTENSION
@@ -454,6 +502,10 @@ with permission of a normal user, you can only get it to work in C<INPLACE>
 mode.  Be warned that in this case folder locking via a lockfile is not
 possible as well.
 
+=warning Cannot remove folder $name file $filename: $!
+
+Writing an empty folder will usually cause that folder to be removed,
+which fails for the indicated reason.  M<new(remove_when_empty)>
 =warning Cannot remove folder $name file $filename: $!
 
 Writing an empty folder will usually cause that folder to be removed,
@@ -697,7 +749,6 @@ for instance by adding a message separator, and this will cause
 problems.  Where access to all messages at once is faster in file
 based folders, access to a single message is (much) slower, because
 the whole folder must be read.
-
 
 =cut
 

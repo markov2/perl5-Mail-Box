@@ -10,7 +10,7 @@ use Mail::Box::Manager;
 use Tools;
 
 use File::Spec;
-use Test::More tests => 16;
+use Test::More tests => 14;
 
 my $new  = File::Spec->catfile('folders', 'create');
 unlink $new;
@@ -34,14 +34,13 @@ my $second = $manager->open
  , lock_type    => 'NONE'
  );
 
-ok(defined $second,                              'open same folder');
-is($second, $folder,                             'same: no new folder');
-my @notices = $manager->report('NOTICES');
-cmp_ok(@notices, "==", 1,                        'mgr noticed double');
+ok(!defined $second,                             'open same folder fails');
+my @warnings = $manager->report('WARNINGS');
+cmp_ok(@warnings, "==", 1,                       'mgr noticed double');
 
-$notices[-1] =~ s#\\mbox\.win#/mbox.src#g;  # Windows
+$warnings[-1] =~ s#\\mbox\.win#/mbox.src#g;  # Windows
 
-is($notices[-1], "Folder folders/mbox.src is already open.\n");
+is($warnings[-1], "Folder folders/mbox.src is already open.\n");
 cmp_ok($manager->openFolders, "==", 1,           'only one folder open');
 
 undef $second;
@@ -53,13 +52,11 @@ my $n = $manager->open
  , type         => 'mbox'
  , lock_type    => 'NONE'
  );
-ok(! -f $new,                                    'folder file does not exist');
-ok(! defined $n,                                 'open non-ex does not succeed');
-@notices = $manager->report('NOTICES');
-cmp_ok(@notices, "==", 1,                        'no new notices since "double"');
+ok(! -f $new,                                   'folder file does not exist');
+ok(! defined $n,                                'open non-ex does not succeed');
 
-my @warnings = $manager->report('WARNINGS');
-cmp_ok(@warnings, "==", 1,                       'new warning');
+@warnings = $manager->report('WARNINGS');
+cmp_ok(@warnings, "==", 2,                      'new warning');
 $warnings[-1] =~ s#\\#/#g;  # Windows
 is($warnings[-1], "Folder does not exist, failed opening mbox folder folders/create.\n");
 

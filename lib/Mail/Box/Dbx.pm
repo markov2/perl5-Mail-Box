@@ -143,6 +143,10 @@ sub readMessages()
 
 #-------------------------------------------
 
+sub updateMessages() { shift }
+
+#-------------------------------------------
+
 sub nameOfSubFolder($)
 {   my ($self, $name) = (shift, shift);
     my $dirname = dirname $self->filename;
@@ -175,10 +179,14 @@ sub listSubFolders(@)
          @subs     = grep { -f File::Spec->catfile($dir, $_.'.dbx') } @subs;
     }
 
-    @subs = grep { my $f = $self->openSubFolder($_); $f && $f->messages } @subs
-        if $skip_empty;
+    return @subs unless $skip_empty;
 
-    @subs;
+    my @filled;
+    foreach my $sub (@subs)
+    {   my $f = $self->openSubFolder($sub, lock_type => 'NONE');
+        push @filled, $f if defined $f && scalar($f->messages);
+    }
+    @filled;
 }
 
 #-------------------------------------------
