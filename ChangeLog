@@ -7,7 +7,19 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-block addMessage/appendMessage for POP3
+block addMessage/appendMessage for POP3?
+check all close return-codes
+
+version 2.029: Mon Nov  4 21:06:30 CET 2002
+
+	Fixes:
+
+	- Empty header lines where printed without trailing new-line.  This
+	  was spotted by [Blair Zajac] soon after the release which broke
+	  it: do not use 2.028
+
+	- Some extra checks for the return-code of close(), added as wished
+	  for by [Blair Zajac]
 
 version 2.028: Mon Nov 4 15:08:57 CET 2002
 

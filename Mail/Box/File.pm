@@ -187,7 +187,7 @@ sub create($@)
     }
 
     if(my $create = IO::File->new($filename, 'w'))
-    {   $create->close;
+    {   $create->close or return;
     }
     else
     {   warn "Cannot create folder $name: $!\n";
@@ -267,8 +267,9 @@ sub close(@)
     undef $_[0];                 #    ref to undef, as the SUPER does.
     shift;
 
-    $self->SUPER::close(@_);
+    my $rc = $self->SUPER::close(@_);
     $self->parserClose;
+    $rc;
 }
 
 #-------------------------------------------
@@ -555,7 +556,6 @@ sub _write_new($)
 
     $self->log(PROGRESS => "Written new folder $self with ".@messages,"msgs.");
     $new->close;
-    1;
 }
 
 # First write to a new file, then replace the source folder in one
@@ -606,8 +606,8 @@ sub _write_replace($)
         }
     }
 
-    $new->close;
-    CORE::close FILE;
+    return 0
+        unless $new->close && CORE::close FILE;
 
     if(move $tmpnew, $filename)
     {    $self->log(PROGRESS => "Folder $self replaced ($kept, $reprint)");
@@ -669,7 +669,7 @@ sub _write_inplace($)
         $message->moveLocation($newbegin - $oldbegin);
     }
 
-    CORE::close FILE;
+    CORE::close FILE or return 0;
     $self->log(PROGRESS => "Folder $self updated in-place ($kept, $printed)");
     $self->parser->takeFileInfo;
 
@@ -709,8 +709,7 @@ sub appendMessages(@)
         push @coerced, $coerced;
     }
 
-    $out->close;
-    $folder->close;
+    return 0 unless $out->close && $folder->close;
     @coerced;
 }
 

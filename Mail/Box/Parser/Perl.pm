@@ -162,6 +162,8 @@ LINE:
             last LINE;
         }
 
+        $body = "\n" unless length $body;
+
         # Collect folded lines
         while($line = $file->getline)
         {   $line =~ m!^[ \t]! ? ($body .= $line) : last;
