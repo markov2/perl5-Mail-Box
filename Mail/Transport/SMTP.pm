@@ -280,42 +280,4 @@ sub tryConnectTo($@)
 
 #------------------------------------------
 
-=method destinations MESSAGE, [ADDRESS|ARRAY-OF-ADDRESSES]
-
-Determine the destination for this message.  If a valid ADDRESS is defined,
-this is used to overrule the addresses within the message.  If the ADDRESS
-is C<undef> it is ignored.
-
-If no ADDRESS is specified, the message is scanned for resent groups (see
-Mail::Message::Head::resentGroups()).  The addresses found in the first
-(is latest added) group are used.  If no resent groups are found, the
-normal C<To>, C<Cc>, and C<Bcc> lines are taken.
-
-=cut
-
-sub destinations($;$)
-{   my ($self, $message, $overrule) = @_;
-    my @to;
-
-    if(defined $overrule)      # Destinations overruled by user.
-    {   my @addr = ref $overrule eq 'ARRAY' ? @$overrule : ($overrule);
-        @to = map { ref $_ && $_->isa('Mail::Address') ? ($_)
-                    : Mail::Address->parse($_) } @addr;
-    }
-    elsif(my @rgs = $message->head->resentGroups)
-    {   @to = $rgs[0]->destinations;
-        $self->log(ERROR => "Resent group does not specify a destination"), return ()
-            unless @to;
-    }
-    else
-    {   @to = $message->destinations;
-        $self->log(ERROR => "Message has no destination"), return ()
-            unless @to;
-    }
-
-    @to;
-}
-
-#------------------------------------------
-
 1;

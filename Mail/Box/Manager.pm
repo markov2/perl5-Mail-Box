@@ -323,12 +323,17 @@ you forgot to require the Mail::Box extension which implements this folder
 type, but probably it is a typo.  Usually, the manager is able to figure-out
 which type to use by itself.
 
-=warning No folder $name of type $type does exist.
+=warning Folder does not exist, failed opening $type folder $name.
 
-The folder is not found, and creating is not permitted or did not
-succeed (see the C<create> flag).  The manager tried to open a folder
-as the specified type.  It may help to explicitly state the type of
-your folder with the C<type> option.
+The folder does not exist and creating is not permitted (see the C<create>
+flag) or did not succeed.  When you do not have sufficient access rights
+to the folder (for instance wrong password for POP3), this warning will
+be produced as well.
+
+The manager tried to open a folder of the specified type.  It may help
+to explicitly state the type of your folder with the C<type> option.
+There will probable be another warning or error message which is related
+to this report, and provides more details.
 
 =cut
 
@@ -443,7 +448,7 @@ sub open(@)
     my $folder = $class->new(@defaults, %args);
 
     unless(defined $folder)
-    {   $self->log(WARNING => "No folder $name of type $folder_type does exist.");
+    {   $self->log(WARNING =>"Folder does not exist, failed opening $folder_type folder $name.");
         return;
     }
 

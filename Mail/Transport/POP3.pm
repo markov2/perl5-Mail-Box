@@ -8,7 +8,7 @@ use base 'Mail::Transport::Receive';
 use IO::Socket  ();
 use Digest::MD5 ();
 
-my $CRLF = "\015\012";
+my $CRLF = $^O eq 'MSWin32' ? "\n" : "\015\012";
 
 =head1 NAME
 

@@ -290,7 +290,7 @@ sub popClient()
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
-    my $pop   = $self->popClient;
+    my $pop   = $self->popClient or return;
     my @log   = $self->logSettings;
     my $seqnr = 0;
 

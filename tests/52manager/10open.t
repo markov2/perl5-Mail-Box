@@ -65,7 +65,7 @@ cmp_ok(@notices, "==", 1,                        'no new notices since "double"'
 my @warnings = $manager->report('WARNINGS');
 cmp_ok(@warnings, "==", 1,                       'new warning');
 $warnings[-1] =~ s#\\#/#g;  # Windows
-is($warnings[-1], "No folder folders/create of type mbox does exist.\n");
+is($warnings[-1], "Folder does not exist, failed opening mbox folder folders/create.\n");
 
 $manager->log('WARNINGS');  # back to default reporting.
 $manager->trace('WARNINGS');

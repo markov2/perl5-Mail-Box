@@ -36,7 +36,7 @@ Mail::Message::Body - the data of a body in a message
  my $content_type = $body->type;
  my $transfer_encoding = $body->transferEncoding;
  my $encoded  = $body->encode(mime_type => 'text/html',
-    charset => 'us-ascii', transfer_encoding => 'NONE');
+    charset => 'us-ascii', transfer_encoding => 'none');
  my $decoded  = $body->decoded;
 
 =head1 DESCRIPTION

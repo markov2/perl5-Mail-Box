@@ -78,8 +78,8 @@ sub init($)
     my $based = $args->{based_on};
 
     $self->{MMBN_nested}
-       = !$based || defined $nested  ? $nested
-       : $based->isNested            ? $based->nested
+       = (!$based || defined $nested) ? $nested
+       : $based->isNested             ? $based->nested
        : undef;
 
     $self;

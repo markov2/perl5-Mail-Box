@@ -689,9 +689,12 @@ sub consume($;$)
         return () unless @objs;
 
         # Format the addresses
-        my @addrs = map {ref $_ && $_->isa('Mail::Address') ? $_->format : "$_"}             @objs;
+        my @strings = map {ref $_ && $_->isa('Mail::Address') ? $_->format : "$_"}
+             @objs;
 
-        $body = $self->fold($name, join(', ', @addrs));
+        my $text  = join(', ', @strings);
+        $text     =~ s/\s+/ /g;
+        $body = $self->fold($name, $text);
     }
     elsif($body !~ s/\n+$/\n/g)   # Added by user...
     {   $body = $self->fold($name, $body);

@@ -404,7 +404,9 @@ sub openFile($)
     return unless $fh;
     $self->{MBPP_file}       = $fh;
 
-    eval { binmode $fh, ':raw' };
+    binmode $fh, ':raw'
+       if ref($fh) eq 'GLOB' || $fh->can('BINMODE');
+
     $self->{MBPP_separators} = [];
 
     # Prepare the first line.

@@ -157,7 +157,7 @@ sub _data_from_lines(@)
 
 sub clone()
 {   my $self  = shift;
-    my $clone = ref($self)->new;
+    my $clone = ref($self)->new(based_on => $self);
 
     copy($self->tempFilename, $clone->tempFilename)
        or return;

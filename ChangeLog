@@ -11,6 +11,55 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.040: Mon Apr 14 15:48:54 CEST 2003
+
+	Fixes:
+
+	- Mail::Transport::Exim could not find destinations().  Move that
+	  method from MT::SMTP to MT::Send.  Thanks to [Greg Matheson].
+
+	- [Dimitris Glynos] fixed one more place where a failed login
+	  for POP3 caused Mail::Box to hick-up.
+
+	- [Dimitris Glynos] made Mail::Box care about succesfull reading
+	  of messages.
+
+	- [Shagren] reported that the CRLF changes on POP3 did break
+	  POP3 under Windows.  The problem is that the IO::* modules
+	  (like IO::Socket) do not implement BINMODE: you can not set
+	  them in 'raw' mode.  Implemented a work-around.
+
+	- [Steve Lewis] explained why information about a body was not
+	  preserved over a clone().  He provided a patch.
+
+	- [Todd Richmond] found-out that Content-Type lines sometimes
+	  doubled.  The reason behind this was that header and body
+	  shared the same field structures, which blocked the auto-
+	  destruction of header lines which were obsoleted: the old
+	  Content-Type line in the header was kept alive by the body.
+
+	- [Michael D Richards] reported another corruption in construction
+	  of binary attachments.  Fixed that as well.
+
+	Improvements:
+
+	- [Alexander Bauer] reported a very slow Mail::Message->read
+	  for large messages.  This was due to IO::ScalarArray (being
+          extremely slow in seeks), which now is replaced by IO::Scalar.
+
+	- Do not use eval{binmode $fh}, but carefully check whether the
+	  the $fh can handle binmode before calling it in the parser.
+
+	- Remove newlines from header field data which is passed as
+	  objects.  When they stringify with newlines included, this
+	  disturbes folding.
+
+	- Added comments on how (not) to change the body of a bounced
+	  message.  Do never do it, but if you have to then...
+
+	- Mail::Message::Construct::reply handles nested messages and
+	  binary files better to cronstruct an answer.
+
 version 2.039: Sun Mar 30 17:34:43 CEST 2003
 
 	Fixes:

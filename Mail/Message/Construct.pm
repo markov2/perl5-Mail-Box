@@ -84,7 +84,6 @@ sub read($@)
     my $ref       = ref $from;
 
     require IO::Scalar;
-    require IO::ScalarArray;
 
     if(!$ref)
     {   $filename = 'scalar';
@@ -96,15 +95,19 @@ sub read($@)
     }
     elsif($ref eq 'ARRAY')
     {   $filename = 'array of lines';
-        $file     = IO::ScalarArray->new($from);
+        my $buffer= join '', @$from;
+        $file     = IO::Scalar->new(\$buffer);
     }
     elsif($ref eq 'GLOB')
     {   $filename = 'file (GLOB)';
-        $file     = IO::ScalarArray->new( [ <$from> ] );
+        local $/;
+        my $buffer= <$from>;
+        $file     = IO::Scalar->new(\$buffer);
     }
     elsif($ref && $from->isa('IO::Handle'))
     {   $filename = 'file ('.ref($from).')';
-        $file     = IO::ScalarArray->new( [ $from->getlines ] );
+        my $buffer= join '', $from->getlines;
+        $file     = IO::Scalar->new(\$buffer);
     }
     else
     {   croak "Cannot read from $from";
@@ -294,9 +297,9 @@ C<NO>, C<INLINE>, and C<ATTACH>.
 sub reply(@)
 {   my ($self, %args) = @_;
 
+    my $body   = $args{body};
+    my $strip  = !exists $args{strip_signature} || $args{strip_signature};
     my $include  = $args{include}   || 'INLINE';
-    my $strip    = !exists $args{strip_signature} || $args{strip_signature};
-    my $body     = defined $args{body} ? $args{body} : $self->body;
 
     if($include eq 'NO')
     {   # Throw away real body.
@@ -305,17 +308,20 @@ sub reply(@)
                unless defined $args{body};
     }
     elsif($include eq 'INLINE' || $include eq 'ATTACH')
-    {   my @stripopts =
-         ( pattern     => $args{strip_signature}
-         , max_lines   => $args{max_signature}
-         );
+    {
+        unless(defined $body)
+        {   # text attachment
+            $body = $self->body;
+            $body = $body->part(0) if $body->isMultipart && $body->parts==1;
+            $body = $body->nested  if $body->isNested;
 
-        my $decoded  = $body->decoded;
-        $body        = $strip ? $decoded->stripSignature(@stripopts) : $decoded;
-
-        if($body->isMultipart && $body->parts==1)
-        {   $decoded = $body->part(0)->decoded;
-            $body    = $strip ? $decoded->stripSignature(@stripopts) : $decoded;
+            $body
+             = $strip && ! $body->isMultipart && !$body->isBinary
+             ? $body->decoded->stripSignature
+                 ( pattern   => $args{strip_signature}
+                 , max_lines => $args{max_signature}
+                 )
+             : $body->decoded;
         }
 
         if($include eq 'INLINE' && $body->isMultipart) { $include = 'ATTACH' }
@@ -1111,6 +1117,11 @@ object.  See Mail::Message::Head::ResentGroup::new() for the available
 options.  This is required if you want to add a new resent group: create
 a new C<Received> line in the header as well.
 
+If you are planning to change the body of a bounce message, don't!  Bounced
+messages have the same message-id as the original message, and therefore
+should have the same content (message-ids are universally unique).  If you
+still insist, use Mail::Message::body().
+
 =examples
 
  my $bounce = $folder->message(3)->bounce(To => 'you', Bcc => 'everyone');
@@ -1163,6 +1174,8 @@ sub bounce(@)
     $head->addResentGroup($rg);
     $bounce;
 }
+
+#------------------------------------------
 
 #------------------------------------------
 

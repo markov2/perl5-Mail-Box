@@ -420,7 +420,9 @@ USAGE
       , init_options => [ @_ ]  # for clone
       ) or return;
 
-    $self->read if $self->{MB_access} =~ /r|a/;
+    $self->read or return
+        if $self->{MB_access} =~ /r|a/;
+
     $self;
 }
 

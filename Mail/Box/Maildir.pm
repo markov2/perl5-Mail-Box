@@ -78,7 +78,7 @@ sub init($)
 
 #-------------------------------------------
 
-=c_method create FOLDERNMAE, OPTIONS
+=c_method create FOLDERNAME, OPTIONS
 
 =error Cannot create Maildir folder $name.
 

@@ -96,7 +96,7 @@ sub _data_from_lines(@)
 
 sub clone()
 {   my $self  = shift;
-    ref($self)->new(data => [ $self->lines ] );
+    ref($self)->new(data => [ $self->lines ], based_on => $self);
 }
 
 #------------------------------------------
