@@ -1,10 +1,6 @@
 
-package Mail::Box::Threads;
-
 use strict;
-use 5.006;
-our $VERSION = v0.9;
-
+package Mail::Box::Threads;
 use Mail::Box::Message;
 
 =head1 NAME
@@ -185,6 +181,35 @@ sub timespan2seconds($)
 
 #-------------------------------------------
 
+=item toBeThreaded MESSAGE [, ...]
+
+=item toBeUnthreaded MESSAGE-ID [, ...]
+
+Register a message to be put in (withdrawn from) a thread when the
+user is asking for threads.  If no-one ever asks for threads, then
+no work is done on them.
+
+=cut
+
+sub toBeThreaded(@)
+{   my $self = shift;
+    push @{$self->{MBT_to_be_threaded}}, @_;
+    $self;
+}
+
+sub toBeUnthreaded(@)
+{   my $self = shift;
+    push @{$self->{MBT_to_be_unthreaded}}, @_;
+    $self;
+}
+
+
+#################
+################# AUTOLOAD (when implemented)
+#################
+
+#-------------------------------------------
+
 =item createDummy MESSAGE-ID
 
 Create a dummy message for this folder.  The dummy is a place-holder
@@ -203,6 +228,31 @@ sub createDummy($)
 
 #-------------------------------------------
 
+=item processDelayedThreading
+
+Parse all messages which where detected in the folder, but were not
+processed into a thread yet.
+
+=cut
+
+sub processDelayedThreading()
+{   my $self = shift;
+
+    if(my $add = $self->{MBT_to_be_threaded})
+    {   $self->inThread($_) foreach @$add;
+        delete $self->{MBT_to_be_threaded};
+    }
+
+    if(my $del = $self->{MBT_to_be_unthreaded})
+    {   $self->outThread($_) foreach @$del;
+        delete $self->{MBT_to_be_unthreaded};
+    }
+
+    $self;
+}
+
+#-------------------------------------------
+
 =item thread MESSAGE
 
 Based on a message, and facts from previously detected threads, try
@@ -212,6 +262,9 @@ to build solid knowledge about the thread where this message is in.
 
 sub thread($)
 {   my ($self, $message) = @_;
+
+    $self->inThread($message);
+    $self->processDelayedThreading;
 
     # Search for the top of this message's thread.
     my $top = $message;
@@ -286,6 +339,8 @@ sub inThread($)
     # this message.
     
     my $msgid   = $message->messageID;
+use Carp;
+confess if $message->isDummy;
     my $head    = $message->head;
 
     my $replies;
@@ -348,6 +403,21 @@ sub inThread($)
     $self->registerThread($message)
         unless $replies || @refs;
 
+    $self;
+}
+
+#-------------------------------------------
+
+=item outThread MESSAGE-ID
+
+Remove the message, which is represented by its message-id, from the
+thread-infrastructure.  A message is replaced by a dummy, if it has
+follow-ups.
+
+=cut
+
+sub outThread($)
+{   my ($self, $msgid) = @_;
     $self;
 }
 
@@ -691,6 +761,7 @@ sub nrMessages()
 Collect all the ids in this thread.
 
 Examples:
+
     $newfolder->addMessages($folder->ids($thread->ids));
     $folder->delete($thread->ids);
 
@@ -789,7 +860,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 

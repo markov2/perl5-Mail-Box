@@ -111,7 +111,7 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/t/2mbox6t.t
 		Mail/t/3mh6t.t
 
-version 0.9:
+version 0.9: Sun Jan 14 12:18:38 CET 2001
 
 Mark Overmeer <mark@overmeer.net>
 	* More tests on threads, which resulted in quite some fixes.
@@ -126,5 +126,26 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/Box/Messages.pm
 		Mail/t/3mh7s.t
 
-	The number of tests grew to over 100, so it is starting to
-	look as if all trics are working.
+	* Tested creation, listFolder and such of Mboxes.  It will
+	  not work for MH folders yet.
+		Mail/Box/Mbox.pm
+		Mail/t/3mbox5c.t
+
+	The number of tests grew to 130, so it is starting to look as
+	if all trics are working.
+
+version 0.91: Wed Jan 17 00:39:08 CET 2001
+
+Mark Overmeer <mark@overmeer.net>
+	* Tested creation, listFolder and such for MH.
+		Mail/Box/MH.pm
+		Mail/t/3mh5c.t
+
+	* Removed 5.6 dependencies.  Hope it works for 5.005 now...
+	  Tjeeee... pitty that most people still use 5.005.
+
+	* Too many fixes, and major rewrite of code related to writing
+	  folders.
+
+	The code seems to stabelize a little, and I have reports of
+	people using the code.

@@ -1,10 +1,7 @@
 
 use strict;
-use 5.006;
 
 package Mail::Box::Index;
-our $VERSION = v0.9;
-
 use FileHandle;
 use File::Copy;
 
@@ -103,12 +100,9 @@ sub writeIndex(@)
 {   my $self = shift;
     my $index = $self->indexFilename or return $self;
 
-    open INDEX, '>', $index or return $self;
+    open INDEX, ">$index" or return $self;
 
-    foreach (@_)
-    {   $_->printIndex(\*INDEX);
-        print INDEX "\n";
-    }
+    $_->printIndex(\*INDEX) foreach @_;
 
     close INDEX;
     $self;
@@ -134,7 +128,7 @@ sub readIndex(;$)
     my $index = $self->indexFilename or return ();
     my $type  = shift || 'MIME::Head';
 
-    open INDEX, '<', $index or return ();
+    open INDEX, $index or return ();
 
     my @index;
     until(eof INDEX)
@@ -157,7 +151,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 

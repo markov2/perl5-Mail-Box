@@ -31,13 +31,19 @@ Plans for the (near?) future:
   - Exmh      (should be relatively simple, extends MH)
   - IMAP      (using Mail::IMAPClient, looks not that hard)
   - Emaul     (for compatibily with Mail::Folder)
-  - Maildir   (comparible to MH)
+  - Maildir   (comparible to MH, but different optimizations
+               possible/required)
 
   Any more?
+  One of the main reasons that these are not implemented, is that my
+  knowledge on how they work is insufficient.
 
-* Make everything autoloading.
-  Mail::Box::MH, ::Mbox, and ::Thread could easily be made autoloading.
+* Make everything autoloading (of perl-code, this time).
+  Mail::Box::MH, ::Mbox, ::Thread, and ::Tie could easily be made
+  autoloading.
+
   For the message-folders, only foundIn() should be kept outside the
   loading mechanism.
+
   All modules are designed to minimize their dependency, so I should
   work well.

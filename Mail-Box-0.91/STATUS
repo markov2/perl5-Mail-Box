@@ -6,12 +6,14 @@ please check for a new version: new programs often get many changes
 in their first months.
 
 The release status is   ***** ALPHA *****
-as long as not all methods are tested intensively.  Mbox folders are
-better tested than MH-folders, especially because the AUTOLOAD-trics
-are simpler for Mboxes.
+as long as not all methods are tested intensively.  There are many
+tests, but it does not cover every situation, yet.
 
-Other folder-types will be implemented only when the beta phase is
+Other folder-types will be implemented only when the BETA phase is
 reached: when the Mbox and MH implementation seem complete and stable.
+The first BETA will have version 1.0.  The module will go out of
+BETA if I know of any application which succesfully uses Mail::Box.
+
 
 Tested
 ======
@@ -32,6 +34,7 @@ MH-folders:
    3mh1r.t            reading
    3mh2w.t            writing
    3mh3a.t            appending to opened and unopened folders
+   3mh5c.t            folders and sub-folders
    3mh6t.t            test threads
    3mh7s.t            mh_sequences and labels.
 
@@ -45,10 +48,15 @@ Locking:
    9lock.t            dotlock mechanism
 
 
-NOT Tested  (but implemented)
+NOT Tested
 ==========
 
-MH creating/removing of folders
-MH listing of folders
-MH sub-folders (emulated in mbox)
-MH index-file
+MH index-file  (but I expect it to work)
+
+appending message behind non-existing folders, especially for a mbox where
+   a directory is in its way.
+
+Illegal messages, and other fault conditions.
+
+So many things are tested, but quite a lot is still lacking.  Please
+contribute.

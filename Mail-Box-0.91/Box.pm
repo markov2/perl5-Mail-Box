@@ -1,16 +1,16 @@
 
 package Mail::Box;
-use 5.006;
+#use 5.006;
 
-$VERSION = '0.9';
-use strict;
+$VERSION = '0.91';
+@ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
 use Mail::Box::Threads;
 use Mail::Box::Locker;
 use Mail::Box::Tie;
 
-our @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
+use strict;
 
 use MIME::Parser;
 
@@ -504,23 +504,67 @@ sub read(@)
 
 #-------------------------------------------
 
-=item write
+=item write [OPTIONS]
 
-Write the data to its folder.  If this returns false, then it failed.
+Write the data to disk.  It return true when this succeeded.  If you
+want to write to a different file, you first create a new folder, then
+move the messages, and then write that file.
+
+As options you may specify
+
+=over 4
+
+=item * force => BOOL
+
+Overrule write-protection (if possible, it may still be blocked by the
+operating-system).
+
+=item * keep_deleted => BOOL
+
+Do not remove messages which were flaged to be deleted from the folder,
+but do remove them from disk.
+
+=item * save_deleted => BOOL
+
+Save messages which where flagged to be deleted.  The flag is conserved
+(when possible)
+
+=back
 
 =cut
 
-sub write()
+sub write(@)
 {   my $self = shift;
-    unless($self->writeable)
+    my %args = @_;
+
+    unless($args{force} || $self->writeable)
     {   warn "Folder $self is opened read-only.\n";
         return;
     }
 
-    $self->{MB_modifications} = 0
-        if $self->writeMessages;
+    unless($args{keep_deleted})
+    {   my @keep;
 
-    $self;
+        foreach my $message ($self->allMessages)
+        {   if($message->deleted)
+            {   $message->diskDelete;
+                $self->messageID($message->messageID, undef);
+                $self->toBeUnthreaded($message);
+            }
+            else
+            {   push @keep, $message;
+            }
+        }
+
+        $self->{MB_messages}      = [ @keep ];
+        $self->{MB_alive}         = [ @keep ];
+        $self->{MB_modifications} = 0
+    }
+
+    $args{messages}
+        = $args{save_deleted} ? [ $self->allMessages ] : [ $self->messages ];
+
+    $self->writeMessages(\%args);
 }
 
 #-------------------------------------------
@@ -555,6 +599,7 @@ C<force> will not help.
 
 sub close(@)
 {   my ($self, %args) = @_;
+    my $force = $args{force} || 0;
 
     return if exists $self->{MB_is_closed};
     $self->{MB_is_closed} = 1;
@@ -569,15 +614,15 @@ sub close(@)
         : $args{write} eq 'NEVER'                          ? 0
         :                                                    0;
 
-    if($write && !$self->writeable)
-    {   unless($args{force} || 0)
-        {   warn "No changes made to read-only folder.\n";
-            return 1;
-        }
-        $self->{MB_access} = 'rw';
+    if($write && !$force && !$self->writeable)
+    {   warn "No changes made to read-only folder.\n";
+        return 1;
     }
 
-    my $rc = $write ? $self->write : 1;
+    my $rc = $write
+           ? $self->write(force => $force)
+           : 1;
+
     $self->unlock;
     $rc;
 }
@@ -723,7 +768,7 @@ Examples:
 
 =cut
 
-sub message(;$) :lvalue
+sub message(;$)
 {   my Mail::Box $self = shift;
     $self->{MB_messages}[shift];
 }
@@ -745,7 +790,6 @@ use Carp;
 confess unless $msgid;
     return $self->{MB_msgid}{$msgid} unless @_;
 
-    # Define message.
     my $message = shift;
 
     # Auto-delete doubles.
@@ -754,11 +798,6 @@ confess unless $msgid;
         return $self;
     }
 
-    # Register the message to be threaded.  It may never be used, when
-    # threads are not used.
-    push @{$self->{MB_to_be_threaded}}, $message;
-
-    # Store the message in the message-id index.
     $self->{MB_msgid}{$msgid} = $message;
 }
 
@@ -799,7 +838,7 @@ sub as_row()
 
 #-------------------------------------------
 
-=item activeMessage INDEX
+=item activeMessage INDEX [,MESSAGE]
 
 Returns the message indicated by INDEX from the list of non-deleted
 messages.  This is useful for the tied-folder interface, where we only
@@ -807,7 +846,10 @@ see the non-deleted messages, but not for other purposes.
 
 =cut
 
-sub activeMessage($) { shift->as_row->[shift] }
+sub activeMessage($;$)
+{   my ($self, $index) = (shift, shift);
+    @_ ? $self->as_row->[$index] = shift : $self->as_row->[$index];
+}
 
 #-------------------------------------------
 
@@ -884,26 +926,6 @@ sub addMessages(@)
 
 #-------------------------------------------
 
-=item thread MESSAGE
-
-Based on a message, and facts from previously detected threads, try
-to build solid knowledge about the thread where this message is in.
-
-=cut
-
-sub thread($)
-{   my ($self, $message) = @_;
-
-    if(exists $self->{MB_to_be_threaded})
-    {   $self->inThread($_) foreach $message, @{$self->{MB_to_be_threaded}};
-        delete $self->{MB_to_be_threaded};
-    }
-
-    $self->Mail::Box::Threads::thread($message);
-}
-
-#-------------------------------------------
-
 =item appendMessages LIST-OF-OPTIONS
 
 (Class method) Append one or more messages to an unopened folder.
@@ -965,7 +987,7 @@ sub coerce($)
 
     # Be sure that the message is loaded, before it is converted
     # to a new type.
-    $message->can('play_dead_parrot_sketch');
+    $message->forceLoad if $message->can('forceLoad');
 
     # Convert to the right type for this mailbox.
     $self->{MB_message_type}->coerce
@@ -1229,7 +1251,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 

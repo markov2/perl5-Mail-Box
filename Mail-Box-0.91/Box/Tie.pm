@@ -1,10 +1,6 @@
 
-package Mail::Box::Tie;
-
 use strict;
-use 5.006;
-
-our $VERSION = '0.9';
+package Mail::Box::Tie;
 
 =head1 NAME
 
@@ -93,15 +89,15 @@ sub TIEARRAY(@)
 sub FETCH($)     { shift->activeMessage(@_) }
 
 sub STORE($$)
-{   my Mail::Box $self = shift;
+{   my $self = shift;
     my $index = shift;
-    $self->activeMessage($index) = shift;
+    $self->activeMessage($index, shift);
 }
 
 sub FETCHSIZE()  { scalar shift->messages }
 
 sub PUSH(@)
-{   my Mail::Box $self = shift;
+{   my $self = shift;
     $self->addMessages(@_);
     scalar $self->messages;
 }
@@ -129,7 +125,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 

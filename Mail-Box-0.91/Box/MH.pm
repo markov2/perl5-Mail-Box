@@ -1,18 +1,15 @@
 
-use strict;
-use 5.006;
-
 package Mail::Box::MH;
+
 use Mail::Box;
 use Mail::Box::Index;
+@ISA     = qw/Mail::Box Mail::Box::Index/;
 
-our @ISA     = qw/Mail::Box Mail::Box::Index/;
-our $VERSION = v0.9;
-
-use Mail::Box;
+use strict;
 
 use FileHandle;
 use File::Copy;
+use File::Basename;
 
 =head1 NAME
 
@@ -97,8 +94,8 @@ Not before any header-line (or any other action on a message) is used,
 the message is read.  This is done using Perl's AUTOLOADing, and is
 transparent to users.  If the first thing you ask for is a header-line,
 then C<lazy_extract> and C<take_headers> determine what how far this
-message is parsed: into a Mail::Box::MH::NotParsed or a
-Mail::Box::MH::Message.
+message is parsed: into a C<Mail::Box::MH::NotParsed> or a
+C<Mail::Box::MH::Message>.
 
 The index-file is farmost best performing, but also in the second case,
 performance can be ok.  When a mail-client opens a huge folder, only a few
@@ -109,7 +106,7 @@ will only be read from file when they appear in the viewport.
 
 =head2 Message State Transition
 
-The user of a folder gets it hand on a message-object, and is not bothered
+The user of a folder gets his hand on a message-object, and is not bothered
 with the actual data which is stored in the object at that moment.  As
 implementor of a mail-package, you might be.
 
@@ -231,7 +228,7 @@ be overruled with this flag.
 
 =cut
 
-my $default_folder_dir = "$ENV{HOME}/.mh";
+my $default_folder_dir = exists $ENV{HOME} ?  "$ENV{HOME}/.mh" : '.';
 
 sub init($)
 {   my ($self, $args) = @_;
@@ -245,31 +242,31 @@ sub init($)
 
     $self->Mail::Box::init($args);
 
-    my $dirname                 = $self->{MB_dirname}
-       = (ref $self)->folderToDirname($self->name, $self->folderdir);
+    my $directory                 = $self->{MB_directory}
+       = (ref $self)->folderTodirectory($self->name, $self->folderdir);
 
     for($args->{index_filename})
     {  $args->{index_filename}
-          = !defined $_ ? "$dirname/.index"  # default
+          = !defined $_ ? "$directory/.index"  # default
           : m!^/!       ? $_                 # absolute
-          :               "$dirname/$_";     # relative
+          :               "$directory/$_";     # relative
     }
 
     $self->Mail::Box::Index::init($args);
 
     for($args->{lockfile} || undef)
     {   $self->lockFilename
-          ( !defined $_ ? "$dirname/.index"  # default
+          ( !defined $_ ? "$directory/.index"  # default
           : m!^/!       ? $_                 # absolute
-          :               "$dirname/$_"      # relative
+          :               "$directory/$_"      # relative
           );
     }
 
     for($args->{labels_filename})
     {   $self->labelsFilename
-          ( !defined $_ ? "$dirname/.mh_sequences"  #default
+          ( !defined $_ ? "$directory/.mh_sequences"  #default
           : m!^/!       ? $_                 # absolute
-          :               "$dirname/$_"      # relative
+          :               "$directory/$_"      # relative
           );
     }
 
@@ -277,13 +274,13 @@ sub init($)
 
     # Check if we can write to the folder, if we need to.
 
-    if($self->writeable && ! -w $dirname)
-    {   if(-e $dirname)
-        {   warn "Folder $dirname is write-protected.\n";
+    if($self->writeable && ! -w $directory)
+    {   if(-e $directory)
+        {   warn "Folder $directory is write-protected.\n";
             $self->{MB_access} = 'r';
         }
-        elsif(!mkdir $dirname)
-        {   warn "Couldnot create folder in $dirname.\n";
+        elsif(!mkdir $directory, 0700)
+        {   warn "Couldnot create folder in $directory.\n";
             return undef;
         }
     }
@@ -333,10 +330,10 @@ sub readMessages()
     # Each message is a file, where a sequence-number is
     # its name.
 
-    my $dirname    = $self->dirname;
+    my $directory    = $self->directory;
 
-    opendir DIR, $dirname or return;
-    my @msgnrs = grep { -f "$dirname/$_" && -r _ }
+    opendir DIR, $directory or return;
+    my @msgnrs = grep { -f "$directory/$_" && -r _ }
                      sort {$a <=> $b}
                          grep /^\d+$/, readdir DIR;
     closedir DIR;
@@ -352,7 +349,7 @@ sub readMessages()
 
     foreach my $msgnr (@msgnrs)
     {
-        my $msgfile = "$dirname/$msgnr";
+        my $msgfile = "$directory/$msgnr";
         my $head;
 
         $head       = $index{$msgfile}
@@ -376,7 +373,7 @@ sub readMessages()
         $self->addMessage($message) if $message;
     }
 
-    $self->{MB_source_mtime}   = (stat $dirname)[9];
+    $self->{MB_source_mtime}   = (stat $directory)[9];
     $self->{MB_highest_msgnr}  = $msgnrs[-1];
     $self->{MB_delayed_loads}  = $#msgnrs;
     $self->{MB_last_untouched} = $#msgnrs;
@@ -420,7 +417,10 @@ sub readMessage($;$)
     my $head    = $message->{MB_head};
     local $_;                       # protect global $_
 
-    open MESSAGE, '<', $message->filename or return;
+    unless(open MESSAGE, $message->filename)
+    {   warn "Unable to open ", $message->filename, ".\n";
+        return;
+    }
 
     # Read the header.
     my @header;
@@ -462,8 +462,10 @@ sub readMessage($;$)
 
     $message->head_init;
 
-    $self->messageID($message->messageID, $message)
-         ->statusToLabels->XstatusToLabels;
+    $self->messageID($message->messageID, $message);
+    $self->toBeThreaded($message);
+    $message->statusToLabels->XstatusToLabels;
+    $message;
 }
 
 #-------------------------------------------
@@ -483,7 +485,9 @@ sub addMessage($)
         my $msgid = $message->messageID;
         my $found = $self->messageID($msgid);
         return $self if $found && !$found->isDummy;
+
         $self->messageID($msgid, $message);
+        $self->toBeThreaded($message);
     }
     else
     {   $message->folder($self);
@@ -496,18 +500,29 @@ sub addMessage($)
 
 #-------------------------------------------
 
-=item write
+=item write [OPTIONS]
 
 Write all messages to the folder-file.  Returns whether this
-was successful.  If you want to write to a different file, you
-first create a new folder, then move the messages, and then write
-that file.
+was successful.  As options you may specify (see C<Mail::Box>
+for explanation)
+
+=over 4
+
+=item * keep_deleted => BOOL
+
+=item * save_deleted => BOOL
+
+=item * renumber => BOOL
+
+Permit renumbering of message.  Bij default this is true, but for some
+unknown reason, you may be thinking that messages should not be renumbered.
+
+=back
 
 =cut
 
-sub writeMessages()
-{   my $self     = shift;
-    my @messages = $self->messages;
+sub writeMessages($)
+{   my ($self, $args) = @_;
 
     $self->lock;
 
@@ -517,43 +532,60 @@ sub writeMessages()
     #       to remove the original before we are sure that the new version
     #       is on disk.
 
-    my $writer = 1;
+    my $writer = 0;
     my %labeled;
+
+    my @messages = @{$args->{messages}};
+    my $renumber = exists $args->{renumber} ? $args->{renumber} : 1;
+    my $delete   = $args->{keep_deleted} || 0;
 
     foreach my $message (@messages)
     {
         # Remove deleted messages.
-        if($message->deleted)
+        if($delete && $message->deleted)
         {   unlink $message->filename;
             next;
         }
 
-        my $new      = $self->dirname . '/' . $writer;
         my $filename = $message->filename;
 
+        my $newfile;
+        if($renumber || !$filename)
+        {    $newfile = $self->directory . '/' . ++$writer;
+        }
+        else
+        {    $newfile = $filename;
+             $writer  = basename $filename;
+        }
+
         if(!$filename)
-        {   # New message for this folder.
-            my $new = FileHandle->new($new, 'w') or die;
+        {   # New message for this folder.  Messages are only
+            # added to the back, so shouldn't cause a problem.
+
+            my $new = FileHandle->new($newfile, 'w') or die;
             $message->print($new);
             $new->close;
+            $message->filename($newfile);
         }
         elsif($message->modified)
         {   # Write modified messages.
             my $oldtmp   = $filename . '.old';
-            move($filename, $oldtmp);
+            move $filename, $oldtmp;
 
-            my $new = FileHandle->new($new, 'w') or die;
+            my $new = FileHandle->new($newfile, 'w') or die;
             $message->print($new);
             $new->close;
 
             unlink $oldtmp;
+            $message->filename($newfile);
         }
-        elsif($filename eq $new)
+        elsif($filename eq $newfile)
         {   # Nothing changed: content nor message-number.
         }
         else
         {   # Unmodified messages, but name changed.
-            move($filename, $new);
+            move $filename, $newfile;
+            $message->filename($newfile);
         }
 
         # Collect the labels.
@@ -565,8 +597,6 @@ sub writeMessages()
 
         push @{$labeled{unseen}}, $writer
             unless $labels->{seen} || 0;
-
-        $writer++;
     }
 
     #
@@ -611,6 +641,7 @@ the manual-page of Mail::Box for explantion of the options.  The folder
 will not be opened.  Returns the list of written messages on success.
 
 Example:
+
     my $message = Mail::Internet->new(...);
     Mail::Box::Mbox->appendMessages
       ( folder    => '=xyz'
@@ -642,7 +673,7 @@ sub appendMessages(@)
     my $msgnr  = $self->highestMessageNumber +1;
     foreach my $message (@messages)
     {
-        my $new = FileHandle->new($self->dirname . '/' . $msgnr, 'w')
+        my $new = FileHandle->new($self->directory . '/' . $msgnr, 'w')
             or next;
 
         $message->print($new);
@@ -669,27 +700,28 @@ sub appendMessages(@)
 
 #-------------------------------------------
 
-=item dirname
+=item directory
 
-Returns the dirname related to this folder.
+Returns the directory related to this folder.
 
 Example:
-    print $folder->dirname;
+
+    print $folder->directory;
 
 =cut
 
-sub dirname() { shift->{MB_dirname} }
+sub directory() { shift->{MB_directory} }
 
 #-------------------------------------------
 
-=item folderToDirname FOLDERNAME, FOLDERDIR
+=item folderTodirectory FOLDERNAME, FOLDERDIR
 
 (class method)  Translate a foldername into a filename, with use of the
 FOLDERDIR to replace a leading C<=>.
 
 =cut
 
-sub folderToDirname($$)
+sub folderTodirectory($$)
 {   my ($class, $name, $folderdir) = @_;
     $name =~ /^=(.*)/ ? "$folderdir/$1" : $name;
 }
@@ -711,9 +743,9 @@ sub highestMessageNumber()
     return $self->{MB_highest_msgnr}
         if exists $self->{MB_highest_msgnr};
 
-    my $dirname    = $self->dirname;
+    my $directory    = $self->directory;
 
-    opendir DIR, $dirname or return;
+    opendir DIR, $directory or return;
     my @messages = sort {$a <=> $b} grep /^\d+$/, readdir DIR;
     closedir DIR;
 
@@ -739,6 +771,7 @@ sub messageID($;$)
     if($message)
     {   # Define loaded message.
         $self->Mail::Box::messageID($msgid, $message);
+        $self->toBeThreaded($message);
     }
     else
     {   # Trigger autoload until the message-id appears.
@@ -777,6 +810,7 @@ tags to messages in the folder.  Typically, this file is called
 C<.mh_sequences>.  The messages are numbered from C<1>.
 
 Example content of C<.mh_sequences>:
+
    cur: 93
    unseen: 32 35-56 67-80
 
@@ -838,7 +872,7 @@ sub readLabels()
 {   my $self = shift;
     my $seq  = $self->labelsFilename || return ();
 
-    return unless open SEQ, '<', $seq;
+    return unless open SEQ, $seq;
     my @labels;
 
     local $_;
@@ -936,6 +970,7 @@ For this class, we use (if defined):
 =back
 
 Example:
+
    Mail::Box::MH->foundIn
       ( '=markov'
       , folderdir => "$ENV{HOME}/.mh"
@@ -946,15 +981,15 @@ Example:
 sub foundIn($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
-    my $dirname   = $class->folderToDirname($name, $folderdir);
+    my $directory   = $class->folderTodirectory($name, $folderdir);
 
-    return 0 unless -d $dirname;
-    return 1 if -f "$dirname/1";
+    return 0 unless -d $directory;
+    return 1 if -f "$directory/1";
 
     # More thorough search required in case some numbered messages
     # disappeared (lost at fsck or copy?)
 
-    return unless opendir DIR, $dirname;
+    return unless opendir DIR, $directory;
     foreach (readdir DIR)
     {   next unless m/^\d+$/;   # Look for filename which is a number.
         closedir DIR;
@@ -973,6 +1008,8 @@ List the folders in a certain directory.
 
 =over 4
 
+=item * folder => FOLDERNAME
+
 =item * folderdir => DIRECTORY
 
 =item * check => BOOL
@@ -985,7 +1022,9 @@ List the folders in a certain directory.
 
 sub listFolders(@)
 {   my ($class, %args)  = @_;
-    my $dir             = $args{folderdir} || $default_folder_dir;
+    my $folder          = $args{folder}    || '=';
+    my $folderdir       = $args{folderdir} || $default_folder_dir;
+    my $dir             = $class->folderTodirectory($folder, $folderdir);
 
     $args{skip_empty} ||= 0;
     $args{check}      ||= 0;
@@ -1001,8 +1040,37 @@ sub listFolders(@)
 
     closedir DIR;
 
-    @dirs = grep { -f "$_/1" } @dirs
-       if $args{skip_empty};
+    # Skip empty folders.  If a folder has sub-folders, then it is not
+    # empty.
+    if($args{skip_empty})
+    {    my @not_empty;
+
+         foreach my $subdir (@dirs)
+         {   if(-f "$dir/$subdir/1")
+             {   # Fast found: the first message of a filled folder.
+                 push @not_empty, $subdir;
+                 next;
+             }
+
+             opendir DIR, "$dir/$subdir" or next;
+             my @entities = grep !/^\./, readdir DIR;
+             closedir DIR;
+
+             if(grep /^\d+$/, @entities)   # message 1 was not there, but
+             {   push @not_empty, $subdir; # other message-numbers exist.
+                 next;
+             }
+
+             foreach (@entities)
+             {   next unless -d "$dir/$subdir/$_";
+                 push @not_empty, $subdir;
+                 last;
+             }
+
+         }
+
+         @dirs = @not_empty;
+    }
 
     # Check if the files we want to return are really folders.
 
@@ -1013,40 +1081,13 @@ sub listFolders(@)
 
 #-------------------------------------------
 
-=item subFolders [OPTIONS]
-
-Returns the subfolders to a folder.  Although file-type folders do not
-have a natural form of sub-folders, we can simulate them.  The
-C<subfolder_extention> option of the constructor (C<new()>) defines
-how sub-folders can be recognized.
-
-=over 4
-
-=item * check => BOOL
-
-=item * skip_empty => BOOL
-
-=back
-
-=cut
-
-sub subFolders(@)
-{  my $self = shift;
-
-   (ref $self)->listFolders
-     ( folderdir => $self->dirname
-     , @_
-     );
-}
-
-#-------------------------------------------
-
 =item openSubFolder NAME [,OPTIONS]
 
 Open (or create, if it does not exist yet) a new subfolder to an
 existing folder.
 
 Example:
+
     my $folder = Mail::Box::MH->new(folder => '=Inbox');
     my $sub    = $folder->openSubFolder('read');
  
@@ -1054,9 +1095,9 @@ Example:
 
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    my $dir = $self->dirname . '/' . $name;
+    my $dir = $self->directory . '/' . $name;
 
-    unless(-d $dir || mkdir $dir)
+    unless(-d $dir || mkdir $dir, 0755)
     {   warn "Cannot create subfolder $name for $self: $!\n";
         return;
     }
@@ -1170,9 +1211,11 @@ sub printIndex(;$)
 {   my $self = shift;
     my $out  = shift || \*STDOUT;
 
-    my $head = $self->head;
+    my $head = $self->head || return $self;
     $head->add('X-MailBox-Filename', $self->filename);
     $head->print($out);
+    print $out "\n";
+    $self;
 }
 
 #-------------------------------------------
@@ -1192,21 +1235,25 @@ sub readIndex($;$)
 
 #-------------------------------------------
 
-=item filename
+=item filename [FILENAME]
 
 Returns the name of the file in which this message is actually stored.  This
-will return C<undef> when the message is not read from a file.
+will return C<undef> when the message is not stored in a file.
 
 =cut
 
-sub filename() { shift->{MBM_filename} }
+sub filename(;$)
+{   my $self = shift;
+    @_ ? $self->{MBM_filename} = shift : $self->{MBM_filename};
+}
 
 ###
 ### Mail::Box::MH::Message
 ###
 
 package Mail::Box::MH::Message;
-our @ISA = qw(Mail::Box::MH::Message::Runtime Mail::Box::Message);
+use vars '@ISA';
+@ISA = qw(Mail::Box::MH::Message::Runtime Mail::Box::Message);
 
 #-------------------------------------------
 
@@ -1243,13 +1290,16 @@ first should have all fields which are specific for MH-folders.
 The coerced message is returned on success, else C<undef>.
 
 Example:
+
    my $mh = Mail::Box::MH->new(...);
    my $message = Mail::Box::Mbox::Message->new(...);
    Mail::Box::MH::Message->coerce($mh, $message);
    # Now $message is ready to be stored in $mh.
 
 However, you can better use
+
    $mh->coerce($message);
+
 which will call coerce on the right message type for sure.
 
 =cut
@@ -1264,7 +1314,11 @@ sub coerce($$)
     # that information will be extracted here, and transfered into arguments
     # for Runtime->init.
 
-    (bless $message, $class)->Mail::Box::Mbox::Message::Runtime::init;
+    my $msgid = $message->head->get('message-id');
+    $message->{MBM_messageID} = $msgid && $msgid =~ m/<.*?>/ ? $&
+                              : 'mh-'.$unreg_msgid++;
+
+    (bless $message, $class)->Mail::Box::MH::Message::Runtime::init;
 }
 
 
@@ -1273,8 +1327,9 @@ sub coerce($$)
 ###
 
 package Mail::Box::MH::Message::NotParsed;
-our @ISA = qw/Mail::Box::MH::Message::Runtime
-              Mail::Box::Message::NotParsed/;
+use vars '@ISA';
+@ISA = qw/Mail::Box::MH::Message::Runtime
+          Mail::Box::Message::NotParsed/;
 
 use IO::InnerFile;
 
@@ -1326,7 +1381,7 @@ sub load($;$)
     else
     {   my $filename = $self->filename;
 
-        unless(open FILE, '<', $filename)
+        unless(open FILE, $filename)
         {   warn "Cannot find folder $folder message $filename anymore.\n";
             return $self;
         }
@@ -1353,7 +1408,7 @@ comes into action: will we read the whole message now, or only the header?
 sub head()
 {   my $self = shift;
     return $self->{MBM_head} if exists $self->{MBM_head};
-    $self->folder->readMessage($self->seqnr);
+    $self->folder->readMessage($self->seqnr) or return;
     $self->head;
 }
 

@@ -15,7 +15,7 @@ use Mail::Box::Mbox;
 my $src  = 't/mbox.src';
 my $dest = 't/mbox.cpy';
 
-
+warn "STATUS *ALPHA*   STATUS *ALPHA*\n";
 ok(Mail::Box::Mbox->foundIn($src));
 
 #

@@ -12,19 +12,12 @@ use File::Copy;
 use lib '..', 't';
 use Tools;
 
-use Mail::Box::Manager;
+use Mail::Box::Mbox;
 
 BEGIN {plan tests => 17}
 
 my $top = 't/Mail';
 my $real = 't/mbox.src';
-
-#
-# We will work with a copy of the original to avoid that we write
-# over our test file.
-#
-
-my $mgr = Mail::Box::Manager->new;
 
 #
 # Create a nice structure which looks like a set of mbox folders.
@@ -33,22 +26,13 @@ my $mgr = Mail::Box::Manager->new;
 sub dir($)
 {   my $dirname = shift;
     return if -d $dirname;
-    mkdir $dirname || die;
+    mkdir $dirname, 0700 || die;
 }
 
 sub folder($;$)
 {   my $filename = shift;
     my $content  = shift || 'Makefile';
     copy $content, $filename || die;
-}
-
-sub cmplists($$)
-{   my ($first, $second) = @_;
-    return 0 unless @$first == @$second;
-    for(my $i=0; $i<@$first; $i++)
-    {   return 0 unless $first->[$i] eq $second->[$i];
-    }
-    1;
 }
 
 dir $top;

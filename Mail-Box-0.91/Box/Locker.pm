@@ -1,10 +1,7 @@
 
-package Mail::Box::Locker;
-
 use strict;
-use 5.006;
-our $VERSION = v0.9;
 
+package Mail::Box::Locker;
 use Fcntl         qw/:DEFAULT :flock/;
 use IO::File;
 use Sys::Hostname;
@@ -510,7 +507,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 

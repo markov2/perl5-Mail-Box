@@ -1,16 +1,15 @@
 
 use strict;
-use 5.006;
-
 package Mail::Box::Mbox;
-our @ISA     = 'Mail::Box';
-our $VERSION = v0.9;
 
 use Mail::Box;
 
+use vars qw/@ISA/;
+@ISA     = 'Mail::Box';
+
 use FileHandle;
 use File::Copy;
-use Fcntl qw(SEEK_END);
+use POSIX ':unistd_h';
 
 =head1 NAME
 
@@ -41,7 +40,7 @@ The name of a folder may be an absolute or relative path.  You can also
 preceed the foldername by C<=>, which means that it is relative to the
 I<folderdir> as specified at C<new>.
 
-=head2 simulation sub-folders
+=head2 Simulation of sub-folders
 
 File-based folders do not really have a sub-folder idea, as directory-based
 folders have, but this module tries to simulate them.  In this implementation
@@ -50,29 +49,41 @@ a directory like
    Mail/subject1/
 
 is taken as an empty folder C<Mail/subject1>, with the folders in that
-directory as sub-folders for it.
+directory as sub-folders for it.  You may also use
 
-You may also use
    Mail/subject1
    Mail/subject1.d/
 
-where C<Mail/subject1> is a folder, and the folders in the C<Mail/subject1.d>
-directory are used as sub-folders.
+where C<Mail/subject1> is the folder, and the folders in the C<Mail/subject1.d>
+directory are used as sub-folders.  If your situation is as in the first
+example and you want to put messages in that empty folder, the directory is
+automatically renamed, such that the second situation is reached.
 
 Because of these simulated sub-folders, the folder-manager does not need to
 distiguish between file- and directory-based folders in this respect.
 
 =head2 Message State Transition
 
-The user of a folder gets it hand on a message-object, and is not bothered
+The user of a folder gets his hand on a message-object, and is not bothered
 with the actual data which is stored in the object at that moment.  As
 implementor of a mail-package, you might be.
+
+A message is not a message from the start, but only if you access the
+body from it.  Below is depicted how the internal status of the
+message-object changes based on actions on the object and parameters.
+
+The C<Mail::Box::Mbox::Message> stage, means that the whole message
+is in memory.  It then is a full decendent of a C<MIME::Entity>.
+But at the same time, it consumes a considerable amount of memory,
+and spent quite some processor time.  All the intermediate stati
+are created to avoid full loading, so to be cheap in memory and
+time.  Folder access will be much faster under normal circumstances.
 
 For trained eyes only:
 
    read()     !lazy
    -------> +----------------------------------> Mail::Box::
-            |                                    MH::Message
+            |                                  Mbox::Message
             |                                         ^
             |                                         |
             |                    NotParsed    load    |
@@ -183,7 +194,7 @@ can be changed using this option.
 
 =cut
 
-my $default_folder_dir = $ENV{HOME} . '/Mail';
+my $default_folder_dir = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
 my $default_extention  = '.d';
 
 sub init($)
@@ -249,6 +260,7 @@ it will not be opened again.  This method will maintain exclusive locking.
 Of course, C<fileIsOpen> only checks if the file is opened or not.
 
 Example:
+
     my $file = $folder->fileOpen or die;
     $folder->fileClose;
 
@@ -449,12 +461,20 @@ sub readMessages(@)
 Write all messages to the folder-file.  Returns whether this
 was successful.  If you want to write to a different file, you
 first create a new folder, then move the messages, and then write
-that file.
+that file. As options you may specify (see C<Mail::Box> for explanation)
+
+=over 4
+
+=item * keep_deleted => BOOL
+
+=item * save_deleted => BOOL
+
+=back
 
 =cut
 
-sub writeMessages()
-{   my Mail::Box::Mbox $self = shift;
+sub writeMessages($)
+{   my ($self, $args) = @_;
     my $filename = $self->filename;
 
     # Is there was a sub-folder, but without extention used (as in subdirs
@@ -476,7 +496,7 @@ sub writeMessages()
         return 0;
     }
 
-    $_->print($new) foreach $self->messages;
+    $_->migrate($new) foreach @{$args->{messages}};
 
     $new->close;
     $self->fileClose unless $was_open;
@@ -508,7 +528,7 @@ sub addMessage($)
     # The message is accepted.
     $self->Mail::Box::addMessage($message);
     $self->messageID($msgid, $message);
-    $self;
+    $self->toBeThreaded($message);
 }
 
 #-------------------------------------------
@@ -520,6 +540,7 @@ the manual-page of Mail::Box for explantion of the options.  The folder
 will not be opened.  Returns the list of written messages on success.
 
 Example:
+
     my $message = Mail::Internet->new(...);
     Mail::Box::Mbox->appendMessages
       ( folder    => '=xyz'
@@ -558,6 +579,7 @@ sub appendMessages(@)
 Returns the filename related to this folder.
 
 Example:
+
     print $folder->filename;
 
 =cut
@@ -619,6 +641,7 @@ on the request.  For this class, we use (if defined):
 =back
 
 Example:
+
    Mail::Box::Mbox->foundIn
       ( '=markov'
       , folderdir => "$ENV{HOME}/Mail"
@@ -664,6 +687,7 @@ an empty folder is presumed.
 =item * skip_empty => BOOL
 
 =item * subfolder_extention => STRING
+
 =back
 
 =cut
@@ -729,6 +753,7 @@ Open (or create, if it does not exist yet) a new subfolder to an
 existing folder.
 
 Example:
+
     my $folder = Mail::Box::Mbox->new(folder => '=Inbox');
     my $sub    = $folder->openSubFolder('read');
  
@@ -744,7 +769,7 @@ sub openSubFolder($@)
 ###
 
 package Mail::Box::Mbox::Message::Runtime;
-use Fcntl qw(SEEK_SET);
+use POSIX ':unistd_h';
 
 #-------------------------------------------
 
@@ -826,11 +851,11 @@ sub fromLine(;$)
 
 #-------------------------------------------
 
-=item print TO
+=item print FILEHANDLE
 
 Write one message to a file-handle.  Unmodified messages are taken
 from the folder-file where they were stored in.  Modified messages
-are written as in memory.  Specify a file-handle to write TO
+are written as in memory.  Specify a FILEHANDLE to write to
 (defaults to STDOUT).
 
 =cut
@@ -873,12 +898,30 @@ sub print()
     1;
 }
 
+#-------------------------------------------
+
+=item migrate FILEHANDLE
+
+Move the message from the current folder, to a new folder-file.  The old
+location should be not used after this.
+
+=cut
+
+sub migrate($)
+{   my ($self, $out) = @_;
+    my $newbegin = tell $out;
+    $self->print($out);
+    $self->{MBM_begin} = $newbegin;
+    $self;
+}
+
 ###
 ### Mail::Box::Mbox::Message
 ###
 
 package Mail::Box::Mbox::Message;
-our @ISA = qw(Mail::Box::Mbox::Message::Runtime Mail::Box::Message);
+use vars qw/@ISA/;
+@ISA = qw(Mail::Box::Mbox::Message::Runtime Mail::Box::Message);
 
 #-------------------------------------------
 
@@ -914,13 +957,16 @@ all fields which are specific for Mbox-folders.
 The coerced message is returned on success, else C<undef>.
 
 Example:
+
    my $inbox = Mail::Box::Mbox->new(...);
    my $mh    = Mail::Box::MH::Message->new(...);
    Mail::Box::Mbox::Message->coerce($inbox, $mh);
    # Now, the $mh is ready to be included in $inbox.
 
 However, you can better use
+
    $inbox->coerce($mh);
+
 which will call the right coerce() for sure.
 
 =cut
@@ -943,8 +989,9 @@ sub coerce($$)
 ###
 
 package Mail::Box::Mbox::Message::NotParsed;
-our @ISA = qw/Mail::Box::Mbox::Message::Runtime
-              Mail::Box::Message::NotParsed/;
+use vars qw/@ISA/;
+@ISA = qw/Mail::Box::Mbox::Message::Runtime
+          Mail::Box::Message::NotParsed/;
 
 use IO::InnerFile;
 
@@ -1013,7 +1060,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 

@@ -1,11 +1,8 @@
 
 use strict;
-use 5.006;
 
 use MIME::Entity;
 use Mail::Box::Threads;
-
-our $VERSION = 0.7;
 
 =head1 NAME
 
@@ -178,8 +175,10 @@ single class.
 
 package Mail::Box::Message::Runtime;
 use Date::Parse;
+use vars qw/@ISA/;
+@ISA = 'Mail::Box::Thread';
 
-our @ISA = 'Mail::Box::Thread';
+#our @ISA = 'Mail::Box::Thread';
 
 =head1 Mail::Box::Message::Runtime
 
@@ -505,7 +504,7 @@ sub labels()
 
 sub statusToLabels()
 {   my $self   = shift;
-    my $status = $self->head->get('status') || return ();
+    my $status = $self->head->get('status') || return $self;
 
     $self->setLabel( seen => $status =~ /R/
                    , old  => $status =~ /O/
@@ -524,7 +523,7 @@ sub createStatus()
 
 sub XstatusToLabels()
 {   my $self   = shift;
-    my $status = $self->head->get('x-status') || return ();
+    my $status = $self->head->get('x-status') || return $self;
 
     $self->setLabel( replied => $status =~ /A/
                    , flagged => $status =~ /F/
@@ -577,10 +576,10 @@ sub shortString()
 ###
 
 package Mail::Box::Message;
-use Carp;
-our @ISA = ( 'Mail::Box::Message::Runtime'
-           , 'MIME::Entity'
-           );
+use vars qw/@ISA/;
+@ISA = ( 'Mail::Box::Message::Runtime'
+       , 'MIME::Entity'
+       );
 
 #-------------------------------------------
 
@@ -682,12 +681,23 @@ sub coerce($$@)
     # Re-initialize the message, but with the options as specified by the
     # creation of this folder, not the folder where the message came from.
 
+    
     (bless $message, $class)->init(\%args) or return;
 
     $message->folder($folder);
-    $message->Mail::Box::Message::Runtime::init(\%args);
+#   $message->Mail::Box::Message::Runtime::init(\%args);
 }
 
+#-------------------------------------------
+
+=item forceLoad
+
+This method is called to signal that the message must be loaded, although
+the method only returns the folder.
+
+=cut
+
+sub forceLoad() { shift }
 
 #-------------------------------------------
 
@@ -790,7 +800,7 @@ sub removePart($)
 
     $self->parts
       ( ref $part
-      ? grep({$part->messageID ne $_->messageID} @parts)
+      ? grep {$part->messageID ne $_->messageID} @parts
       : splice(@parts, $part, 1)
       );
 }
@@ -806,12 +816,26 @@ can distinguish between the two.
 
 sub isPart() { shift->{MBM_is_part} || 0 }
 
+#-------------------------------------------
+
+=item diskDelete
+
+Remove a message from disk.  This is not from the folder, but everything
+else, like parts of the message which are stored externally from the
+folder.
+
+=cut
+
+sub diskDelete() { shift }
+
+
 ###
 ### Mail::Box::Message::Dummy
 ###
 
 package Mail::Box::Message::Dummy;
-our @ISA = 'Mail::Box::Message::Runtime';
+use vars qw/@ISA/;
+@ISA = 'Mail::Box::Message::Runtime';
 
 #-------------------------------------------
 
@@ -861,7 +885,8 @@ sub shortString()
 ###
 
 package Mail::Box::Message::NotParsed;
-our @ISA = 'Mail::Box::Message::Runtime';
+use vars qw/@ISA $AUTOLOAD/;
+@ISA = 'Mail::Box::Message::Runtime';
 
 #-------------------------------------------
 
@@ -916,7 +941,7 @@ otherwise read the message twice.
 
 =cut
 
-our $AUTOLOAD;
+#our $AUTOLOAD;
 
 sub AUTOLOAD
 {   my $self   = shift;
@@ -947,8 +972,8 @@ sub head() { shift->{MBM_head} }
 ###
 
 package Mail::Box::Message::NotReadHead;
-
-our $AUTOLOAD;
+use vars qw/$AUTOLOAD/;
+#our $AUTOLOAD;
 
 #-------------------------------------------
 
@@ -1125,7 +1150,7 @@ sub AUTOLOAD
     (my $method = $AUTOLOAD) =~ s/.*\:\://;
 
     my $message = $self->{MBM_message};
-    $message->body;     # Trigger message loading.
+    $message->forceLoad;
     my $head = $message->head;
 
     $_[0]    = $head;   # try to infuence the handle which the caller
@@ -1148,7 +1173,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.9
+This code is alpha, version 0.91
 
 =cut
 
