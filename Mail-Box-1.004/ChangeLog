@@ -2,7 +2,20 @@ CHANGELOG of Mail::Box
 
 All changes till now were made by Mark Overmeer <mark@overmeer.net>
 
-version 1.003:
+version 1.004: Fri Feb 23 19:11:45 CET 2001
+
+	With even more help of David Coppit:
+	* (hopefully) fixed the last problems with deletion of folders
+	  on NFS systems.  May solve the Win32 problems, too, but waiting
+	  for someone to test it.
+	* Warning if you want to instantiate a Mail::Box (use
+          Mail::Box::Manager if you need auto-detection)
+	* A $folder->close actively tries to set $folder to undef to
+	  cause "use of undefined" errors when someone tries to do anything
+	  with the folder after it was closed.
+	* No interface change.
+
+version 1.003: Thu Feb 22 00:08:47 CET 2001
 
 	With help of David Coppit:
 	* Optimized folder deletion (a bit).  It will only cause
@@ -10,6 +23,7 @@ version 1.003:
           message.
 	* Close folder-file access before removing the file is needed
 	  for some OS'es and for NFS.
+	* No changes to methods needed.
 
 version 1.002: Fri Feb 16 23:50:14 CET 2001
 

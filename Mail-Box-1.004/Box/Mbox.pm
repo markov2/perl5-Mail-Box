@@ -533,6 +533,16 @@ sub appendMessages(@)
 
 #-------------------------------------------
 
+sub close(@)
+{   my $self = $_[0];            # be careful, we want to set the calling
+    undef $_[0];                 #    ref to undef, as the SUPER does.
+    shift;
+    $self->Mail::Box::close(@_);
+    $self->fileClose;
+}
+
+#-------------------------------------------
+
 =item filename
 
 Returns the filename related to this folder.
@@ -664,7 +674,7 @@ sub create($@)
         return;
     }
 
-    close CREATE;
+    CORE::close CREATE;
     $class;
 }
 
@@ -783,7 +793,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.003
+This code is beta, version 1.004
 
 =cut
 

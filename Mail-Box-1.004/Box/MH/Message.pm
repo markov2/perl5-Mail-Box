@@ -397,11 +397,12 @@ with the actual data which is stored in the object at that moment.  As
 implementor of a mail-package, you might be.
 
 A message is simple to use, but has a quite complex class structure.
-A message is not a message from the start, but only if you access the
-body from it.  Below is depicted how the internal status of the
-message-object changes based on actions on the object and parameters.
+A message is not a real message from the start, but only if you access the
+body from it.  Till then, you only have a hollow placeholder.  Below is
+depicted how the internal status of a message-object changes based on
+actions on the object and parameters.
 
-The inheritance relations is like this:
+The inheritance relation is like this:
 
      read()
      =====#
@@ -426,9 +427,10 @@ is in memory.  It then is a full decendent of a C<MIME::Entity>.
 But at the same time, it consumes a considerable amount of memory,
 and spent quite some processor time.  All the intermediate stati
 are created to avoid full loading, so to be cheap in memory and
-time.  Folder access will be much faster under normal circumstances.
+time.  Random folder access will be much faster by this strategy,
+under normal circumstances.
 
-For trained eyes only:
+For trained eyes only the transition diagram:
 
    read()     !lazy && !DELAY
    -------> +----------------------------------> Mail::Box::
@@ -500,7 +502,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.003
+This code is beta, version 1.004
 
 =cut
 

@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.003';
+$VERSION = '1.004';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -21,7 +21,7 @@ Mail::Box - Manage a message-folder.
 =head1 SYNOPSIS
 
    use Mail::Box;
-   my $folder = new Mail::Box file => $ENV{MAIL}, ...;
+   my $folder = new Mail::Box::Mbox file => $ENV{MAIL}, ...;
    print $folder->message(0)->subject;      # See Mail::Box::Message
    $folder->message(3)->deleted(1);
    my $emails = $folder->messages;          # amount
@@ -266,7 +266,19 @@ use Carp;
 use overload 'cmp' => sub {$_[0]->name cmp $_[1]->name};
 
 sub new(@)
-{   my $self    = bless {}, shift;
+{   my $class   = shift;
+
+    if($class eq __PACKAGE__)
+    {   use Carp;
+        my $package = __PACKAGE__;
+        croak <<USAGE;
+You should not instantiate $package but one of the sub-classes, like
+Mail::Box::Mbox.  If you need folder-type autodetection, then use
+the folder-manager (see Mail::Box::Manager).
+USAGE
+    }
+
+    my $self    = bless {}, $class;
 
     $self->{MB_init_options} = [ @_ ];  # for clone
     my %args    = @_;
@@ -638,6 +650,7 @@ sub close(@)
            : 1;
 
     $self->unlock;
+    undef $self;
     $rc;
 }
 
@@ -1269,7 +1282,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.003
+This code is beta, version 1.004
 
 =cut
 
