@@ -17,8 +17,8 @@ use File::Compare;
 use File::Copy;
 
 BEGIN {
-   if($^O =~ /mswin/i)
-   {   plan skip_all => 'Not on Windows';
+   if($windows)
+   {   plan skip_all => 'Not for Windows';
        exit 0;
    }
 

@@ -45,6 +45,8 @@ $grep1->search($folder);
 $fh->close;
 select $oldfh;
 
+$output =~ s#\\#/#g;  # windows
+
 is($output, <<'EXPECTED');
 t/mbox.cpy, message 8: Resize with Transparency
    21: However, ImageMagick (ImageMagick 4.2.7, PerlMagick 4.27 on Linux)
@@ -85,6 +87,8 @@ foreach (@m2)
 
 # messages are reversed ordered here, but in order returned: looking
 # backwards in the folder file.
+
+$output =~ s#\\#/#g;  # windows
 
 is($output, <<'EXPECTED');
 t/mbox.cpy, message 44: Font metrics
@@ -251,6 +255,8 @@ my @msgs  = $start->threadMessages;
 cmp_ok(@msgs, "==", 2);
 ok($grep10->search($start));
 
+$output =~ s#\\#/#g;  # windows
+
 is($output, <<'EXPECTED');
 t/mbox.cpy, message 26: Re: your mail
    13: Are you using ImageMagick 5.2.0?  When I used the script I sent the
@@ -287,6 +293,8 @@ cmp_ok(@m11, "==", 1);
 $fh->close;
 select $oldfh;
 
+$output =~ s#\\#/#g;  # windows
+
 is($output, <<'EXPECTED');
 t/mbox.cpy, message 26: Re: your mail
    13: Are you using ImageMagick 5.2.0?  When I used the script I sent the
@@ -317,6 +325,8 @@ cmp_ok(@m12, "==", 1);
 
 $fh->close;
 select $oldfh;
+
+$output =~ s#\\#/#g;  # windows
 
 is($output, <<'EXPECTED');
 t/mbox.cpy, message 20: 

@@ -186,6 +186,7 @@ Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
 Lines: 24
 Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
 
 preamb1
 preamb2
@@ -226,6 +227,7 @@ Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
 Lines: 1
 Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
 
 --part-separator--
 EXPECTED
@@ -244,6 +246,7 @@ Content-Type: text/html; charset="us-ascii"
 Content-Length: 12
 Lines: 2
 Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
 
 p1 l1
 p1 l2

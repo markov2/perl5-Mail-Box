@@ -44,7 +44,8 @@ These objects each store one header line, and facilitates access routines to
 the information hidden in it.  Also, you may want to have a look at the
 added methods of a message:
 
- my $from    = $message->from;
+ my @from    = $message->from;
+ my $sender  = $message->sender;
  my $subject = $message->subject;
  my $msgid   = $message->messageId;
 
@@ -240,11 +241,24 @@ and returned.  When a STRING is used, that one is formatted.
 
 =cut
 
+# attempt to change the case of a tag to that required by RFC822. That
+# being all characters are lowercase except the first of each
+# word. Also if the word is an `acronym' then all characters are
+# uppercase. We, rather arbitrarily, decide that a word is an acronym
+# if it does not contain a vowel and isn't the well-known 'Cc' or
+# 'Bcc' headers.
+
+my %wf_lookup
+  = qw/mime MIME  ldap LDAP  soap SOAP
+       bcc Bcc  cc Cc/;
+
 sub wellformedName(;$)
 {   my $thing = shift;
     my $name = @_ ? shift : $thing->name;
-    $name =~ s/(\w+)/\L\u$1/g;
-    $name;
+
+    join '-',
+       map { $wf_lookup{lc $_} || ( /[aeiouyAEIOUY]/ ? ucfirst lc : uc ) }
+          split /\-/, $name;
 }
 
 #------------------------------------------

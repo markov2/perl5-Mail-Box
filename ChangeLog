@@ -7,6 +7,26 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.026:
+
+	Improvements:
+
+	- Mail::Message::Field::wellformedName() produces better results,
+	  thanks to [Emmet Cailfield]
+
+version 2.025: Mon Sep 23 13:11:57 CEST 2002
+
+	Fixes:
+
+	- Accidentally left debug-printstatements in Mail::Transport::SMTP
+
+	- Fixed from address in Mail::Transport::SMTP
+
+	Improvements:
+
+	- MIME-Version header line automatically added to constructed
+	  messages (rfc 2045). [Matthew Darwin]
+
 version 2.024: Sun Sep 22 23:06:55 CEST 2002
 
 	Fixes:

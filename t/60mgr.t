@@ -45,6 +45,8 @@ ok(defined $second);
 is($second, $folder);
 my @notices = $manager->report('NOTICES');
 cmp_ok(@notices, "==", 1);
+
+$notices[-1] =~ s#\\#/#g;  # Windows
 is($notices[-1], "Folder t/mbox.src is already open.\n");
 cmp_ok($manager->openFolders, "==", 1);
 
@@ -64,6 +66,7 @@ cmp_ok(@notices, "==", 1);
 
 my @warnings = $manager->report('WARNINGS');
 cmp_ok(@warnings, "==", 1);
+$warnings[-1] =~ s#\\#/#g;  # Windows
 is($warnings[-1], "Folder t/create does not exist (mbox).\n");
 
 $manager->log('WARNINGS');  # back to default reporting.

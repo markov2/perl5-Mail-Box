@@ -11,6 +11,8 @@ use IO::File;
 use POSIX 'tmpnam';
 use File::Copy;
 
+my $crlf_platform = $^O =~ m/mswin|cygwin/;
+
 =head1 NAME
 
 Mail::Message::Body::File - body of a message temporarily stored in a file
@@ -184,9 +186,10 @@ sub nrLines()
 sub size()
 {   my $self = shift;
 
-      exists $self->{MMBF_size}
-    ? $self->{MMBF_size}
-    : ($self->{MMBF_size} = -s $self->tempFilename);
+    return $self->{MMBF_size} if exists $self->{MMBF_size};
+
+    $self->{MMBF_size} = (-s $self->tempFilename)
+       - ( $crlf_platform ? $self->nrLines : 0 );
 }
 
 

@@ -9,7 +9,7 @@ use warnings;
 use strict;
 use lib '..', '.';
 
-use Mail::Box 2.00;
+use Mail::Box;
 
 #
 # Get the command line arguments.
@@ -41,5 +41,7 @@ TEXT
 # Mail::Transmit package.
 #
 
-$message->send(via => 'mail', trace => 'NOTICE');
+warn "Sending returned error $!\n"
+   unless $message->send(via => 'smtp', trace => 'NOTICE', debug => 1);
+
 #$message->send(via => 'sendmail');

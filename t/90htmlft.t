@@ -17,8 +17,7 @@ BEGIN {
    eval 'require HTML::FormatText';
 
    if($@)
-   {   warn "requires HTML::FormatText.\n";
-       plan tests => 0;
+   {   plan skip_all => "requires HTML::FormatText.\n";
        exit 0;
    }
 

@@ -11,7 +11,7 @@ use warnings;
 
 use lib qw(. t);
 
-BEGIN {plan tests => 63}
+BEGIN {plan tests => 68}
 
 use Mail::Message::Field::Fast;
 use Mail::Address;
@@ -157,8 +157,20 @@ is($q->toString, qq(Content-Type: text/plain; charset="iso-10646"\n));
 # Check preferred capitization of Labels
 #
 
-is(Mail::Message::Field->wellformedName('Content-Transfer-Encoding'), 'Content-Transfer-Encoding');
-is(Mail::Message::Field->wellformedName('content-transfer-encoding'), 'Content-Transfer-Encoding');
-is(Mail::Message::Field->wellformedName('CONTENT-TRANSFER-ENCODING'), 'Content-Transfer-Encoding');
-is(Mail::Message::Field->wellformedName('cONTENT-tRANSFER-eNCODING'), 'Content-Transfer-Encoding');
+my @tests =
+( 'Content-Transfer-Encoding' => 'Content-Transfer-Encoding'
+, 'content-transfer-encoding' => 'Content-Transfer-Encoding'
+, 'CONTENT-TRANSFER-ENCODING' => 'Content-Transfer-Encoding'
+, 'cONTENT-tRANSFER-eNCODING' => 'Content-Transfer-Encoding'
+, 'mime-version'              => 'MIME-Version'
+, 'MIME-VERSION'              => 'MIME-Version'
+, 'Mime-vERSION'              => 'MIME-Version'
+, 'src-label'                 => 'SRC-Label'
+, 'my-src-label'              => 'My-SRC-Label'
+);
+
+while(@tests)
+{   my ($from, $to) = (shift @tests, shift @tests);
+    is(Mail::Message::Field->wellformedName($from), $to);
+}
 

@@ -3,13 +3,15 @@ use strict;
 package Tools;
 
 use base 'Exporter';
-our @EXPORT = qw/clean_dir unpack_mbox2mh unpack_mbox2maildir
-                 cmplists listdir
-                 $src $unixsrc $winsrc
-                 $fn  $unixfn  $winfn
-                 $cpy $cpyfn
-                 $raw_html_data
-                /;
+our @EXPORT =
+  qw/clean_dir unpack_mbox2mh unpack_mbox2maildir
+     cmplists listdir
+     $src $unixsrc $winsrc
+     $fn  $unixfn  $winfn
+     $cpy $cpyfn
+     $raw_html_data
+     $crlf_platform $windows
+    /;
 
 use File::Spec;
 use Sys::Hostname;
@@ -17,17 +19,20 @@ use Sys::Hostname;
 our ($src, $unixsrc, $winsrc);
 our ($fn,  $unixfn,  $winfn);
 our ($cpy, $cpyfn);
+our($crlf_platform, $windows);
 
 BEGIN {
+   $windows       = $^O =~ m/win32|cygwin/i;
+   $crlf_platform = $windows;
+
    $unixfn  = 'mbox.src';
    $winfn   = 'mbox.win';
    $cpyfn   = 'mbox.cpy';
    $unixsrc = File::Spec->catfile('t', $unixfn);
    $winsrc  = File::Spec->catfile('t', $winfn);
    $cpy     = File::Spec->catfile('t', $cpyfn);
-   ($src, $fn) = $^O =~ m/win32/
-            ? ($winsrc, $winfn)
-            : ($unixsrc, $unixfn);
+
+   ($src, $fn) = $windows ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
 }
 
 #

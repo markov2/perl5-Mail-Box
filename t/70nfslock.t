@@ -18,7 +18,7 @@ use File::Spec;
 my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 
 BEGIN {
-   if($^O =~ m/mswin/i)
+   if($windows)
    {   plan skip_all => "not available on MicroSoft Windows.";
        exit 0;
    }

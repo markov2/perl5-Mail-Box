@@ -67,6 +67,7 @@ Content-Type: text/html; charset="us-ascii"
 Content-Length: 83
 Lines: 2
 Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
 
 This text is used to test base64 encoding and decoding.  Let
 see whether it works.

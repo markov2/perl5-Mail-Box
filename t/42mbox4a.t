@@ -102,6 +102,9 @@ $folder = $mgr->open
   , access    => 'rw'
   );
 
+ok($folder);
+cmp_ok($folder->messages, "==", 47);
+
 my $sec = $mgr->open
   ( folder    => '=empty'
   , folderdir => 't'
@@ -109,8 +112,6 @@ my $sec = $mgr->open
   , create    => 1
   );
 
-ok($folder);
-cmp_ok($folder->messages, "==", 47);
 ok($sec);
 cmp_ok($sec->messages, "==", 0);
 cmp_ok($mgr->openFolders, "==", 2);

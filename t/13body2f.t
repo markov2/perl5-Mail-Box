@@ -33,6 +33,7 @@ my $body = Mail::Message::Body::File->new(file => $f);
 ok($body);
 is($body->string, $filedata);
 cmp_ok($body->nrLines, "==", 5);
+
 cmp_ok($body->size, "==", length $filedata);
 
 my $fakeout;

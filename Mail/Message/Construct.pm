@@ -1008,7 +1008,8 @@ pairs or Mail::Message::Field objects.  In case of a key-value
 pair, the field's name is to be used as key and the value is a
 string, address (Mail::Address object), or array of addresses.
 
-A C<Date> and a C<Message-Id> field are added unless supplied.
+A C<Date>, C<Message-Id>, and C<MIME-Version> field are added unless
+supplied.
 
 =examples
 
@@ -1052,6 +1053,9 @@ sub buildFromBody(@)
 
     $head->add(Date => Mail::Message::Field->toDate)
         unless defined $head->get('Date');
+
+    $head->add('MIME-Version' => '1.0')  # required by rfc2045
+        unless defined $head->get('MIME-Version');
 
     $message;
 }

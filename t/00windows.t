@@ -10,8 +10,11 @@ use strict;
 use warnings;
 use FileHandle;
 
+use lib qw(. t);
+use Tools;
+
 BEGIN {
-   unless($^O =~ m/mswin/i)
+   unless($windows)
    {   plan skip_all => "preparation for MicroSoft Windows.";
        exit 0;
    }

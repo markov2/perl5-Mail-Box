@@ -54,9 +54,12 @@ foreach my $message ($folder->messages)
     $msgnr++;
 }
 
-if($^O =~ /win32/i)   # Correct count for empty trailing line
-     { cmp_ok($end+2 , "==",  -s $folder->filename); }
-else { cmp_ok($end+1 , "==",  -s $folder->filename); }
+# Correct count for empty trailing line
+my $exp_end
+  = $^O eq 'cygwin' ? $end+1   # why not 2?
+  : $windows        ? $end+2
+  :                   $end+1;
+cmp_ok($exp_end , "==",  -s $folder->filename);
 
 #
 # None of the messages should be modified.

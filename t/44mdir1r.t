@@ -17,9 +17,8 @@ use File::Compare;
 use File::Copy;
 
 BEGIN {
-   if($^O =~ /mswin/i)
-   {   warn "Maildir filenames are incompatible with Windows";
-       plan tests => 0;
+   if($windows)
+   {   plan skip_all => "Maildir filenames are incompatible with Windows";
        exit 0;
    }
 
