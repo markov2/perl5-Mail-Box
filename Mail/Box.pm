@@ -658,8 +658,8 @@ sub update(@)
 
 =method organization
 
-Returns whether a folder is organized as one 'FILE' with many messages or
-a 'DIRECTORY' with one message per file.
+Returns how the folder is organized: as one C<'FILE'> with many messages,
+a C<'DIRECTORY'> with one message per file, or by a C<'REMOTE'> server.
 
 =cut
 
@@ -764,8 +764,8 @@ folder is closed.
 =option  select 'ACTIVE'|'DELETED'|'ALL'|LABEL|!LABEL|FILTER
 =default select 'ACTIVE'
 
-Which messages are to be copied. See the description of the option
-for the messages() method about how this works.
+Which messages are to be copied. See messages(description)
+about how this works.
 
 =option  subfolders BOOLEAN|'FLATTEN'|'RECURSE'
 =default subfolders <folder type dependent>

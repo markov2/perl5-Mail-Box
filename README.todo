@@ -38,7 +38,10 @@ Plans for the (near?) future:
   - Maildir   (comparable to MH, but different optimizations
                possible/required)
   - Emaul     (? for compatibly with Mail::Folder)
-  - NNTP
+  - News      NNTP
+  - Outlook
+  - Exchange
+  - Netscape
 
   Any more?
   One of the main reasons that these are not implemented, is that my
@@ -55,7 +58,5 @@ Plans for the (near?) future:
 * Convert text to html vv
 
 * Mail::Box::Search::Spam
-
-* Use Text::Autoformat when constructing messages/replies/formats
 
 * Kill a message which is used to free-up memory in large folders.

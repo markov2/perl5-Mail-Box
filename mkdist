@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=2.022
+VERSION=2.023
 
 umask 022
 

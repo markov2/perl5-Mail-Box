@@ -169,14 +169,12 @@ sub inHead(@)
 
     my $matched = 0;
   LINES:
-    foreach my $name ($head->names)
-    {   next unless $field_check->($head, $name);
-        foreach my $field ($head->get($name))
-        {   next unless $match_check->($head, $field);
-            $matched++;
-            last LINES unless $deliver;  # no deliver: only one match needed
-            $deliver->( {@details, field => $field} );
-        }
+    foreach my $field ($head->orderedFields)
+    {   next unless $field_check->($head, $field->name)
+                 && $match_check->($head, $field);
+        $matched++;
+        last LINES unless $deliver;  # no deliver: only one match needed
+        $deliver->( {@details, field => $field} );
     }
 
     $matched;

@@ -399,7 +399,7 @@ In the first example below, this routine is called seven times.
 
 =examples
 
- print $message->threadToString;
+ print $node->threadToString;
 
 may result in
 
@@ -414,7 +414,7 @@ may result in
 The `*' represents a missing message (a "dummy" message).  The `[3]'
 presents a folded thread with three messages.
 
-   print $message->threadToString(\&show);
+   print $node->threadToString(\&show);
 
    sub show($) {
       my $message = shift;

@@ -17,7 +17,7 @@ use File::Copy;
 use File::Spec;
 use File::Basename;
 use POSIX ':unistd_h';
-use IO::File;
+use IO::File ();
 
 =head1 NAME
 

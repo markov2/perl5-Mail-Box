@@ -7,6 +7,19 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.023: Sat Sep 14 11:11:03 CEST 2002
+
+	Fixes:
+
+	- t/65search.t failed for some Perl versions, dependent on the
+	  hash implementation.  Mail::Box::Search::Grep::inHead did
+	  not use MM::Head::orderedFields() yet. Discovered by
+	  [Blair & Liz & Greg & Conrad Heiney]
+
+	- Mail::Box::Mbox includes IO::File with () to avoid colission
+	  between constant definitions in IO::File and POSIX.  Fixed
+	  by [Marcel Gruenauer]
+
 version 2.022: Mon Sep  9 18:55:01 CEST 2002
 
 	Detailed checks against RFC2822 is in progress, which means that
