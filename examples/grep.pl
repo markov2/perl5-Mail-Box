@@ -4,6 +4,7 @@
 #
 # This code can be used and modified without restriction.
 # Mark Overmeer, <mailbox@overmeer.net>, 17 feb 2002
+# Updated 16 jan 2003 to work more like unix-grep syntax
 
 use warnings;
 use strict;
@@ -16,21 +17,29 @@ use Mail::Box::Search::Grep;
 # Get the command line arguments.
 #
 
-die "Usage: $0 mailbox pattern\n"
-    unless @ARGV==2;
+die "Usage: $0 pattern mailboxes\n"
+    unless @ARGV >= 2;
 
-my ($mailbox, $pattern) = @ARGV;
+my ($pattern, @mailboxes) = @ARGV;
 
 my $mgr = Mail::Box::Manager->new;
-my $folder = $mgr->open($mailbox)
-   or die "Cannot open folder $mailbox.\n";
 
-my $grep = Mail::Box::Search::Grep->new
-  ( in      => 'MESSAGE'
-  , match   => qr/$pattern/
-  , details => 'PRINT'
-  );
+foreach my $mailbox (@mailboxes)
+{   my $folder = $mgr->open($mailbox);
+    unless(defined $folder)
+    {   warn "*** Cannot open folder $mailbox.\n";
+        next;
+    }
 
-$grep->search($folder);
+    print "*** Scanning through $mailbox\n"
+       if @mailboxes > 1;
 
-$folder->close;
+    my $grep = Mail::Box::Search::Grep->new
+      ( in      => 'MESSAGE'
+      , match   => qr/$pattern/
+      , details => 'PRINT'
+      );
+
+    $grep->search($folder);
+    $folder->close;
+}

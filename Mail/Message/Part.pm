@@ -107,8 +107,7 @@ sub buildFromBody($$;@)
      , @log
      );
 
-    $part->storeBody($body->check);
-    $part->statusToLabels;
+    $part->body($body->check);
     $part;
 }
 

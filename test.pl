@@ -208,6 +208,7 @@ sub check_requirement($)
 
     my $package = $req->{package};
 
+    local $_;   # evals are destroying $_ sometimes.
     eval "require $package";
     if($@)
     {   print "    package $package is not installed\n";
@@ -250,7 +251,6 @@ sub update_requirement($)
         {   $reason =~ s/^/        /mg;
             print $reason;
         }
-
 
         print "    do you want to install $package? yes/no/all [$install] ";
         eval "require Term::ReadKey";

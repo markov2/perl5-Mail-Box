@@ -930,6 +930,11 @@ to create a C<Mail::Message::Body>.
  file => \*MYINPUTFILE                   # file handle
  file => $in                             # IO::Handle
 
+=option  files ARRAY-OF-FILE
+=default files []
+
+See option file, but then an array reference collection more of them.
+
 =option  attach BODY|MESSAGE|ARRAY-OF-BODY
 =default attach undef
 
@@ -937,6 +942,11 @@ One attachment to the message.  Each attachment can be full MESSAGE or a BODY.
 
  attach => $folder->message(3)->decoded  # body
  attach => $folder->message(3)           # message
+
+=option  head HEAD
+=default head undef
+
+Start with a prepared header, otherwise one is created.
 
 =examples
 
@@ -957,14 +967,13 @@ One attachment to the message.  Each attachment can be full MESSAGE or a BODY.
 sub build(@)
 {   my $class = shift;
 
-    my $head  = Mail::Message::Head::Complete->new;
     my @parts
       = ! ref $_[0] ? ()
       : $_[0]->isa('Mail::Message')       ? shift
       : $_[0]->isa('Mail::Message::Body') ? shift
       :               ();
 
-    my @headerlines;
+    my ($head, @headerlines);
     while(@_)
     {   my $key = shift;
         if(ref $key && $key->isa('Mail::Message::Field'))
@@ -973,10 +982,14 @@ sub build(@)
         }
 
         my $value = shift;
-        if($key eq 'data')
+        if($key eq 'head')
+        {   $head = $value }
+        elsif($key eq 'data')
         {   push @parts, Mail::Message::Body->new(data => $value) }
         elsif($key eq 'file')
         {   push @parts, Mail::Message::Body->new(file => $value) }
+        elsif($key eq 'files')
+        {   push @parts, map {Mail::Message::Body->new(file => $_) } @$value }
         elsif($key eq 'attach')
         {   push @parts, ref $value eq 'ARRAY' ? @$value : $value }
         elsif($key =~ m/^[A-Z]/)
@@ -985,24 +998,25 @@ sub build(@)
         {   croak "Skipped unknown key $key in build." } 
     }
 
-    my $message = $class->new(head => $head);
-
     my $body
        = @parts==0 ? Mail::Message::Body::Lines->new()
        : @parts==1 ? $parts[0]
        : Mail::Message::Body::Multipart->new(parts => \@parts);
 
-    $class->buildFromBody($body, @headerlines);
+    $class->buildFromBody($body, $head, @headerlines);
 }
 
 #------------------------------------------
 
-=method buildFromBody BODY, HEADERS
+=method buildFromBody BODY, [HEAD], HEADERS
 
 (Class method)
 Shape a message around a BODY.  Bodies have information about their
 content in them, which is used to construct a header for the message.
-Next to that, more HEADERS can be specified.
+You may specify a HEAD object which is pre-initialized, or one is
+created for you (also when HEAD is C<undef>).
+Next to that, more HEADERS can be specified which are stored in that
+header.
 
 Header fields are added in order, and before the header lines as
 defined by the body are taken.  They may be supplied as key-value
@@ -1035,7 +1049,13 @@ sub buildFromBody(@)
 {   my ($class, $body) = (shift, shift);
     my @log     = $body->logSettings;
 
-    my $head    = Mail::Message::Head::Complete->new(@log);
+    my $head;
+    if(ref $_[0] && $_[0]->isa('Mail::Message::Head')) { $head = shift }
+    else
+    {   shift unless defined $_[0];   # undef as head
+        $head = Mail::Message::Head::Complete->new(@log);
+    }
+
     while(@_)
     {   if(ref $_[0]) {$head->add(shift)}
         else          {$head->add(shift, shift)}

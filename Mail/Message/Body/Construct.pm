@@ -178,9 +178,12 @@ returned.
  my $msg    = Mail::Message->buildFromBody(
     $message->decoded->attach($pgpkey));
 
+ # The last message of the $multi multiparted body becomes a coerced $entity.
  my $entity  = MIME::Entity->new;
  my $multi   = $msg->body->attach($entity);
- # The last message of the $multi multiparted body is the coerced $entity.
+
+ # Now create a new message
+ my $msg     = Mail::Message->new(head => ..., body => $multi);
 
 =cut
 
@@ -191,8 +194,13 @@ sub attach(@)
     push @parts, shift while @_ && ref $_[0];
 
     return $self unless @parts;
-    unshift @parts, ($self->isNested ? $self->nested : $self);
+    unshift @parts,
+      ( $self->isNested    ? $self->nested
+      : $self->isMultipart ? $self->parts
+      : $self
+      );
 
+    return $parts[0] if @parts==1;
     Mail::Message::Body::Multipart->new(parts => \@parts, @_);
 }
 

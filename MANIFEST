@@ -63,8 +63,11 @@ Mail/Message/Convert/MimeEntity.pm
 Mail/Message/Convert/TextAutoformat.pm
 Mail/Message/Dummy.pm
 Mail/Message/Field.pm
+Mail/Message/Field/Attribute.pm
 Mail/Message/Field/Fast.pm
 Mail/Message/Field/Flex.pm
+Mail/Message/Field/Full.pm
+Mail/Message/Field/Unstructured.pm
 Mail/Message/Head.pm
 Mail/Message/Head/Complete.pm
 Mail/Message/Head/Delayed.pm
@@ -80,6 +83,7 @@ Mail/Message/TransferEnc/SevenBit.pm
 Mail/Message/Wrapper/SpamAssassin.pm
 Mail/Reporter.pm
 Mail/Transport.pm
+Mail/Transport/Exim.pm
 Mail/Transport/IMAP4.pm
 Mail/Transport/Mailx.pm
 Mail/Transport/POP3.pm
@@ -113,6 +117,8 @@ tests/10report/Definition.pm
 tests/11field/10cfws.t
 tests/11field/20fast.t
 tests/11field/30flex.t
+tests/11field/40full.t
+tests/11field/41attr.t
 tests/11field/Definition.pm
 tests/12head/10create.t
 tests/12head/20resent.t

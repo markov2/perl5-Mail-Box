@@ -35,8 +35,6 @@ Plans for the (near?) future:
 
   - Exmh      (should be relatively simple, extends MH)
   - IMAP      (using Mail::IMAPClient, looks not that hard)
-  - Maildir   (comparable to MH, but different optimizations
-               possible/required)
   - Emaul     (? for compatibly with Mail::Folder)
   - News      NNTP
   - Outlook
@@ -58,8 +56,10 @@ Plans for the (near?) future:
   For the message-folders, only foundIn() should be kept outside the
   loading mechanism.
 
-* Convert text to html vv
-
-* Mail::Box::Search::Spam
-
 * Kill a message which is used to free-up memory in large folders.
+
+* Maildir quota
+
+* Cooperation with OpenPGP
+
+* MD5 checksums and more

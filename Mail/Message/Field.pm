@@ -11,10 +11,10 @@ use Date::Parse;
 our %_structured;  # not to be used directly: call isStructured!
 my $default_wrap_length = 78;
 
-use overload qq("") => sub { $_[0]->unfolded_body }
+use overload qq("") => sub { $_[0]->unfoldedBody }
            , '+0'   => 'toInt'
            , bool   => sub {1}
-           , cmp    => sub { $_[0]->unfolded_body cmp "$_[1]" }
+           , cmp    => sub { $_[0]->unfoldedBody cmp "$_[1]" }
            , '<=>'  => sub { $_[2]
                            ? $_[1]        <=> $_[0]->toInt
                            : $_[0]->toInt <=> $_[1]
@@ -268,7 +268,7 @@ sub wellformedName(;$)
 Returns the folded version of the whole header.  When the header is shorter
 than the wrap length, a list of one line is returned.  Otherwise more
 lines will be returned, all but the first starting with at least one blank.
-See also folded_body() to get the same information without the field's name.
+See also foldedBody() to get the same information without the field's name.
 
 In scalar context, the lines are delived into one string, which is
 faster because that's the way they are stored...
@@ -290,14 +290,14 @@ be B<stripped> from everything what is behind the first semi-color (C<;>).
 In aby case, the string is unfolded.  
 
 Whether the field is structured is defined by isStructured().
-This method may be what you want, but usually, the folded_body() and
-unfolded_body() are what you are looking for.
+This method may be what you want, but usually, the foldedBody() and
+unfoldedBody() are what you are looking for.
 
 =cut
 
 sub body()
 {   my $self = shift;
-    my $body = $self->unfolded_body;
+    my $body = $self->unfoldedBody;
     return $body unless $self->isStructured;
 
     $body =~ s/\s*\;.*//s;
@@ -306,7 +306,7 @@ sub body()
 
 #------------------------------------------
 
-=method folded_body [BODY]
+=method foldedBody [BODY]
 
 Returns the body as a set of lines. In scalar context, this will be one line
 containing newlines.  Be warned about the newlines when you do
@@ -319,7 +319,7 @@ argument must be correct.
 
 #------------------------------------------
 
-=method unfolded_body [BODY, [WRAP]]
+=method unfoldedBody [BODY, [WRAP]]
 
 Returns the body as one single line, where all folding information (if
 available) is removed.  This line will also NOT end on a new-line.
@@ -330,7 +330,7 @@ folding size.
 
 =examples
 
- my $body = $field->unfolded_body;
+ my $body = $field->unfoldedBody;
  print "$field";   # via overloading
 
 =cut
@@ -353,13 +353,13 @@ sub comment(;$)
 {   my $self = shift;
     return undef unless $self->isStructured;
 
-    my $body = $self->unfolded_body;
+    my $body = $self->unfoldedBody;
 
     if(@_)
     {   my $comment = shift;
         $body    =~ s/\s*\;.*//;
         $body   .= "; $comment" if defined $comment && length $comment;
-        $self->unfolded_body($body);
+        $self->unfoldedBody($body);
         return $comment;
     }
  
@@ -368,7 +368,7 @@ sub comment(;$)
 
 #------------------------------------------
 
-sub content() { shift->unfolded_body }  # Compatibility
+sub content() { shift->unfoldedBody }  # Compatibility
 
 #------------------------------------------
 
@@ -392,15 +392,15 @@ returned.
 
 sub attribute($;$)
 {   my ($self, $attr) = (shift, shift);
-    my $body  = $self->unfolded_body;
+    my $body  = $self->unfoldedBody;
 
     unless(@_)
-    {   $body =~ m/\b$attr=( "( (?: [^"]|\\" )* )"
-                           | '( (?: [^']|\\' )* )'
-                           | (\S*)
-                           )
-                  /xi;
-        return $+;
+    {   return
+           $body =~ m/\b$attr=( "( (?: [^"]|\\" )* )"
+                              | '( (?: [^']|\\' )* )'
+                              | (\S*)
+                              )
+                  /xi ? $+ : undef;
     }
 
     my $value = shift;
@@ -410,7 +410,7 @@ sub attribute($;$)
             or s/\b$attr="([^"]|\\")*"//i
             or s/\b$attr=\S*//i;
         }
-        $self->unfolded_body($body);
+        $self->unfoldedBody($body);
         return undef;
     }
 
@@ -422,7 +422,7 @@ sub attribute($;$)
          or do { $_ .= qq(; $attr="$quoted") }
     }
 
-    $self->unfolded_body($body);
+    $self->unfoldedBody($body);
     $value;
 }
 
@@ -459,7 +459,7 @@ sub string(;$)
 
     my $wrap  = shift || $default_wrap_length;
     my $name  = $self->Name;
-    my @lines = $self->fold($name, $self->unfolded_body, $wrap);
+    my @lines = $self->fold($name, $self->unfoldedBody, $wrap);
     $lines[0] = $name . ':' . $lines[0];
     wantarray ? @lines : join('', @lines);
 }
@@ -515,27 +515,46 @@ sub toDate($)
 
 (Class or Instance method) Remove the I<comments> and I<folding white
 spaces> from the STRING.  Without string and only as instance method, the
-unfolded_body() is being stripped and returned.
+unfoldedBody() is being stripped and returned.
+
+WARNING: This operation is only allowed for structured header fields (which
+are defined by the various RFCs as being so.  You don't want parts within
+braces which are in the Subject header line to be removed, to give an
+example.
 
 =cut
 
 sub stripCFWS($)
 {   my $thing  = shift;
-    my $string = @_ ? shift : $thing->unfolded_body;
 
-    for($string)
-    {  s/(?: \(
-                 ( [^()]*
-                   \( [^()]* \)
-                 )*
-                 [^()]*
-             \)
-          )/ /gsx;
-       s/\s+/ /gs;
+    # get (folded) data
+    my $string = @_ ? shift : $thing->foldedBody;
+
+    # remove comments
+    my $r          = '';
+    my $in_dquotes = 0;
+    my $open_paren = 0;
+
+    my @s = split m/([()"])/, $string;
+    while(@s)
+    {   my $s = shift @s;
+
+           if(length $r && substr($r, -1) eq "\\") { $r .= $s } # escaped special
+        elsif($s eq '"')   { $in_dquotes = not $in_dquotes; $r .= $s }
+        elsif($s eq '(' && !$in_dquotes) { $open_paren++ }
+        elsif($s eq ')' && !$in_dquotes) { $open_paren-- }
+        elsif($open_paren) {}  # in comment
+        else               { $r .= $s }
+    }
+
+    # beautify and unfold at the same time
+    for($r)
+    {  s/\s+/ /gs;
        s/\s+$//;
        s/^\s+//;
     }
-    $string;
+
+    $r;
 }
       
 #------------------------------------------
@@ -581,7 +600,7 @@ Returns the number of lines needed to display this header-line.
 
 =cut
 
-sub nrLines() { my @l = shift->folded_body; scalar @l }
+sub nrLines() { my @l = shift->foldedBody; scalar @l }
 
 #------------------------------------------
 
@@ -663,7 +682,7 @@ sub consume($;$)
     else                          # Created by parser
     {   # correct erroneous wrap-seperators (dos files under UNIX)
         $body =~ s/[\012\015]+/\n/g;
-        $body = ' '.$body unless substr($body, 0, 1) eq ' ';
+        $body =~ s/^\s*/ /;  # start with one blank, folding kept unchanged
 
         if($body eq "\n")
         {   Mail::Reporter->log(WARNING => "Empty field: $name\n");
@@ -694,7 +713,7 @@ be enforced (re-folding will take place).
 
 sub setWrapLength(;$)
 {   my $self = shift;
-    $self->[1] = $self->fold($self->[0],$self->unfolded_body, @_);
+    $self->[1] = $self->fold($self->[0],$self->unfoldedBody, @_);
 }
 
 #------------------------------------------
@@ -766,7 +785,7 @@ sub fold($$;$)
 
 The reverse of fold(): all lines which form the body of a field are
 joined into one by removing all line terminators (even the last).
-The blank at the beginning of the first line is removed as well.
+Possible leading blanks on the first line are removed as well.
 
 =cut
 
@@ -774,7 +793,7 @@ sub unfold($)
 {   my $string = $_[1];
     for($string)
     {   s/\n//g;
-        s/^ //;
+        s/^ +//;
     }
     $string;
 }

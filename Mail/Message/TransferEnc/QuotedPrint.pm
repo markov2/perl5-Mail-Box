@@ -85,7 +85,9 @@ sub decode($@)
         s/=0[dD]$//;
         s/\=([A-Fa-f0-9]{2})/
             my $code = hex $1;
-            $code < 040 || $code > 127 ? sprintf('\\%03o', $code) : chr $code
+              $code == 9  ? "\t"
+            : $code < 040 ? sprintf('\\%03o', $code)
+            : chr $code
          /ge;
 
         $_ .= "\n" unless s/\=$//;

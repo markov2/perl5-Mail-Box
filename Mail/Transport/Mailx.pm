@@ -66,7 +66,7 @@ sub init($)
 
     $args->{via} = 'mailx';
 
-    $self->SUPER::init($args);
+    $self->SUPER::init($args) or return;
 
     $self->{MTM_program}
       = $args->{proxy}

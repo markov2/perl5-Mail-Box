@@ -42,8 +42,8 @@ C<sendmail>, C<mail>, or other programs on the local host.
 =default via      'smtp'
 =default port     25
 
-=option  debug BOOLEAN
-=default debug <false>
+=option  smtp_debug BOOLEAN
+=default smtp_debug <false>
 
 Simulate transmission: the SMTP protocol output will be sent to your
 screen.
@@ -93,7 +93,7 @@ sub init($)
     $args->{via}  ||= 'smtp';
     $args->{port} ||= '25';
 
-    $self->SUPER::init($args);
+    $self->SUPER::init($args) or return;
 
     my $helo = $args->{helo}
       || eval { require Net::Config; $Net::Config::inet_domain }
@@ -101,7 +101,7 @@ sub init($)
 
     $self->{MTS_net_smtp_opts}
        = { Hello   => $helo
-         , Debug   => ($args->{debug} || 0)
+         , Debug   => ($args->{smtp_debug} || 0)
          };
 
     $self;

@@ -37,6 +37,10 @@ without C<via> options to get a message transported.
 Use sendmail to process and deliver the mail.  This requires the
 C<sendmail> program to be installed on your system.
 
+=item * Mail::Transport::Exim
+
+Use C<exim> to distribute the message.
+
 =item * Mail::Transport::Qmail
 
 Use C<qmail-inject> to distribute the message.

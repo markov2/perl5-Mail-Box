@@ -42,3 +42,10 @@ contributions
     message considered to be a copy and ignored.
 
     By the way: this may remove a lot of spam ;)
+
+ 4) How can I fight SPAM?
+
+    Mail::Classification is a package based on Mail::Box, which can be
+    trained to recognize Spam.  SpamAssassin is a rule based spam filter,
+    and can be used via Mail::Box::Search::SpamAssassin
+    

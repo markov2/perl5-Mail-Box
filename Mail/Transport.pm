@@ -49,12 +49,14 @@ protocols will implement both sending and receiving.
 #------------------------------------------
 
 my %mailers =
- ( mail     => 'Mail::Transport::Mailx'
- , mailx    => 'Mail::Transport::Mailx'
- , sendmail => 'Mail::Transport::Sendmail'
- , smtp     => 'Mail::Transport::SMTP'
- , pop      => 'Mail::Transport::POP3'
- , pop3     => 'Mail::Transport::POP3'
+ ( exim     => '::Exim'
+ , mail     => '::Mailx'
+ , mailx    => '::Mailx'
+ , pop      => '::POP3'
+ , pop3     => '::POP3'
+ , qmail    => '::Qmail'
+ , sendmail => '::Sendmail'
+ , smtp     => '::SMTP'
  );
 
 #------------------------------------------
@@ -116,6 +118,15 @@ by the Mail::Transport::Mailx module, C<sendmail> belongs to
 C<::Sendmail>, and C<smtp> is implemented in C<::SMTP>.  The C<pop> or
 C<pop3> protocol implementation can be found in C<::POP3>.
 
+=option  executable FILENAME
+=default executable C<undef>
+
+If you specify an executable, the module does not need to search the
+system directories to figure-out where the client lives.  Using this
+decreases the flexible usage of your program: moving your program
+to other systems may involve changing the path to the executable,
+which otherwise would work auto-detect and unmodified.
+
 =cut
 
 sub new(@)
@@ -130,9 +141,10 @@ sub new(@)
 
     my %args  = @_;
     my $via   = lc($args{via} || '')
-        or croak "No transport protocol provided.\n";
+        or croak "No transport protocol provided";
 
-    $via      = $mailers{$via} if exists $mailers{$via};
+    $via      = 'Mail::Transport'.$mailers{$via}
+       if exists $mailers{$via};
 
     eval "require $via";
     return undef if $@;
@@ -155,6 +167,19 @@ sub init($)
     $self->{MT_retry}    = $args->{retry}    || -1;
     $self->{MT_timeout}  = $args->{timeout}  || 120;
     $self->{MT_proxy}    = $args->{proxy};
+
+    if(my $exec = $args->{executable})
+    {   $self->{MT_exec} = $exec;
+
+        $self->log(WARNING
+                    => "Avoid program abuse with an absolute path for $exec.")
+           unless File::Spec->file_name_is_absolute($exec);
+
+        unless(-x $exec)
+        {   $self->log(WARNING => "Executable $exec does not exist.");
+            return undef;
+        }
+    }
 
     $self;
 }
@@ -205,13 +230,16 @@ of the binary to be used.
 
 =cut
 
-my @safe_directories = qw(/usr/local/bin /usr/bin /bin
-   /sbin /usr/sbin /usr/lib);
+my @safe_directories
+   = qw(/usr/local/bin /usr/bin /bin /sbin /usr/sbin /usr/lib);
 
 sub findBinary($@)
 {   my ($self, $name) = (shift, shift);
 
-    foreach (@safe_directories, @_)
+    return $self->{MT_exec}
+        if exists $self->{MT_exec};
+
+    foreach (@_, @safe_directories)
     {   my $fullname = File::Spec->catfile($_, $name);
         return $fullname if -x $fullname;
     }

@@ -72,7 +72,7 @@ sub get($) { $_[0]->get_header($_[1]) }
 sub get_header($)
 {   my ($self, $name) = @_;
     my $field = $self->get_mail_object->head->get($name);
-    defined $field ? $field->unfolded_body : undef;
+    defined $field ? $field->unfoldedBody : undef;
 }
 
 #------------------------------------------

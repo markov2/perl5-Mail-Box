@@ -30,9 +30,9 @@ there are =3D confusing constructions like this one: =3D0D, which looks
 encoded, but is not.
 ENCODED
 
-my $decoded = <<'DECODED';   # note the quotes!
-In the source text, there are a few \010\015 strange characters,
-which \200\201 must become encoded.  There is also a \010== long line, which must be broken into pieces, and
+my $decoded = <<DECODED;   # note the quotes!
+In the source text, there are a few \\010\\015 strange characters,
+which \200\201 must become encoded.  There is also a \\010== long line, which must be broken into pieces, and
 there are = confusing constructions like this one: =0D, which looks
 encoded, but is not.
 DECODED

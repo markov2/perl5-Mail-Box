@@ -7,14 +7,10 @@ Obligatory:
   test $msg->body(undef);
 
   Processing folders with non-platform-native line separators.
-  Mail::Message->lineSeparator("\015\012");
 
   appendMessage opens folder, but not needed.
 
 Optional:
-
-  Many calls for tell() can be removed from the parsers, which will
-  really speed-up parsing.
 
   Body::* _data_from_*() may use $. in some cases.  This would speed-up
   body creation.
@@ -33,7 +29,7 @@ Optional:
 
   guessBodySize in MH can be implemented without trigger
 
-  Mail::Message::Body::Scalar can get nrlines from read()
+  Mail::Message::Body::Scalar can get nrLines from read()
 
   fromBody with nested multiparts at once.
 
@@ -45,6 +41,7 @@ Optional:
   updateMessages for Mail::Box::Mbox
   updateMessages for Mail::Box::MH
   demoting messages which stay when their folder closes.
-  Mail::Box::Maildir is progressing but not finished.
   concatenate within reply must shape after source message, not prelude
   $body->beautify;
+
+  Maildir quota

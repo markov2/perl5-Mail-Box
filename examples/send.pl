@@ -4,6 +4,7 @@
 #
 # This code can be used and modified without restriction.
 # Mark Overmeer, <mailbox@overmeer.net>, 20 nov 2001
+# 16 jan 2003, added some options
 
 use warnings;
 use strict;
@@ -44,4 +45,11 @@ TEXT
 warn "Sending returned error $!\n"
    unless $message->send;
 
-#$message->send(via => 'sendmail', trace => 'NOTICE', debug => 1);
+$message->send
+  ( via        => 'sendmail'      # you can do even without this line
+# , trace      => 'NOTICE'
+# , executable => 'C:\lib\sendmail.exe'
+# , debug_smtp => 1
+# , timeout    => 300
+# , retry      => 5
+  );

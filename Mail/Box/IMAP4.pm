@@ -24,7 +24,7 @@ Mail::Box::IMAP4 - handle IMAP4 folders as client
 
 =head1 DESCRIPTION
 
-UNDER DEVELOPMENT: Cannot be used yet!
+UNDER DEVELOPMENT: CANNOT BE USED YET!
 
 Maintain a folder which has its messages stored on a remote server.  The
 communication between the client application and the server is implemented

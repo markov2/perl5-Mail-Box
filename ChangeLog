@@ -7,6 +7,94 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.035: Fri Jan 24 20:41:23 CET 2003
+
+	Fixes:
+
+	- Mail::Reporter::defaultTrace() now accepts names as well.
+	  Recieved a fix by [David A Golden]
+
+	- Mail::Message::Field::attribute() now returns (undef) when
+	  the attribute is not defined.  Patched by [Marty Pauley]
+
+	- [Jost Krieger] found that getline() in ::Base64 does catch
+	  the read line in $_, which could be expected reading its doc.
+
+	- message/rfc822 within delayed multiparts are now triggered
+	  correctly.
+
+	- [Beirne Konarski] found out that eval{} in test.pl sometimes
+	  modified $_, which broke installations.
+
+	- Headers from body where lost in multipart. Reported by [Nik Clayton].
+
+	Improvements:
+
+	- {Greg Matheson] contributed Mail::Transport::Exim, to send
+	  email using an external exim client.
+
+	- Added Mail::Transport::new(executable) which offers you a
+	  way to explicitly specify where the transfer agent is located.
+
+	- Changed Mail::Transport::SMTP::init(debug) option into
+	  smtp_debug, to show that it is not Mail::Box which is being
+	  traced, but the low level SMTP drivers only.
+
+	- Added some example options to examples/send.pl, which showed
+	  some inconveniences of Mail::Message::send(), which have been
+	  solved.
+
+	- [David A Golden] wrote Mail::Classification based on Mail::Box,
+	  which is a learning spam filter.  References added to README.FAQ
+
+	- Doc-fix in Mail::Message::from/to/cc/bcc() by [Greg Matheson].
+
+	- Renamed Mail::Message::Field*::folded_body() and ::unfolded_body()
+	  to ::foldedBody() and ::unfoldedBody(), to be consequent with
+	  the method naming of Mail::Box.
+
+	- Mail::Message::TransferEnc::Base64::_decode_from_lines() does
+	  not warn anymore in case of a line which only contains padding.
+	  Found by [David A Golden]
+
+	- Mail::Messsage::Field::stripCFWS() now understands escaped quotes
+	  and parenthesis.  Parenthesis within quotes are not seen as comment
+	  anymore.
+
+	- Implemented Mail::Message::Field::Full with many tests in
+	  tests/11field/40full.t.  Implements RFC2047.
+
+	- Implemented Mail::Message::Field::Attribute with many tests in
+	  tests/11field/41attr.t   It implements field attribute understanding
+	  as defined in RFC2822 and RFC2045, with the extensions about
+	  parameter encoding and continuations as defined in RFC2231.
+
+	- Implemented Mail::Message::Field::Unstructured, as first
+	  category of fields.  Tests in test/11field/42unstr.t
+
+	- Added Maildir quotas to the long wishlist.  Suggested by
+	  [Brian Grossman]
+
+	- On request by [David A Golden], Mail::Reporter now returns
+	  Scalar::Util::dualvar values where the use may wish to know
+	  the numeric value as well as the string representation of an
+	  error level.  Tests added in tests/10report/10errors.
+
+	- Modified examples/grep.pl you unix-grep syntax
+
+	- Mail::Box::Search now takes nested messages under the flag of
+	  multiparts (search or not to search, that's the question)
+
+	- Mail::Message->build and buildFromBody now accept a pre-filled
+	  header.
+
+	- Mail::Message->build accepts a new option 'files', which is
+	  an abbreviation for multiple 'file' options.
+
+	- Mail::Message::TransferEnc::decode() now als decodes chars above
+	  127 and tab.  Escape characters are still not decoded for safety
+	  reasons.  On request by [Marty Pauley]
+
 version 2.034: Thu Jan  2 15:08:56 CET 2003
 
 	Fixes:
@@ -91,7 +179,7 @@ version 2.032: Fri Nov 29 19:59:47 CET 2002
 	Fixes:
 
 	- Enforce Text::FormatPS version 2.01, because the output format
-	  has changed.  Scripts adapted to the new layout.  [Blar Zajac]
+	  has changed.  Scripts adapted to the new layout.  [Blair Zajac]
 
 	- Required Term::ReadKey for installation. [Greg Matheson]
 
@@ -212,7 +300,7 @@ version 2.028: Mon Nov 4 15:08:57 CET 2002
 
 	Improvements:
 
-	- In joint forces with [Greg Metheson], some small improvements have
+	- In joint forces with [Greg Matheson], some small improvements have
 	  been made in the mailbox parser for Windows...  But it is still
 	  far from perfect.
 
@@ -240,7 +328,7 @@ version 2.027: Sat Oct 26 08:52:32 CEST 2002
 
 	Improvement:
 
-	- Mail::Transfer::POP3 implemented by [Liz Matthijsen].
+	- Mail::Transfer::POP3 implemented by [Liz Mattijsen].
 
 	- [Shagren] found the first reason to modify Mail::Transfer::POP3
 	  a little.
@@ -261,7 +349,7 @@ version 2.027: Sat Oct 26 08:52:32 CEST 2002
 	  is detected by the parser.
 
 	- Rewrote Mail::Box::scanForMessage() in search of a bug reported
-	  by [Shargren] concerning Mail::Box::find()  But it was not the
+	  by [Shagren] concerning Mail::Box::find()  But it was not the
 	  cause.  Still, the method has improved.
 
 	- Changed  split /(?<=\n)/  into  split /^/  everywhere.
@@ -669,7 +757,7 @@ version 2.017: Fri Jul  5 17:06:08 CEST 2002
 	  will skip deleted parts as well.
 
 	- Mail::Box::messages() accepts
-             range:       $folder->messages(3, 100)
+	     range:       $folder->messages(3, 100)
              non-deleted: $folder->messages('ACTIVE')
              deleted:     $folder->messages('DELETED')
              labeled:     $folder->messages('seen')

@@ -1,10 +1,11 @@
-
+ 
 use strict;
 use warnings;
 
 package Mail::Reporter;
 
 use Carp;
+use Scalar::Util 'dualvar';
 
 =head1 NAME
 
@@ -105,8 +106,12 @@ sub init($)
 =method defaultTrace [LEVEL, [LEVEL]
 
 (Class method)
-Reports the default trace and log level which is used for object as list
+Reports the default trace and log LEVEL which is used for object as list
 of two elements.  When not explicitly set, both are set to C<WARNINGS>.
+Two values are returned: the first is the log level, the second represents
+the trace level.  Both are special variables: in numeric context they
+deliver a value (the internally used value), and in string context the
+string name.  Be warned that the string is always singular!
 
 You may specify one or two arguments.  In case of one argument, the
 default log and trace levels will both be set to that value.  When two
@@ -117,29 +122,45 @@ the second the default trace level.
 
  my ($loglevel, $tracelevel) = Mail::Reporter->defaultTrace;
  Mail::Reporter->defaultTrace('NOTICES');
- Mail::Reporter->defaultTrace('WARNINGS', 'INFO');
+
+ my $(l, $t) = Mail::Reporter->defaultTrace('WARNINGS', 'DEBUG');
+ print $l;     # prints "WARNING"  (no S!)
+ print $l+0;   # prints "4"
 
 =cut
 
 sub defaultTrace(;$$)
 {   my $self = shift;
-    return ($default_log, $default_trace) unless @_;
 
-    ($default_log, $default_trace) = @_==1 ? ($_[0], $_[0]) : @_;
+    if(@_)
+    {   my ($log, $trace) = @_==1 ? ($_[0], $_[0]) : @_;
+
+        $default_log   = $levelprio{$log}
+           or croak "Undefined log level $log";
+
+        $default_trace = $levelprio{$trace}
+           or croak "Undefined trace level $trace";
+    }
+
+    ( $self->logPriority($default_log), $self->logPriority($default_trace) );
 }
 
 #------------------------------------------
 
 =method trace [LEVEL]
 
-Change the trace level of the object.  It returns the number which
-is internally used to represent the level.
+Change the trace LEVEL of the object. When no arguments are specified, the
+current level is returned only.  It will be returned in one scalar which
+contains both the number which is internally used to represent the level,
+and the string which represents it.  See logPriority().
 
 =cut
 
 sub trace(;$)
 {   my $self = shift;
-    return $levelname[$self->{MR_trace}] unless @_;
+
+    return $self->logPriority($self->{MR_trace})
+        unless @_;
 
     my $level = shift;
     my $prio  = $levelprio{$level}
@@ -154,9 +175,13 @@ sub trace(;$)
 
 (Class or Instance method)
 As instance method this function has three different purposes.  Without
-any argument, it returns the name of the current log level.  With one
-argument, a new level of logging detail is set.  With more arguments, it
-is a report which may need to be logged or traced.
+any argument, it returns one scalar containing the number which is internally
+used to represent the current log level, and the textual representation of
+the string at the same time. See Scalar::Util::dualvar() for an explanation.
+
+With one argument, a new level of logging detail
+is set (specify a number of one of the predefined strings).
+With more arguments, it is a report which may need to be logged or traced.
 
 As class method, only a message can be passed.  The global configuration
 value set with defaultTrace() is used to decide whether the message is
@@ -168,8 +193,9 @@ be added.
 
 =examples
 
- print $message->log;      # may print   NOTICE
- $message->log('ERRORS');  # sets a new level
+ print $message->log;      # may print "NOTICE"
+ print $message->log +0;   # may print "3"
+ $message->log('ERRORS');  # sets a new level, returns the numeric value
 
  $message->log(WARNING => "This message is too large.");
  $folder ->log(NOTICE  => "Cannot read from file $filename.");
@@ -188,7 +214,8 @@ sub log(;$@)
 {   my $thing = shift;
 
     if(ref $thing)   # instance call
-    {   return $levelname[$thing->{MR_log}] unless @_;
+    {   return $thing->logPriority($thing->{MR_log})
+            unless @_;
 
         my $level = shift;
         my $prio  = $levelprio{$level}
@@ -350,13 +377,30 @@ sub notImplemented(@)
 
 =method logPriority LEVEL
 
-(Class and instance method)   Returns the priority of the named level as
-numeric value.  The higher the number, the more important the message.
+(Class and instance method)  One error level (log or trace) has more
+than one representation: a numeric value and one or more strings.  For
+instance, 4, 'WARNING', and 'WARNINGS' are all the same.  You can specify
+any of these, and in return you get a dualvar (see Scalar::Util::dualvar())
+back, which contains the number and the singular form.
+
+The higher the number, the more important the message.
 Only messages about C<INTERNAL> problems are more important than C<NONE>.
+
+=examples
+
+ my $r = Mail::Reporter->logPriority('WARNINGS');
+ my $r = Mail::Reporter->logPriority('WARNING');    # same
+ my $r = Mail::Reporter->logPriority(4);            # same, deprecated
+ print $r;      # prints 'WARNING'  (no S!)
+ print $r + 0;  # prints 4
+ if($r < Mail::Reporter->logPriority('ERROR')) {..} # true
 
 =cut
 
-sub logPriority($) { $levelprio{$_[1]} }
+sub logPriority($)
+{   my $level = $levelprio{$_[1]} or return undef;
+    dualvar $level, $levelname[$level];
+}
 
 #-------------------------------------------
 

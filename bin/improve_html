@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl5.8.0
 
 use strict;
 use warnings;
@@ -99,6 +99,8 @@ while(<HTML>)                # Body
 
      my $in_example = m/^\s/;
 
+     # separate the references from the text:
+     #  text . ref . text . ref . text ...
      my @line
         = $in_example
         ? split / ( [\w-]+\:\:[\w:-]*\w\b ) /x
@@ -114,7 +116,8 @@ while(<HTML>)                # Body
      }
 
      for(my $i=1; $i<@line; $i+=2)
-     {   my $ref = $line[$i];
+     {   # For each of the references
+         my $ref = $line[$i];
          my ($text, $method, $option)
           = $ref =~ m/\:\:(\w+)\((\w*)\)$/ ? ($`, $1, $2)
           : $ref =~ m/^(\w+)\((\w*)\)$/    ? ($manual, $1, $2)

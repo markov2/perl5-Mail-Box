@@ -97,7 +97,7 @@ sub isNested() {1}
 
 #------------------------------------------
 
-sub isBinary() {shift->nested->isBinary}
+sub isBinary() {shift->nested->body->isBinary}
 
 #------------------------------------------
 
@@ -235,12 +235,12 @@ sub encoded() { shift->forNested( sub {$_[1]->encoded} ) }
 sub read($$$$)
 {   my ($self, $parser, $head, $bodytype) = @_;
 
-    my $raw = Mail::Message->new;
-    $raw->readFromParser($parser, $bodytype)
+    my $nest = Mail::Message::Part->new(container => undef);
+    $nest->readFromParser($parser, $bodytype)
        or return;
 
-    my $cooked = Mail::Message::Part->coerce($raw, $self);
-    $self->{MMBN_nested} = $cooked;
+    $nest->container($self);
+    $self->{MMBN_nested} = $nest;
     $self;
 }
 

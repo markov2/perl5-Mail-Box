@@ -87,7 +87,7 @@ sub new($;$$@)
 sub init($)
 {   my ($self, $args) = @_;
 
-    @$self{ qw/MMF_name MMF_body/ } = @$args{ qw/name body/ };
+    @$self{ qw/MMFF_name MMFF_body/ } = @$args{ qw/name body/ };
 
     $self->comment($args->{comment})
         if exists $args->{comment};
@@ -116,7 +116,7 @@ sub clone()
 
 sub length()
 {   my $self = shift;
-    length($self->{MMF_name}) + 1 + length($self->{MMF_body});
+    length($self->{MMFF_name}) + 1 + length($self->{MMFF_body});
 }
 
 #------------------------------------------
@@ -127,40 +127,40 @@ sub length()
 
 #------------------------------------------
 
-sub name() { lc shift->{MMF_name}}
+sub name() { lc shift->{MMFF_name}}
 
 #------------------------------------------
 
-sub Name() { shift->{MMF_name}}
+sub Name() { shift->{MMFF_name}}
 
 #------------------------------------------
 
 sub folded(;$)
 {   my $self = shift;
-    return $self->{MMF_name}.':'.$self->{MMF_body}
+    return $self->{MMFF_name}.':'.$self->{MMFF_body}
         unless wantarray;
 
-    my @lines = $self->folded_body;
-    my $first = $self->{MMF_name}. ':'. shift @lines;
+    my @lines = $self->foldedBody;
+    my $first = $self->{MMFF_name}. ':'. shift @lines;
     ($first, @lines);
 }
 
 #------------------------------------------
 
-sub unfolded_body($;@)
+sub unfoldedBody($;@)
 {   my $self = shift;
-    $self->{MMF_body} = $self->fold($self->{MMF_name}, @_)
+    $self->{MMFF_body} = $self->fold($self->{MMFF_name}, @_)
        if @_;
 
-    $self->unfold($self->{MMF_body});
+    $self->unfold($self->{MMFF_body});
 }
 
 #------------------------------------------
 
-sub folded_body($)
+sub foldedBody($)
 {   my ($self, $body) = @_;
-    if(@_==2) { $self->{MMF_body} = $body }
-    else      { $body = $self->{MMF_body} }
+    if(@_==2) { $self->{MMFF_body} = $body }
+    else      { $body = $self->{MMFF_body} }
 
     wantarray ? (split /^/, $body) : $body;
 }

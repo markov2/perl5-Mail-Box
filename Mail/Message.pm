@@ -435,7 +435,13 @@ sub print(;$)
 Transmit the message to anything outside this Perl program.  MAILER
 is a Mail::Transport::Send object.  When the MAILER is not specified, one
 will be created, and kept as default for the next messages as well.
-The OPTIONS are mailer specific.
+
+The OPTIONS are mailer specific, and a mixture of what is usable for
+the creation of the mailer object and the sending itself.  Therefore, see
+for possible options Mail::Transport::Send::new() and
+Mail::Transport::Send::send().
+
+=example
 
  $message->send;
 
@@ -444,24 +450,26 @@ is short (but little less flexibile) for
  my $mailer = Mail::Transport::SMTP->new(@smtpopts);
  $mailer->send($message, @sendopts);
 
+See examples/send.pl in the distribution of Mail::Box.
+
 =cut
 
 my $default_mailer;
 
 sub send(@)
-{   my $self   = shift;
+{   my ($self, @options) = @_;
 
     require Mail::Transport::Send;
 
     my $mailer
        = ref $_[0] && $_[0]->isa('Mail::Transport::Send') ? shift
-       : defined $default_mailer  ? $default_mailer
-       : ($default_mailer = Mail::Transport->new(@_));
+       : !@options && defined $default_mailer             ? $default_mailer
+       : ($default_mailer = Mail::Transport::Send->new(@options));
 
     $self->log(ERROR => "No mailer found"), return
         unless defined $mailer;
 
-    $mailer->send($self, @_);
+    $mailer->send($self, @options);
 }
 
 #------------------------------------------
@@ -586,7 +594,7 @@ name.  If the field has multiple appearances in the header, only the last
 instance is returned.
 
 The field name is case insensitive.  the I<unfolded body> of the field is
-returned, see Mail::Message::Field::unfolded_body().  If you need more complex
+returned, see Mail::Message::Field::unfoldedBody().  If you need more complex
 handing of fields, then call Mail::Message::Head::get() yourself.
 
 =examples
@@ -595,7 +603,7 @@ handing of fields, then call Mail::Message::Head::get() yourself.
 
 Is equivalent to:
 
- print $msg->head->get('Content-Type')->unfolded_body, "\n";
+ print $msg->head->get('Content-Type')->body, "\n";
 
 =cut
 
@@ -608,13 +616,13 @@ sub get($)
 
 =method from
 
-Returns the address(es) of the sender(s).  Returned is a list of
-Mail::Address objects, which represent the addresses found on
-the C<From> header field.  Usually, this is only one address, but
-there can be more.
+Returns the address of the sender.  It is possible to have more than
+one address specified in the C<From> field of the message. Therefore a
+list of Mail::Address objects is returned, which usually has
+length 1.
 
-If you need exactly one address to return (for instance to reply
-a message to), you should use sender().
+If you need one address of a sender, for instance to create a reply to,
+then use sender().
 
 =example
 
@@ -658,7 +666,7 @@ sub sender()
 
 =method to
 
-Returns the addresses which are specified on the C<To> header line(s).
+Returns the addresses which are specified on the C<To> header line (or lines).
 A list of Mail::Address objects is returned.  The people addressed
 here are the targets of the content, and should read it contents
 carefully.
@@ -675,7 +683,7 @@ sub to() { map {$_->addresses} shift->head->get('To') }
 
 =method cc
 
-Returns the addresses which are specified on the C<Cc> header line(s)
+Returns the addresses which are specified on the C<Cc> header line (or lines)
 A list of Mail::Address objects is returned.  C<Cc> stands for
 I<Carbon Copy>; the people addressed on this line receive the message
 informational, and are usually not expected to reply on its content.
@@ -688,7 +696,7 @@ sub cc() { map {$_->addresses} shift->head->get('Cc') }
 
 =method bcc
 
-Returns the addresses which are specified on the C<Bcc> header line(s)
+Returns the addresses which are specified on the C<Bcc> header line (or lines)
 A list of Mail::Address objects is returned.
 C<Bcc> stands for I<Blind Carbon Copy>: destinations of the message which are
 not listed in the messages actually sent.  So, this field will be empty

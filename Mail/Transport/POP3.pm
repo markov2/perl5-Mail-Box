@@ -60,7 +60,7 @@ sub init($)
     $args->{via}    = 'pop3';
     $args->{port} ||= 110;
 
-    $self->SUPER::init($args);
+    $self->SUPER::init($args) or return;
 
     $self->{MTP_auth}    = $args->{authenticate} || 'AUTO';
     return unless $self->socket;   # establish connection
