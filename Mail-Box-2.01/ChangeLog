@@ -1,0 +1,413 @@
+CHANGELOG of Mail::Box version 2
+
+All changes were made by Mark Overmeer <mark@overmeer.net>, unless
+specified differently.
+
+Soon to be implemented
+ updateMessages for Mail::Box::Mbox
+ updateMessages for Mail::Box::MH
+ writeMessages  for Mail::Box::Maildir
+ appendMessages for Mail::Box::Maildir
+
+version 2.010: Sun Mar  3 16:05:16 CET 2002
+
+	Fixes:
+
+	- Fixed serious mis-calculation for delayed bodies in MH folders.
+	  The 'fail-safe' approach did safe the programs till now, but
+	  it is much better now: correct 'Content-Length' headers will
+	  safe you time now.
+
+	- Improved quite some doc-issues in Mail::Box::MH::(Label|Index).pm
+
+	- Prototype of Mail::Message::Body::_data_from_lines was @_, which
+	  is a silly typo checked by bleadperl... [Marcel Gruenauer]
+
+	- Mail::Box::Parser::Perl line 87, binmode without filehandle...
+	  reported by [Marcel Gruenauer]  But now it is causing problems
+	  with perlio in 5.7.2 ...
+
+	- Minor changes to scripts/takemail by [Tassilo v Parseval]
+
+	- Mistakes in the docs of Mail::Box::Search::Grep, found by
+	  [Tassilo v Parseval]
+
+	- Accidentally took only non-delayed messages in Grep: wrong
+	  default.  Detected by [Tassilo v Parseval]
+
+	- The METHOD INDEXes ended with a list of links to related
+	  manual-pages which where not expanded correctly by pod.
+	  Therefor is was changed: now the INDEX starts with the
+	  man-pages which will have correct links this time.
+
+	Improvements:
+
+	- Changed encoders/decoders status from ALPHA to BETA.
+
+	- Removed organization option to new() for Mail::Boxes: it is
+	  not modifyable.  The method which shows whether the folder
+	  is DIRECTORY or FILE organized will stay.
+
+	- *PARTIAL* implementation of Maildir folders, which did have large
+	  implications for the MH implementation.  The maildir implementation
+	  is NOT READY yet.
+
+          New class structure:
+
+	    Mail::Box::MH
+	    is a Mail::Box::Dir            <-- new
+	    is a Mail::Box
+
+	    Mail::Box::MH::Message
+	    is a Mail::Box::Dir::Message   <-- new
+	    is a Mail::Box::Message
+	    is a Mail::Message
+
+	    Mail::Box::Maildir             <-- new
+	    is a Mail::Box::Dir            <-- new
+	    is a Mail::Box
+
+	    Mail::Box::Maildir::Message    <-- new
+	    is a Mail::Box::Dir::Message   <-- new
+	    is a Mail::Box::Message
+
+	- Massive changes in label management, required to facilitate
+	  Maildir labels which are in the filename.
+
+	- Added /usr/lib to the safe_directories are searched by
+	  Mail::Transport for binaries [Slaven Rezic]
+
+	- Any Mail::Box type may implement an 'updateMessages'.  When
+	  $mailbox->update is called and 'updateMessages' exists, the
+	  folder tries to figure-out changes in the folder which were
+	  made by external programs.  External programs may add messages
+	  to the end of the folder without applying a lock, which is
+	  dangerous.
+
+version 2.009: Wed Feb 20 09:03:56 CET 2002
+
+	Fixes:
+
+	- Forgot to update METHOD INDEX
+
+	- t/65search1g.t tests Mail::Box::Search::Grep, which found
+	  some problems in the implementation which are fixed now.
+
+	Improvements:
+
+	- Mail::Box::Manager::threads() now also works when the folders
+	  are not used as named parameter:
+	     $mgr->threads(folders => [$inbox, $outbox]);  # was
+	     $mgr->threads($inbox, $outbox);               # added
+
+	- Default output file-handle changed from STDOUT to the selected
+	  file-handle (see perldoc -f select)... usually this will
+	  return STDOUT.
+
+version 2.008: Mon Feb 18 16:11:52 CET 2002
+
+	Fixes:
+
+	- [Alam Kelm] proved me that the other perl modules are wrong,
+	  wrapping the header-lines more often than the RFC permits.  So,
+	  wrapping on ';' and '.' is removed.  Wrapped headers are always
+	  accepted, so there is no difference when reading a folder.
+
+	- Added 'use Mail::Address' to Mail::Message::Field
+          [Walery Studennikov]
+
+	- [Andreas Marcel Riechert] Added -I flag for {net|open}bsd with
+          mailx in Mail::Transport::Mailx
+
+	- The parent of a Multipart body after reading accidentally was
+          a body, not a message.  Fixed in Mail::Message::Body::Multipart.
+
+	Improvements:
+
+	- New modules Mail::Box::Search and Mail::Box::Search::Grep, however
+	  they still need testing.  De docs have to be updated too.
+	  Mail::Box::Search::Spam must be a piece of cake now.
+	  Example in examples/grep.pl
+
+	- Replaced -w flag in test-scripts by 'use warnings'
+
+	- Centralized definition of folder-files in t/Tools.pm to
+	  simplify implementation on Windows.
+
+	- t/00windows.t to convert t/mbox.src to t/mbox.win with CRLF
+	  line-terminations.
+
+	- moved Mail::Message::Body::Encode::eol to
+	  Mail::Message::Body::eol because is always needed and
+	  hence triggered the parsing of Encode..
+
+	- Mail::Message::Body::eol option NATIVE will be translated into
+          LF, CR or CRLF.
+
+	- Mail::Message::Body::*::size will return the size of the
+	  message as stored in the file, so taking care of \n which
+	  becomes CRLF on some systems.
+
+	- Croak when $mgr->copyTo/moveTo is used with a message which
+	  is not part of a folder yet: appendMessage should be used instead.
+
+	- Mail::Box::Thread::Node::threadMessages() collects all messages
+	  which are in a thread.
+
+version 2.007: Mon Jan 14 10:07:09 CET 2002
+
+	Fixes:
+
+        - [Alan Kelm] found a mistake in Mail::Box::Locker::DotLock::_try_lock
+
+	- [Alan Kelm] updated some docs about locking.
+
+	- [Alan Kelm] folder->new keep_dups option.
+
+	- [Alan Kelm] fixed a stupid bug: messages printed to MBOX folders
+	  did not get an empty line after them (before the from-line).
+	  changed  print('') into print("\n") in Mail::Box::Mbox::Messages.pm
+	  Mail::Box doesn't need that line, but other mail-agents might.
+
+	Improvements:
+
+	- Avoid colissions between two messages which falsily share
+	  messageID.  One will get a new number.
+
+	- Start implementing understanding of CRLF / CR and foreign
+          line-endings
+
+	- Implemented stricter checks.  When a body is created, it is
+	  not trusted until the data is checked.  This is lazy again ;)
+	  Specify the checked option for the body is you are sure the
+	  data is correct.  Also for the folders: when they are `trusted',
+	  all bodies will be created `checked', which boosts performance
+	  when used with the Perl parser.
+
+version 2.006: Wed Jan  2 08:27:21 CET 2002
+
+	Fixes:
+
+	- Accidentally typed   (@_)  as prototype of some methods.  Found
+	  by [Jeffrey Friedl]
+
+version 2.005: Sun Dec 30 14:25:22 CET 2001
+
+	Fixes:
+
+	- Because of a bug related to weak references in the 5.6.0
+	  Perl core, 5.6.1 is required now...
+
+	Improvements:
+
+	- Rewrote Mail::Box::Parser::Perl, to avoid use of unget_line.
+	  At the same time, the detection of the folder's line mode is
+	  simplified.  However, not seek is sparsely used... maybe as
+	  next improvement this could be avoided as well.
+
+	- The performance is improved considerably when the folder
+	  is trusted.  However, a little slowdown can be experienced
+	  for untrusted folders, because better CRLF handling.
+
+	- $mboxmsg->fileLocation returns only begin message in scalar
+	  context.
+
+	- readHeader returns ref-array for each field i.s.o. four
+	  elements in a list.
+
+	- Mail::Box::Parser::inDosmode is now called
+	  Mail::Box::Parser::lineSeparator.  Although a start has been
+	  made to support Windows and non-native folders, it is not
+	  fully implemented yet.
+
+	- Updated the Mail::Box::Parser manual-page.
+
+version 2.004: Sun Dec 16 22:53:06 CET 2001
+
+	Fixes:
+
+	- I didn't know yet, but you can do things like:
+	    $reply->head->add(To => $orig->head->get('From'));
+	  because of stringification ;)
+
+	- $message->from also may return the content of the Sender header.
+
+	- Mail::Message::Construct::quotePrelude renamed to
+	  ::replyPrelude, which is more consequent.
+
+	New:
+
+	- Added Mail::Message::Construct::forward() and ::forwardSubject.
+	  With tests in t/57*
+
+	- Replies are even more flexible now.
+
+version 2.003: Sat Dec 15 00:47:50 CET 2001
+
+	Fixes:
+
+	- Moved stuff from Mail::Message::Head::read to
+	  Mail::Box::Parser::readHeader to improve parser indepency and
+	  speed.
+
+	- [Marcel de Boer] showed me that labels were not treated
+	  right in Mail::Box v2.  Moved from Mail::Box::Message to
+	  Mail::Message and Mail::Message::Head.
+
+	- [Marcel de Boer] also found a problem with cloning of multi-
+	  parts which got solved: a Mail::Message::Part is cloned to
+	  be a Mail::Message!
+
+	- Quite a speed improvement too.
+
+	- Changed version policy
+
+version 2.002: Fri Dec 13 17:46:01 CET 2001
+
+	Fixes:
+
+	- Better (less complaining) recovery of bad header parsing.
+
+	- Removed a back-reference from a locker object to the folder,
+	  by which the folders where kept alive although out of scope.
+	  "circular reference".  According the the errors I got when
+	  removing this one, there should be no strong refs left.
+
+	- replaced many "warn"s by "$self->log(WARNING =>"s in
+	  Mail::Box::Manager.
+
+	- Improved handling and creating folders in the Mail::Box::Manager.
+
+	- A header may be empty, but then it will be 'false'.  This is
+	  needed to correctly recover corrupted mbox folders.
+
+	New:
+
+	- Mail::Message::Field::Fast implements a fast but dirty way to
+	  store the header information.  Tested in t/11field1.t
+	  It saves about 10% memory and 7% performance.
+
+	- Mail::Message::Field::Flex implements an extendible but slower
+	  way to manage the data.  Tested in t/11field2.t
+
+version 2.00_19: Wed Dec 12 22:13:56 CET 2001
+
+	Most work about sending messages.  Slight extension of the
+	interface for some other packages.
+
+	Fixes:
+
+	- Removed Tassilo's header parser optimization in favor of
+	  split again, because it breaks on empty fields.
+
+	- [Tassilo v Parsival] added some 'binmode OUT' lines to
+	  make 98% of the tests succeed on Windows!!  But I am not
+	  sure that is the right answer.  More on that later.
+
+	New:
+
+	- Added to/from/cc/bcc/subject methods to Mail::Message, to
+	  hide Resent- header lines which overrule these fields in the
+	  header.  Required for correct rfc822 support.
+
+	- Added destinations() to Mail::Message.
+
+	- Added isResent() to Mail::Message::Field.
+
+	- Added addresses() to Mail::Message::Field, which returns a list
+	  of addresses as specified by the header line.
+
+	- Added pod reference to Mail::Message's service methods on header
+	  lines.
+
+	- Added Mail::Message::Head::Complete::printUndisclosed() and
+	  Mail::Message::printUndisclosed() which is the same as print()
+	  but leaving the Cc and Bcc headers out.
+
+	- Added Mail::Transport::putContent($message)
+
+	- Added Mail::Transport::SMTP shaped after Net/SMTP, but much more
+	  facilities and real Perl 5 code!  Not ready yet.
+
+version 2.00_18: Mon Dec 10 22:19:44 CET 2001
+
+	- Added some requires for package FileHandle.
+
+	- Added Mail::Transport::Qmail (cannot test it, but expect it
+	  to work)
+
+	- Reorganized (and improved the docs) on all Transport modules.
+
+	- Added POSIX fcntl locking.
+
+	- [Tassilo v Parsival] demonstrated the fastest way to split
+	  a header, determined by benchmarking 6 variations on the theme.
+	  Used in Mail::Box::Parser::Perl.pm
+
+version 2.00_17: Sat Dec  8 23:10:06 CET 2001
+
+	- Moved scripts/web/* to scripts/
+
+	- Header line options in Mail::Message::Construct::reply start
+	  with capitals too.
+
+	- Added Mail::Message::Body::Multipart::stripSignature
+
+	- Simplified Mail::Message::Construct::reply a little
+
+	- Fixed problem with the resulting body-types where delayed bodies
+	  where used to be encoded and decoded.
+
+	- Extra checks for From-line in mbox folders, to help incorrectly
+	  formatted folders.
+
+	- [Tassilo v Parsival] discovered the problematic recovery for
+	  erroneous headers.  Some recovery is tried.
+
+version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
+
+	First beta of Mail::Box version 2
+
+        Most import changes:
+
+	* Replaced all use of MIME::Parser, Mail::Internet, and MIME::Entity,
+	  althought the foreign message types are still useable in some
+	  places.
+
+	* All code has been changed.  Simple things, like opening a folder,
+	  reading messages and such are the same.  However handling of
+	  messages is really different from the MIME::Entity/Mail::Internet
+	  implementation.  Your message handling must be body-oriented ;)
+	  tranforming a body into a new body, into a new body, and
+	  finally create a new message from it.  See Mail::Box-Cookbook.
+
+	* Moved code to use 5.6.0 features, so no support for 5.005
+	  anymore.  This is required for Inline::C and Unicode support.
+	  Mail::Box releases below 2 will be supported for some time
+	  for people with `old' perl.
+
+	* Parsing in Inline::C or plain Perl
+
+	* folder->open(take_headers) removed
+	  folder->open(extract) replaces folder->open(lazy_extract) to
+	  avoid double negation in your program.
+	  listFolders became listSubFolders
+          allMessages became messages(); so $folder->messages always
+	  returns all.
+
+	* Unfolding of headers considered stupid: headers which are
+	  structured (check Mail::Message::Field::isStructured) may always
+	  be multi-lined. Just specify the right options when you scan
+	  through the line with regular expressions.
+
+	* All packages is separate files.
+
+	* Many more test, a few example files, Mail::Box-Overview and
+	  Mail::Box-Cookbook.
+
+Before this, we had Mail::Box-1.xyz which also has a Changelog.  Most of
+that information is not really useful because version >=2.0 is a really,
+really major change, although there is strike for compibility.
+
+However, some of the bugfixes contributed for Mail::Box v1 are
+still present in Mail::Box v2.
