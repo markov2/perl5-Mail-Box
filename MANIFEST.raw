@@ -1,0 +1,6 @@
+MANIFEST.raw
+bin/improve_html
+bin/make_pod
+bin/make_podindex
+mkdist
+count

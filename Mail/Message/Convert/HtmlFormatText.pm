@@ -6,7 +6,7 @@ use base 'Mail::Message::Convert';
 
 use Mail::Message::Body::String;
 
-use HTML::TreeBuilder;
+use HTML::TreeBuilder 3.13;
 use HTML::FormatText;
 
 =head1 NAME

@@ -211,7 +211,7 @@ sub trySend($@)
 
 Creates the connection to the SMTP server.  When more than one hostname
 was specified, the first which accepts a connection is taken.  An
-L<IO::Server::INET> object is returned.
+L<IO::Socket::INET> object is returned.
 
 =cut
 

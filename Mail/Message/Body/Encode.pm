@@ -49,7 +49,7 @@ characters and binary files (like images and archives) must be encoded
 during transmission to an ASCII representation.
 
 The implementation of the required encoders and decoders is found in
-the C<Mail::Message::TransferEnc> set of packages.  The related
+the Mail::Message::TransferEnc set of packages.  The related
 manual page lists the transfer encodings which are supported.
 
 =item * mime-type translation
@@ -340,10 +340,10 @@ Relate the NAMEd transfer encoding to an OBJECTs or object of the specified
 CLASS.  In the latter case, an object of that CLASS will be created on the
 moment that one is needed to do encoding or decoding.
 
-The CLASS or OBJECT must extend Mail::Message:TransferEnc.  It will
+The CLASS or OBJECT must extend Mail::Message::TransferEnc.  It will
 replace existing class and object for this NAME.
 
-Why aren't you contributing this class to Mail::Box?
+Why aren't you contributing this class to MailBox?
 
 =cut
 

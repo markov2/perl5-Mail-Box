@@ -9,7 +9,7 @@ use Mail::Message::Body::Lines;
 use Mail::Message::Body::File;
 
 use overload bool  => sub {1}   # $body->print if $body
-           , '""'  => 'string'
+           , '""'  => 'string_unless_carp'
            , '@{}' => 'lines'
            , '=='  => sub {$_[0]->{MMB_seqnr}==$_[1]->{MMB_seqnr}}
            , '!='  => sub {$_[0]->{MMB_seqnr}!=$_[1]->{MMB_seqnr}};
@@ -124,7 +124,7 @@ C<::External> object only uses a file when the folder is open.
 
 Each body type has methods to produce the storage of the other types.
 As example, you can ask any body type for the message as a list of lines,
-but this call will be most efficient for the C<::Body::Lines> type.
+but this call will be most efficient for the MM::Body::Lines type.
 
 =head1 METHODS
 
@@ -721,6 +721,14 @@ a copy of the internally kept information.
 =cut
 
 sub string() {shift->notImplemented}
+
+sub string_unless_carp()
+{   my $self  = shift;
+    return $self->string unless (caller)[0] eq 'Carp';
+
+    (my $class = ref $self) =~ s/^Mail::Message/MM/;
+    "$class object";
+}
 
 #------------------------------------------
 

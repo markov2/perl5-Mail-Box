@@ -141,6 +141,7 @@ t/55reply1r.t
 t/56bounce.t
 t/57forw0s.t
 t/57forw1f.t
+t/58clone.t
 t/60mgr.t
 t/60mgr2url.t
 t/61threads.t

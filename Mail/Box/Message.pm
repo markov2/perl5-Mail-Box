@@ -293,13 +293,13 @@ sub shortString()
 =method readBody PARSER, HEAD [, BODYTYPE]
 
 Read the body of one message.  The PARSER gives access to the folder file.
-The HEAD has been read with C<readHead>.  The optional BODYTYPE supplies
+The HEAD has been read with readHead().  The optional BODYTYPE supplies
 the class name of the body to be created, or a code reference to a
 routine which can produce a body type based on the head (passed as
 first argument).
 
-By default, the BODYTYPE will call C<determineBodyType> method of the
-folder where the message will be added to.
+By default, the BODYTYPE will call Mail::Box::determineBodyType()
+where the message will be added to.
 
 =cut
 

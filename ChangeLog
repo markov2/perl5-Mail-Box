@@ -7,7 +7,48 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-version 2.019:
+version 2.021: Tue Aug 20 17:42:24 CEST 2002
+
+	Fixes:
+
+	- Requires HTML::TreeBuilder release 3.13 or newer, if you want to
+	  use Mail::Message::Convert::HtmlFormat*.pm, because 3.12 contains
+	  a serious bug.  Resolved by [Blair Zajac]
+
+	- A mistake in the previous release could cause that parts of
+	  multiparts where lazy.  This is not correct: all parts must be
+	  extracted at once.  Detected by [Jost Krieger]
+
+	- Another bug introduced with the previous release was the
+	  removal of automatic body-to-messagepart coercion.
+
+	- When a nested body was checked on encoding, it accidentally returned
+	  its nested content, in stead of itself.  Detected by [Blair Zajac]
+
+	- Mail::Message::isMultipart triggered the body, which is not needed
+	  because the info is in the header as well.
+
+	- pod2html translators are terrible.  Put more sofistication in
+	  my html-polisher.
+
+	Improvements:
+
+	- Carp is stringifying objects, which is terrible in combination with
+	  overloading stringification on message headers and bodies.  Therefore,
+	  a special exception for stringification is added to return a
+	  different result to Carp.
+
+	- The Mail::Box::determineBodyType is simplified.
+
+	- Multiparts and Nested (rcf822) message are now also delayed when
+	  their size is not known (often the case) or too large.
+
+	- Implemented Mail::Message::Part::buildFromBody() to assist the
+	  improved Mail::Message::Part::coerce()
+
+	- Testing cloning of complex messages in t/58clone.t
+
+version 2.019: Thu Aug 15 09:46:42 CEST 2002
 
 	Fixes:
 

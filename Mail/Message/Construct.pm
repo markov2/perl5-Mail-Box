@@ -57,8 +57,8 @@ Read a message from a FILEHANDLE, SCALAR, a reference to a SCALAR, or
 an array of LINES.  The OPTIONS are passed to the C<new()> of the message
 which is created.
 
-Please have a look at C<build> and C<buildFromBody> in
-C<Mail::Message::Construct> before thinking about this C<read> method.
+Please have a look at build() and buildFromBody()
+before thinking about this C<read> method.
 Use this C<read> only when you have a file-handle like STDIN to parse
 from, or some external source of message lines.  When you already have a
 separate set of head and body lines, then C<read> is certainly B<not>

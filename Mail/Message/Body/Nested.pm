@@ -44,7 +44,7 @@ when a message contains a nested message, like message/rfc822.
 
 =default mime_type 'message/rfc822'
 
-=option  nested =E<gt> MESSAGE
+=option  nested MESSAGE-PART
 =default nested undef
 
 The message which is nested within this one.
@@ -53,6 +53,9 @@ The message which is nested within this one.
 
  my $intro = Mail::Message::Body->new(data => ...);
  my $body  = Mail::Message::Body::Nested->new(nested  => $intro);
+
+ my $msg   = $folder->message(3);
+ my $encaps= Mail::Message::Body::Nested->new(nested => $msg);
 
 =cut
 
@@ -66,7 +69,7 @@ sub init($)
 
     my $nested;
     if(my $raw = $args->{nested})
-    {   my $nested = Mail::Message::Part->coerce($raw, $self);
+    {   $nested = Mail::Message::Part->coerce($raw, $self);
 
         croak 'Data not convertible to a message (type is ', ref $raw,")\n"
             unless defined $nested;
@@ -182,7 +185,7 @@ sub forNested($)
     my $body      = $nested->body;
     my $new_body  = $code->($self, $body);
 
-    return $body if $new_body == $body;
+    return $self if $new_body == $body;
 
     my $new_nested  = Mail::Message->new(head => $nested->head->clone);
     $new_nested->body($new_body);

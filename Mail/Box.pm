@@ -209,20 +209,22 @@ reading of the body.  Header information is more often needed than
 the body data, so why parse it always together?  The cost of delaying
 is not too high.
 
-If you supply a number to this option, bodies of those messages with a
+If you supply an INTEGER to this option, bodies of those messages with a
 total size less than that number will be extracted from the folder only
-when necessary.
+when necessary.  Messages where the size is not included in the header
+(like often the case for multiparts and nested messages) will not be
+extracted by default.
 
-If you supply a code reference, that subroutine is called every time
+If you supply a CODE reference, that subroutine is called every time
 that the extraction mechanism wants to determine whether to parse the
 body or not. The subroutine is called with the following arguments:
 
- $code->(FOLDER, HEAD)
+ CODE->(FOLDER, HEAD)
 
 where FOLDER is a reference to the folder we are reading.  HEAD refers to a
-Mail::Message::Head.  The routine must return a true value (extract now)
-or a false value (be lazy, do not parse yet).  Think about using the
-guessBodySize() and guessTimestamp() on the header to determine
+Mail::Message::Head::Complete.  The routine must return a C<true> value (extract
+now) or a C<false> value (be lazy, do not parse yet).  Think about using the
+C<guessBodySize> and C<guessTimestamp> on the header to determine
 your choice.
 
 The third possibility is to specify the NAME of a method.  In that case,
@@ -438,21 +440,21 @@ sub init($)
         = $args->{head_delayed_type}|| 'Mail::Message::Head::Delayed';
     $self->{MB_multipart_type}
         = $args->{multipart_type}   || 'Mail::Message::Body::Multipart';
-    my $headtype     = $self->{MB_head_type}
-        = $args->{MB_head_type}     || 'Mail::Message::Head::Complete';
     $self->{MB_field_type}          = $args->{field_type};
 
-    confess "head_type must be complete, but is $headtype.\n"
-        unless $headtype->isa('Mail::Message::Head::Complete');
+    my $headtype     = $self->{MB_head_type}
+        = $args->{MB_head_type}     || 'Mail::Message::Head::Complete';
 
-    my $extract  = $args->{extract} || 10000;
+    my $extract  = $args->{extract} || 'extractDefault';
     $self->{MB_extract}
       = ref $extract eq 'CODE' ? $extract
       : $extract eq 'ALWAYS'   ? sub {1}
       : $extract eq 'LAZY'     ? sub {0}
       : $extract eq 'NEVER'    ? sub {1}  # compatibility
       : $extract =~ m/\D/      ? sub {no strict 'refs';shift->$extract(@_)}
-      :                          $extract;  # digits stay to avoid closure.
+      :     sub { my $size = $_[1]->guessBodySize;
+                  defined $size && $size < $extract;
+                };
 
     #
     # Create a locker.
@@ -1430,19 +1432,10 @@ reading the folder initially.
 sub determineBodyType($$)
 {   my ($self, $message, $head) = @_;
 
-    if($self->{MB_lazy_permitted} && !$message->isPart)
-    {   my $delayed = $self->{MB_body_delayed_type};
-        my $extract = $self->{MB_extract};
-
-        return $delayed
-             if ref $extract && !$extract->($self, $head);
-
-        my $size = $head->guessBodySize;
-        return $delayed if $size && $size > $extract;
-    }
-
-    return $self->{MB_multipart_type}
-        if $head->isMultipart;
+    return $self->{MB_body_delayed_type}
+        if $self->{MB_lazy_permitted}
+        && ! $message->isPart
+        && ! $self->{MB_extract}->($self, $head);
 
     my $bodytype = $self->{MB_body_type};
     ref $bodytype ? $bodytype->($head) : $bodytype;

@@ -487,8 +487,8 @@ sub make_methods_pod($$)
     my $manual  = $pod->{manual};
     print INDEX "\n$manual $package\n";
 
-    my @supers  = map { $_->{manual} } @{$pkgs{$package}{pods}};
-    push @supers, all_super_classes $package;
+    my @supers  = map { $_->{manual} } map { @{$pkgs{$_}{pods}} }
+                    $package, all_super_classes $package;
 
     warn "ERROR: No title for chapter in $manual.\n"
         unless defined $chapter->{title};

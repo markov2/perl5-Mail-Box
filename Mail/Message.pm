@@ -42,8 +42,8 @@ Complex message handling (like construction of replies) are handled by the
 Mail::Message::Construct package which is autoloaded.  That package
 adds functionality to the Mail::Message objects.
 
-The main methods are get() -to get information from a message
-header- and decoded() to get the intended content of a message.
+The main methods are get() (to get information from a message
+header) and decoded() to get the intended content of a message.
 
 =head1 METHODS
 
@@ -762,10 +762,18 @@ Return the body of this message.  BE WARNED that this returns
 you an object which may be encoded: use decoded() to get a body
 with usable data.
 
-With options, a new BODY is set for this message.  The body must
-be an (sub-)class of Mail::Message::Body.  In this case, information
-from the specified body will be copied into the header.  The body
-object will be encoded if needed, because messages written to file
+With options, a new BODY is set for this message.  This is B<not>
+for normal use unless you understand the consequences: you change
+the message content without changing the message-ID.  The right
+way to go is via
+
+ $message = Mail::Message->buildFromBody($body);  # or
+ $message = Mail::Message->build($body);          # or
+ $message = $origmsg->forward(body => $body);
+
+The BODY must be an (sub-)class of Mail::Message::Body.  In this case,
+information from the specified body will be copied into the header.  The
+body object will be encoded if needed, because messages written to file
 or transmitted shall not contain binary data.  The converted body
 is returned.
 
@@ -904,9 +912,9 @@ need to read the body of the message to detect this.
 
 =cut
 
-sub isMultipart() {shift->body->isMultipart}
+sub isMultipart() {shift->head->isMultipart}
 
-#------------------------------------------
+#-------------------------------------------
 
 =method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
 
@@ -957,7 +965,6 @@ sub parts(;$)
     : $recurse            ? @parts
     : confess "Select parts via $what?";
 }
-
 
 #------------------------------------------
 
@@ -1107,8 +1114,8 @@ to create expectations about the message's length, but also to determine
 the mime-type and encodings of the body data.
 
 The BODYTYPE determines which kind of body will be made and defaults to
-the value specified by the C<body_type> option at message creation
-(see new()).  BODYTYPE may be the name of a body class, or a reference
+the value specified by new(body_type).
+BODYTYPE may be the name of a body class, or a reference
 to a routine which returns the body's class when passed the HEAD as only
 argument.
 
@@ -1118,29 +1125,32 @@ my $mpbody = 'Mail::Message::Body::Multipart';
 my $nbody  = 'Mail::Message::Body::Nested';
 my $lbody  = 'Mail::Message::Body::Lines';
 
-sub readBody($$;$)
+sub readBody($$;$$)
 {   my ($self, $parser, $head, $getbodytype) = @_;
 
-    my $ct   = $head->get('Content-Type');
-    my $type = defined $ct ? lc $ct->body : 'text/plain';
-
     my $bodytype
-      = substr($type, 0, 10) eq 'multipart/' ? $mpbody
-      : $type eq 'message/rfc822'            ? $nbody
-      : ! $getbodytype   ? ($self->{MM_body_type} || $lbody)
+      = ! $getbodytype   ? ($self->{MM_body_type} || $lbody)
       : ref $getbodytype ? $getbodytype->($self, $head)
       :                    $getbodytype;
 
-    my $lines   = $head->get('Lines');
-    my $size    = $head->guessBodySize;
+    my $body;
+    if($bodytype->isDelayed)
+    {   $body = $bodytype->new
+          ( message           => $self
+          , $self->logSettings
+          );
+    }
+    else
+    {   my $ct   = $head->get('Content-Type');
+        my $type = defined $ct ? lc $ct->body : 'text/plain';
 
-    my $body
-      = $bodytype->isDelayed
-      ? $bodytype->new
-        ( message           => $self
-        , $self->logSettings
-        )
-      : $bodytype->new
+        # Be sure you have acceptable bodies for multipars and nested.
+        if(substr($type, 0, 10) eq 'multipart/' && !$bodytype->isMultipart)
+        {   $bodytype = $mpbody }
+        elsif($type eq 'message/rfc822' && !$bodytype->isNested)
+        {   $bodytype = $nbody  }
+
+        $body = $bodytype->new
         ( message           => $self
         , mime_type         => scalar $head->get('Content-Type')
         , transfer_encoding => scalar $head->get('Content-Transfer-Encoding')
@@ -1148,6 +1158,10 @@ sub readBody($$;$)
         , checked           => $self->{MM_trusted}
         , $self->logSettings
         );
+    }
+
+    my $lines   = $head->get('Lines');
+    my $size    = $head->guessBodySize;
 
     $body->read
       ( $parser, $head, $getbodytype,

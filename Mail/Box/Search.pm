@@ -33,12 +33,12 @@ Currently implemented searches:
 
 =item Mail::Box::Search::Grep
 
-Match header or body against a regular expression in a C<grep> like
+Match header or body against a regular expression in a UNIX C<grep> like
 fashion.
 
 =back
 
-A C<Mail::Box::Search::Spam> is high on the wishlist.
+A Mail::Box::Search::Spam is high on the wishlist.
 
 =head1 METHODS
 

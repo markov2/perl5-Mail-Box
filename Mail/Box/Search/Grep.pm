@@ -78,7 +78,7 @@ is matched, the whole message will be flagged for deletion.
 =default field undef
 
 Not valid in combination with C<< in => BODY >>.
-all. The STRING is one full field name (case-insensitive).  Use a REGEX
+The STRING is one full field name (case-insensitive).  Use a REGEX
 to select more than one header line to be scanned. CODE is a routine which
 is called for each field in the header.   The CODE is called with the header
 as first, and the field as second argument.  If the CODE returns true, the

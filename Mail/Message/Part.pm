@@ -74,19 +74,64 @@ sub init($)
 
 #------------------------------------------
 
-=method coerce BODY|MESSAGE, PARENT-BODY
+=method buildFromBody BODY, PARENT, HEADERS
+
+(Class method) 
+Shape a message around a BODY.  Bodies have information about their
+content in them, which is used to construct a header for the message.
+Next to that, more HEADERS can be specified.  No headers are obligatory.
+No extra headers are fabricated automatically.
+
+=example
+
+ my $part = Mail::Message::Part $body, $parent;
+
+=cut
+
+sub buildFromBody($$;@)
+{   my ($class, $body, $parent) = (shift, shift, shift);
+    my @log     = $body->logSettings;
+
+    my $head    = Mail::Message::Head::Complete->new(@log);
+    while(@_)
+    {   if(ref $_[0]) {$head->add(shift)}
+        else          {$head->add(shift, shift)}
+    }
+
+    my $part = $class->new
+     ( head   => $head
+     , parent => $parent
+     , @log
+     );
+
+    $part->storeBody($body->check);
+    $part->statusToLabels;
+    $part;
+}
+
+#------------------------------------------
+
+=method coerce BODY|MESSAGE, MULTIPART, HEADERS
 
 Transforms a BODY or MESSAGE to a real message part.  The MULTIPART refers
 to the parental body.
 
+When ta BODY is specified, extra HEADERS can be supplied as well.  Bodies
+are coerced into message parts by calling buildFromBody().  If you specify
+a MESSAGE residing in a folder, this message will automatically be cloned.
+
 =cut
 
 sub coerce($@)
-{   my ($class, $message, $parent) = @_;
+{   my ($class, $thing, $parent) = (shift, shift, shift);
+
+    return $class->buildFromBody($thing, $parent, @_)
+        if $thing->isa('Mail::Message::Body');
+
+    my $message = $thing->isa('Mail::Box::Message') ? $thing->clone : $thing;
 
     my $part = $class->SUPER::coerce($message);
     $part->{MMP_parent} = $parent;
-
     $part;
 }
 

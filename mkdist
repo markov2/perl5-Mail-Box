@@ -1,5 +1,9 @@
 #!/bin/bash
 
+VERSION=2.021
+
+umask 022
+
 TOP=$PWD
 BIN=$TOP/bin
 
@@ -10,7 +14,14 @@ HTMLOUT="$HTML-output"
 HTMLERR="$HTML-errors"
 SITE=/home/markov/shared/perl/public_html/mailbox
 
-VERSION=2.019
+open_up()
+{   DIR="$1"
+    echo "opening $DIR"
+    [ -d $DIR ] || exit $?
+
+    find $DIR         -exec chmod a+r {} \;
+    find $DIR -type d -exec chmod a+x {} \;
+}
 
 echo ">>> Producing version $VERSION"
 
@@ -23,6 +34,7 @@ sort -u MANIFEST >x && mv x MANIFEST
 
 echo ">>> Run tests"
 perl Makefile.PL      || exit $?
+chmod a+x t/*.t
 #make test             || exit $?
 
 echo ">>> Creating HTML with mpod2html"
@@ -64,7 +76,8 @@ echo -n "Continue with distribution? [n/y] "
 read CONT
 case "$CONT" in
 y*) ;;
-*)  exit 0;;
+*)  echo ">>> No distribution created"
+    exit 0;;
 esac
 
 echo ">>> HTML to website"
@@ -73,11 +86,12 @@ cd $HTML
 rm -rf $SITE/html
 mkdir $SITE/html
 
-tar -cf $SITE/html/current.tar *
-gzip -9f $SITE/html/current.tar
-(cd $SITE/html; ls -lh current.tar.gz)
+tar -cf $SITE/html/html-current.tar *
+gzip -9f $SITE/html/html-current.tar
+(cd $SITE/html; ls -lh html-current.tar.gz)
 
 cp -r * $SITE/html
+open_up  $SITE/html
 
 echo ">>> Make dist"
 cd $TMP
@@ -89,7 +103,8 @@ make dist >/dev/null
 
 [ -d $SITE/source ] || mkdir $SITE/source
 cp $TMP/$DIST $SITE/source/
-ln -sf $DIST $SITE/source/current.tar.gz
+ln -sf $DIST $SITE/source/html-current.tar.gz
+open_up $SITE/source
 
 echo ">>> Make raw"
 
@@ -97,8 +112,9 @@ cd $TOP
 [ -d $SITE/raw ] || mkdir $SITE/raw
 RAW=Mail-Box-raw.$VERSION.cpio
 cat MANIFEST MANIFEST.raw | cpio -oca >$SITE/raw/$RAW
-bzip2 -9 $SITE/raw/$RAW
-ln -sf $RAW.bz2 $SITE/raw/current.cpio.bz2
-(cd $SITE/raw; ls -lh current.cpio.bz2)
+bzip2 -9f $SITE/raw/$RAW
+ln -sf $RAW.bz2 $SITE/raw/raw-current.cpio.bz2
+(cd $SITE/raw; ls -lh $RAW.bz2)
+open_up $SITE/raw
 
 echo ">>> Ready"

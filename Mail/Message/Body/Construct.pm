@@ -100,15 +100,15 @@ Specify a list of COMPONENTS.  Each component can be
 
 =over 4
 
-=item a message (Mail::Message), the body of the message is used,
+=item * a message (Mail::Message), the body of the message is used,
 
-=item a body (Mail::Message::Body),
+=item * a body (Mail::Message::Body),
 
-=item C<undef>, which will be skipped,
+=item * C<undef>, which will be skipped,
 
-=item a scalar, which is split on new-lines,
+=item * a scalar, which is split on new-lines,
 
-=item an array of scalars, each providing one line.
+=item * an array of scalars, each providing one line.
 
 =back
 

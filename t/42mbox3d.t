@@ -112,7 +112,7 @@ ok(!@f_subjects);
 
 my $parsed = 0;
 $_->isParsed && $parsed++ foreach $folder->messages;
-ok($parsed==3);   # only multiparts
+ok($parsed==0);
 
 #
 # Check that the whole folder is continuous
@@ -143,7 +143,7 @@ ok($end== -s $copy->filename);
 
 $parsed = 0;
 $_->isParsed && $parsed++ foreach $copy->messages;
-ok($parsed==3);   # three multiparts
+ok($parsed==0);
 
 #
 # Force one message to be loaded.

@@ -8,11 +8,14 @@ die "Usage: $0 index raw-html >clean-html\n"
 my ($index, $html) = @ARGV;
 
 my %external_modules = map { ($_ => 1) }
- qw/Net::Config Net::Domain Net::SMTP IO::Server::INET Pod::HTML
+ qw/Net::Config Net::Domain Net::SMTP Pod::HTML
     Mail::Internet MIME::Entity Text::Autoformat HTML::FormatText
-    HTML::FormatPS Mail::Address MIME::Types MIME::Type
-    Object::Realize::Later IO::File IO::Handle Tie::Array Inline::C
-    Mail::Folder/;
+    HTML::FormatPS Mail::Address
+    IO::File IO::Handle Tie::Array IO::Socket::INET
+    Inline::C Mail::Folder
+    MIME::Type MIME::Types Object::Realize::Later
+    Mail::Box::Parser::C Mail::Box::File Mail::Message::Body::External
+    Mail::Message::Body::External Mail::Box::Search::Spam/;
 
 my %index;
 sub read_index($)
@@ -48,14 +51,18 @@ sub rel_link($$)
 
     my @from = split /\:\:/, $from;
     my @to   = split /\:\:/, $to;
-    pop @from;
 
+    my $last = 'index';
     while(@from && @to && $from[0] eq $to[0])
-    {   shift @from;
+    {   $last = shift @from;
         shift @to;
     }
 
-    ('../' x @from) . (join '/', @to) . '.html';
+    local $" = '/';
+
+      !@to   ? ('../' x @from)."$last.html"
+    : !@from ? "$last/@to.html"
+    :          ('../' x (@from-1)) . "@to.html";
 }
 
 read_index $index;
@@ -86,12 +93,14 @@ my $insert_pre = 0;
 while(<HTML>)                # Body
 {
      chomp;
-     s#^\<li .*\<p\>(.*?)\<.*#<li class=POD_ITEM>$1#;
+     s#^\<li .*\<p\>(.*?)\</p\>.*#<li class=POD_ITEM>$1#;
      s#^\<dt .*?"\>\<b\>(.*?)\</a\>#<dt class=POD_ITEM><b>$1#;
+     s#1"\>\</a\>#"></a>#;
+
      $insert_pre = 1 if s#^\<pre class#<p class#;
  
      if( $insert_pre && m!^\s*$! )  # bug in mpod2html: pre too early
-     {    $_ = "<pre>";
+     {    $_ = "<pre class=POD_VERBATIM>";
           $insert_pre = 0;
      }
 

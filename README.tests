@@ -94,6 +94,7 @@ Message construction   Mail::Message::Construct
    56bounce.t          bounce
    57forw0s.t          create a forward subject
    57forw1f.t          create singlepart message forwards
+   58clone.t           cloning complex messages
 
 Folder manager:
    60mgr.t             locating/opening/closing folders.
