@@ -111,9 +111,9 @@ sub fromLine(;$)
 
     # Create a fake.
     my $from   = $self->head->get('from') || '';
+    my $stamp  = $self->timestamp || time;
     my $sender = $from =~ m/\<.*?\>/ ? $1 : 'unknown';
-    my $date   = $self->head->get('date') || '';
-    $self->{MBM_from_line} = "From $sender $date\n";
+    $self->{MBM_from_line} = "From $sender ".(gmtime $stamp)."\n";
 }
 
 #-------------------------------------------
@@ -141,9 +141,8 @@ sub print()
         # course) also the body.
 
         $self->createStatus->createXStatus;
-        print $out $self->fromLine;
         $self->MIME::Entity::print($out);
-        print $out "\n";
+        $out->print("\n");
     }
     else
     {   # Unmodified messages are copied directly from their folder
@@ -158,7 +157,7 @@ sub print()
             $folder->fileClose unless $was_open;
             return 0;
         }
-        print $out $msg;
+        $out->print($msg);
     }
 
     $folder->fileClose unless $was_open;
@@ -177,6 +176,7 @@ location should be not used after this.
 sub migrate($)
 {   my ($self, $out) = @_;
     my $newbegin = tell $out;
+    $out->print($self->fromLine);
     $self->print($out);
     $self->{MBM_begin} = $newbegin;
     $self;
@@ -410,7 +410,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.100
+This code is beta, version 1.110
 
 =cut
 

@@ -9,5 +9,6 @@ WriteMakefile(
                     , MIME::Tools    => 5.0
                     , Date::Parse    => 0.0
 		    , File::Spec     => 0.0
+                    , IO::Scalar     => 0.0
                     }
 );

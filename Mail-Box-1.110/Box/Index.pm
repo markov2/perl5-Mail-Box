@@ -22,7 +22,7 @@ message-threads.  The Mail::Box::Index is able to store and read a
 the headers of all messages in one file.
 
 When Mail::Box::Index functionality is switched on (specify C<keep_index>
-when creating a folder), the index-file is automatically read.  When
+when opening a folder), the index-file is automatically read.  When
 the folder is closed, a new index-file is created.
 
 Special care is taken to avoid a problems when the user changed or
@@ -156,7 +156,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.100
+This code is beta, version 1.110
 
 =cut
 

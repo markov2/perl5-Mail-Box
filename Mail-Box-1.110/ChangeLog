@@ -2,6 +2,27 @@ CHANGELOG of Mail::Box
 
 All changes till now were made by Mark Overmeer <mark@overmeer.net>
 
+version 1.101:
+
+	* Various small documentation fixes.
+
+	* $msg->copyMessage($folder, @messages)
+	  $mgr->copyMessage($msg, folder => ...)
+
+	* $msg->moveMessage($folder, @messages)
+	  $mgr->moveMessage($msg, folder => ...)
+
+	* $message->copyTo($folder)
+
+	* $message->print will not start with a from-line anymore
+	  when the message is in an Mbox folder.  Instead, you need
+	  to do
+		print $message->fromLine;
+                $message->print;
+
+	* MIME::Entity's which are put in Mbox folders get a time
+	  assigned in the From-line.
+
 version 1.100:
 
 	* MAJOR CHANGE, which shouldn't effect anyone except people

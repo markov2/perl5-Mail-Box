@@ -280,12 +280,14 @@ sub readMessages(@)
     my $parser     = $self->parser;
     my $delayed    = 0;
 
-    my ($begin, $end) = (0, undef);
     local $_;
     my $from_line  = $file->getline;
+    my $end;
 
     while($from_line)
     {
+        my $begin = $file->tell;
+
         # Detect header.
         my @header;
         while(<$file>)
@@ -296,7 +298,7 @@ sub readMessages(@)
 
         # Detect body
 
-        $end = $file->tell;
+        $end = $begin;
         my @body;
 
         while(<$file>)
@@ -308,7 +310,7 @@ sub readMessages(@)
         # a pitty that an MIME::Entity does not split new and init...
 
         my $size    = $end - $begin;
-        chomp $from_line;
+#       chomp $from_line;
 
         my @options =
           ( @{$self->{MB_message_opts}}
@@ -318,7 +320,6 @@ sub readMessages(@)
           );
 
         $from_line     = $_;               # catch for next message.
-        $begin         = $end;             #
 
         my $message;
         if(not $self->lazyExtract(\@header, \@body, $size))
@@ -523,7 +524,21 @@ sub appendMessages(@)
 
     seek $file, 0, SEEK_END;
 
-    $_->print($file) foreach @messages;
+    foreach (@messages)
+    {   # I would like to coerce here, into the correct message type.  However,
+        # the folder has not been opened, so what is the correct type?  Instead
+        # of a real conversion, we have hope that each line just starts with a
+        # from-line
+        # $class->coerce($_);   # sorry, can't
+ 
+        $file->print( $_->can('formLine')
+                    ? $_->fromLine
+                    : $_->Mail::Box::Mbox::Message::fromLine
+                    );
+
+        $_->print($file);
+        $file->print("\n");
+    }
 
     $folder->fileClose;
     $folder->close;
@@ -793,7 +808,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.100
+This code is beta, version 1.110
 
 =cut
 

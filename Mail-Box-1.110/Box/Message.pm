@@ -353,9 +353,9 @@ but on UNIX systems will be in seconds since 1 January 1970.
 
 =cut
 
-sub timestamp()
+sub MIME::Entity::timestamp()
 {   my $self = shift;
-    return undef if $self->isDummy;
+    my $head = $self->head || return;
 
     if(my $date = $self->head->get('date'))
     {   my $stamp = str2time($date, 'GMT');
@@ -519,6 +519,7 @@ sub diskDelete() { shift }
 package Mail::Box::Message::Parsed;
 use vars qw/@ISA/;
 use MIME::Entity;
+use IO::Scalar;
 
 @ISA = ( 'Mail::Box::Message', 'MIME::Entity');
 
@@ -634,6 +635,39 @@ sub coerce($$@)
 
     $message->folder($folder);
 #   $message->Mail::Box::Message::init(\%args);
+}
+
+#-------------------------------------------
+
+=item copyTo FOLDER
+
+Move the message to the indicated opened FOLDER.  The message is
+removed from the folder where it resides in (flagged to be deleted).
+The content of the message is copied.
+
+Example:
+
+   my $draft = $mgr->open(folder => 'Draft');
+   $message->copyTo($draft);
+
+=cut
+
+sub copyTo($)
+{   my ($self, $folder) = @_;
+
+    # To create a copy, we print to file and then parse it back.  This
+    # is a real trick which could consume inefficient amounts of memory
+    # and time, but is independent from the MIME::Entity implementation.
+
+    my $internal;
+    my $plaintext = new IO::Scalar;
+    $plaintext->open(\$internal);
+    $self->print($plaintext);
+
+    my $parser    = $folder->parser;
+    $folder->addMessage($parser->parse_data($internal));
+
+    $self;
 }
 
 #-------------------------------------------
@@ -1201,7 +1235,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.100
+This code is beta, version 1.110
 
 =cut
 

@@ -1,8 +1,9 @@
 
-use strict;
 package Mail::Box::Manager;
 
+use strict;
 use Mail::Box;
+use Carp;
 
 =head1 NAME
 
@@ -11,10 +12,12 @@ Mail::Box::Manager - Manage a set of folders
 =head1 SYNOPSIS
 
    use Mail::Box::Manager;
-   my $manager = new Mail::Box::Manager;
-   my $folder  = $manager->open(folder => $ENV{MAIL});
-   $manager->registerType(mbox => 'Mail::Box::Mbox');
-   $manager->close($folder);
+   my $mgr    = new Mail::Box::Manager;
+   my $folder = $mgr->open(folder => $ENV{MAIL});
+   $mgr->registerType(mbox => 'Mail::Box::Mbox');
+   $mgr->close($folder);
+   $mgr->copyMessage('Draft', $message);
+   $mgr->moveMessage('Outbox', $message1, $message2, create => 1 );
 
 =head1 DESCRIPTION
 
@@ -250,8 +253,8 @@ sub open(@)
     my $name          = $args{folder} ||= $ENV{MAIL};
 
     # Do not open twice.
-    my ($folder) = grep {$name eq "$_"} $self->openFolders;
-    if($folder)
+    my ($folder) = $self->isOpenFolder($name);
+    if(defined $folder)
     {   warn "Folder $name is already open.\n";
         return;
     }
@@ -321,6 +324,23 @@ sub openFolders() { @{shift->{MBM_open_folders}} }
 
 #-------------------------------------------
 
+=item isOpenFolder FOLDER
+
+Returns folder when the FOLDER is kept open.
+
+Example:
+
+    print "Yes\n" if $mgr->isOpenFolder('Inbox');
+
+=cut
+
+sub isOpenFolder($)
+{   my ($self, $name) = @_;
+    (grep {$name eq $_->name} $self->openFolders)[0];
+}
+
+#-------------------------------------------
+
 =item close FOLDER
 
 =item closeAllFolders
@@ -347,16 +367,16 @@ sub close($)
 {   my ($self, $folder) = @_;
     return unless $folder;
 
-    my @open   = $self->openFolders;
-    my @result = grep {$folder ne $_} @open;
+    my $name      = $folder->name;
+    my @remaining = grep {$name ne $_->name} @{$self->{MBM_open_folders}};
 
-    if(@result==@open)
+    if(@{$self->{MBM_open_folders}} == @remaining)
     {   warn "The folder was not opened by this folder-manager.\n";
         return;
     }
 
     $folder->close;
-    $self->{MBM_open_folders} = [ @result ];
+    $self->{MBM_open_folders} = [ @remaining ];
     $self;
 }
 
@@ -368,12 +388,13 @@ sub closeAllFolders()
 
 #-------------------------------------------
 
-=item appendMessage FOLDER|FOLDERNAME, MESSAGES, OPTIONS
+=item appendMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
 
 Append one or more messages to a folder.  As first argument, you
 may specify a FOLDERNAME or an opened folder.  When the name is
 that of an opened folder, is it treated as if the folder-structure
-was specified.
+was specified.  You may also specify the foldername as part
+of the option-list.
 
 When a message is added to an opened folder, it is only added to
 the structure internally in the program.  The data will not be
@@ -394,30 +415,36 @@ Examples:
 
    $mgr->appendMessage('=send', $message, folderdir => '/');
    $mgr->appendMessage('=received', $inbox->messages);
+   $mgr->appendMessage($inbox->messages, folder => 'Drafts');
 
 =cut
 
-sub appendMessage($@)
-{   my ($self, $folder) = (shift, shift);
+sub appendMessage(@)
+{   my $self = shift;
+    my $folder;
+    $folder  = shift if !ref $_[0] || $_[0]->isa('Mail::Box');
+
     my @messages;
     push @messages, shift while @_ && ref $_[0];
-    my @options = @_;
+
+    my %options = @_;
+    $folder ||= $options{folder};
 
     # Try to resolve filenames into opened-files.
-    unless(ref $folder)
-    {   foreach ($self->openFolders)
-        {   if($_->name eq $folder)
-            {   $folder = $_;
-                last;
-            }
-        }
-    }
+    $folder = $self->isOpenFolder($folder)
+        if !ref $folder && $self->isOpenFolder($folder);
 
     if(ref $folder)
     {   # An open file.
         unless($folder->isa('Mail::Box'))
         {   warn "Folder $folder is not a Mail::Box; cannot add a message.\n";
             return;
+        }
+
+        foreach (@messages)
+        {   next unless $_->isa('Mail::Box::Message') && $_->folder;
+            use Carp;
+            croak "Use moveMessage() or copyMessage() to move between opened folders.\n";
         }
 
         return $folder->addMessages(@messages);
@@ -450,15 +477,90 @@ sub appendMessage($@)
 
     # Even the default foldertype was not found.
     ($name, $class, @gen_options) = @{$self->{MBM_folder_types}[1]}
-       unless $found;
+        unless $found;
 
     $class->appendMessages
-      ( folder   => $folder
-      , type     => $name
+      ( type     => $name
       , messages => \@messages
       , @gen_options
-      , @options
+      , %options
+      , folder   => $folder
       );
+}
+
+#-------------------------------------------
+
+=item copyMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+
+Copy a message from one folder into an other folder.  If that other folder
+has not been opened, the copy behaves like an appendMessage().  Otherwise,
+the data from the message is copied and added to the other open folder.
+
+You need to specify a folder's name or folder-object as first argument,
+or in the option-list.  The options are those which can be specified
+when opening a folder.
+
+Examples:
+
+    my $drafts = $mgr->open(folder => 'Drafts');
+    my $outbox = $mgr->open(folder => 'Outbox');
+    $mgr->copyMessage($outbox, $drafts->message(0));
+
+    $mgr->copyMessage('Trash', $drafts->message(1), $drafts->message(2),
+               folderdir => '/tmp', create => 1);
+
+    $mgr->copyMessage($drafts->message(1), folder => 'Drafts'
+               folderdir => '/tmp', create => 1);
+
+=cut
+
+sub copyMessage(@)
+{   my $self   = shift;
+    my $folder;
+    $folder    = shift if !ref $_[0] || $_[0]->isa('Mail::Box');
+
+    my @messages;
+    push @messages, shift while @_ && ref $_[0];
+
+    my %options = @_;
+    $folder ||= $options{folder};
+
+    # Try to resolve filenames into opened-files.
+    $folder = $self->isOpenFolder($folder)
+        if !ref $folder && $self->isOpenFolder($folder);
+
+    if(ref $folder) { $_->copyTo($folder) foreach @messages }
+    else { $self->appendMessages(@messages, %options, folder => $folder) }
+
+    # '_delete' is a hidden option to simplify the implementation of
+    # moveMessages.  It should not be used by callers of copyMessage().
+    if($options{_delete})
+    {   $_->delete foreach @messages;
+    }
+
+    $self;
+}
+
+#-------------------------------------------
+
+=item moveMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+
+Move a message from one folder to the next.  Be warned that removals from
+a folder only take place when the folder is closed, so the message is only
+flagged to be deleted in the opened source folder.
+
+   $mgr->moveMessage($received, $inbox->message(1))
+
+is equivalent to
+
+   $mgr->copyMessage($received, $inbox->message(1));
+   $inbox->message(1)->delete;
+
+=cut
+
+sub moveMessage(@)
+{   my $self   = shift;
+    $self->copyMessage(@_, _delete => 1);
 }
 
 #-------------------------------------------
@@ -492,7 +594,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.100
+This code is beta, version 1.110
 
 =cut
 
