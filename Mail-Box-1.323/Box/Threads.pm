@@ -902,7 +902,11 @@ Sum the size of all the messages in the thread.
 sub totalSize()
 {   my $self  = shift;
     my $total = 0;
-    $self->recurseThread( sub {$total += shift->{MBT_messages}[0]->size; 1} );
+    $self->recurseThread
+     ( sub {my $message = shift->message;
+            $total += $message->size unless $message->isDummy;
+            1}
+     );
     $total;
 }
 
@@ -1182,7 +1186,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.322
+This code is beta, version 1.323
 
 =cut
 

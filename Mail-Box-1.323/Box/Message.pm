@@ -170,7 +170,7 @@ sub init($)
         if exists $args->{messageID};
 
     $self->{MBM_labels}   ||= {};
-    $self->folder($args->{folder}) if $args->{folder};
+    $self->folder($args->{folder}) if defined $args->{folder};
 
     return $self if $self->isDummy;
 
@@ -704,7 +704,14 @@ sub copyTo($)
     $self->print($plaintext);
 
     my $parser    = $folder->parser;
-    $folder->addMessage($parser->parse_data($internal));
+    my $copy      = $parser->parse_data($internal);
+    $folder->coerce($copy);
+
+    $copy->fromLine($self->fromLine)
+        if $copy->can('fromLine') && $self->can('fromLine');
+
+    $folder->addMessage($copy);
+    $folder->modifications(1);
 
     $self;
 }
@@ -1259,7 +1266,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.322
+This code is beta, version 1.323
 
 =cut
 

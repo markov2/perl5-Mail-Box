@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.322';
+$VERSION = '1.323';
 
 use Carp;
 use MIME::Parser;
@@ -1490,7 +1490,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.322
+This code is beta, version 1.323
 
 =cut
 

@@ -107,7 +107,6 @@ sub fromLine(;$)
 {   my $self = shift;
 
     return $self->{MBM_from_line} = shift if @_;
-
     return $self->{MBM_from_line} if $self->{MBM_from_line};
 
     # Create a fake.
@@ -133,10 +132,13 @@ sub print()
     my $out      = shift || \*STDOUT;
 
     my $folder   = $self->folder;
-    my $was_open = $folder->fileIsOpen;
-    my $file     = $folder->fileOpen;
+    my ($was_open, $file);
+    if(defined $folder)
+    {   $was_open = $folder->fileIsOpen;
+        $file     = $folder->fileOpen;
+    }
 
-    if($self->modified)
+    if($self->modified || ! defined $file)
     {   # Modified messages are printed as they were in memory.  This
         # may change the order and content of header-lines and (of
         # course) also the body.
@@ -417,7 +419,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.322
+This code is beta, version 1.323
 
 =cut
 

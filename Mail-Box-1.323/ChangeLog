@@ -5,6 +5,18 @@ specified differently.
 
 #to do: copy labels with the message
 
+version 1.323: Wed Oct 24 00:23:16 CEST 2001
+
+	Thanks to [Michael West] for detailed reports
+
+	* Fix counting thread size in threads with dummies
+
+	* Fixed copyTo flagging the destination folder to be modified
+
+	Thanks to [Nikolaus Rath]
+
+	* fileIsOpen errors on new messages in a folder probably fixed.
+
 version 1.322: Wed Oct 17 12:28:23 CEST 2001
 
 	* Mail::Box::sort() could not sort everything correctly.
