@@ -265,8 +265,9 @@ sub repliedTo()
 =method follows THREAD, QUALITY
 
 Register that the current thread is a reply to the specified THREAD. The
-QUALITY of the relation is specified by the second argument.  The THREAD
-may still have angles around it, and in that case maybe even blanks.
+QUALITY of the relation is specified by the second argument.  The method
+returns C<undef> if the link is not accepted in order to avoid circular
+references.
 
 The relation may be specified more than once, but only the most confident
 relation is used. For example, if a reply (QUALITY equals C<REPLY>) is
@@ -279,6 +280,20 @@ new thread overrides the previous.
 sub follows($$)
 {   my ($self, $thread, $how) = @_;
     my $quality = $self->{MBTN_quality};
+
+    # Do not create cyclic constructs caused by erroneous refs.
+
+    my $msgid = $self->messageId;       # Look up for myself, upwards in thread
+    for(my $walker = $thread; defined $walker; $walker = $walker->repliedTo)
+    {   return undef if $walker->messageId eq $msgid;
+    }
+
+    my $threadid = $thread->messageId;  # a->b and b->a  (ref order reversed)
+    foreach ($self->followUps)
+    {   return undef if $_->messageId eq $threadid;
+    }
+
+    # Register
 
     if($how eq 'REPLY' || !defined $quality)
     {   $self->{MBTN_parent}  = $thread;

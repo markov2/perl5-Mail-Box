@@ -425,8 +425,8 @@ to a folder file when it is closed.  It is quite dangerous to change the
 body: especially be warned that you have to change the message-id as well:
 no two messages should have the same id.
 
-Without value, the current setting is returned, although you can better
-use isModified().
+Without value, the current setting is returned, although you can better use
+isModified().
 
 =cut
 

@@ -152,7 +152,6 @@ sub string()
 
 sub lines()
 {    my $nested = shift->nested;
-warn "Nested = ",ref $nested;
      defined $nested ? ($nested->lines) : ();
 }
 

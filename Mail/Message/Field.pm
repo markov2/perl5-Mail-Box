@@ -397,19 +397,20 @@ sub attribute($;$)
 
     unless(@_)
     {   return
-           $body =~ m/\b$attr=( "( (?: [^"]|\\" )* )"
-                              | '( (?: [^']|\\' )* )'
-                              | (\S*)
-                              )
+           $body =~ m/\b$attr\s*\=\s*
+                       ( "( (?: [^"]|\\" )* )"
+                       | '( (?: [^']|\\' )* )'
+                       | (\S*)
+                       )
                   /xi ? $+ : undef;
     }
 
     my $value = shift;
     unless(defined $value)  # remove attribute
     {   for($body)
-        {      s/\b$attr='([^']|\\')*'//i
-            or s/\b$attr="([^"]|\\")*"//i
-            or s/\b$attr=\S*//i;
+        {      s/\b$attr\s*=\s*'([^']|\\')*'//i
+            or s/\b$attr\s*=\s*"([^"]|\\")*"//i
+            or s/\b$attr\s*=\s*\S*//i;
         }
         $self->unfoldedBody($body);
         return undef;
@@ -417,9 +418,9 @@ sub attribute($;$)
 
     (my $quoted = $value) =~ s/"/\\"/g;
     for($body)
-    {       s/\b$attr='([^']|\\')*'/$attr="$quoted"/i
-         or s/\b$attr="([^"]|\\")*"/$attr="$quoted"/i
-         or s/\b$attr=\S+/$attr="$quoted"/i
+    {       s/\b$attr\s*=\s*'([^']|\\')*'/$attr="$quoted"/i
+         or s/\b$attr\s*=\s*"([^"]|\\")*"/$attr="$quoted"/i
+         or s/\b$attr\s*=\s*\S+/$attr="$quoted"/i
          or do { $_ .= qq(; $attr="$quoted") }
     }
 
@@ -661,13 +662,12 @@ A new field is being created which does contain characters not permitted
 by the RFCs.  Using this field in messages may break other e-mail clients
 or transfer agents, and therefore mutulate or extinguish your message.
 
-=warning Empty field: $name
-
-Empty fields are not allowed, however sometimes found in messages constructed
-by broken applications.  You probably want to ignore this message unless you
-wrote this broken application yourself.
-
 =cut
+
+#=notice Empty field: $name
+#Empty fields are not allowed, however sometimes found in messages constructed
+#by broken applications.  You probably want to ignore this message unless you
+#wrote this broken application yourself.
 
 sub consume($;$)
 {   my $self = shift;
@@ -699,12 +699,10 @@ sub consume($;$)
     else                          # Created by parser
     {   # correct erroneous wrap-seperators (dos files under UNIX)
         $body =~ s/[\012\015]+/\n/g;
-        $body =~ s/^\s*/ /;  # start with one blank, folding kept unchanged
+        $body =~ s/^[ \t]*/ /;  # start with one blank, folding kept unchanged
 
-        if($body eq "\n")
-        {   $self->log(WARNING => "Empty field: $name\n");
-            return ();
-        }
+        $self->log(NOTICE => "Empty field: $name\n")
+           if $body eq " \n";
     }
 
     ($name, $body);

@@ -185,7 +185,7 @@ May trigger completion.
 
 sub isMultipart()
 {   my $type = shift->get('Content-Type');
-    $type && $type->body =~ m[^(multipart/)|(message/rfc822)]i;
+    $type && $type->body =~ m[^multipart/]i;
 }
 
 #------------------------------------------

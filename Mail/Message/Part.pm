@@ -14,13 +14,14 @@ Mail::Message::Part - a part of a message, but a message by itself.
 
  my Mail::Message $message = ...;
  if($message->isMultipart) {
-     my Mail::Message::Part $part;
+    my Mail::Message::Part $part;
 
-     foreach $part ($message->body->parts) {
-         $part->print(\*OUT);
-         my $attachbody = $part->head;
-         my $attachhead = $part->body;
-     }
+    foreach $part ($message->body->parts) {
+       $part->print(\*OUT);
+       my $attached_head = $part->head;
+       my $attached_body = $part->body;      # encoded as read
+       my $attached_body = $part->decoded;   # transfer-encoding removed
+    }
  }
 
 =head1 DESCRIPTION

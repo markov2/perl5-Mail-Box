@@ -188,8 +188,9 @@ sub type() {'pop3'}
 sub close()
 {   my $self = shift;
 
-    my $pop  = $self->popClient;
-    $pop->disconnect if defined $pop;
+    if(my $pop = delete $self->{MBP_client})
+    {   $pop->disconnect;
+    }
 
     $self->SUPER::close;
 }

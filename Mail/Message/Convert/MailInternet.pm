@@ -88,9 +88,8 @@ sub export($@)
     my $mi_head = Mail::Header->new;
 
     my $head    = $message->head;
-    foreach my $name ($head->names)
-    {   $mi_head->add(undef, $_->string)
-            foreach $head->get($name);
+    foreach my $field ($head->orderedFields)
+    {   $mi_head->add($field->Name, scalar $field->foldedBody);
     }
 
     Mail::Internet->new

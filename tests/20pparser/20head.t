@@ -13,8 +13,9 @@ use lib qw(. t);
 use Mail::Message::Head;
 use Mail::Box::Parser::Perl;
 use Tools;
+use Mail::Message;
 
-BEGIN { plan tests => 15 }
+BEGIN { plan tests => 16 }
 
 my $h = Mail::Message::Head->new;
 ok(defined $h);
@@ -48,3 +49,22 @@ my $recb = "(from majordomo\@localhost)\tby unca-don.wizards.dupont.com (8.9.3/8
 is($received->body, $recb);
 is($received->comment, 'Wed, 9 Feb 2000 15:38:42 -0500 (EST)');
 
+# Check parsing empty fields
+# Contributed by Marty Pauley
+
+my $message = <<'EOT';
+Date: Mon, 24 Feb 2003 11:07:36 +0000
+From: marty@kasei.com
+To: marty@kasei.com
+Subject: Test Message
+Message-ID: <20030224010736.GA32736@phobos.kasei.com>
+Mime-Version: 1.0
+X-foo:
+Content-Type: text/plain
+Content-Disposition: inline
+
+This is a test message.
+EOT
+my $mm = Mail::Message->read($message);
+my $foo = $mm->head->get("x-foo")->string;
+is($foo, "X-foo: \n",               "X-foo ok");

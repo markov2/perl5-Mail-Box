@@ -54,11 +54,14 @@ Separator to be used between parts of the message.  This separator must
 be unique in case the message contains nested multiparts (which are not
 unusual).  If <undef>, a nice unique boundary will be generated.
 
-=option  epilogue BODY
+=option  epilogue BODY|STRING
 =default epilogue undef
 
 The text which is included in the main body after the final boundary.  This
 is usually empty, and has no meaning.
+
+Provide a BODY object or a STRING which will automatically translated
+into a text/plain body.
 
 =option  parts ARRAY-OF-(MESSAGES|BODIES)
 =default parts undef
@@ -71,13 +74,16 @@ C<MIME::Entity> and C<Mail::Internet> objects are acceptable in the
 list, because they are coercible into Mail::Message::Part's.  Values
 of C<undef> will be skipped silently.
 
-=option  preamble BODY
+=option  preamble BODY|STRING
 =default preamble undef
 
 The text which is included in the body before the first part.  It is
 common use to include a text to warn the user that the message is a
 multipart.  However, this was useful in earlier days: most mail
 agents are very capable in warning the user themselves.
+
+Provide a BODY object or a STRING which will automatically translated
+into a text/plain body.
 
 =examples
 
@@ -86,6 +92,7 @@ agents are very capable in warning the user themselves.
 
  my $body  = Mail::Message::Body::Multipart->new
    ( boundary => time . '--it-s-mine'
+   , preamble => "This is a multi-part message in MIME format.\n\n"
    , parts    => [ $intro, $folder->message(3)->decoded, $pgp ]
    );
 
@@ -100,7 +107,8 @@ passed to the initiation.  The data is ignored.
 
 sub init($)
 {   my ($self, $args) = @_;
-    $args->{mime_type} ||= 'multipart/mixed';
+    my $based = $args->{based_on};
+    $args->{mime_type} ||= defined $based ? $based->mimeType :'multipart/mixed';
 
     $self->SUPER::init($args);
 
@@ -117,22 +125,32 @@ sub init($)
         }
     }
 
-    if(defined(my $based = $args->{based_on}))
+    my $preamble = $args->{preamble};
+    $preamble    = Mail::Message::Body->new(data => $preamble)
+       if defined $preamble && ! ref $preamble;
+    
+    my $epilogue = $args->{epilogue};
+    $epilogue    = Mail::Message::Body->new(data => $epilogue)
+       if defined $epilogue && ! ref $epilogue;
+    
+    if($based)
     {   $self->boundary($args->{boundary} || $based->boundary);
-        $self->{MMBM_preamble} = $args->{preamble} || $based->preamble;
+        $self->{MMBM_preamble}
+            = defined $preamble ? $preamble : $based->preamble;
 
         $self->{MMBM_parts}
             = @parts              ? \@parts
             : $based->isMultipart ? [ $based->parts('ACTIVE') ]
             : [];
 
-        $self->{MMBM_epilogue} = $args->{epilogue} || $based->epilogue;
+        $self->{MMBM_epilogue}
+            = defined $epilogue ? $epilogue : $based->epilogue;
     }
     else
     {   $self->boundary($args->{boundary} ||$self->type->attribute('boundary'));
-        $self->{MMBM_preamble} = $args->{preamble};
+        $self->{MMBM_preamble} = $preamble;
         $self->{MMBM_parts}    = \@parts;
-        $self->{MMBM_epilogue} = $args->{epilogue};
+        $self->{MMBM_epilogue} = $epilogue;
     }
 
     $self;

@@ -431,7 +431,7 @@ sub reply(@)
 
     my $reply   = $msgtype->buildFromBody
       ( $total
-      , From    => $from || '(undisclosed)'
+      , From    => $from || 'Undisclosed senders:;'
       , To      => $to
       , Subject => $subject
       , 'In-Reply-To' => $origid
@@ -1077,7 +1077,7 @@ sub buildFromBody(@)
      , @log
      );
 
-    $message->body($body->check);
+    $message->body($body);
     $message->statusToLabels;
 
     # be sure the mesasge-id is actually stored in the header.

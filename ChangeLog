@@ -9,7 +9,67 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 wat als appendMessage faalt?
 filehandle als bron folder?
+MH index in append mode niet lezen.
 
+version 2.039: Sun Mar 30 17:34:43 CEST 2003
+
+	Fixes:
+
+	- [Phil Holden] supplied a patch to Mail::Transport::POP3 to
+	  send CRLF line terminations, and improvements on handling
+	  the welcome message.
+
+	- [Mike Cudmore] found a bug which caused a call to parts() on
+	  lazy nested messages.
+
+	- [delepine@u-picardie.fr] patched conversion of Mail::Message
+	  to Mail::Header in Mail::Message::Convert::MailInternet.
+
+	- [Sebastian Willert] showed that multipart/anythings were
+	  always changed into multipart/mixed things after an
+	  operation on them, like attach.
+
+	- [Dimitris Glynos] found that a log-in failure for POP3 tried
+	  to establish the connection twice.
+
+	- [Michael D Richards] reported corruption in construction of
+	  binary attachments, which was caused by buildFromBody always
+	  converting CRLF -> LF (on Unix).  Removed this.
+
+	- [Christoph Dahl] reported that header field attributes with
+	  blanks around the '=' where not detected.  Some flexibility
+	  added.
+
+	- [Eugene Eric Kim] reported the problem where incorrect in-reply-to
+	  or References fields could cause thread cycles which where not
+	  usuable.  Cycles will be ignored.
+
+	Improvements:
+
+	- [Marty Pauley] supplied a patch to use MIME::QuotedPrint for
+	  Mail::Message::TransferEnc::QuotedPrint.  Originally, the
+	  module implemented en/decoding by itself in Perl, however
+	  since MIME::QP is a code module, the advantages disappeared.
+
+	- Mail::Message::Body::Multipart's preamble and epilogue now
+	  accepts strings, so you so not have to create a body for them
+	  explicitly.
+
+version 2.038: Wed Feb 26 16:20:03 CET 2003
+
+	Fixes:
+
+	- It was not possible to remove POP3 messages with $msg->delete
+	  noticed [Jason Woodward]
+
+	- An empty header field could still be a cause of problems.  They
+	  were removed from the header, with a warning.  Now changed the
+	  warning into a notice message, and the fields are kept.  A fix
+	  and test by [Marty Pauley]
+
+	- POP3 messages where not readible when the server does not support
+	  UIDLs.  Silly bug, solved by [Andreas Fitzner].
+ 
 version 2.037: Sun Feb 23 14:53:50 CET 2003
 
 	Fixes:
