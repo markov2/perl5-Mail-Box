@@ -20,7 +20,7 @@ if(@ARGV && $ARGV[0] eq '-v')
 
 my $select_tests = qr/^/;
 if(@ARGV)
-{   my $pat = join '|', @ARGV;
+{   my $pat = join '|', map { "\Q$_" } @ARGV;
     $select_tests = qr/$pat/o;
 }
 

@@ -46,7 +46,7 @@ sub init(@)
         unless defined $file;
 
     return unless $file;
-#   binmode $file, ':raw';
+    eval { binmode $file, ':raw' };
 
     $self->{MBPP_file}       = $file;
     $self->{MBPP_filename}   = $filename          || ref $file;
@@ -117,7 +117,7 @@ sub closeFile()
 sub pushSeparator($)
 {   my ($self, $sep) = @_;
     unshift @{$self->{MBPP_separators}}, $sep;
-    $self->{MBPP_strip_gt}++ if $sep =~ m/^From /;
+    $self->{MBPP_strip_gt}++ if substr($sep, 0, 5) eq 'From ';
     $self;
 }
 
@@ -126,7 +126,7 @@ sub pushSeparator($)
 sub popSeparator()
 {   my $self = shift;
     my $sep  = shift @{$self->{MBPP_separators}};
-    $self->{MBPP_strip_gt}-- if $sep =~ m/^From /;
+    $self->{MBPP_strip_gt}-- if substr($sep, 0, 5) eq 'From ';
     $sep;
 }
     
@@ -134,7 +134,7 @@ sub popSeparator()
 
 sub filePosition(;$)
 {   my $self = shift;
-    @_ ? seek($self->{MBPP_file}, shift, 0) : tell $self->{MBPP_file};
+    @_ ? $self->{MBPP_file}->seek(shift, 0) : $self->{MBPP_file}->tell;
 }
 
 my $empty = qr/^[\015\012]*$/;
@@ -166,7 +166,8 @@ LINE:
         while($line = $file->getline)
         {   $line =~ m!^[ \t]! ? ($body .= $line) : last;
         }
-    
+
+        $body =~ s/\015//g;
         push @ret, [ $name, $body ];
     }
 
@@ -218,7 +219,7 @@ sub readSeparator()
 
     return () unless defined $line;
 
-    $line     =~ s/[\012\015\s]+$/\n/g;
+    $line     =~ s/[\012\015\n]+$/\n/g;
     return ($start, $line)
         if substr($line, 0, length $sep) eq $sep;
 
@@ -240,11 +241,16 @@ sub _read_stripped_lines(;$$)
     {   my $sep  = $seps[0];
         my $l    = length $sep;
 
-        while(my $line = $file->getline)
-        {
-            if(substr($line, 0, $l) eq $sep
-              && ($sep !~ m/^From / || $line =~ m/ (19[789]\d|20[01]\d)/ ))
-            {   $file->seek(-length($line), 1);
+        while(1)
+        {   my $where = $file->tell;
+            my $line  = $file->getline or last;
+
+            if(   substr($line, 0, $l) eq $sep
+               && (   substr($sep, 0, 5) ne 'From '
+                   || $line =~ m/ (19[789]\d|20[01]\d)/
+                  )
+               )
+            {   $file->seek($where, 0);
                 last;
             }
 
@@ -254,17 +260,20 @@ sub _read_stripped_lines(;$$)
     elsif(@seps)
     {   
 
-  LINE: while(my $line = $file->getline)
-        {
+  LINE: while(1)
+        {   my $where = $file->tell;
+            my $line  = $file->getline or last;
+
             foreach my $sep (@seps)
-            {   if(substr($line, 0, length $sep) eq $sep
-                   && ($sep !~ m/^From / || $line =~ m/ (19[789]\d|20[01]\d)/ ))
-                {   $file->seek(-length $line, 1);
-                    last LINE;
-                }
+            {   next if substr($line, 0, length $sep) ne $sep;
+                next if substr($sep, 0, 5) eq 'From '
+                       && $line !~ m/ (19[789]\d|20[01]\d)/;
+
+                $file->seek($where, 0);
+                last LINE;
             }
 
-            $line =~ s/\015?$//;
+            $line =~ s/\015$//;
             push @lines, $line;
         }
     }
@@ -302,7 +311,7 @@ sub _take_scalar($$)
 
     my $return;
     $file->read($return, $end-$begin);
-    $return =~ s/\015?//g;
+    $return =~ s/\015//g;
     $return;
 }
 

@@ -50,9 +50,9 @@ is($k->toString, "Sender: short line\n");
 my @klines = $k->toString;
 cmp_ok(@klines, "==", 1);
 
-my $l = Mail::Message::Field->new(Sender =>
- 'oijfjslkgjhius2rehtpo2uwpefnwlsjfh2oireuqfqlkhfjowtropqhflksjhflkjhoiewurpq');
-my @llines = $k->toString;
+my $long = 'oijfjslkgjhius2rehtpo2uwpefnwlsjfh2oireuqfqlkhfjowtropqhflksjhflkjhoiewurpq';
+my $l = Mail::Message::Field->new(Sender => $long);
+my @llines = $l->toString;
 cmp_ok(@llines, "==", 1);
 
 my $m = Mail::Message::Field->new(Sender =>

@@ -754,7 +754,7 @@ sub fold($$;$)
        push @folded, " $1\n";
     }
 
-    push @folded, " $line\n";
+    push @folded, " $line\n" if length $line;
     wantarray ? @folded : join('', @folded);
 }
 

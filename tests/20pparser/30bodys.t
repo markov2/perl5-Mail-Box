@@ -39,10 +39,16 @@ $head->read($parser);
 ok(defined $head);
 ok($head,                          "overloaded boolean");
 
+my $hard_coded_lines_msg0  = 33;
+my $hard_coded_length_msg0 = 1280;
+my $binary_size = $hard_coded_length_msg0
+      + ($crlf_platform ? $hard_coded_lines_msg0 : 0);
+
 my $length = int $head->get('Content-Length');
-cmp_ok($length, "==", 1280,        "first message size");
+cmp_ok($length, "==", $binary_size, "first message size");
+
 my $lines  = int $head->get('Lines');
-cmp_ok($lines, "==", 33,           "first message lines");
+cmp_ok($lines, "==", $hard_coded_lines_msg0,   "first message lines");
 
 my $body = Mail::Message::Body::String->new;
 $body->read($parser, $head, undef, $length, $lines);
@@ -61,8 +67,8 @@ my @msgs;
 
 push @msgs,  # first message already read.
  { fields => scalar $head->names
- , lines  => $lines
- , size   => $length
+ , lines  => $hard_coded_lines_msg0
+ , size   => $hard_coded_length_msg0
  , sep    => $sep
  , subject=> $head->get('subject')
  };
@@ -75,7 +81,7 @@ while(1)
     like($sep, qr/^From /,                     "1 from $count");
 
     $head = Mail::Message::Head->new;
-    ok(defined $head,                          "1 head count");
+    ok(defined $head,                          "1 head $count");
 
     $head->read($parser);
 

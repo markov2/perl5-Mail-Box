@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=2.027
+VERSION=2.028
 
 umask 022
 
@@ -22,6 +22,7 @@ open_up()
     find $DIR         -exec chmod a+r {} \;
     find $DIR -type d -exec chmod a+x {} \;
 }
+
 
 echo ">>> Producing version $VERSION"
 [ -d "$TMP/tests" ]   || mkdir "$TMP/tests";
@@ -106,6 +107,21 @@ make dist >/dev/null
 cp $TMP/$DIST $SITE/source/
 ln -sf $DIST $SITE/source/source-current.tar.gz
 open_up $SITE/source
+
+INDEX=$SITE/source/index.html
+echo >$INDEX <<'page_head'
+<HTML>
+<HEAD><TITLE>Older sources of Mail::Box</TITLE></HEAD>
+<BODY BGCOLOR=white>
+page_head
+
+for f in $(cd $SITE/source; ls *gz)
+do echo "<A HREF=\"$f\">$f</A><BR>" >>$INDEX
+done
+
+echo >>$INDEX <<'page_tail'
+</BODY></HTML>
+page_tail
 
 echo ">>> Make raw"
 

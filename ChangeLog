@@ -7,6 +7,37 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+block addMessage/appendMessage for POP3
+
+version 2.028: Mon Nov 4 15:08:57 CET 2002
+
+	Fixes:
+
+	- [Greg Matheson] decovered a small bug in the 10field test-script.
+	  After being corrected, it showed a mistake in MM::Field with folding
+	  very long words in field bodies. This bug was corrected.
+
+	- Fixed a parser bug in MBOX, which showed an error when closing
+	  a folder without explicit write before it.  Reported by
+	  [David A Golden]
+
+	- [Blair Zajac] reported that the multipart boundary was not
+	  added to the Content-Type field.
+
+	- [Sebastian Krahmer] adviced me to put a very strong warning against
+	  the use of mailx (Mail::Transport::Mailx), which is accepted because
+	  the funarability has been proven: mailx is exploitable insecure.
+
+	- [Shagren] hit a POP3 server which does not add a blank at the end
+	  of each message.  The last line of his message body was removed
+	  because Mail::Transport::POP3 did not anticipate that.
+
+	Improvements:
+
+	- In joint forces with [Greg Metheson], some small improvements have
+	  been made in the mailbox parser for Windows...  But it is still
+	  far from perfect.
+
 version 2.027: Sat Oct 26 08:52:32 CEST 2002
 
 	Fixes:
@@ -14,7 +45,7 @@ version 2.027: Sat Oct 26 08:52:32 CEST 2002
 	- Lazy Mail::Box::Dir::Message::print() (mbox and mh messages)
 	  used File::Copy's copy(), which cannot handle IO::Lines file
 	  objects as destination.  Replaced by own implementation.
-	  [Tiny Bowden] reported this problem, and fix my patch as well.
+	  [Tony Bowden] reported this problem, and fix my patch as well.
 
 	- Mail::Box::find() was not able to get the id of the first
 	  lazy-loaded message.

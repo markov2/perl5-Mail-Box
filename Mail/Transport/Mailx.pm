@@ -22,10 +22,15 @@ C<Mail>, or C<'mail'>.  When instantiated, the mailer will look for
 any of these binaries in specific system directories, and the first
 program found is taken.
 
-Under Linux, freebsd, and bsdos the mail, Mail, and mailx names are
-just links.  They are very primitive, what will cause many headers
-to be lost.  For these platforms, you can better not use this
-transport mechanism.
+B<WARNING: There are many security issues with mail and mailx. DO NOT USE
+these commands to send messages which contains data derived from any
+external source!!!>
+
+Under Linux, freebsd, and bsdos the C<mail>, C<Mail>, and C<mailx> names are
+just links to the same binary.  The implementation is very primitive, pre-MIME
+standard,  what may cause many headers to be lost.  For these platforms (and
+probably for other platforms as well), you can better not use this transport
+mechanism.
 
 =head1 METHODS
 

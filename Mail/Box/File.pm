@@ -267,8 +267,8 @@ sub close(@)
     undef $_[0];                 #    ref to undef, as the SUPER does.
     shift;
 
-    $self->parserClose;
     $self->SUPER::close(@_);
+    $self->parserClose;
 }
 
 #-------------------------------------------

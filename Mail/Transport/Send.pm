@@ -56,7 +56,8 @@ take hours to complete).
 
 Use the external C<mail>, C<mailx>, or C<Mail> programs to send the
 message.  Usually, the result is poor, because some versions of these
-programs do not support MIME headers.
+programs do not support MIME headers.  Besides, these programs are
+known to have exploitable security breaches.
 
 =back
 

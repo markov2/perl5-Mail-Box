@@ -151,9 +151,7 @@ sub header($;$)
     my $socket    = $self->socket      or return;
     my $n         = $self->id2n($uidl) or return;
 
-    my $header = $self->sendList($socket, "TOP $n $bodylines\n");
-    pop( @$header ); # POP3 protocol adds empty lines, ;-(
-    $header;
+    $self->sendList($socket, "TOP $n $bodylines\n");
 }
 
 #------------------------------------------
@@ -180,7 +178,10 @@ sub message($;$)
     my $message = $self->sendList($socket, "RETR $n\n");
 
     return unless $message;
-    pop( @$message ); # POP3 protocol adds empty lines, ;-(
+
+    # Some POP3 servers add a trailing empty line
+    pop @$message if @$message && $message->[-1] =~ m/^[\012\015]*$/;
+
     return if exists $self->{MTP_nouidl};
 
     $self->{MTP_fetched}{$uidl} = undef; # mark this ID as fetched

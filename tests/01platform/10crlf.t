@@ -16,12 +16,14 @@ BEGIN {
    plan tests => 1;
 }
 
+my $crlf = "\015\012";
+
 open SRC,  '<', $unixsrc  or die "Cannot open $unixsrc to read: $!\n";
 binmode SRC;
-$/ = "\012";
 
 open DEST, '>', $winsrc or die "Cannot open $winsrc for writing: $!\n";
 select DEST;
+binmode DEST;
 
 until(eof SRC)
 {
@@ -29,7 +31,7 @@ until(eof SRC)
 
   HEADER:
     while(<SRC>)
-    {   s/[\012\015]*$/\n/;
+    {   s/[\012\015]*$/$crlf/;
 
            if( m/^Content-Length\: / ) {$bytes = $' +0}
         elsif( m/^Lines\: /          ) {$lines = $' +0}
@@ -37,13 +39,13 @@ until(eof SRC)
         {   # End of header
             if(defined $bytes && defined $lines)
             {   $bytes += $lines;
-                print "Content-Length: $bytes\n";
+                print "Content-Length: $bytes\015\012";
             }
 
-            print "Lines: $lines\n"
+            print "Lines: $lines$crlf"
                 if defined $lines;
 
-            print "\n";
+            print $crlf;
             last HEADER;
         }
         else {print}
@@ -51,7 +53,7 @@ until(eof SRC)
 
   BODY:
     while(<SRC>)
-    {   s/[\012\015]*$/\n/;
+    {   s/[\012\015]*$/$crlf/;
         print;
         last BODY if m/^From /;
     }

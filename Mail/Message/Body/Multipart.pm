@@ -422,15 +422,16 @@ STRING you explicitly set the boundary to be used.
 my $unique_boundary = time;
 
 sub boundary(;$)
-{   my $self      = shift;
-    my $mime      = $self->type;
+{   my $self  = shift;
+    my $mime  = $self->type;
 
-    return $self->type->attribute(boundary => shift) if @_;
+    unless(@_)
+    {   my $boundary = $mime->attribute('boundary');
+        return $boundary if defined $boundary;
+    }
 
-    my $boundary = $mime->attribute('boundary');
-    return $boundary if defined $boundary;
-
-    $self->type->attribute(boundary => "boundary-".$unique_boundary++);
+    my $boundary = @_ && defined $_[0] ? (shift) : "boundary-".$unique_boundary++;
+    $self->type->attribute(boundary => $boundary);
 }
 
 #------------------------------------------
