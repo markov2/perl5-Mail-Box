@@ -23,12 +23,18 @@ written with it yet.  Please inform the author when you have, so this
 module can go to stable.  Read the STATUS file inclosed in the package for
 more details.
 
+The Mail::Box package can be used as back-end to Mail User-Agents
+(MUA's), and has special features to help those agents to have fast
+access to folder-data.  These features may delay access to folders
+for other kinds of applications.  Maybe Mail::Procmail has more for
+you in such cases.
+
+=head2 The folder manager
+
 The folder manager maintains a set of folders (mail-boxes).  Those
 folders may be of different types.  Most folder-types can be detected
-automatically.
-
-This class is the only one you create in your program: all other classes
-will come when needed.
+automatically.  This class is the only one you create in your program:
+all other classes will come when needed.
 
 Overview:
 
@@ -486,7 +492,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.004
+This code is beta, version 1.100
 
 =cut
 

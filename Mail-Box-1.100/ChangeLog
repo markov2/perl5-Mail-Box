@@ -2,6 +2,27 @@ CHANGELOG of Mail::Box
 
 All changes till now were made by Mark Overmeer <mark@overmeer.net>
 
+version 1.100:
+
+	* MAJOR CHANGE, which shouldn't effect anyone except people
+	  who extend the module.  I renamed the message object (now
+	  the package is still young, before too many people have to
+          change their code), to be more logical.
+
+	    Mail::Box::Message::Runtime -> Mail::Box::Message
+	    Mail::Box::Message          -> Mail::Box::Message::Parsed
+	    Mail::Box::MH::Runtime      -> Mail::Box::MH::Message
+	    Mail::Box::MH::Message      -> Mail::Box::MH::Parsed
+	    Mail::Box::MBox::Runtime    -> Mail::Box::Mbox::Message
+	    Mail::Box::MBox::Message    -> Mail::Box::Mbox::Parsed
+
+	* From-lines (in Mboxes) which seperate messages must also
+	  end on a four digit year now, which must be in 19??-20??.
+	  Maybe this reduces the chance that a `From ' line in a
+	  body is mistaken as message-start.  By the way: if there
+	  is such line in a a body, it is a mistake of the mail-
+	  client, not of Mail::Box!
+
 version 1.004: Fri Feb 23 19:11:45 CET 2001
 
 	With even more help of David Coppit:

@@ -53,7 +53,7 @@ my $message = $folder->messageID(
 ok($message);
 
 $start = $message->thread;
-ok($start->isa('Mail::Box::Message::Runtime'));
+ok($start->isa('Mail::Box::Message'));
 ok($start);
 ok($start->messageID ne $message->messageID);
 ok($start->threadToString, <<'START');

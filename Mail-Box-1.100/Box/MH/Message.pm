@@ -14,8 +14,8 @@ Mail::Box::MH::Message - a message in a MH-folder
 
 =head1 DESCRIPTION
 
-This manual-page describes the classes C<Mail::Box::MH::Runtime>,
-C<Mail::Box::MH::Message>, and C<Mail::Box::MH::NotParsed>.  These objects are
+This manual-page describes the classes C<Mail::Box::MH::Message>,
+C<Mail::Box::MH::Parsed>, and C<Mail::Box::MH::NotParsed>.  These objects are
 used to store messages which are not totally read, fully read, or to be written
 to a L<Mail::Box::MH> type of folder.
 
@@ -25,8 +25,8 @@ from stage, the message changes from object-class (try to do this in any
 other language than Perl!).
 
 All information which is required during the full life-span of the message
-is stored in a C<Mail::Box::MH::Runtime>, which is extended by
-the C<Mail::Box::MH::NotParsed> and the C<Mail::Box::MH::Message>.  The 
+is stored in a C<Mail::Box::MH::Message>, which is extended by
+the C<Mail::Box::MH::NotParsed> and the C<Mail::Box::MH::Parsed>.  The 
 last object (C<Mail::Box::MH::NotReadHead>) maintains some header-lines of the
 message.
 
@@ -36,15 +36,15 @@ L<details about the implementation|/"IMPLEMENTATION">, but first the use.
 =cut
 
 ###
-### Mail::Box::MH::Runtime
+### Mail::Box::MH::Message
 ###
 
-package Mail::Box::MH::Runtime;
+package Mail::Box::MH::Message;
 use File::Copy;
 
 #-------------------------------------------
 
-=head1 CLASS Mail::Box::MH::Runtime
+=head1 CLASS Mail::Box::MH::Message
 
 This object contains methods which are part of as well delay-loaded
 (not-parsed) as loaded messages, but not general for all folders.
@@ -176,18 +176,18 @@ sub filename(;$)
 }
 
 ###
-### Mail::Box::MH::Message
+### Mail::Box::MH::Parsed
 ###
 
-package Mail::Box::MH::Message;
+package Mail::Box::MH::Parsed;
 use vars '@ISA';
-@ISA = qw(Mail::Box::MH::Runtime Mail::Box::Message);
+@ISA = qw(Mail::Box::MH::Message Mail::Box::Message::Parsed);
 
 #-------------------------------------------
 
 =back
 
-=head1 CLASS Mail::Box::MH::Message
+=head1 CLASS Mail::Box::MH::Parsed
 
 This object extends a Mail::Box::Message with extra tools and facts
 on what is special to messages in file-based folders, with respect to
@@ -201,8 +201,8 @@ messages in other types of folders.
 
 sub init($)
 {   my ($self, $args) = @_;
-    $self->Mail::Box::Message::init($args);
-    $self->Mail::Box::MH::Runtime::init($args);
+    $self->Mail::Box::Parsed::init($args);
+    $self->Mail::Box::MH::Message::init($args);
     $self;
 }
 
@@ -211,7 +211,7 @@ sub init($)
 =item coerce FOLDER, MESSAGE [,OPTIONS]
 
 (Class method)
-Coerce a MESSAGE into a Mail::Box::MH::Message, ready to be stored in
+Coerce a MESSAGE into a Mail::Box::MH::Parsed, ready to be stored in
 FOLDER.  When any message is offered to be stored in the mailbox, it
 first should have all fields which are specific for MH-folders.
 
@@ -221,7 +221,7 @@ Example:
 
    my $mh = Mail::Box::MH->new(...);
    my $message = Mail::Box::Mbox::Message->new(...);
-   Mail::Box::MH::Message->coerce($mh, $message);
+   Mail::Box::MH::Parsed->coerce($mh, $message);
    # Now $message is ready to be stored in $mh.
 
 However, you can better use
@@ -236,24 +236,24 @@ sub coerce($$)
 {   my ($class, $folder, $message) = (shift, shift, shift);
     return $message if $message->isa($class);
 
-    Mail::Box::Message->coerce($folder, $message, @_) or return;
+    Mail::Box::Message::Parsed->coerce($folder, $message, @_) or return;
 
     # When I know more what I can save from other types of messages, later,
     # that information will be extracted here, and transfered into arguments
-    # for Runtime->init.
+    # for Message->init.
 
     my $msgid = $message->head->get('message-id');
     $message->{MBM_messageID} = $msgid && $msgid =~ m/<.*?>/ ? $&
                               : 'mh-'.$unreg_msgid++;
 
-    (bless $message, $class)->Mail::Box::MH::Runtime::init;
+    (bless $message, $class)->Mail::Box::MH::Message::init;
 }
 
 #-------------------------------------------
 
 sub diskDelete()
 {   my $self = shift;
-    $self->Mail::Box::Message::diskDelete;
+    $self->Mail::Box::Parsed::diskDelete;
     unlink $self->filename;
     $self;
 }
@@ -265,7 +265,7 @@ sub diskDelete()
 
 package Mail::Box::MH::NotParsed;
 use vars '@ISA';
-@ISA = qw/Mail::Box::MH::Runtime
+@ISA = qw/Mail::Box::MH::Message
           Mail::Box::Message::NotParsed/;
 
 use IO::InnerFile;
@@ -289,7 +289,7 @@ are remembered.
 sub init(@)
 {   my $self = shift;
     $self->Mail::Box::Message::NotParsed::init(@_)
-         ->Mail::Box::MH::Runtime::init(@_);
+         ->Mail::Box::MH::Message::init(@_);
 }
 
 #-------------------------------------------
@@ -407,14 +407,15 @@ The inheritance relation is like this:
      read()
      =====#
           V              load()
-       ::MH::NotParsed ========> ::MH::Message
+       ::MH::NotParsed ========> ::MH::Parsed
            |       \               /    |
            ^        \             /     ^
-           |          ::MH::Runtime     |
+           |          ::MH::Message     |
            |                            |
-      ::Message::NotParsed          ::Message
+         ::Message                ::Message
+        ::NotParsed                ::Parsed
                 \                  /    |
-                 ::Message::Runtime     ^
+                 `--- ::Message --'     ^
                            |            |
                            ^        MIME::Entity
                            |            |
@@ -422,7 +423,7 @@ The inheritance relation is like this:
                                         |
                                     Mail::Internet
 
-The C<Mail::Box::MH::Message> stage, means that the whole message
+The C<Mail::Box::MH::Parsed> stage, means that the whole message
 is in memory.  It then is a full decendent of a C<MIME::Entity>.
 But at the same time, it consumes a considerable amount of memory,
 and spent quite some processor time.  All the intermediate stati
@@ -434,7 +435,7 @@ For trained eyes only the transition diagram:
 
    read()     !lazy && !DELAY
    -------> +----------------------------------> Mail::Box::
-            |                                    MH::Message
+            |                                    MH::Parsed
             | lazy && !DELAY && !index                ^
             +--------------.                          |
             |           \   \    NotParsed    load    |
@@ -460,7 +461,7 @@ For trained eyes only the transition diagram:
               \ other()  \ other() \regexps && !taken
                \          \         \
                 \          \         \    load    Mail::Box::
-                 `----->----+---------+---------> MH::Message
+                 `----->----+---------+---------> MH::Parsed
 
          ,---------------.
         |                |
@@ -468,7 +469,7 @@ For trained eyes only the transition diagram:
    NotParsed     head()  |
    MIME::Head -------->--'
             \                           Mail::Box::
-             `------------------------> MH::Message
+             `------------------------> MH::Parsed
 
 
                             load_head   NotParsed
@@ -479,7 +480,7 @@ For trained eyes only the transition diagram:
                          \ !lazy
                           \
                            `-----------> Mail::Box::
-                             load        MH::Message
+                             load        MH::Parsed
 
 Terms: C<lazy> refers to the evaluation of the C<lazy_extract()> option. The
 C<load> and C<load_head> are triggers to the C<AUTOLOAD> mothods.  All
@@ -502,7 +503,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.004
+This code is beta, version 1.100
 
 =cut
 

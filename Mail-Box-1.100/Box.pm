@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.004';
+$VERSION = '1.100';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -101,7 +101,7 @@ manual-pages)
  lock_timeout      Mail::Box::Locker  1 hour
  lock_wait         Mail::Box::Locker  10 seconds
  manager           Mail::Box          undef
- message_type      Mail::Box          'Mail::Box::Message'
+ message_type      Mail::Box          'Mail::Box::Message::Parsed'
  notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
  notread_type      Mail::Box          'Mail::Box::Message::NotParsed'
  realhead_type     Mail::Box          'MIME::Head'
@@ -313,7 +313,7 @@ sub init($)
         if exists $args->{manager};
 
     my $message_type         = $self->{MB_message_type}
-        = $args->{message_type}     || $class . '::Message';
+        = $args->{message_type}     || $class . '::Parsed';
     $self->{MB_notreadhead_type}
         = $args->{notreadhead_type} || $class . '::NotReadHead';
     $self->{MB_notparsed_type}
@@ -1282,7 +1282,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.004
+This code is beta, version 1.100
 
 =cut
 

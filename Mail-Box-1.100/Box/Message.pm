@@ -7,17 +7,23 @@ Mail::Box::Message - Manage one message within a mail-folder
 
 =head1 SYNOPSIS
 
+   # Usually these message objects are created indirectly
    use Mail::Box::Message;
-   my $folder = new Mail::Box::Message 'text';
+   my $folder = new Mail::Box::Mbox folder => ...;
+   my $msg    = $folder->message(1);
+   $msg->delete;
+   $msg->size;   # and much more
 
 =head1 DESCRIPTION
 
-Read L<Mail::Box::Manager> first.  This page also describes
-C<Mail::Box::Message::Runtime>, C<Mail::Box::Message::NotParsed>,
-C<Mail::Box::Message::NotReadHead>, and C<Mail::Box:Message::Dummy>.
+These pages do only describe methods which relate to folders.  If you
+access the knowledge of a message, then read C<MIME::Entity>.
 
-These objects are used as base-classes for messages which are not totally read,
-are fully read, or to be written to some kind of folder.
+Read L<Mail::Box::Manager> first.  This page also describes
+C<Mail::Box::Message::Parsed>, C<Mail::Box::Message::NotParsed>,
+C<Mail::Box::Message::NotReadHead>, and C<Mail::Box:Message::Dummy>.
+These objects are used as base-classes for messages which are not totally
+read, are fully read, or to be written to some kind of folder.
 
 During its life, a message will pass through certain stages.  These
 stages were introduced to reduce the access-time to the folder.  Changing
@@ -30,7 +36,7 @@ This page handles three types of messages:
 
 =over 4
 
-=item * Mail::Box::Message
+=item * Mail::Box::Message::Parsed
 
 A read message.  This is a full decendent of MIME::Entity, with all
 information on the message and its parts stored in easily and fast
@@ -68,7 +74,7 @@ properly:
 
 =over 4
 
-=item * Mail::Box::Message::Runtime
+=item * Mail::Box::Message
 
 Data and functionality which is not stored in the folder, but is shared
 by various message-types (a real-message, a dummy, and a not-parsed)
@@ -88,17 +94,17 @@ L<details about the implementation|/"IMPLEMENTATION">, but first the use.
 =cut
 
 ###
-### Mail::Box::Message::Runtime
+### Mail::Box::Message
 ###
 
-package Mail::Box::Message::Runtime;
+package Mail::Box::Message;
 use Date::Parse;
 use Mail::Box::Thread;
 
 use vars qw/@ISA/;
 @ISA = 'Mail::Box::Thread';
 
-=head1 CLASS Mail::Box::Message::Runtime
+=head1 CLASS Mail::Box::Message
 
 This class is a base for all kinds of messages.  It defines the simularities
 between messages in various stages: dummy, not-parsed, or parsed.
@@ -224,7 +230,7 @@ sub size() { shift->{MBM_size} }
 =item isParsed
 
 C<isParsed> checks whether the message is parsed (read from file).  Returns
-true or false.  Only a Mail::Box::Message will return true.
+true or false.  Only a Mail::Box::Message::Parsed will return true.
 
 =cut
 
@@ -507,22 +513,20 @@ folder.
 sub diskDelete() { shift }
 
 ###
-### Mail::Box::Message
+### Mail::Box::Message::Parsed
 ###
 
-package Mail::Box::Message;
+package Mail::Box::Message::Parsed;
 use vars qw/@ISA/;
 use MIME::Entity;
 
-@ISA = ( 'Mail::Box::Message::Runtime'
-       , 'MIME::Entity'
-       );
+@ISA = ( 'Mail::Box::Message', 'MIME::Entity');
 
 #-------------------------------------------
 
 =back
 
-=head1 CLASS Mail::Box::Message
+=head1 CLASS Mail::Box::Message::Parsed
 
 This object extends a MIME::Entity.  This is the only object type defined
 in this set of packages which represents a real message (which parsed into
@@ -539,7 +543,7 @@ memory, with access to all headers, and writeable)
 =item new [OPTIONS]
 
 Create a new message.  The options available are taken from
-C<Mail::Box::Message::Runtime::new()>, as described above.
+C<Mail::Box::Message::new()>, as described above.
 
 If you want to add a message to a folder, which is derived
 from some strange source, then you do:
@@ -559,14 +563,14 @@ The C<addMessage()> accepts anything what is based on Mail::Internet.
 
 sub new(@)
 {   my $class = shift;
-    $class->Mail::Box::Message::Runtime::new(@_);
+    $class->Mail::Box::Message::new(@_);
 }
 
 sub init($)
 {   my ($self, $args) = @_;
     $self->delayedInit($args) || return $self;
 
-    $self->Mail::Box::Message::Runtime::init($args);
+    $self->Mail::Box::Message::init($args);
 }
 
 sub delayedInit($)
@@ -588,9 +592,9 @@ sub isParsed() { 1 }
 
 =item coerce FOLDER, MESSAGE [,OPTIONS]
 
-(Class method) Coerce a MESSAGE into a Mail::Box::Message.  This method
-is automatically called if you add a strange message-type to a FOLDER.
-You usually do not need to call this yourself.
+(Class method) Coerce a MESSAGE into a Mail::Box::Message::Parsed.  This
+method is automatically called if you add a strange message-type to a
+FOLDER.  You usually do not need to call this yourself.
 
 The coerced message is returned on success, else C<undef>.
 
@@ -598,8 +602,8 @@ Example:
 
    my $folder = Mail::Box::Mbox->new;
    my $entity = MIME::Entity->new(...);
-   Mail::Box::MBox::Message->coerce($inbox, $entity);
-   # now $entity is a Mail::Box::Mbox::Message
+   Mail::Box::MBox::Message::Parsed->coerce($inbox, $entity);
+   # now $entity is a Mail::Box::Mbox::Message::Parsed
 
 It better to use
 
@@ -629,7 +633,7 @@ sub coerce($$@)
     (bless $message, $class)->init(\%args) or return;
 
     $message->folder($folder);
-#   $message->Mail::Box::Message::Runtime::init(\%args);
+#   $message->Mail::Box::Message::init(\%args);
 }
 
 #-------------------------------------------
@@ -698,7 +702,7 @@ option at folder-creation) this implies that the message-body is read
 from folder and parsed.  This is performed automatically.
 
 When you do have a multipart message, you have to call C<parts>
-to get a list of Mail::Box::Message objects, each representing one
+to get a list of Mail::Box::Message::Parsed objects, each representing one
 part of the message.  Be warned that even such part can be split in
 nested parts.  You can pass an array-reference with messages to set a
 new list of parts.
@@ -716,10 +720,10 @@ sub parts(@)
        $self->MIME::Entity::parts( [@_] );
 }
 
-sub part_upgrade($$)   # from MIME::Entity into Mail::Box::Message
+sub part_upgrade($$)   # from MIME::Entity into Mail::Box::Message::Parsed
 {   my ($self, $part, $count) = @_;
 
-    $part->Mail::Box::Message::Runtime::init
+    $part->Mail::Box::Message::init
       ( messageID => $self->messageID . '-p$count'
       );
 
@@ -734,8 +738,8 @@ sub part_upgrade($$)   # from MIME::Entity into Mail::Box::Message
 =item removePart PART|INDEX
 
 Remove one part of the list of parts from this message.  Specify a PART
-(Mail::Box::Message instance) or an index (sequence-number is list of
-parts)
+(Mail::Box::Message::Parsed instance) or an index (sequence-number is
+list of parts)
 
 =cut
 
@@ -768,7 +772,7 @@ sub isPart() { shift->{MBM_is_part} || 0 }
 
 package Mail::Box::Message::NotParsed;
 use vars qw/@ISA $AUTOLOAD/;
-@ISA = 'Mail::Box::Message::Runtime';
+@ISA = 'Mail::Box::Message';
 
 #-------------------------------------------
 
@@ -858,7 +862,7 @@ sub head() { shift->{MBM_head} }
 
 package Mail::Box::Message::Dummy;
 use vars qw/@ISA/;
-@ISA = 'Mail::Box::Message::Runtime';
+@ISA = 'Mail::Box::Message';
 
 #-------------------------------------------
 
@@ -971,7 +975,7 @@ sub init($)
 Overruled methods, which first check if we know about the header.  In
 case we do, the values can be returned immediately.  Otherwise we trigger
 the message to be read from the folder-file and then retry on the
-real Mail::Box::Message object.
+real Mail::Box::Message::Parsed object.
 
 =cut
 
@@ -1079,7 +1083,7 @@ to the header autoloader.
 =item *
 
 The header autoloader calls the real C<get> method of the
-C<Mail::Box::Message>, as autoloaders should do.
+C<Mail::Box::Message::Parsed>, as autoloaders should do.
 
 =back
 
@@ -1122,8 +1126,8 @@ message is translated into a real MIME::Entity.
 
 When a folder is read, the C<lazy_extract> option to C<Mail::Box::new>
 determines if the content of the message is to be parsed immediately into
-a Mail::Box::Message or should be left unparsed in the folder-file.  In
-the latter case, a Mail::Box::Message::NotParsed is created.
+a Mail::Box::Message::Parsed or should be left unparsed in the folder-file.
+In the latter case, a Mail::Box::Message::NotParsed is created.
 
 Not-parsing messages improves the speed of folder reading, and reduce
 the memory footprint of your program considerably.  However, it keeps
@@ -1131,7 +1135,7 @@ the folder-file locked, so should not be used on the incoming messages
 mail-box.
 
 The parsing of a message (reading the non-parsed messages from the
-folder file and translating it into Mail::Box::Message type objects)
+folder file and translating it into Mail::Box::Message::Parsed type objects)
 is automatically triggered when you access head-lines which were not
 specified in C<take_headers> when the folder was read, and when you
 call methods which are not defined on a non-parsed message.
@@ -1144,7 +1148,7 @@ existing folders.
 
                   unknown references
    Mail::Box      and reply-to's        Mail::Box
-   finds message ---------------------> ::Message::Dummy
+   finds message -----------------> ::Message::Dummy
          |                                    |
          v messages                           |
          |                                    |
@@ -1161,27 +1165,27 @@ existing folders.
                /         `--->-------,
               v                       |
         Mail::Box                     |
-        ::Message::NotParsed          |
+    ::Message::NotParsed              |
               |                       v
               |serious use         Mail::Box
-               `---------------->-- ::Message
+               `---------->-- ::Message::Parsed
 
 =head2 Class structure for messages
 
-As example, the next scheme uses the fake folder-type C<XYZ>, which may
-be for instance C<mbox> or C<MH>.  
+As example, the next scheme uses the fake folder-type C<XYZ>, which
+may be for instance C<mbox> or C<MH>.  
 
-       ::XYZ::Message             ::XYZ::NotParsed
+       ::XYZ::Parsed              ::XYZ::NotParsed
           |      \                /         |
           |       \              /          |
-          ^        ::XYZ::Runtime           ^
+          ^        ::XYZ::Message           ^
           |                                 |
           |                                 |
-     ::Message     ::Message::Dummy    ::Message
-          |   ^           |           ::NotParsed
-          |    \          ^           ^
+     ::Message    ::Message::Dummy    ::Message
+      ::Parsed            |          ::NotParsed
+          |    ^          ^           ^
           ^     \         |          /
-          |       ::Message::Runtime
+          |      `--- ::Message ----'
           |               |
      MIME::Entity         ^
           |               |
@@ -1197,7 +1201,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.004
+This code is beta, version 1.100
 
 =cut
 
