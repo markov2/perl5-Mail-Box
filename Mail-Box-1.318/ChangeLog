@@ -1,0 +1,519 @@
+CHANGELOG of Mail::Box
+
+All changes were made by Mark Overmeer <mark@overmeer.net>, unless
+specified differently.
+
+version 1.319:
+
+	* Implemented Mail::Message::Field with tests in t/01field.t
+
+	* Implemented Mail::Message::Head with tests in t/02head.t
+
+	* Implemented Mail::Message::Part as sub-class of Mail::Message
+
+	* Implemented Mail::Message::Body
+
+	* Implemented Mail::Message::Body::String with tests in t/03body0s.t
+
+	* Implemented Mail::Message::Body::Lines with tests in t/03body1l.t
+
+version 1.318: Wed Jul 18 08:14:59 CEST 2001
+
+	* open file rw is impossible, of course!  Should be r+
+          not rw
+
+version 1.317: Mon Jul 16 22:53:36 CEST 2001
+
+	* [Tassilo von Parseval] added scripts/takemail
+
+version 1.316: Sat Jul 14 10:15:01 CEST 2001
+
+	* [Tassilo von Parseval] extended scripts/lsmail with new options.
+
+	* Modifications to scripts/web/mailbox2html.
+
+
+version 1.315: Sat Jul 14 01:34:31 CEST 2001
+
+	* Synopsis in Mail::Box starts with Mail::Box::Manager now.
+
+	* [Tassilo von Parseval]'s messages are not MBs is size, but
+	  only kBs. fixed Mail::Box::Message::sortSize().
+
+	* t/19filelck.t on Solaris cannot work, because exclusive
+	  file-rights can only be got for writable files (which is
+	  stupid)  Open file 'rw' in that case, or fail when there
+          are no writing rights. Mail::Box::Mbox.pm.
+          Reported by [Jost Krieger]
+
+
+version 1.314: Thu Jul 12 22:41:56 CEST 2001
+
+	* Added initial Mail::Message::Body to the distribution.
+
+	* Removed `our' from Box/Locker/*.pm, so perl 5.005 should
+	  be supported again.  Thanks to [Alex <Bunya@iile.ru>]
+
+	* eval catches problems with message-parts. [Tassilo von Parseval]
+
+	* Documentation on code arg of threadToString, on request by
+	  [Tassilo von Parseval]
+
+	* Include File::Spec in t/17threads.t [Jost Krieger]
+
+	* Return of flock in Mail::Box::Locker::File.pm check whether it
+	  ever will return a result. Found by [Jost Krieger]
+
+version 1.313: Sun Jul  8 19:29:34 CEST 2001
+
+	* Started a FAQ
+
+	* Caught $mgr->open where foldername could not be determined.
+
+	* Caught possible recursion in closing folders by the manager.
+
+	* Added scripts/lsmail as example.
+
+	* Fixed removal of nodes from a thread.
+
+	* Fixed update of version-numbers of scripts.
+
+	* Changed the name of various descriptive files to start with
+	  README.  This should clean-up the directory a little.
+
+	* Renamed the existing test-scripts to numbers above 10, so
+	  new parser scripts can take lower number, hence be executed
+	  first.
+
+version 1.312: Fri Jul  6 22:22:32 CEST 2001
+
+	* Rather nasty bug, where POSIX::dup() interfered with
+	  MIME::Entity->dup().  Problem reported by [Jens Wiesecke]
+
+	* Tried to tighten-up coerce(), but not sure whether it
+	  is perfect yet.  Message-parts are not upgraded to a
+	  Mail::Box::Message.
+
+	* Generalized Mail::Box::addMessage such that
+	  Mail::Box::{Mbox,MH}::addMessage could be removed.
+
+	* Added PLANS for Mail::Box v2.000
+
+version 1.311: Mon Jul  2 22:15:25 CEST 2001
+
+	* Fixed halt in some folders by undef message ($_ problem)
+
+	* Fixed creating new folder as mh, where Mbox is the
+	  default. Problem reported by [Marcel Grunauer]
+
+	* Newly created folders must be written too ;)  Added
+	  increment on modifications for a folder when a message
+	  is added after reading the folder.
+
+	* Added Mail::Message as reservation for future plans.
+
+version 1.310: Sun Jul  1 00:05:25 CEST 2001
+
+	* Mail::Box::Threads::threadToString can be passed a function
+	  to produce a line which should appear in thread-printing.
+
+	* When you open an Mail::Box::Mbox with a foldername which
+	  is a directory, it is considered an empty folder with
+	  only sub-folders.
+
+	* Opening sub-folders respect the Mail::Box::Manager now.
+
+	* Fixed buglet in Mail::Box::Message::label()
+
+	* Toegevoegd: Mail::Box::find(), which scans from back
+	  to start of folder, parsing all headers which were not
+	  known yet, in search of a certain messageID.
+
+	* Experimental version of scripts/web/mailbox2html
+
+	* Tried to catch some of the errors produced by MIME::Parser
+	  a little better, but I got strenghtened in my opinion that
+	  MIME::Parser and friends must be replaced.
+	  Mail::Box version 2.0 will be able to work without it, and
+	  be written in C, so as past as possible.
+
+version 1.300: Tue Jun 26 16:28:06 CEST 2001
+
+	* Split Mail::Box::Tie into Mail::Box::Tie::HASH
+	  and Mail::Box::Tie::ARRAY, without the users noticing it ;)
+
+	**** SERIOUS CHANGES **** (mainly internal)
+
+	Re-implementation of thread-detection.  It is a pitty, but I
+	couldn't maintain the old interface and seperate threads from
+	folders at the same time.  However, a transformation can be
+	done swifty.  Read Mail::Box::Threads for details.
+
+version 1.200: Sat Jun 23 23:44:59 CEST 2001
+
+	**** SERIOUS CHANGES **** (mainly internal)
+
+	* Added `organization' method to folder to see how a folder is
+	  organized.  Returns 'FILE' or 'DIRECTORY'
+
+	* Fixed reading of indexes in MH-folders.
+
+	Re-implementation of Mail::Box::Tie.  Really incompatible, but
+	simple to fix: see the manpage.
+
+	* Added "tie to hash" to Mail::Box::Tie.  This replaces
+	  functionality offered by the Mail::TieFolder package.
+
+	* Fixed many inconsistencies in Mail::Box::Tie description.
+	  Tied as array, it will now keep on showing all messages,
+	  also the deleted, which means that the index of a message
+	  in the tied-array will not change anymore.
+
+	Re-implementation of Mail::Box::Locker, which originally was
+	was a super-class of Mail::Box, into a seperate object which
+	is instantiated by a folder.  This way, you can create own
+	lockers.  The only thing what really has changed is the
+	result of   $folder->isa('Mail::Box::Locker')   which may
+	be a good thing.
+
+	* Locking method names now are case insensitive (uppercase
+	  became my favorit).  Added some tests for file-based locking,
+	  but I'am not sure it is trustable.
+
+	* Preferred name for locking-methods now in capitals, although
+	  lowercase will still work.
+
+	* Added `lockMethod' method to folder to see what way a folder
+	  is locked.  Returns 'DOTLOCK', 'FILE', 'NFS', or 'NONE'.
+
+        * Fixed mbox-locking with file-lock, by [Adam Marks]
+
+	* Locking method 'FILE' may work now for Mboxes (added some
+	  tests, but need more).  Implementation details for MH
+	  locking based on 'FILE' are not clear yet.
+
+	* Locking method 'NFS' may work too.
+
+version 1.114: Fri Jun 22 10:21:01 MEST 2001
+
+        * Fixed copying messages file-to-file, which resulted in errors
+          on delayloading reading parts.  Thanks to Jim Tseng for his
+          detailed description of the circumstances.
+
+version 1.113: Thu Jun 21 11:00:00 MEST 2001
+
+        * Patch blessing in $folder->parts.  Thanks to [Jens Wiesecke] for
+          helping me tracking down the problem.
+
+version 1.112: Thu Jun  7 22:45:00 CEST 2001
+
+        by [Eric Cholet]
+
+	* Changed the detection of "From"-lines again... each Mbox-
+          type package formats the line differently.  I hope they
+	  all share the inclusion of a year, as minimum.
+
+version 1.111: Sat Apr 28 16:15:52 CEST 2001
+
+	by [Jochen Lutz]
+
+	* readMessage accepts \r at end of `^From' line for the sake
+	  of folders written on Win*  in Mail::Box::Mbox
+
+	* Fixed folderdir handling in Mail::Box::Manager
+
+	by [Lupe Christoph]
+
+ 	* Fixes in transition from Mime::Entity to Mail::Box::Message
+	  related to multi-part messages.
+
+	* Solved small portability issue with 5.005, related to $out->print
+
+version 1.110: Mrt 24 2001
+
+	* Various small documentation fixes.
+
+	* $msg->copyMessage($folder, @messages)
+	  $mgr->copyMessage($msg, folder => ...)
+
+	* $msg->moveMessage($folder, @messages)
+	  $mgr->moveMessage($msg, folder => ...)
+
+	* $message->copyTo($folder)
+
+	* $message->print will not start with a from-line anymore
+	  when the message is in an Mbox folder.  Instead, you need
+	  to do
+		print $message->fromLine;
+                $message->print;
+
+	* MIME::Entity's which are put in Mbox folders get a time
+	  assigned in the From-line.
+
+version 1.100: Mrt 4 2001
+
+	* MAJOR CHANGE, which shouldn't effect anyone except people
+	  who extend the module.  I renamed the message object (now
+	  the package is still young, before too many people have to
+          change their code), to be more logical.
+
+	    Mail::Box::Message::Runtime -> Mail::Box::Message
+	    Mail::Box::Message          -> Mail::Box::Message::Parsed
+	    Mail::Box::MH::Runtime      -> Mail::Box::MH::Message
+	    Mail::Box::MH::Message      -> Mail::Box::MH::Parsed
+	    Mail::Box::MBox::Runtime    -> Mail::Box::Mbox::Message
+	    Mail::Box::MBox::Message    -> Mail::Box::Mbox::Parsed
+
+	* From-lines (in Mboxes) which seperate messages must also
+	  end on a four digit year now, which must be in 19??-20??.
+	  Maybe this reduces the chance that a `From ' line in a
+	  body is mistaken as message-start.  By the way: if there
+	  is such line in a a body, it is a mistake of the mail-
+	  client, not of Mail::Box!
+
+version 1.004: Fri Feb 23 19:11:45 CET 2001
+
+	With even more help of [David Coppit]
+
+	* (hopefully) fixed the last problems with deletion of folders
+	  on NFS systems.  May solve the Win32 problems, too, but waiting
+	  for someone to test it.
+
+	* Warning if you want to instantiate a Mail::Box (use
+          Mail::Box::Manager if you need auto-detection)
+
+	* A $folder->close actively tries to set $folder to undef to
+	  cause "use of undefined" errors when someone tries to do anything
+	  with the folder after it was closed.
+
+	* No interface change.
+
+version 1.003: Thu Feb 22 00:08:47 CET 2001
+
+	With help of [David Coppit]
+
+	* Optimized folder deletion (a bit).  It will only cause
+	  parsing of messages when this is needed for the type of
+          message.
+
+	* Close folder-file access before removing the file is needed
+	  for some OS'es and for NFS.
+
+	* No changes to methods needed.
+
+version 1.002: Fri Feb 16 23:50:14 CET 2001
+
+	* Better error messages for die and warn during tests.  Hope
+	  to figure-out why Windows still gives some problems, but
+	  I do not want to go out and look a machine with it :(
+
+	* No changes to methods needed.
+
+version 1.001: Sun Feb 11 17:20:35 CET 2001
+
+	* Fixed documention on creation of Mail::Box::Message-s: don't!
+	  You should do $folder->addMessage( <some MIME::Entity> )
+
+	* Added $! to some error-messages.  I hope it helps in the
+	  compilation reports of perl-testers, so I can see why the
+	  Win* tests do not work.
+
+	* No changes to methods needed.
+
+version 1.000: Mon Feb  5 22:36:11 CET 2001
+
+	* BETA!!!!
+
+	* Using File::Spec everywhere where directories and sub-
+	  directories are involved, so that the package may work
+	  on Win*
+
+	* Removed O_NONBLOCK for dotlock-files on Win*  Hope it
+	  works.  Can anyone improve the port to Windows?
+
+	* No changes on method-calls needed.
+
+version 0.94: Sat Feb  3 13:09:00 CET 2001
+
+	* Extracted Mail::Box::Mbox::Message* into a seperate file.
+
+	* Extracted Mail::Box::MH::Message* into a seperate file.
+
+	* Extracted Mail::Box::Tread into a seperate file.
+
+	* The objects Mail::Box::{Mbox::MH}::Message::Runtime are renamed
+	  to the slightly briever Mail::Box::{Mbox::MH}::Runtime.
+
+	* The objects Mail::Box::{Mbox::MH}::Message::NotParsed are renamed
+	  to the slightly briever Mail::Box::{Mbox::MH}::NotParsed.
+
+	* Moved around with the text in manuals *a lot* to make access
+	  easier.  Many pod improvements (I hope)
+
+version 0.93: Fri Feb  2 16:16:09 CET 2001
+
+	* Doc update only.  There where some mistakes against pod.
+
+version 0.92: Tue Jan 30 21:22:57 CET 2001
+
+	* Tested (and changed) creation of folders.
+
+	* Tested (and changed) deletion of folders.
+
+	* Added the `create' flag to open() in Manager.
+
+	* Removed synchronize(), because it is covered by write()
+
+	* listFolders() can be called as class and as instance method.
+
+	Changed files:
+		Mail/Box/MH.pm
+		Mail/Box/Mbox.pm
+		Mail/Box/Manager.pm
+		Mail/t/2mbox5c.t
+		Mail/t/3mh5c.t
+
+	MH and Mbox implementation seem complete, but there may need
+	more tests.  Try it out!  The full package will reach beta soon.
+
+version 0.91: Wed Jan 17 00:39:08 CET 2001
+
+	* Tested listFolder and such for MH.
+		Mail/Box/MH.pm
+		Mail/t/3mh5c.t
+
+	* Removed 5.6 dependencies.  Hope it works for 5.005 now...
+	  Tjeeee... pitty that most people still use 5.005.
+
+	* Too many fixes, and major rewrite of code related to writing
+	  of messages into folders.
+
+	The code seems to stabelise, and I have reports of people using
+	the code with success.
+
+version 0.9: Sun Jan 14 12:18:38 CET 2001
+
+	* More tests on threads, which resulted in quite some fixes.
+	  I am sure that some things may be improved, still.
+		Mail/Box/Threads.pm
+		Mail/Box.pm
+		Mail/Box/Messages.pm
+
+	* The .mh_sequences file gave only little fight, so passes
+	  the tests now.
+		Mail/Box/MH.pm
+		Mail/Box/Messages.pm
+		Mail/t/3mh7s.t
+
+	* Tested creation, listFolder and such of Mboxes.  It will
+	  not work for MH folders yet.
+		Mail/Box/Mbox.pm
+		Mail/t/3mbox5c.t
+
+	The number of tests grew to 130, so it is starting to look as
+	if all trics are working.
+
+version 0.8: Sat Jan 13 01:05:49 CET 2001
+
+	* Removed in_reply_to() and references() from Mail::Box::Messages,
+	  because they had only use in Mail::Box::Threads.
+
+	* Implemented and tested thread detection.  See the test-files
+	  on the results.
+		Mail/Box/Threads.pm
+		Mail/t/2mbox6t.t
+		Mail/t/3mh6t.t
+
+version 0.7:  Thu Jan  4 22:44:30 CET 2001
+
+	* Changed `use v5.6.0' (which is perfect 5.6.0 code) into
+	  `use 5.006' (which is understood by 5.005) in all modules.
+
+	* Fixed call to messageID in MH-folder, before the header is read
+	  to trigger the header to be read.
+		Mail/Box/MH.pm
+
+version 0.6:  Thu Jan  4 22:44:30 CET 2001
+
+	* Simplified autoloading (a lot)  The reference to the object
+	  does not change anymore when a message is converted from an
+          Mail::Box::Message::NotParsed into a Mail::Box::Message.
+
+	* Stricter treatment of coercions with coerce().
+
+	* Reimplementation of Threads to be as lazy as possible.
+	  Not Tested Yet!!!
+		Mail/Box/Treads.pm
+
+	* MH folders are even more lazy than they were: by default nothing
+	  at all is read.  Only access of any header-line will cause a
+	  read in a file.
+
+	* Added `DELAY' option to Mail::Box::new(take_headers)
+
+	* Added a message state transition diagram (which is really
+	  complicated for MH folders) and much more other documentation
+	  improvements
+
+	* Added large number of tests (about 40), which all succeed ;)
+
+	Nearly all files got changed, although I managed to keep the method
+	interface rather stable: (by the way: this is still an alpha release!)
+		Mail/Box/Mbox.pm
+		Mail/Box/MH.pm
+		Mail/Box/Message.pm
+
+
+version 0.5:  Thu Jan  4 11:14:05 CET 2001
+
+	* Installation fixes.
+
+version 0.4:   Fri Dec 29 23:19:25 CET 2000
+
+	* Tests for appending messages to mboxes and MH(and fixes)
+		t/2mbox4a.t
+		t/3mh2a.t
+		Mail/Box/Mbox.pm
+		Mail/Box/MH.pm
+		Mail/Box/Manager.pm
+		Mail/Box.pm
+
+	* Close on folder informs manager
+		Mail/Box/Manager.pm
+		Mail/Box.pm
+
+
+version 0.3:
+
+	* Initial coding of
+		Mail/Box/MH.pm
+		Mail/Box/Index.pm
+
+	* Appending messages and labels
+		Mail/Box.pm
+		Mail/Box/Mbox.pm
+		Mail/Box/MH.pm
+
+version 0.2:
+
+	* Improvements on Threads
+		Mail/Box/Threads.pm
+
+	* Mail::Box->new(take_headers => ...)
+	  now documents that you can use regular-expressions and accepts
+          'ALL' and 'REAL'.  New option realhead_type to indicate which
+          type of header is used by MIME::Entity.
+		Mail/Box.pm
+
+version 0.1: Sat Dec  9 20:38:40 CET 2000
+
+	* Initial coding of
+		Mail/Box.pm
+		Mail/Box/Locker.pm
+		Mail/Box/Manager.pm
+		Mail/Box/Mbox.pm
+		Mail/Box/Message.pm
+		Mail/Box/Threads.pm
+		Mail/Box/Tie.pm
+	(including some tests)
+
