@@ -141,9 +141,7 @@ ok($folder->messages==1);
 $folder->close;
 ok(-f File::Spec->catfile($newfolder, '1'));
 
-opendir DIR, $newfolder
-    or die "Cannot read directory $newfolder: $!\n";
-
+opendir DIR, $newfolder or die "Cannot read directory $newfolder: $!\n";
 my @all = grep !/^\./, readdir DIR;
 closedir DIR;
 ok(@all==1);
@@ -151,6 +149,8 @@ ok(@all==1);
 my $seq = File::Spec->catfile($newfolder, '.mh_sequences');
 open SEQ, $seq or die "Cannot read $seq: $!\n";
 my @seq = <SEQ>;
+close SEQ;
+
 ok(@seq==1);
 ok($seq[0],"unseen: 1\n");
 
@@ -165,7 +165,6 @@ $folder = Mail::Box::MH->new
   );
 
 ok(-d $f4);
-qx(ls -lR $top);
 $folder->delete;
 $folder->close;
 ok(! -d $f4);

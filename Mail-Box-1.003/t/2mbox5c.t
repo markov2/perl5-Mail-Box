@@ -160,7 +160,7 @@ ok(-f File::Spec->catfile($top, "f4"));
 $folder->delete;
 $folder->close;
 ok(! -f File::Spec->catfile($top, "f4")); 
-ok(!-d File::Spec->catfile($top, "f4.d")); 
+ok(! -d File::Spec->catfile($top, "f4.d")); 
 
 #
 # Write a folder, but at the same place is a subdir.  The subdir should

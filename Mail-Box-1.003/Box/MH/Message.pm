@@ -258,6 +258,7 @@ sub diskDelete()
     $self;
 }
 
+
 ###
 ### Mail::Box::MH::NotParsed
 ###
@@ -378,6 +379,15 @@ sub messageID(@)
     $self->Mail::Box::Message::messageID(@_);
 }
 
+#-------------------------------------------
+
+sub diskDelete()
+{   my $self = shift;
+    $self->Mail::Box::Message::NotParsed::diskDelete;
+    unlink $self->filename;
+    $self;
+}
+
 =back
 
 =head1 IMPLEMENTATION
@@ -490,7 +500,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.002
+This code is beta, version 1.003
 
 =cut
 

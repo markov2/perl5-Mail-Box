@@ -101,7 +101,7 @@ sub init($)
 
     $self->Mail::Box::init($args);
 
-    my $directory                 = $self->{MB_directory}
+    my $directory               = $self->{MB_directory}
        = (ref $self)->folderToDirectory($self->name, $self->folderdir);
 
     for($args->{index_filename})
@@ -1112,7 +1112,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.002
+This code is beta, version 1.003
 
 =cut
 

@@ -416,7 +416,9 @@ sub writeMessages($)
     my @messages = @{$args->{messages}};
 
     if(!@messages && $self->{MB_remove_empty})
-    {   unlink $filename
+    {   $self->fileClose;  # on some circumstances this would stop unlink.
+
+        unlink $filename
             or warn "Couldn't remove folder $self (file $filename): $!\n";
 
         # Can the sub-folder directory be removed?  Don't mind if this
@@ -781,7 +783,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.002
+This code is beta, version 1.003
 
 =cut
 

@@ -494,6 +494,18 @@ sub shortString()
           , scalar $self->followUps, $subject;
 }
 
+#-------------------------------------------
+
+=item diskDelete
+
+Remove a message from disk.  This is not from the folder, but everything
+else, like parts of the message which are stored externally from the
+folder.
+
+=cut
+
+sub diskDelete() { shift }
+
 ###
 ### Mail::Box::Message
 ###
@@ -748,19 +760,6 @@ can distinguish between the two.
 =cut
 
 sub isPart() { shift->{MBM_is_part} || 0 }
-
-#-------------------------------------------
-
-=item diskDelete
-
-Remove a message from disk.  This is not from the folder, but everything
-else, like parts of the message which are stored externally from the
-folder.
-
-=cut
-
-sub diskDelete() { shift }
-
 
 
 ###
@@ -1198,7 +1197,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.002
+This code is beta, version 1.003
 
 =cut
 

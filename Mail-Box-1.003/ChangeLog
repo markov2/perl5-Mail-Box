@@ -2,6 +2,15 @@ CHANGELOG of Mail::Box
 
 All changes till now were made by Mark Overmeer <mark@overmeer.net>
 
+version 1.003:
+
+	With help of David Coppit:
+	* Optimized folder deletion (a bit).  It will only cause
+	  parsing of messages when this is needed for the type of
+          message.
+	* Close folder-file access before removing the file is needed
+	  for some OS'es and for NFS.
+
 version 1.002: Fri Feb 16 23:50:14 CET 2001
 
 	* Better error messages for die and warn during tests.  Hope

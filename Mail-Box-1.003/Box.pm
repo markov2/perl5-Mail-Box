@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.002';
+$VERSION = '1.003';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -560,8 +560,10 @@ sub write(@)
         foreach my $message ($self->allMessages)
         {   if($message->deleted)
             {   $message->diskDelete;
-                $self->messageID($message->messageID, undef);
-                $self->toBeUnthreaded($message);
+                if($message->headIsRead)
+                {   $self->messageID($message->messageID, undef);
+                    $self->toBeUnthreaded($message);
+                }
             }
             else
             {   push @keep, $message;
@@ -1267,7 +1269,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.002
+This code is beta, version 1.003
 
 =cut
 
