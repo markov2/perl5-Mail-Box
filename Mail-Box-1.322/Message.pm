@@ -3,7 +3,7 @@ package Mail::Message;
 use strict;
 use warnings;
 
-our $VERSION = '1.321';
+our $VERSION = '1.322';
 
 use Mail::Box;
 
@@ -215,7 +215,7 @@ David Coppit <david@coppit.org>
 
 =head1 VERSION
 
-This code is beta version 1.313, so far from complete.  Please
+This code is beta version 1.322, so far from complete.  Please
 contribute with remarks and additions.
 
 =head1 COPYRIGHT

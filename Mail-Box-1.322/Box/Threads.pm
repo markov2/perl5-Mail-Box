@@ -1072,9 +1072,6 @@ know for sure whether there fill follow messages in the future).
 sub endTimeEstimate()
 {   my $self = shift;
 
-    return $self->message->timestamp
-        unless $self->isDummy;
-
     my $latest;
     $self->recurseThread
      (  sub { my $node = shift;
@@ -1185,7 +1182,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.321
+This code is beta, version 1.322
 
 =cut
 

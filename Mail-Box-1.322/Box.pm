@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.321';
+$VERSION = '1.322';
 
 use Carp;
 use MIME::Parser;
@@ -1451,8 +1451,8 @@ sub sort(@)
 {   my ($class, $prepare, $compare) = splice @_, 0, 3;
     return () unless @_;
 
-    my %value = map { ($_ => $prepare->($_))} @_;
-    sort {$compare->($value{$a}, $value{$b})} @_;
+    my %value = map { ($prepare->($_) => $_) } @_;
+    map { $value{$_} } sort {$compare->($a, $b)} keys %value;
 }
 
 #-------------------------------------------
@@ -1490,7 +1490,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.321
+This code is beta, version 1.322
 
 =cut
 

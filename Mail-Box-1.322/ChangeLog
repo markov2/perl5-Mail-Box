@@ -3,7 +3,17 @@ CHANGELOG of Mail::Box
 All changes were made by Mark Overmeer <mark@overmeer.net>, unless
 specified differently.
 
-version 1.321:
+#to do: copy labels with the message
+
+version 1.322: Wed Oct 17 12:28:23 CEST 2001
+
+	* Mail::Box::sort() could not sort everything correctly.
+	  Thanks to [Michael West] for detecting this.
+
+	* Corrected Mail::Box::Thread::endTimeEstimate, triggered
+	  by [Michael West]
+
+version 1.321: Mon Oct 15 11:03:12 CEST 2001
 
 	* Accidentally Mail::Box::Thread::addMessage was taken as pod,
 	  not as code :(
