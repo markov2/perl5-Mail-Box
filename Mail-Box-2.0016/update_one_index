@@ -1,0 +1,383 @@
+#!/usr/bin/perl -w
+
+use strict;
+no strict 'refs';
+
+use List::Util 'max';
+use lib '.';
+
+my ($src, $dest) = @ARGV;
+my $verbose = 0;
+my $version = '2.00_16';
+my $email   = 'mailbox@overmeer.net';
+
+require $src;
+
+sub modname($)
+{   my $path = shift;
+    $path =~ s/\.pm$//;
+    join '::', split m!/!, $path;
+}
+
+sub filename($)
+{   my $mod = shift;
+    (join '/', split '::', $mod) . '.pm';
+}
+
+sub modabbrev($)
+{   my $mod = shift;
+    join '', map {substr $_, 0, 1} split '::', $mod;
+}
+
+my %mods;
+
+sub getinfo($);
+sub getinfo($)
+{   my $mod = shift;
+    my %mod = (name => $mod, filename => filename($mod));
+    $mods{$mod} = \%mod;
+
+    eval "require $mod";
+    die $@ if $@;
+
+    # Get info about full sub-classes
+
+    my @isa = grep /^Mail\:\:/, @{"${mod}::ISA"};
+    $mod{isa} = \@isa;
+
+    die "No multiple inheritance: $mod is a @isa\n"
+       if @isa > 1;
+
+    print "$mod @{$mod{isa}}\n" if $verbose;
+
+    getinfo($_) foreach @{$mod{isa}};
+
+    # Get info about realized sub-classes
+
+    if($mod->can('willRealize'))
+    {   $mod{realize} = $mod->willRealize;
+        print "$mod will realize $mod{realize}\n" if $verbose;
+        getinfo($mod{realize});
+    }
+
+    # Get info about autoloaded modules
+
+    my @load
+       = $mod eq 'Mail::Message'
+       ? 'Mail::Message::Construct'
+       : $mod eq 'Mail::Message::Body'
+       ? ('Mail::Message::Body::Construct', 'Mail::Message::Body::Encode')
+       : ();
+
+    $mod{load} = \@load;
+    foreach my $load (@load)
+    {   print "$mod will load $mod{load}\n" if $verbose;
+        getinfo($load);
+    }
+}
+
+#
+# Collect items
+# Here we scan the file for all documented methods in the METHOD
+# section.
+#
+
+sub collect_items($)
+{   my $mod = shift;
+
+    print "Scanning $mod->{name}\n" if $verbose;
+
+    open POD, '<', $mod->{filename}
+        or die "$mod->{filename}: $!\n";
+
+    my $extent  = $mod->{extent}  = {};
+    my $general = $mod->{general} = {};
+    my $garbage = {};
+
+    my $section;
+    my $nest    = 0;
+    my $in_pod  = 0;
+
+    while(<POD>)
+    {
+        if( /^=head1/ )
+        {   $section
+               = /METHODS.*exten/ ? $extent
+               : /METHODS/        ? $general
+               : undef;
+        }
+        elsif( /^=over/ ) {$nest++}
+        elsif( /^=back/ ) {$nest--}
+        elsif( $section && /^=item/ && $nest==1 )
+        {   (my $full = $_) =~ s/^=item\s*//;
+            chomp $full;
+            if((my $short) = $full =~ /^(\w+)/)
+            {   $section->{$short} = $section->{$short} ? "$short ..." : $full;
+                print "$short => $full\n" if $verbose;
+            }
+            else
+            {   warn "Illegal item: $_\n";
+            }
+
+        }
+
+        $in_pod = 1 if /^=/;
+        $in_pod = 0 if /^=cut/;
+        warn "IN POD line $.: $_" if $in_pod && /^(sub |\#\-\-)/;
+
+        warn "REMOVE $.: $_" if $in_pod && /^(warn|confess|croak|carp|die)/;
+    }
+
+    close POD;
+}
+
+#
+# Create hierarchy display
+#
+
+sub hierarchy($;$);
+sub hierarchy($;$)
+{   my $modname = shift;
+    my $level   = shift || 0;
+    print "Hierarchy of $modname\n" if $verbose;
+
+    my $mod     = $mods{$modname};
+    $mod->{level} = $level;
+
+    my @isa     = @{$mod->{isa}} ? hierarchy $mod->{isa}[0], $level+1 : ();
+    $isa[0]     = "is a $isa[0]" if @isa;
+
+    unless($mod->{realize})
+    {   my @load = $mod->{load} ? @{$mod->{load}} : ();
+        if(@load)
+        {   local $" = ' + ';
+            my @short = map { (my $x = $_) =~ s/^$modname//; $x} @load;
+            $modname .= " + @short";
+            $mods{$_}{level} = $level foreach @load;
+        }
+        return ($modname, @isa);
+    }
+
+    my @realize = hierarchy $mod->{realize}, $level;
+    my $modreal = "$modname realizes";
+    unshift @isa, $modreal;
+    my $tab1    = max map {length} @isa;
+
+    my @glued;
+    push @glued, sprintf "%-${tab1}s %s", shift @isa ||'', shift @realize ||''
+        while @isa || @realize;
+
+    @glued;
+}
+
+#
+# Build a table to display a set of methods.
+#
+
+sub build_table($$)
+{   my ($mainmod, $which) = @_;
+    my %sets;
+
+    foreach my $mod (sort {$mods{$a}{level} <=> $mods{$b}{level}} keys %mods)
+    {   my $abbrev = $mainmod eq $mod ? '' : modabbrev $mod;
+        my $defs   = $mods{$mod}{$which};
+
+        foreach my $short (keys %$defs)
+        {   my $full = $defs->{$short};
+            $full = (substr $full, 0, 27) . '...' if length $full > 30;
+            $sets{$short} = [$abbrev, $full]
+                unless $sets{$short};
+        }
+    }
+
+    my @sets = sort keys %sets;
+    my @lines;
+    my @left  = @sets{splice @sets, 0, @sets/2};
+    my @right = @sets{@sets};
+
+    while(@left)
+    {   my $left = shift @left;
+        my $lefttext = sprintf "%4s $left->[1]", $left->[0];
+
+        if(@right)
+        {   my $right = shift @right;
+            push @lines
+              , sprintf "%-35s  %4s $right->[1]", $lefttext, $right->[0];
+        }
+        else
+        {   push @lines, $lefttext;
+        }
+    }
+
+    @lines;
+}
+
+#
+# Create a list of abbreviations.
+#
+
+sub build_abbrev($)
+{   my $exclude = shift;
+    my %abbrev;
+    foreach (keys %mods)
+    {   next if $_ eq $exclude;
+        my $abbrev = modabbrev $_;
+        $abbrev{sprintf "%4s", $abbrev} = $_;
+    }
+    
+    map {"$_ = L<$abbrev{$_}>"} sort keys %abbrev;
+}
+
+#
+# Replace the old info by the newly generated tables.
+#
+
+sub replace($$)
+{   my ($hierarchy, $method_index) = @_;
+    open  SRC, '<', $src  or die "Cannot open $src: $!\n";
+    open DEST, '>', $dest or die "Cannot write $dest: $!\n";
+
+    my $oldout = select DEST;
+
+    while(<SRC>)
+    {
+        if( /^\=head1 SYN/ && defined $hierarchy)
+        {   print <<NEWHIER;
+=head1 CLASS HIERARCHY
+
+$hierarchy
+
+NEWHIER
+            undef $hierarchy;
+        }
+
+        if( defined $hierarchy && /^\=head1 CLASS/ )
+        {   print <<REPLCLASS;
+=head1 CLASS HIERARCHY
+
+$hierarchy
+
+REPLCLASS
+
+            undef $hierarchy;
+            while(<SRC>) {last if /^\=/}
+        }
+
+        if( /^\=head1 METHOD INDEX/ )
+        {   print <<REPLINDEX;
+=head1 METHOD INDEX
+
+$method_index
+REPLINDEX
+            undef $method_index;
+            while(<SRC>) {last if /^\=/}
+        }
+
+        if( /^\=head1 METHODS/ && defined $method_index )
+        {   print <<NEWINDEX;
+=head1 METHOD INDEX
+
+$method_index
+
+NEWINDEX
+            undef $method_index;
+        }
+
+        last if /^\=head1 (AUTHOR|SEE ALSO)/;
+        print;
+    }
+
+    warn "method index not used" if $method_index;
+    warn "hierarchy not used"    if $hierarchy;
+
+    close SRC;
+
+    print <<FOOTER;
+=head1 SEE ALSO
+
+L<Mail::Box-Overview>
+
+=head1 AUTHOR
+
+Mark Overmeer (F<$email>).
+All rights reserved.  This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
+
+=head1 VERSION
+
+This code is beta, version $version.
+
+Copyright (c) 2001 Mark Overmeer. All rights reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+1;
+FOOTER
+
+    close DEST;
+
+    select $oldout;
+}
+
+#
+# MAIN
+#
+
+# recursive get module-structure
+my $mod = modname $src;
+getinfo $mod;
+
+# get info for each module
+collect_items $mods{$_} foreach keys %mods;
+
+# Try to create a descent presentation for the object
+# hierarchy.
+my @hierarchy = hierarchy $mod;
+my $hierarchy = @hierarchy > 1
+              ? ' ' . (join "\n ", @hierarchy)
+              : undef;
+
+# Create the tables
+
+my @general   = build_table $mod, 'general';
+my @extent    = build_table $mod, 'extent';
+
+# List abbreviations of modules
+my @listabbrev= build_abbrev $mod;
+
+#print $hierarchy;
+#print "GENERAL:\n$general\n";
+#print "EXTENT:\n$extent\n";
+
+local $" = "\n ";
+
+my $method_index = <<INDEX;
+The general methods for C<$mod> objects:
+
+ @general
+INDEX
+
+$method_index .= <<INDEX if @extent;
+
+The extra methods for extension writers:
+
+ @extent
+INDEX
+
+if(@listabbrev)
+{   $method_index .= @listabbrev==1 ? <<SHORT : <<LONG;
+
+Prefixed methods are described in @listabbrev.
+SHORT
+
+Methods prefixed with an abbreviation are described in the following
+manual-pages:
+
+ @listabbrev
+LONG
+}
+
+replace $hierarchy, $method_index;
+

@@ -1,0 +1,37 @@
+
+This file lists the things to do before v2.01 beta can come out.
+
+Obligatory:
+
+  Mail::Message::Construct::forward()
+
+  test of scripts/
+  Mail::Message::Body::Multipart::file()
+  test $msg->body(undef);
+  test trusted folders
+
+Optional:
+
+  Many calls for tell() can be removed from the parsers, which will
+  really speed-up parsing.
+
+  Body::* _data_from_*() may use $. in some cases.  This would speed-up
+  body creation.
+
+  Automatic detection of best body-type in Mail::Message::Body::new
+  can be done better.  For instance: use ::Body::Extern for binaries.
+
+  Mail::Message::Body::External
+  Mail::Message::Body::InFolder
+
+  Mail::Message::Compat::smtpsend() a.o.
+
+  Doc re-read.
+
+  examples/
+
+  Mail::Message::Head::Delayed::read()
+
+  guessBodySize in MH can be implemented without trigger
+
+  Mail::Message::Body::Scalar can get nrlines from read()
