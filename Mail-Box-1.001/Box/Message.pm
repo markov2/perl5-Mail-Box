@@ -524,12 +524,20 @@ memory, with access to all headers, and writeable)
 
 #-------------------------------------------
 
-=item new LINES [, OPTIONS]
+=item new [OPTIONS]
 
-Create a new message.  LINES is a reference to an array of lines which
-describe the message, or a file-handle.  The options is a list of
-labeled values.  Extentions (sub-classes) of an Mail::Box::Message
-may define more options, but these are general:
+Create a new message.  The options available are taken from
+C<Mail::Box::Message::Runtime::new()>, as described above.
+
+If you want to add a message to a folder, which is derived
+from some strange source, then you do:
+
+     use MIME::Parser;
+     my $parser = MIME::Parser->new;
+     my $entity = $parser->parse(@lines);
+     $folder->addMessage($entity);
+
+The C<addMessage()> accepts anything what is based on Mail::Internet.
 
 =cut
 
@@ -1190,7 +1198,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.000
+This code is beta, version 1.001
 
 =cut
 

@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '1.000';
+$VERSION = '1.001';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -1267,7 +1267,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.000
+This code is beta, version 1.001
 
 =cut
 

@@ -177,7 +177,7 @@ sub init($)
         else
         {   my $create = FileHandle->new($filename, 'w');
             unless($create)
-            {   warn "Cannot create folder $filename.\n";
+            {   warn "Cannot create folder $filename: $!\n";
                 return;
             }
             $create->close;
@@ -417,7 +417,7 @@ sub writeMessages($)
 
     if(!@messages && $self->{MB_remove_empty})
     {   unlink $filename
-            or warn "Couldn't remove folder $self (file $filename).\n";
+            or warn "Couldn't remove folder $self (file $filename): $!\n";
 
         # Can the sub-folder directory be removed?  Don't mind if this
         # doesn't work.
@@ -781,7 +781,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 1.000
+This code is beta, version 1.001
 
 =cut
 
