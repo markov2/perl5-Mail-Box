@@ -1,6 +1,19 @@
 CHANGELOG of Mail::Box
 
-version 0.94:
+
+version 1.00: Mon Feb  5 22:36:11 CET 2001
+
+Mark Overmeer <mark@overmeer.net>
+
+	* BETA!!!!
+	* Using File::Spec everywhere where directories and sub-
+	  directories are involved, so that the package may work
+	  on Win*
+	* Removed O_NONBLOCK for dotlock-files on Win*  Hope it
+	  works.  Can anyone improve the port to Windows?
+
+
+version 0.94: Sat Feb  3 13:09:00 CET 2001
 
 Mark Overmeer <mark@overmeer.net>
 

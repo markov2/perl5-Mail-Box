@@ -11,6 +11,7 @@ use strict;
 
 use FileHandle;
 use File::Copy;
+use File::Spec;
 use File::Basename;
 
 =head1 NAME
@@ -105,26 +106,26 @@ sub init($)
 
     for($args->{index_filename})
     {  $args->{index_filename}
-          = !defined $_ ? "$directory/.index"  # default
-          : m!^/!       ? $_                 # absolute
-          :               "$directory/$_";     # relative
+          = !defined $_ ? File::Spec->catfile($directory, '.index') # default
+          : File::Spec->file_name_is_absolute($_) ? $_              # absolute
+          :               File::Spec->catfile($directory, $_);      # relative
     }
 
     $self->Mail::Box::Index::init($args);
 
     for($args->{lockfile} || undef)
     {   $self->lockFilename
-          ( !defined $_ ? "$directory/.index"  # default
-          : m!^/!       ? $_                 # absolute
-          :               "$directory/$_"      # relative
+          ( !defined $_ ? File::Spec->catfile($directory, '.index')  # default
+          : File::Spec->file_name_is_absolute($_) ? $_               # absolute
+          :               File::Spec->catfile($directory, $_)        # relative
           );
     }
 
     for($args->{labels_filename})
     {   $self->labelsFilename
-          ( !defined $_ ? "$directory/.mh_sequences"  #default
-          : m!^/!       ? $_                 # absolute
-          :               "$directory/$_"      # relative
+          ( !defined $_ ? File::Spec->catfile($directory, '.mh_sequences')
+          : File::Spec->file_name_is_absolute($_) ? $_               # absolute
+          :               File::Spec->catfile($directory, $_)        # relative
           );
     }
 
@@ -187,7 +188,7 @@ sub readMessages()
     # its name.
 
     opendir DIR, $directory or return;
-    my @msgnrs = grep { -f "$directory/$_" && -r _ }
+    my @msgnrs = grep { -f File::Spec->catfile($directory,$_) && -r _ }
                      sort {$a <=> $b}
                          grep /^\d+$/, readdir DIR;
     closedir DIR;
@@ -203,7 +204,7 @@ sub readMessages()
 
     foreach my $msgnr (@msgnrs)
     {
-        my $msgfile = "$directory/$msgnr";
+        my $msgfile = File::Spec->catfile($directory, $msgnr);
         my $head;
 
         $head       = $index{$msgfile}
@@ -537,7 +538,7 @@ sub appendMessages(@)
     my $msgnr  = $self->highestMessageNumber +1;
     foreach my $message (@messages)
     {
-        my $new = FileHandle->new("$directory/$msgnr", 'w')
+        my $new = FileHandle->new(File::Spec->catfile($directory,$msgnr), 'w')
             or next;
 
         $message->print($new);
@@ -587,7 +588,7 @@ FOLDERDIR to replace a leading C<=>.
 
 sub folderToDirectory($$)
 {   my ($class, $name, $folderdir) = @_;
-    $name =~ /^=(.*)/ ? "$folderdir/$1" : $name;
+    $name =~ /^=(.*)/ ? File::Spec->catfile($folderdir,$1) : $name;
 }
 
 #-------------------------------------------
@@ -863,7 +864,7 @@ sub foundIn($@)
     my $directory = $class->folderToDirectory($name, $folderdir);
 
     return 0 unless -d $directory;
-    return 1 if -f "$directory/1";
+    return 1 if -f File::Spec->catfile($directory, "1");
 
     # More thorough search required in case some numbered messages
     # disappeared (lost at fsck or copy?)
@@ -953,7 +954,7 @@ sub listFolders(@)
 
     return () unless -d $dir && opendir DIR, $dir;
 
-    my @dirs = grep { !/^\d+$|^\./ && -d "$dir/$_" && -r _ }
+    my @dirs = grep { !/^\d+$|^\./ && -d File::Spec->catfile($dir,$_) && -r _ }
                    readdir DIR;
 
     closedir DIR;
@@ -964,13 +965,13 @@ sub listFolders(@)
     {    my @not_empty;
 
          foreach my $subdir (@dirs)
-         {   if(-f "$dir/$subdir/1")
+         {   if(-f File::Spec->catfile($dir,$subdir, "1"))
              {   # Fast found: the first message of a filled folder.
                  push @not_empty, $subdir;
                  next;
              }
 
-             opendir DIR, "$dir/$subdir" or next;
+             opendir DIR, File::Spec->catfile($dir,$subdir) or next;
              my @entities = grep !/^\./, readdir DIR;
              closedir DIR;
 
@@ -980,7 +981,7 @@ sub listFolders(@)
              }
 
              foreach (@entities)
-             {   next unless -d "$dir/$subdir/$_";
+             {   next unless -d File::Spec->catfile($dir,$subdir,$_);
                  push @not_empty, $subdir;
                  last;
              }
@@ -994,7 +995,7 @@ sub listFolders(@)
 
     return @dirs unless $args{check};
 
-    grep { $class->foundIn("$dir/$_") } @dirs;
+    grep { $class->foundIn(File::Spec->catfile($dir,$_)) } @dirs;
 }
 
 #-------------------------------------------
@@ -1020,7 +1021,7 @@ sub openSubFolder($@)
         return;
     }
 
-    $self->clone( folder => "$self/$name", @_ );
+    $self->clone( folder => File::Spec->catfile("$self",$name), @_ );
 }
 
 =back
@@ -1111,7 +1112,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.94
+This code is beta, version 1.000
 
 =cut
 

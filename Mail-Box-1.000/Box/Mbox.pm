@@ -9,6 +9,7 @@ use vars qw/@ISA/;
 
 use FileHandle;
 use File::Copy;
+use File::Spec;
 use POSIX ':unistd_h';
 
 =head1 NAME
@@ -161,9 +162,9 @@ sub init($)
     $lockdir     =~ s!/([^/]*)$!!;
     my $extent   = $args->{lock_extention} || '.lock';
     $self->lockFilename
-      ( $extent =~ m!^/!   ? $extent
+      ( File::Spec->file_name_is_absolute($extent) ? $extent
       : $extent =~ m!^\.!  ? "$filename$extent"
-      :                      "$lockdir/$extent"
+      :                      File::Spec->catfile($lockdir, $extent)
       );
 
     # Check if we can write to the folder, if we need to.
@@ -558,12 +559,14 @@ sub folderToFilename($$$)
     my $real  = shift @parts;
 
     while(@parts)
-    {   my $next = shift @parts;
-        $real = -e "$real/$next"                     ? "$real/$next"
-              : -e "$real$extention/$next"           ? "$real$extention/$next"
-              : -e "$real$extention/$next$extention" ? "$real$extention/$next"
-              : -d "$real$extention"                 ? "$real$extention/$next"
-              :                                        "$real/$next";
+    {   my $next         = shift @parts;
+        my $real_next    = File::Spec->catfile($real, $next);
+        my $realext_next = File::Spec->catfile($real.$extention, $next);
+        $real = -e $real_next               ? $real_next
+              : -e $realext_next            ? $realext_next
+              : -e $realext_next.$extention ? $realext_next
+              : -d "$real$extention"        ? $realext_next
+              :                               $real_next;
     }
     $real;
 }
@@ -725,16 +728,17 @@ sub listFolders(@)
     my %folders;  # hash to immediately un-double names.
 
     foreach (@entries)
-    {   next unless -r "$real/$_";
+    {   my $entry = File::Spec->catfile($real, $_);
+        next unless -r $entry;
         if( -f _ )
         {   next if $args{skip_empty} && ! -s _;
-            next if $args{check} && !$class->foundIn("$real/$_");
+            next if $args{check} && !$class->foundIn($entry);
             $folders{$_}++;
         }
         elsif( -d _ )
         {   # Directories may create fake folders.
             if($args{skip_empty})
-            {   opendir DIR, "$real/$_" or next;
+            {   opendir DIR, $entry or next;
                 my @sub = grep !/^\./, readdir DIR;
                 closedir DIR;
                 next unless @sub;
@@ -777,7 +781,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.94
+This code is beta, version 1.000
 
 =cut
 

@@ -5,8 +5,9 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME	 => 'Mail::Box',
     VERSION_FROM => 'Box.pm', # finds $VERSION
-    PREREQ_PM    => { Mail::Internet => 1.33
-                    , MIME::Tools    => 5.406
-                    , Date::Parse    => 2.20
+    PREREQ_PM    => { Mail::Internet => 1.0
+                    , MIME::Tools    => 5.0
+                    , Date::Parse    => 0.0
+		    , File::Spec     => 0.0
                     }
 );

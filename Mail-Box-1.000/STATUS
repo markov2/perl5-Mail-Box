@@ -5,14 +5,10 @@ This program was written in December 2000.  This is quite recent, so
 please check for a new version: new programs often get many changes
 in their first months.
 
-The release status of the whole package is   ***** ALPHA *****
-as long as not all methods are tested intensively.  There are many
-tests, but it does not cover every situation, yet.
-
-Other folder-types will be implemented only when the BETA phase is
-reached: when the Mbox and MH implementation seem complete and stable.
-The first BETA will have version 1.0.  The module will go out of
-BETA if I know of any application which succesfully uses Mail::Box.
+The release status of the whole package is   ***** BETA *****
+There are many tests, but it does not cover every situation, yet.
+The first BETA had version 1.0.  The module will go out of BETA if I
+know of any application which succesfully uses Mail::Box.
 
 
 Tested

@@ -7,6 +7,7 @@
 use Test;
 use File::Compare;
 use File::Copy;
+use File::Spec;
 use lib '..', 't';
 use strict;
 
@@ -15,8 +16,8 @@ use Tools;
 
 BEGIN {plan tests => 12}
 
-my $orig = 't/mbox.src';
-my $src  = 't/mh.src';
+my $orig = File::Spec->catfile('t', 'mbox.src');
+my $src  = File::Spec->catfile('t', 'mh.src');
 
 #
 # Unpack the file-folder.
@@ -89,6 +90,6 @@ $mgr->appendMessage($src, $msg
   , access       => 'rw'
   );
 
-ok(-f "$src/47");  # skipped 13, so new is 46+1
+ok(-f File::Spec->catfile($src, "47"));  # skipped 13, so new is 46+1
 
 clean_dir $src;

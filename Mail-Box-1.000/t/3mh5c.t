@@ -8,6 +8,7 @@ use strict;
 
 use Test;
 use File::Copy;
+use File::Spec;
 
 use lib '..', 't';
 use Tools;
@@ -17,8 +18,8 @@ use Mail::Box::MH;
 
 BEGIN {plan tests => 19}
 
-my $src = 't/mbox.src';
-my $top = 't/Mail';
+my $src = File::Spec->catfile('t', 'mbox.src');
+my $top = File::Spec->catfile('t', 'Mail');
 
 my $mbox = Mail::Box::Mbox->new
   ( folder      => $src
@@ -29,29 +30,33 @@ my $mbox = Mail::Box::Mbox->new
 # Create a nice structure which looks like a set of MH folders.
 #
 
-sub folder($;@)
+sub folder($;$@)
 {   my $dirname = shift;
+    $dirname = File::Spec->catfile($dirname, shift) if @_;
     mkdir $dirname, 0700 || die unless -d $dirname;
     foreach (@_)
-    {   open CREATE, ">$dirname/$_" or die;
+    {   my $f = File::Spec->catfile($dirname, $_);
+        open CREATE, ">$f" or die "Cannot create $f";
         $mbox->message($_)->print(\*CREATE) if m/^\d+$/;
         close CREATE;
     }
+    $dirname;
 }
 
 folder $top;
-folder "$top/f1", qw/a b c/;
-folder "$top/f2", 1, 2, 3;       # only real folder
-folder "$top/f3";                # empty folder
-folder "$top/sub1";
-folder "$top/sub1/s1f1";
-folder "$top/sub1/s1f2";
-folder "$top/sub1/s1f3";
-folder "$top/sub2";               # empty dir
-folder "$top/f4", 1, 2, 3;
-folder "$top/f4/f4f1";
-unpack_mbox "t/mbox.src", "$top/f4/f4f2";
-folder "$top/f4/f4f3";
+folder $top, 'f1', qw/a b c/;
+folder $top, 'f2', 1, 2, 3;       # only real folder
+folder $top, 'f3';                # empty folder
+
+my $sub1 = folder $top, 'sub1';
+folder $sub1, 's1f1';
+folder $sub1, 's1f2';
+folder $sub1, 's1f3';
+folder $top,  'sub2';            # empty dir
+my $f4 = folder $top, 'f4', 1, 2, 3;
+folder $f4, 'f4f1';
+unpack_mbox $src, File::Spec->catfile($f4, 'f4f2');
+folder $f4, 'f4f3';
 
 ok(cmplists [ sort Mail::Box::MH->listFolders(folderdir => $top) ]
           , [ qw/f1 f2 f3 f4 sub1 sub2/ ]
@@ -104,9 +109,10 @@ $folder->close;
 # Open a new folder.
 #
 
-ok(! -d "$top/f4/newfolder");
+my $newfolder = File::Spec->catfile($f4, 'newfolder');
+ok(! -d $newfolder);
 Mail::Box::MH->create('=f4/newfolder', folderdir  => $top);
-ok(-d "$top/f4/newfolder");
+ok(-d $newfolder);
 
 $folder = Mail::Box::MH->new
   ( folderdir  => $top
@@ -129,14 +135,15 @@ $folder->addMessage($msg);
 $folder->modifications(+1);
 ok($folder->messages==1);
 $folder->close;
-ok(-f "$top/f4/newfolder/1");
+ok(-f File::Spec->catfile($newfolder, '1'));
 
-opendir DIR, "$top/f4/newfolder" or die;
+opendir DIR, $newfolder or die;
 my @all = grep !/^\./, readdir DIR;
 closedir DIR;
 ok(@all==1);
 
-open SEQ, "$top/f4/newfolder/.mh_sequences" or die;
+my $seq = File::Spec->catfile($newfolder, '.mh_sequences');
+open SEQ, $seq or die "Cannot open $seq\n";;
 my @seq = <SEQ>;
 ok(@seq==1);
 ok($seq[0],"unseen: 1\n");
@@ -151,9 +158,10 @@ $folder = Mail::Box::MH->new
   , access    => 'rw'
   );
 
-ok(-d "$top/f4");
+ok(-d $f4);
+qx(ls -lR $top);
 $folder->delete;
 $folder->close;
-ok(! -d "$top/f4");
+ok(! -d $f4);
 
 clean_dir $top;

@@ -2,7 +2,7 @@
 package Mail::Box;
 #use 5.006;
 
-$VERSION = '0.94';
+$VERSION = '1.000';
 @ISA = qw/Mail::Box::Threads Mail::Box::Locker Mail::Box::Tie/;
 
 use Mail::Box::Message;
@@ -262,6 +262,7 @@ Examples:
 
 use overload '@{}' => 'as_row';
 use overload '""'  => 'name';
+use Carp;
 use overload 'cmp' => sub {$_[0]->name cmp $_[1]->name};
 
 sub new(@)
@@ -1266,7 +1267,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.94
+This code is beta, version 1.000
 
 =cut
 

@@ -10,12 +10,13 @@ use strict;
 
 use Mail::Box::Manager;
 use Tools;
+use File::Spec;
 
 BEGIN {plan tests => 10}
 
-my $orig = 't/mbox.src';
-my $src  = 't/mh.src';
-my $seq  = "$src/.mh_sequences";
+my $orig = File::Spec->catfile('t', 'mbox.src');
+my $src  = File::Spec->catfile('t', 'mh.src');
+my $seq  = File::Spec->catfile($src, '.mh_sequences');
 
 #
 # Unpack the file-folder.

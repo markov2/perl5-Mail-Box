@@ -100,10 +100,16 @@ How long can a lock stand?  When an different e-mail program left a
 lock, then this will be removed automatically after the specified
 seconds.  The default is one hour.
 
-=item * lock_wait =E<gt> SECONDS
+=item * lock_wait =E<gt> SECONDS|'NOTIMEOUT'
 
-How long to wait for receiving the lock.  The lock-request may fail.
-If SECONDS equals 'NOTIMEOUT', then we wait till the lock can be taken.
+How long to wait for receiving the lock.  The lock-request may fail,
+when the specified number of seconds is reached.  If 'NOTIMEOUT' is
+specified, we wait till the lock can be taken.
+
+It is platform and locking method specific whether it is possible at
+all to limit the trials to the specified number of seconds.  For instance,
+the `dotlock' method on Windows will always wait until the lock has been
+received.
 
 =item * lockfile =E<gt> FILENAME
 
@@ -297,8 +303,11 @@ sub lockFilename(;$)
 sub try_dot_lock($)
 {   my ($self, $lockfile) = @_;
 
-    my $lock = IO::File->new($lockfile,
-        O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK, 0600) or return 0;
+    my $flags = $^O eq 'MSWin32'
+              ?  O_CREAT|O_EXCL|O_WRONLY
+              :  O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK;
+
+    my $lock  = IO::File->new($lockfile, $flags, 0600) or return 0;
 
     $self->{MBL_haslock} = $lockfile;
     close $lock;
@@ -317,8 +326,7 @@ sub do_dot_unlock($)
 sub dot_lock
 {   my ($self, $folder) = @_;
     my $lockfile = $folder->lockFilename;
-    my $end  = $self->{MBL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MBL_timeout};
-
+    my $end   = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1 : $self->{MBL_timeout};
     my $timer = 0;
 
     while($timer != $end)
@@ -512,7 +520,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.94
+This code is beta, version 1.000
 
 =cut
 
