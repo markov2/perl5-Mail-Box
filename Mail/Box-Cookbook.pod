@@ -152,7 +152,7 @@ contains one part, and that INLINE is requested, it will be 'flattened':
 the reply may be a single-part.
 
 Have a look at the parameters which can be passed to reply in
-L<M<Mail::Message::Construct>>.  For a single-part reply, the return
+M<Mail::Message::Construct>.  For a single-part reply, the return
 will be
 
  prelude

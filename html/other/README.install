@@ -1,0 +1,44 @@
+
+Mail::Box documentation on HTML
+===============================
+
+An installed version of the manual pages of Mail::Box in HTML can be found
+at http://perl.overmeer.net/mailbox/html/
+
+All installation rules may change in future releases.  Please read this
+installation file carefully, each time.
+
+== Requirements
+
+ - To install this documentation set, you must to be able to run CGI
+   scripts on your web-server.
+ - About 6MB disk-space
+ - absolute location /mailbox/html to the top of your domain
+
+== Installation
+
+1) Unpack all files in $web/mailbox/html/
+
+2) Be sure that mailbox/html/jump.cgi has execute rights
+
+3) Be sure that web-server's configuration permit jump.cgi to run:
+
+     Options +ExecCGI
+     AddHandler cgi-script .cgi
+
+== Other location
+
+If you need to install the documentation on a different location than
+you need to change some absolute paths in the html files. On Unix/Linux,
+you can simply do:
+
+  for f in $(find . -type f);
+  do
+     sed <$f >x 's!/mailbox/html!/new/location!g' && mv x $f
+  done
+
+== Cannot run CGI
+
+Now you have a problem.  You *CAN NOT* point the cgi link to the public
+CGI script, because used numbers will change for each (pre-)release.  So
+you have to use the public installation of these pages.

@@ -80,12 +80,12 @@ foreach my $set (@sets)
     my @requires = $package->requires;
     check_requirement $_ foreach @requires;
 
-    next unless @tests;
-
     foreach my $req (@requires)
     {   update_requirement $req;
         check_requirement $req;    # do not always believe CPAN install
     }
+
+    next unless @tests;
 
     $success{$set} = run_in_harness @tests;
 }

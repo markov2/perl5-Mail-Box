@@ -127,7 +127,7 @@ sub head(;$)
 
 #-------------------------------------------
 
-=section The Message
+=section The message
 
 =method folder [FOLDER]
 

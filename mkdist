@@ -13,6 +13,8 @@ DIST=/tmp/MailBox    # where the module's distribution is being built
 #### Other constants
 SOURCES=public_html/mailbox/source
 RAW=public_html/mailbox/raw
+HTML=public_html/mailbox/html
+
 MANIFESTS="MANIFEST MANIFEST.extra"
 EXAMPLE_OODOC=examples/mailbox.tar.gz
 
@@ -46,7 +48,7 @@ tar -czf $EXAMPLE_OODOC README.oodoc mkdist mkdoc html || exit $?
 )
 
 #
-# Publish distribution on the private website
+# Publish PRODUCED distribution on the private website
 #
 
 DISTNAME=$(cd $DIST; ls -rt *.tar.gz | tail -1)
@@ -66,7 +68,7 @@ fi
 )
 
 #
-# Publish raw module data (including the raw manual information) to
+# Publish the RAW module data (including the raw manual information) to
 # the website
 #
 
@@ -85,5 +87,23 @@ fi
   [ -n "$VERBOSE" ] && ls -l $RAWNAME
   ln -sf $RAWNAME raw-current.tar.bz2 || exit $?
 )
+
+#
+# Publish the HTML as package
+#
+
+( cd $HTML || exit $?
+  HTMLNAME="html-current.tar.gz"
+  [ -n "$VERBOSE" ] && echo "* Publishing $HTML/$HTMLNAME"
+  tar -czf $HTMLNAME $(cat MANIFEST) || exit $?
+)
+  
+[ -n "$VERBOSE" ] && ls -l $HTML/$HTMLNAME
+
+#
+# READY
+#
+
+[ -n "$VERBOSE" ] && echo "* Ready";
 
 exit 0

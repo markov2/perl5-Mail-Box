@@ -49,7 +49,7 @@ sub init($)
 
 #-------------------------------------------
 
-=section The Message
+=section The message
 
 =method unique [STRING]
 

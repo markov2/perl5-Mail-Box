@@ -91,28 +91,7 @@ sub clone()
 
 #-------------------------------------------
 
-sub head(;$$)
-{   my $self  = shift;
-    return $self->SUPER::head unless @_;
-
-    my ($head, $labels) = @_;
-    $self->SUPER::head($head, $labels);
-    $self->statusToLabels if $head && !$head->isDelayed;
-    $head;
-}
-
-#-------------------------------------------
-
-sub label(@)
-{   my $self   = shift;
-    my $return = $self->SUPER::label(@_);
-    $self->labelsToStatus if @_ > 1;
-    $return;
-}
-
-#-------------------------------------------
-
-=section The Message
+=section The message
 
 =method fromLine [LINE]
 

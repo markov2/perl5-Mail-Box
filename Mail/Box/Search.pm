@@ -297,7 +297,7 @@ sub searchPart($)
 
    # Handle multipart parts.
 
-   if($body->isMultipart || $body->isNested)
+   if($body->isMultipart)
    {   return $matched unless $self->{MBS_multiparts};
        my $no_delayed = not $self->{MBS_delayed};
        @bodies = ($body->preamble, $body->epilogue);
@@ -309,6 +309,10 @@ sub searchPart($)
            $matched += $self->searchPart($piece);
            return $matched if $matched && !$self->{MBS_deliver};
        }
+   }
+   elsif($body->isNested)
+   {   return $matched unless $self->{MBS_multiparts};
+       $matched += $self->searchPart($body->nested);
    }
    else
    {   @bodies = ($body);

@@ -148,9 +148,16 @@ sub listSubFolders(@)
 
 #-------------------------------------------
 
+sub nameOfSubFolder($)
+{   my ($self, $name) = @_;
+    File::Spec->catfile($self->directory, $name);
+}
+
+#-------------------------------------------
+
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
-    $self->createDirs(File::Spec->catfile($self->directory, $name));
+    $self->createDirs($self->nameOfSubFolder($name));
     $self->SUPER::openSubFolder($name, @_);
 }
 

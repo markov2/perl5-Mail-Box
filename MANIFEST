@@ -5,6 +5,8 @@ MANIFEST
 Mail/Box-Cookbook.pod
 Mail/Box-Overview.pod
 Mail/Box.pm
+Mail/Box/Dbx.pm
+Mail/Box/Dbx/Message.pm
 Mail/Box/Dir.pm
 Mail/Box/Dir/Message.pm
 Mail/Box/File.pm
@@ -81,6 +83,7 @@ Mail/Message/Field/Unstructured.pm
 Mail/Message/Head.pm
 Mail/Message/Head/Complete.pm
 Mail/Message/Head/Delayed.pm
+Mail/Message/Head/Partial.pm
 Mail/Message/Head/ResentGroup.pm
 Mail/Message/Head/Subset.pm
 Mail/Message/Part.pm
@@ -129,6 +132,7 @@ tests/11field/30flex.t
 tests/11field/Definition.pm
 tests/12head/10create.t
 tests/12head/20resent.t
+tests/12head/30partial.t
 tests/12head/Definition.pm
 tests/13body/10string.t
 tests/13body/20lines.t
@@ -187,6 +191,8 @@ tests/43pop3/original/0003
 tests/43pop3/original/0004
 tests/43pop3/server
 tests/44imap/Definition.pm
+tests/45dbx/10read.t
+tests/45dbx/Definition.pm
 tests/50message/10stripsig.t
 tests/50message/20replsubj.t
 tests/50message/21reply.t

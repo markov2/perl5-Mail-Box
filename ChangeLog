@@ -11,6 +11,44 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.043:
+
+	Fixes:
+
+	- [Greg Matheson] small doc-fix for Mail::Message::Body::Construct
+	  foreachLine().
+
+version 2.042: Tue May 20 14:32:05 CEST 2003
+
+	Fixes:
+
+	- Added message-id to the wrong side of the Reference field
+	  in reply() and forward().  Fix by [Mike Mimic]
+
+	- [Tassilo v Parsival] reported an error when HTML::FormatText
+	  was not installed.
+
+	- [Alex Liberman] found that searching nested messages failed,
+	  because they were treated as multiparts.
+
+	- [Todd Richmond] demonstrated that multiparts contained circular
+	  references, which increased memory consumption.  Not hard too
+	  fix.
+
+	Improvements:
+
+	- Implemented Mail::Box::Dbx to read Outlook Express files.  Tests
+	  in tests/45dbx/*
+
+	- Implemented Mail::Message::Head::Partial, which will contain
+	  a subset of headers without knowing where to find the rest
+	  of it.  ::Subset knows where to get the rest.  Tests in
+	  tests/12head/30partial.t
+
+	- $head->removeFields(), $head->removeFieldsExcept() and
+	  $head->removeResentGroups to free up memory. This "upgrades" a
+	  complete header into a partial header.
+
 version 2.041: Thu May  8 14:05:32 CEST 2003
 
 	Fixes:

@@ -48,7 +48,8 @@ skipped.
  my $nonempty = $content->foreachLine( \&filled );
 
  my $wrong    = $content->foreachLine( sub {s/a/A/} );  # WRONG!!!
- my $right    = $content->foreachLine( sub {(my $x=$_) =~ s/a/A/} );
+ my $right    = $content->foreachLine(
+        sub {(my $x=$_) =~ s/a/A/; $x} );
 
 =cut
 

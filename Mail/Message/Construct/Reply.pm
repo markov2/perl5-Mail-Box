@@ -335,7 +335,7 @@ sub reply(@)
       , To      => $to
       , Subject => $subject
       , 'In-Reply-To' => $origid
-      , References    => ($refs ? "$origid $refs" : $origid)
+      , References    => ($refs ? "$refs $origid" : $origid)
       );
 
     my $newhead = $reply->head;

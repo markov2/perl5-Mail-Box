@@ -250,10 +250,17 @@ sub listSubFolders(@)
 
 #-------------------------------------------
 
-sub openSubFolder($@)
+sub nameOfSubFolder($@)
 {   my ($self, $name) = (shift, shift);
+    File::Spec->catfile($self->directory, $name);
+}
 
-    my $subdir = File::Spec->catfile($self->directory, $name);
+#-------------------------------------------
+
+sub openSubFolder($)
+{   my ($self, $name) = @_;
+
+    my $subdir = $self->nameOfSubFolder($name);
     unless(-d $subdir || mkdir $subdir, 0755)
     {   warn "Cannot create subfolder $name for $self: $!\n";
         return;
@@ -427,14 +434,17 @@ sub readMessages(@)
          $labels->read if $labels;
     }
 
-    my @log    = $self->logSettings;
+    my $body_type   = $args{body_delayed_type};
+    my $head_type   = $args{head_delayed_type};
+    my @log         = $self->logSettings;
+
     foreach my $msgnr (@msgnrs)
     {
         my $msgfile = File::Spec->catfile($directory, $msgnr);
 
         my $head;
         $head       = $index->get($msgfile) if $index;
-        $head     ||= $args{head_delayed_type}->new(@log);
+        $head     ||= $head_type->new(@log);
 
         my $message = $args{message_type}->new
          ( head       => $head
@@ -446,9 +456,7 @@ sub readMessages(@)
         my $labref  = $labels ? $labels->get($msgnr) : ();
         $message->label(seen => 1, $labref ? @$labref : ());
 
-        my $body    = $args{body_delayed_type}->new(@log, message => $message);
-        $message->storeBody($body);
-
+        $message->storeBody($body_type->new(@log, message => $message));
         $self->storeMessage($message);
     }
 

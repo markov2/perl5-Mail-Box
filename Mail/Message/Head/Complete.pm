@@ -5,10 +5,10 @@ package Mail::Message::Head::Complete;
 use base 'Mail::Message::Head';
 
 use Mail::Box::Parser;
+require Mail::Message::Head::Partial;
 
-use Carp;
 use Scalar::Util 'weaken';
-use List::Util 'sum';
+use List::Util   'sum';
 
 =chapter NAME
 
@@ -335,10 +335,14 @@ sub delete($) { $_[0]->reset($_[1]) }
 
 =method removeField FIELD
 
-Remove the specified FIELD from the header.  This is useful when there
-are possible more than one fields with the same name, and you need to
-remove exactly one of them.  Also have a look at M<delete()>, M<reset()>,
-and M<set()>.
+Remove the specified FIELD object from the header.  This is useful when
+there are possible more than one fields with the same name, and you
+need to remove exactly one of them.  Also have a look at M<delete()>,
+M<reset()>, and M<set()>.
+
+See also M<Mail::Message::Head::Partial::removeFields()> (mind the 's'
+at the end of the name), which accepts a string or regular expression
+as argument to select the fields to be removed.
 
 =warning Cannot remove field $name from header: not found.
 
@@ -370,6 +374,51 @@ sub removeField($)
     $self->log(WARNING => "Cannot remove field $name from header: not found.");
 
     return;
+}
+
+#------------------------------------------
+
+=method removeFields STRING|REGEXP, [STRING|REGEXP, ...]
+
+The header object is turned into a M<Mail::Message::Head::Partial> object
+which has a set of fields removed.  Read about the implications and the
+possibilities in M<Mail::Message::Head::Partial::removeFields()>.
+
+=cut
+
+sub removeFields(@)
+{   my $self = shift;
+    (bless $self, 'Mail::Message::Head::Partial')->removeFields(@_);
+}
+   
+#------------------------------------------
+
+=method removeFieldsExcept STRING|REGEXP, [STRING|REGEXP, ...]
+
+The header object is turned into a M<Mail::Message::Head::Partial> object
+which has a set of fields removed.  Read about the implications and the
+possibilities in M<Mail::Message::Head::Partial::removeFieldsExcept()>.
+
+=cut
+
+sub removeFieldsExcept(@)
+{   my $self = shift;
+    (bless $self, 'Mail::Message::Head::Partial')->removeFieldsExcept(@_);
+}
+
+#------------------------------------------
+
+=method removeResentGroups
+
+Removes all resent groups at once.  The header object is turned into
+a M<Mail::Message::Head::Partial> object.  Read about the implications and the
+possibilities in M<Mail::Message::Head::Partial::removeResentGroups()>.
+
+=cut
+
+sub removeResentGroups(@)
+{   my $self = shift;
+    (bless $self, 'Mail::Message::Head::Partial')->removeResentGroups(@_);
 }
 
 #------------------------------------------

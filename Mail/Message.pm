@@ -245,17 +245,18 @@ sub coerce($)
 
 =method clone
 
-Create a copy of this message.  Returned is a Mail::Message object.
+Create a copy of this message.  Returned is a M<Mail::Message> object.
 The head and body, the log and trace levels are taken.  Labels are
 copied with the message, but the delete and modified flags are not.
  
-BE WARNED: the clone of any kind of message (or a message part) will B<always
-be a Mail::Message> object.  For example, a Mail::Box::Message's clone is
-detached from the folder of its original.  When you use Mail::Box::addMessage()
-with the cloned message at hand, then the clone will automatically
-be coerced into the right message type to be added.
+BE WARNED: the clone of any kind of message (or a message part)
+will B<always> be a M<Mail::Message> object.  For example, a
+Mail::Box::Message's clone is detached from the folder of its original.
+When you use M<Mail::Box::addMessage()> with the cloned message at hand,
+then the clone will automatically be coerced into the right message type
+to be added.
 
-See also copyTo() and moveTo().
+See also M<Mail::Box::Message::copyTo()> and M<Mail::Box::Message::moveTo()>.
 
 =example
 

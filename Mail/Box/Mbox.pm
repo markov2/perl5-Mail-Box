@@ -4,7 +4,6 @@ package Mail::Box::Mbox;
 use base 'Mail::Box::File';
 
 use Mail::Box::Mbox::Message;
-use File::Copy 'move';
 
 =chapter NAME
 
@@ -36,13 +35,13 @@ to contain them.  This extension C<.d> can be changed using this option.
 
 =cut
 
-my $default_folder_dir    = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
-my $default_sub_extension = '.d';
+our $default_folder_dir    = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
+our $default_sub_extension = '.d';
 
 sub init($)
 {   my ($self, $args) = @_;
 
-    $self->{MBM_sub_ext}    # required for SUPER::init
+    $self->{MBM_sub_ext}    # required during init
         = $args->{subfolder_extension} || $default_sub_extension;
 
     $self->SUPER::init($args);
@@ -58,7 +57,7 @@ sub init($)
 If a directory is found on the location of the folder to be created, this
 STRING is used to extend that directory name with.  This will cause the
 directory to be seen as sub-folder for the created folder.  This argument
-is passed to dirToSubfolder().
+is passed to M<dirToSubFolder()>.
 
 =cut
 
@@ -76,7 +75,9 @@ sub create($@)
 =c_method foundIn [FOLDERNAME], [OPTIONS]
 
 If no FOLDERNAME is specified, then the value of the C<folder> option
-is taken.
+is taken.  A mbox folder is a file which starts with a separator
+line: a line with C<'From '> as first characters.  Blank lines which
+start the file are ignored, which is not for all MUA's acceptable.
 
 =option  folder FOLDERNAME
 =default folder undef
@@ -216,23 +217,6 @@ sub listSubFolders(@)
 
 =section Internals
 
-=method dirToSubfolder DIRECTORY, EXTENSION
-
-The DIRECTORY is renamed by appending the EXTENSION, which defaults to C<".d">,
-to make place for a folder file on that specific location.  C<false> is
-returned if this failed.
-
-=cut
-
-sub dirToSubfolder($$)
-{   my ($self, $dir, $extension) = @_;
-    $extension ||= $default_sub_extension;
-
-    move $dir, $dir.$extension;
-}
-
-#-------------------------------------------
-
 =ci_method folderToFilename FOLDERNAME, FOLDERDIR, [EXTENSION]
 
 Translate a folder name into a filename, using the
@@ -244,7 +228,6 @@ Otherwise, the extension default to C<'.d'>.
 
 sub folderToFilename($$;$)
 {   my ($thingy, $name, $folderdir, $extension) = @_;
-    return $name if File::Spec->file_name_is_absolute($name);
 
     $extension ||=
           ref $thingy ? $thingy->{MBM_sub_ext} : $default_sub_extension;

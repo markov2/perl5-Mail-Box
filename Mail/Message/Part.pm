@@ -3,6 +3,7 @@ use warnings;
 
 package Mail::Message::Part;
 use base 'Mail::Message';
+use Scalar::Util 'weaken';
 
 use Carp;
 
@@ -57,7 +58,9 @@ sub init($)
     confess "No container specified for part.\n"
         unless exists $args->{container};
 
-    $self->{MMP_container} = $args->{container};
+    weaken($self->{MMP_container})
+       if $self->{MMP_container} = $args->{container};
+
     $self;
 }
 
@@ -86,7 +89,7 @@ sub coerce($@)
     my $message = $thing->isa('Mail::Box::Message') ? $thing->clone : $thing;
 
     my $part    = $class->SUPER::coerce($message);
-    $part->{MMP_container} = $container;
+    $part->container($container);
     $part;
 }
 
@@ -130,7 +133,10 @@ sub buildFromBody($$;@)
 
 sub container(;$)
 {   my $self = shift;
-    @_ ? $self->{MMP_container} = shift : $self->{MMP_container};
+    return $self->{MMP_container} unless @_;
+
+    $self->{MMP_container} = shift;
+    weaken($self->{MMP_container});
 }
 
 #------------------------------------------

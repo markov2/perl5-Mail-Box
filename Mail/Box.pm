@@ -109,6 +109,13 @@ remote system.  After the connection to a POP server is made, the
 messages can be looked at and removed as if they are on the local
 system.
 
+=item * M<Mail::Box::Dbx>
+
+Dbx files are created by Outlook Express. Using the external (optional)
+Mail::Transport::Dbx module, you can read these folders.  Writing and
+deletion of messages is not supported. Read access is enough to do
+folder conversions, for instance.
+
 =back
 
 Other folder types are on the (long) wishlist to get implemented.  Please,
@@ -472,7 +479,7 @@ USAGE
 sub init($)
 {   my ($self, $args) = @_;
 
-    $self->SUPER::init($args);
+    return unless defined $self->SUPER::init($args);
 
     my $class      = ref $self;
     my $foldername = $args->{folder} || $ENV{MAIL};
@@ -787,7 +794,7 @@ folder is closed.
 =option  select 'ACTIVE'|'DELETED'|'ALL'|LABEL|!LABEL|FILTER
 =default select 'ACTIVE'
 
-Which messages are to be copied. See messages(description)
+Which messages are to be copied. See the description of M<messages()>
 about how this works.
 
 =option  subfolders BOOLEAN|'FLATTEN'|'RECURSE'
@@ -867,10 +874,11 @@ sub _copy_to($@)
     return $self unless $flatten || $recurse;
 
     # Take subfolders
+
   SUBFOLDER:
-    foreach ($self->listSubFolders)
+    foreach ($self->listSubFolders(check => 1))
     {   my $subfolder = $self->openSubFolder($_, access => 'r');
-        $self->log(ERROR => "Unable to open subfolder $_"), return
+        $self->log(ERROR => "Unable to open subfolder $_"), next
             unless defined $subfolder;
 
         if($flatten)   # flatten
@@ -1140,7 +1148,7 @@ sub isModified()
     return 1 if $self->{MB_modified};
 
     foreach (@{$self->{MB_messages}})
-    {    return $self->{MB_modified} = 1
+    {   return $self->{MB_modified} = 1
             if $_->isDeleted || $_->isModified;
     }
 
@@ -1582,20 +1590,21 @@ existing folder.
 =cut
 
 sub openSubFolder($@)
-{   my ($self, $name) = (shift, shift);
-    $self->openRelatedFolder(@_, folder => "$self/$name");
+{   my $self    = shift;
+    my $name    = $self->nameOfSubFolder(shift);
+    $self->openRelatedFolder(@_, folder => $name);
 }
 
 #-------------------------------------------
 
-=method nameOfSubfolder NAME
+=method nameOfSubFolder NAME
 
 Returns the constructed name of the folder with NAME, which is a sub-folder
 of this current one.
 
 =cut
 
-sub nameOfSubfolder($)
+sub nameOfSubFolder($)
 {   my ($self, $name)= @_;
     "$self/$name";
 }

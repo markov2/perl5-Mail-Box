@@ -284,9 +284,19 @@ sub remove_html_alternative_to_text($@)
     $part;
 }
 
+my $has_hft;
+
 sub text_alternative_for_html($@)
 {   my ($self, $part, %args) = @_;
-    return $part unless $part->body->mimeType eq 'text/html';
+
+    my $hft = 'Mail::Message::Convert::HtmlFormatText';
+    unless(defined $has_hft)
+    {   eval "require Mail::Message::Convert::HtmlFormatText";
+        $has_hft = $hft->can('format');
+    }
+
+    return $part
+        unless $has_hft && $part->body->mimeType eq 'text/html';
 
     my $container = $part->container;
     my $in_alt    = defined $container
@@ -296,14 +306,11 @@ sub text_alternative_for_html($@)
         if $in_alt
         && first { $_->body->mimeType eq 'text/plain' } $container->parts;
 
-    eval "require Mail::Message::Convert::HtmlFormatText";
-    return $part if $@;   # simply ignore wish when compile errors
 
     # Create the plain part
 
     my $html_body  = $part->body;
-    my $plain_body = Mail::Message::Convert::HtmlFormatText
-        ->new->format($html_body);
+    my $plain_body = $hft->new->format($html_body);
 
     my $plain_part = Mail::Message::Part->new(container => undef);
     $plain_part->body($plain_body);

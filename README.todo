@@ -37,7 +37,7 @@ Plans for the (near?) future:
   - IMAP      (using Mail::IMAPClient, looks not that hard)
   - Emaul     (? for compatibly with Mail::Folder)
   - News      NNTP
-  - Outlook
+  - Outlook   writting... (reading is already available in ::Dbx)
   - Exchange
   - Netscape
   - Zip       Compressed folders

@@ -54,6 +54,15 @@ may be caused as result of reading a fast index file, as described in
 M<Mail::Box::MH::Index>.  The object is automatically transformed
 into a M<Mail::Message::Head::Complete> when all header lines must be known.
 
+=item * M<Mail::Message::Head::Partial>
+
+A partial header is like a subset header: probably the header is incomplete.
+The means that you are not sure whether a M<get()> for a field fails because
+the field is not a part of the message or that it fails because it is not
+yet known to the program.  Where the subset header knows where to get the
+other fields, the partial header does not know it.  It cannot hide its
+imperfection.
+
 =item * M<Mail::Message::Head::Delayed>
 
 In this case, there is no single field known.  Access to this header will
@@ -146,7 +155,7 @@ sub new(@)
 
     $class->SUPER::new(@_);
 }
-      
+ 
 sub init($)
 {   my ($self, $args) = @_;
 

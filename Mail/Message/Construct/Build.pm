@@ -214,7 +214,7 @@ sub buildFromBody(@)
     $message->body($body);
     $message->statusToLabels;
 
-    # be sure the mesasge-id is actually stored in the header.
+    # be sure the message-id is actually stored in the header.
     $head->add('Message-Id' => '<'.$message->messageId.'>')
         unless defined $head->get('message-id');
 

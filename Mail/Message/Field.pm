@@ -634,16 +634,21 @@ sub toInt()
 
 Convert a timestamp into a MIME-acceptable date format.  This
 differs from the default output of C<localtime> in scalar context.  Without
-argument, the C<localtime> is used to get the current time.  Be sure to have
-your timezone set right, especially when this script runs automatically.
+argument, the C<localtime> is used to get the current time. TIME can be
+specified as one numeric (like the result of C<time()>) and as list
+(like produced by c<localtime()> in list context).
+
+Be sure to have your timezone set right, especially when this script
+runs automatically.
 
 =examples
 
- my $now = localtime;
+ my $now = time;
  Mail::Message::Field->toDate($now);
 
- Mail::Message::Field->toDate(scalar localtime);
- Mail::Message::Field->toDate;  # same
+ Mail::Message::Field->toDate(time);
+ Mail::Message::Field->toDate(localtime);  # same
+ Mail::Message::Field->toDate;             # same
  # returns someting like:  Wed, 28 Aug 2002 10:40:25 +0200
 
 =cut
@@ -651,10 +656,10 @@ your timezone set right, especially when this script runs automatically.
 my @weekday = qw/Sun Mon Tue Wed Thu Fri Sat Sun/;
 my @month   = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
 
-sub toDate($)
+sub toDate(@)
 {   my $class = shift;
     use POSIX 'strftime';
-    my @time  = @_ ? localtime(shift) : localtime;
+    my @time  = @_== 0 ? localtime() : @_==1 ? localtime(shift) : @_;
     strftime "$weekday[$time[6]], %d $month[$time[4]] %Y %H:%M:%S %z", @time;
 }
 

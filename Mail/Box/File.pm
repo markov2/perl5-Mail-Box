@@ -108,7 +108,7 @@ sub init($)
     $args->{body_type} ||= \&_default_body_type;
     $args->{lock_file} ||= '--';   # to be resolved later
 
-    $self->SUPER::init($args);
+    return unless defined $self->SUPER::init($args);
 
     my $class = ref $self;
 
@@ -191,10 +191,15 @@ sub create($@)
     return $class if -f $filename;
 
     my $dir       = dirname $filename;
+    if(-f $dir && defined $subext)
+    {   $dir      .= $subext;
+        $filename  = File::Spec->catfile($dir, basename $filename);
+    }
+
     $class->log(ERROR => "Cannot create directory $dir for folder $name: $!"),return
         unless -d $dir || mkdir $dir, 0755;
 
-    $class->dirToSubfolder($filename, $subext)
+    $class->moveAwaySubFolder($filename, $subext)
         if -d $filename && defined $subext;
 
     if(my $create = IO::File->new($filename, 'w'))
@@ -239,13 +244,6 @@ sub close(@)
     if(my $parser = delete $self->{MBF_parser}) { $parser->stop }
 
     $rc;
-}
-
-#-------------------------------------------
-
-sub openSubFolder($@)
-{   my ($self, $name) = (shift, shift);
-    $self->openRelatedFolder(@_, folder => "$self/$name");
 }
 
 #-------------------------------------------
@@ -377,10 +375,28 @@ sub readMessages(@)
         $self->storeMessage($message);
     }
 
-    # Release the folder.
     $self;
 }
  
+#-------------------------------------------
+
+=method moveAwaySubFolder DIRECTORY, EXTENSION
+
+The DIRECTORY is renamed by appending the EXTENSION, which defaults to C<".d">,
+to make place for a folder file on that specific location.  C<false> is
+returned if this failed.
+
+=error Cannot move away sub-folder $dir
+
+=cut
+
+sub moveAwaySubFolder($$)
+{   my ($self, $dir, $extension) = @_;
+    $self->log("ERROR: Cannot move away sub-folder $dir")
+       unless move $dir, $dir.$extension;
+    $self;
+}
+
 #-------------------------------------------
 
 =method write OPTIONS
@@ -660,11 +676,19 @@ sub tmpNewFolder($) { shift->filename . '.tmp' }
 
 =chapter DETAILS
 
-=section How file-based folders work
+=section How file based folders work
 
-File-based folders store many messages in one file (let's call this a
-`file-based' folder, in comparison to a `directory-based' folder types
-like MH and Maildir).
+File based folders maintain a folder (a set of messages) in one
+single file.  The advantage is that your folder has only one
+single name, which speeds-up access to all messages at once.
+
+The disadvantage over directory based folder (see M<Mail::Box::Dir>)
+is that you have to construct some means to keep all message apart,
+for instance by adding a message separator, and this will cause
+problems.  Where access to all messages at once is faster in file
+based folders, access to a single message is (much) slower, because
+the whole folder must be read.
+
 
 =cut
 

@@ -135,10 +135,6 @@ sub init($$)
 
 =section The header
 
-=cut
-
-#------------------------------------------
-
 =method delete
 
 Remove all the header lines which are combined in this resent group
@@ -155,6 +151,8 @@ sub delete()
     $head->removeField($_) foreach @fields;
     $self;
 }
+
+#------------------------------------------
 
 =method orderedFields
 
@@ -204,6 +202,9 @@ OBJECT is returned.
 
 =cut
 
+our $resent_field_names
+   = qr/^(received|return\-path|delivered\-to|resent\-\w*)$/i;
+
 sub set($$)
 {   my $self  = shift;
 
@@ -211,9 +212,7 @@ sub set($$)
     if(@_==1) { $field = shift }
     else
     {   my ($fn, $value) = @_;
-        $name  = $fn =~ m!^(received|return\-path|delivered\-to|resent\-\w*)$!i ? $fn
-               : "Resent-$fn";
-
+        $name  = $fn =~ $resent_field_names ? $fn : "Resent-$fn";
         $field = Mail::Message::Field::Fast->new($name, $value);
     }
 
