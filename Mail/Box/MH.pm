@@ -12,39 +12,25 @@ use IO::File;
 use File::Spec;
 use File::Basename;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::MH - handle MH folders
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::MH;
  my $folder = new Mail::Box::MH folder => $ENV{MAIL}, ...;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This documentation describes how MH mailboxes work, and what you
 can do with the MH folder object C<Mail::Box::MH>.
-Please read C<Mail::Box-Overview> and C<Mail::Box> first.
 
-L<The internal organization and details|/"IMPLEMENTATION"> are found
-at the bottom of this manual-page.
-
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default folderdir $ENV{HOME}/.mh
+=default folderdir C<$ENV{HOME}/.mh>
 =default lock_file <index_file>
 
 =option  keep_index BOOLEAN
@@ -58,7 +44,7 @@ as the subject of each message, instead of having to read possibly
 thousands of messages.
 
 =option  index_filename FILENAME
-=default index_filename foldername.'/.index'
+=default index_filename <foldername>C</.index>
 
 The FILENAME which is used in each directory to store the headers of all
 mails. The filename shall not contain a directory path. (e.g. Do not use
@@ -67,12 +53,12 @@ C</usr/people/jan/.index>, nor C<subdir/.index>, but say C<.index>.)
 =option  index OBJECT
 =default index undef
 
-You may specify an OBJECT of a type which extends Mail::Box::MH::Index
-(at least implements the C<get> method), as alternative for an index file
-reader as created by Mail::Box::MH.
+You may specify an OBJECT of a type which extends M<Mail::Box::MH::Index>
+(at least implements a C<get()> method), as alternative for an index file
+reader as created by C<Mail::Box::MH>.
 
 =option  labels_filename FILENAME
-=default labels_filename foldername.'/.mh_sequence'
+=default labels_filename <foldername>C</.mh_sequence>
 
 In MH-folders, messages can be labeled, for instance based on the
 sender or whether it is read or not.  This status is kept in a
@@ -82,15 +68,15 @@ be overruled with this flag.
 =option  labels OBJECT
 =default labels undef
 
-You may specify an OBJECT of a type which extends Mail::Box::MH::Labels
-(at least implements the C<get> method), as alternative for labels file
+You may specify an OBJECT of a type which extends M<Mail::Box::MH::Labels>
+(at least implements the C<get()> method), as alternative for labels file
 reader as created by C<Mail::Box::MH>.
 
 =option  index_type CLASS
-=default index_type 'Mail::Box::MH::Index'
+=default index_type M<Mail::Box::MH::Index>
 
 =option  labels_type CLASS
-=default labels_type 'Mail::Box::MH::Labels'
+=default labels_type M<Mail::Box::MH::Labels>
 
 =cut
 
@@ -136,13 +122,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-=c_method create FOLDERNAME, OPTIONS
+=ci_method create FOLDERNAME, OPTIONS
 
 =error Cannot create MH folder $name: $!
 
@@ -153,7 +133,8 @@ exist?
 =cut
 
 sub create($@)
-{   my ($class, $name, %args) = @_;
+{   my ($thingy, $name, %args) = @_;
+    my $class     = ref $thingy      || $thingy;
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $directory = $class->folderToDirectory($name, $folderdir);
 
@@ -197,19 +178,7 @@ sub foundIn($@)
 
 #-------------------------------------------
 
-=head2 On open folders
-
-=cut
-
-#-------------------------------------------
-
 sub type() {'mh'}
-
-#-------------------------------------------
-
-=head2 Sub-folders
-
-=cut
 
 #-------------------------------------------
 
@@ -295,17 +264,71 @@ sub openSubFolder($@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=c_method appendMessages OPTIONS
+
+Append a message to a folder which is not open.
+
+=error Cannot append message without lock on $folder.
+
+It is impossible to append one or more messages to the folder which is
+not opened, because locking it failes.  The folder may be in use by
+an other application, or you may need to specify some lock related
+options (see M<new()>).
+
+=error Unable to write message for $folder to $filename: $!
+
+The new message could not be written to its new file, for the specific
+reason.
 
 =cut
 
+sub appendMessages(@)
+{   my $class  = shift;
+    my %args   = @_;
+
+    my @messages = exists $args{message} ? $args{message}
+                 : exists $args{messages} ? @{$args{messages}}
+                 : return ();
+
+    my $self     = $class->new(@_, access => 'a')
+        or return ();
+
+    my $directory= $self->directory;
+    return unless -d $directory;
+
+    my $locker   = $self->locker;
+    unless($locker->lock)
+    {   $self->log(ERROR => "Cannot append message without lock on $self.");
+        return;
+    }
+
+    my $msgnr    = $self->highestMessageNumber +1;
+
+    foreach my $message (@messages)
+    {   my $filename = File::Spec->catfile($directory,$msgnr);
+        $message->create($filename)
+          or $self->log(ERROR => "Unable to write message for $self to $filename: $!\n");
+
+        $msgnr++;
+    }
+ 
+    my $labels   = $self->labels->append(@messages);
+
+    $locker->unlock;
+    $self->close;
+
+    @messages;
+}
+
 #-------------------------------------------
+
+=section Internals
 
 =method highestMessageNumber
 
-Returns the highest number which is used in the folder to store a file.  This
-method may be called when the folder is read (then this number can be
-derived without file-system access), but also when the folder is not
+Returns the highest number which is used in the folder to store a file.
+This method may be called when the folder is read (then this number can
+be derived without file-system access), but also when the folder is not
 read (yet).
 
 =cut
@@ -509,65 +532,11 @@ sub writeMessages($)
 
 #-------------------------------------------
 
-=method appendMessage OPTIONS
-
-=error Cannot append message without lock on $folder.
-
-It is impossible to append one or more messages to the folder which is
-not opened, because locking it failes.  The folder may be in use by
-an other application, or you may need to specify some lock related
-options (see new()).
-
-=error Unable to write message for $folder to $filename: $!
-
-The new message could not be written to its new file, for the specific
-reason.
-
-=cut
-
-sub appendMessages(@)
-{   my $class  = shift;
-    my %args   = @_;
-
-    my @messages = exists $args{message} ? $args{message}
-                 : exists $args{messages} ? @{$args{messages}}
-                 : return ();
-
-    my $self     = $class->new(@_, access => 'a')
-        or return ();
-
-    my $directory= $self->directory;
-    return unless -d $directory;
-
-    my $locker   = $self->locker;
-    unless($locker->lock)
-    {   $self->log(ERROR => "Cannot append message without lock on $self.");
-        return;
-    }
-
-    my $msgnr    = $self->highestMessageNumber +1;
-
-    foreach my $message (@messages)
-    {   my $filename = File::Spec->catfile($directory,$msgnr);
-        $message->create($filename)
-          or $self->log(ERROR => "Unable to write message for $self to $filename: $!\n");
-
-        $msgnr++;
-    }
- 
-    my $labels   = $self->labels->append(@messages);
-
-    $locker->unlock;
-    $self->close;
-
-    @messages;
-}
-
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=chapter DETAILS
 
-=head2 How MH-folders work
+=section How MH-folders work
 
 MH-type folders use a directory to store the messages of one folder.  Each
 message is stored in a separate file.  This seems useful, because changes
@@ -577,7 +546,7 @@ folder files.
 
 However, MH-based folders perform very bad if you need header information
 of all messages.  For instance, if you want to have full knowledge about
-all message-threads (see C<Mail::Box::Thread::Manager>) in the folder, it
+all message-threads (see M<Mail::Box::Thread::Manager>) in the folder, it
 requires to read all header lines in all message files.  And usually, reading
 your messages in threads is desired.
 
@@ -587,7 +556,7 @@ directory may contain a file named C<.mh_sequences>, storing labels which
 relate to the messages.  Furthermore, a folder-directory may contain
 sub-directories, which are seen as sub-folders.
 
-=head2 Labels
+=section Labels
 
 User actions on a message are flagged with a label.  When the folder is
 opened, these flags are read from the C<.mh_sequences> file.  When the
@@ -596,7 +565,7 @@ in the message headers -as used by Mbox folders- are only looked at when
 new messages are added to the folder.  These lines are only updated when a
 MH message has to be written to a folder for some reason.
 
-=head2 This implementation
+=section This implementation
 
 This implementation supports the C<.mh-sequences> file and sub-folders.
 Next to this, considerable effort it made to avoid reading each message-file.
@@ -608,16 +577,16 @@ one directory, are bad for performance.  Consider that you want to know
 the subjects of all messages, while browser through a folder with your
 mail-reading client.  This would cause all message-files to be read.
 
-C<Mail::Box::MH> has two ways to try improve performance.  You can use
+M<Mail::Box::MH> has two ways to try improve performance.  You can use
 an index-file, and use on delay-loading.  The combination performs even
 better.  Both are explained in the next sections.
 
-=head2 An index-file
+=section An index-file
 
-If you specify C<keep_index> as option to the folder creation method
-C<new()>, then all header-lines of all messages from the folder which
-have been read once, will also be written into one dedicated index-file
-(one file per folder).  The default filename is C<.index>
+If you specify M<new(keep_index)>, then all header-lines of all messages
+from the folder which have been read once, will also be written into
+one dedicated index-file (one file per folder).  The default filename
+is C<.index>
 
 However, index-files are not supported by any other reader which supports
 MH (as far as I know).  If you read the folders with such I client, it

@@ -13,69 +13,49 @@ use Mail::Message::Body::Lines;
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert::MailInternet - translate Mail::Message to Mail::Internet vv
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Message::Convert::MailInternet;
  my $convert = Mail::Message::Convert::MailInternet->new;
 
- my Mail::Message  $msg    = Mail::Message->new;
+ my Mail::Message  $msg    = M<Mail::Message>->new;
  my Mail::Internet $intern = $convert->export($msg);
 
- my Mail::Internet $intern = Mail::Internet->new;
+ my Mail::Internet $intern = M<Mail::Internet>->new;
  my Mail::Message  $msg    = $convert->from($intern);
 
- use Mail::Box::Manager;
+ use M<Mail::Box::Manager>;
  my $mgr     = Mail::Box::Manager->new;
  my $folder  = $mgr->open(folder => 'Outbox');
  $folder->addMessage($intern);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The Mail::Internet class of message is very popular for all
+The M<Mail::Internet> class of message is very popular for all
 kinds of message applications written in Perl.  However, the
 format was developed when e-mail messages where still small and
 attachments where rare; Mail::Message is much more flexible in
 this respect.
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 Converting
-
-=cut
-
-#------------------------------------------
+=section Converting
 
 =method export MESSAGE, OPTIONS
 
 Returns a new message object based on the information from
-a Mail::Message object.  The MESSAGE specified is an
+a M<Mail::Message> object.  The MESSAGE specified is an
 instance of a Mail::Message.
 
 =examples
 
  my $convert = Mail::Message::Convert::MailInternet->new;
- my Mail::Message  $msg   = Mail::Message->new;
- my Mail::Internet $copy  = $convert->export($msg);
+ my Mail::Message  $msg   = M<Mail::Message>->new;
+ my M<Mail::Internet> $copy  = $convert->export($msg);
 
 =cut
 
@@ -104,13 +84,13 @@ sub export($@)
 =method from OBJECT, OPTIONS
 
 Returns a new Mail::Message object based on the information from
-an message-type which is strange to the Mail::Box set of modules.
+an message-type which is foreign to the Mail::Box set of modules.
 
 =examples
 
  my $convert = Mail::Message::Convert::MailInternet->new;
- my Mail::Internet $msg  = Mail::Internet->new;
- my Mail::Message  $copy = $convert->from($msg);
+ my Mail::Internet $msg  = M<Mail::Internet>->new;
+ my M<Mail::Message>  $copy = $convert->from($msg);
 
 =cut
 

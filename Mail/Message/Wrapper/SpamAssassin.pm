@@ -9,11 +9,11 @@ use Mail::Message::Body::Lines;
 
 #------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Wrapper::SpamAssassin - Connect a Mail::Message with Mail::SpamAssassin
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  # See Mail::Box::Search::SpamAssassin for the prefered interface
  # However, it is possible to do:
@@ -26,28 +26,18 @@ Mail::Message::Wrapper::SpamAssassin - Connect a Mail::Message with Mail::SpamAs
  $msg->label(spam => 1) if $status->is_spam;
  $status->rewrite_mail;  # Adds spam lines to header
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The Mail::Message::Wrapper::SpamAssassin class --sorry for the long package
-name-- is a wrapper aroung Mail::SpamAssassin::Message, which is an
-interface to the spam checking software of Mail::SpamAssassin.
+The C<Mail::Message::Wrapper::SpamAssassin>
+class --sorry for the long package
+name-- is a wrapper around M<Mail::SpamAssassin::Message>, which is an
+interface to the spam checking software of M<Mail::SpamAssassin>.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new MESSAGE, OPTIONS
 
-Creates a wrapper around the MESSAGE.  There are no OPTIONS defined
-yet.
+Creates a wrapper around the MESSAGE.
 
 =cut
 

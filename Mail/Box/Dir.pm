@@ -19,43 +19,41 @@ use File::Copy;
 use File::Spec;
 use File::Basename;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Dir - handle folders with a file per message.
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  # Do not instantiate this object
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This documentation describes the way directory organized mailboxes work.
 At the moment, this object is extended by
 
 =over 4
 
-=item * Mail::Box::MH
+=item * M<Mail::Box::MH>
 
-=item * Mail::Box::Maildir
+MH folders, which are represented by a directory containing files which
+are sequentially numbered.
+
+=item * M<Mail::Box::Maildir>
+
+Maildir folders, which are located in a directory which has sub-directories
+named C<tmp>, C<new>, and C<cur>.  Each of these directories may contain
+files with names which are a combination of a numeric timestamp and some
+status flags.
 
 =back
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default body_type 'Mail::Message::Body::Lines'
-=default lock_file <folder>/.lock
+=default body_type M<Mail::Message::Body::Lines>
+=default lock_file <folder>C</.lock>
 
 =warning Folder directory $directory is write-protected.
 
@@ -110,18 +108,13 @@ sub organization() { 'DIRECTORY' }
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section The folder
 
 =method directory
 
 Returns the directory related to this folder.
 
-=examples
-
+=example
  print $folder->directory;
 
 =cut
@@ -129,6 +122,8 @@ Returns the directory related to this folder.
 sub directory() { shift->{MBD_directory} }
 
 #-------------------------------------------
+
+=section Internals
 
 =method folderToDirectory FOLDERNAME, FOLDERDIR
 

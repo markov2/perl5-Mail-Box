@@ -6,41 +6,31 @@ use base 'Mail::Transport::Send';
 
 use Net::SMTP;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::SMTP - transmit messages without external program
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $sender = Mail::Transport::SMTP->new(...);
  $sender->send($message);
 
  $message->send(via => 'smtp');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This module implements transport of C<Mail::Message> objects by negotiating
 to the destination host directly by using the SMTP protocol, without help of
 C<sendmail>, C<mail>, or other programs on the local host.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =default hostname <from Net::Config>
 =default proxy    <from Net::Config>
-=default via      'smtp'
-=default port     25
+=default via      C<'smtp'>
+=default port     C<25>
 
 =option  smtp_debug BOOLEAN
 =default smtp_debug <false>
@@ -53,7 +43,7 @@ screen.
 
 The fully qualified name of the sender's host (your system) which
 is used for the greeting message to the receiver.  If not specified,
-Net::Config or else Net::Domain are questioned to find it.
+M<Net::Config> or else M<Net::Domain> are questioned to find it.
 When even these do not supply a valid name, the name of the domain in the
 C<From> line of the message is assumed.
 
@@ -66,10 +56,11 @@ failing.
 =option  username STRING
 =default username undef
 
-Use SASL authentication to contact the remote SMTP server (RFC2554).  This
-username in combination with new(password) is passed as arguments to
-Net::SMTP::auth().  Other forms of authentication are not supported by
-Net::SMTP.  The C<username> can also be specified as an Authen::SASL object.
+Use SASL authentication to contact the remote SMTP server (RFC2554).
+This username in combination with new(password) is passed as arguments
+to M<Net::SMTP> method auth.  Other forms of authentication are not
+supported by Net::SMTP.  The C<username> can also be specified as an
+M<Authen::SASL> object.
 
 =option  password STRING
 =default password undef
@@ -106,12 +97,6 @@ sub init($)
 
     $self;
 }
-
-#------------------------------------------
-
-=head2 Sending Mail
-
-=cut
 
 #------------------------------------------
 
@@ -223,11 +208,13 @@ sub trySend($@)
 
 #------------------------------------------
 
+=section Server connection
+
 =method contactAnyServer
 
 Creates the connection to the SMTP server.  When more than one hostname
 was specified, the first which accepts a connection is taken.  An
-IO::Socket::INET object is returned.
+M<IO::Socket::INET> object is returned.
 
 =cut
 
@@ -269,7 +256,7 @@ sub contactAnyServer()
 =method tryConnectTo HOST, OPTIONS
 
 Try to establish a connection to deliver SMTP to the specified HOST.  The
-OPTIONS are passed to the C<new> method of Net::SMTP.
+OPTIONS are passed to the C<new> method of M<Net::SMTP>.
 
 =cut
 

@@ -4,12 +4,13 @@ use warnings;
 package Mail::Message::Field::AddrGroup;
 use base 'Mail::Reporter';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::AddrGroup - A group of Mail::Message::Field::Address objects
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
+ !! UNDER CONSTRUCTION !!
  my $g = Mail::Message::Field::AddrGroup->new('name');
 
  my $a = Mail::Message::Field::Address->new(...);
@@ -18,19 +19,9 @@ Mail::Message::Field::AddrGroup - A group of Mail::Message::Field::Address objec
  my $f = Mail::Message::Field::Addresses->new;
  $f->addGroup($g);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new DATA
 
@@ -49,6 +40,8 @@ sub init($)
 }
 
 #------------------------------------------
+
+=section The group
 
 =method name
 
@@ -74,19 +67,9 @@ sub addAddress(@)
 
 #------------------------------------------
 
-=method addresses
-
-Returns all addresses defined in this group.
-
-=cut
-
-sub addresses() { @{shift->{MMFA_addresses}} }
-
-#------------------------------------------
-
 =method string
 
-Returns the group as string.
+Returns the address group as string.
 
 =cut
 
@@ -98,5 +81,21 @@ sub string()
 }
 
 #------------------------------------------
+
+=section The addresses
+
+=method addresses
+
+Returns all addresses defined in this group.
+
+=cut
+
+sub addresses() { @{shift->{MMFA_addresses}} }
+
+#------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

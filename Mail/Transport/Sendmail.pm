@@ -6,16 +6,16 @@ use base 'Mail::Transport::Send';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::Sendmail - transmit messages using external Sendmail program
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $sender = Mail::Transport::Sendmail->new(...);
  $sender->send($message);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Implements mail transport using the external C<'Sendmail'> program.
 When instantiated, the mailer will look for the binary in specific system
@@ -25,21 +25,11 @@ Some people use Postfix as MTA.  Postfix can be installed as replacement
 for Sendmail: is provides a program with the same name and options.  So,
 this module supports postfix as well.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default via 'sendmail'
+=default via C<'sendmail'>
 
 =cut
 
@@ -60,11 +50,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Sending Mail
-
-=cut
-
-#------------------------------------------
+=section Sending mail
 
 =method trySend MESSAGE, OPTION
 
@@ -80,7 +66,7 @@ sub trySend($@)
 
     my $program = $self->{MTS_program};
     if(open(MAILER, '|-')==0)
-    {   { exec $program, '-t'; }  # {} to avoid warning
+    {   { exec $program, '-it'; }  # {} to avoid warning
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
         return 0;
     }

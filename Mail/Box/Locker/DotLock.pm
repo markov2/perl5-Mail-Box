@@ -8,35 +8,25 @@ use IO::File;
 use Carp;
 use File::Spec;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Locker::DotLock - lock a folder with a separate file
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  See Mail::Box::Locker
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The C<::DotLock> object lock the folder by creating a file with the
 same name as the folder, extended by C<.lock>.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =option  file FILENAME
-=default file <folderfile>.lock
+=default file <folderfile>C<.lock>
 
 Name of the file to lock.  By default, the folder's name is extended with
 C<.lock>.
@@ -61,19 +51,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Locker
-
-=cut
-
-#-------------------------------------------
-
 sub name() {'DOTLOCK'}
-
-#-------------------------------------------
-
-=head2 Locking
-
-=cut
 
 #-------------------------------------------
 
@@ -145,6 +123,8 @@ sub lock()
 #-------------------------------------------
 
 sub isLocked() { -e shift->filename }
+
+#-------------------------------------------
 
 1;
 

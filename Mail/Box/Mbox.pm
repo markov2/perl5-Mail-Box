@@ -6,38 +6,28 @@ use base 'Mail::Box::File';
 use Mail::Box::Mbox::Message;
 use File::Copy 'move';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Mbox - handle folders in Mbox format
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Mbox;
  my $folder = Mail::Box::Mbox->new(folder => $ENV{MAIL}, ...);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This documentation describes how Mbox mailboxes work, and also describes
 what you can do with the Mbox folder object Mail::Box::Mbox.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default message_type 'Mail::Box::Mbox::Message'
+=default message_type M<Mail::Box::Mbox::Message>
 
 =option  subfolder_extension STRING
-=default subfolder_extension '.d'
+=default subfolder_extension C<'.d'>
 
 Mbox folders do not support sub-folders.  However, this module can
 simulate sub-directories if the user wants it to.  When a subfolder of
@@ -60,13 +50,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-=method create FOLDERNAME, OPTIONS
+=ci_method create FOLDERNAME, OPTIONS
 
 =option  subfolder_extension STRING
 =default subfolder_extension undef
@@ -79,7 +63,8 @@ is passed to dirToSubfolder().
 =cut
 
 sub create($@)
-{   my ($class, $name, %args) = @_;
+{   my ($thingy, $name, %args) = @_;
+    my $class = ref $thingy    || $thingy;
     $args{folderdir}           ||= $default_folder_dir;
     $args{subfolder_extension} ||= $default_sub_extension;
 
@@ -88,9 +73,10 @@ sub create($@)
 
 #-------------------------------------------
 
-=method foundIn [FOLDERNAME], [OPTIONS]
+=c_method foundIn [FOLDERNAME], [OPTIONS]
 
-If no FOLDERNAME is specified, then the C<folder> option is taken.
+If no FOLDERNAME is specified, then the value of the C<folder> option
+is taken.
 
 =option  folder FOLDERNAME
 =default folder undef
@@ -131,18 +117,6 @@ sub foundIn($@)
 
 #-------------------------------------------
 
-=head2 On open folders
-
-=cut
-
-#-------------------------------------------
-
-=head2 Closing the folder
-
-=cut
-
-#-------------------------------------------
-
 sub writeMessages($)
 {   my ($self, $args) = @_;
 
@@ -164,13 +138,7 @@ sub type() {'mbox'}
 
 #-------------------------------------------
 
-=head2 Sub-folders
-
-=cut
-
-#-------------------------------------------
-
-=method listSubFolders OPTIONS
+=ci_method listSubFolders OPTIONS
 
 =option  subfolder_extension STRING
 =default subfolder_extension <from object>
@@ -246,11 +214,7 @@ sub listSubFolders(@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method dirToSubfolder DIRECTORY, EXTENSION
 
@@ -305,9 +269,9 @@ sub folderToFilename($$;$)
 
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=chapter DETAILS
 
-=head2 How MBOX folders work
+=section How MBOX folders work
 
 MBOX folders store many messages in one file.  Each message begins with a
 line which starts with the string C<From >.  Lines inside a message which
@@ -319,7 +283,7 @@ strictly defined.  The exact content of the separator lines differ between
 Mail User Agents (MUA's).  Besides, some MUAs (like mutt) forget to encode
 the C<From > lines within message bodies, breaking other parsers....
 
-=head2 Simulation of sub-folders
+=section Simulation of sub-folders
 
 MBOX folders do not have a sub-folder concept as directory based folders
 do, but this MBOX module tries to simulate them.  In this implementation
@@ -340,7 +304,5 @@ folder, the directory is automatically (and transparently) renamed, so
 that the second situation is reached.
 
 =cut
-
-1;
 
 1;

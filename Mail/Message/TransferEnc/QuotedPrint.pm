@@ -7,17 +7,17 @@ use base 'Mail::Message::TransferEnc';
 
 use MIME::QuotedPrint;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::TransferEnc::QuotedPrint - handle quoted-printable message bodies
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $decoded = $msg->decoded;
  my $encoded = $msg->encode(transfer => 'quoted-printable');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Encode and decode message bodies for quoted-printable transfer encoding.
 The Quoted-Printable encoding is intended
@@ -27,37 +27,11 @@ characters (as defined by English Americans) are represented by a
 triplet consisting of the character "=" followed by two hexadecimal
 digits.
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 The Encoder
-
-=cut
-
-#------------------------------------------
 
 sub name() { 'quoted-printable' }
-
-#------------------------------------------
-
-=head2 Encoding
-
-=cut
 
 #------------------------------------------
 
@@ -68,7 +42,7 @@ sub check($@)
 
 #------------------------------------------
 
-=item decode BODY, OPTIONS
+=method decode BODY, OPTIONS
 
 Decoding is tricky, and not without loss of information.  Lines will
 stay separate lines, although they might have been joined before the
@@ -93,7 +67,7 @@ sub decode($@)
 
 #------------------------------------------
 
-=item encode BODY, OPTIONS
+=method encode BODY, OPTIONS
 
 Encoding is to quoted-printable is a careful process: All characters
 outside the normal printing range, and including C<'='> are encoded.

@@ -5,20 +5,20 @@ use warnings;
 package Mail::Message::Convert;
 use base 'Mail::Reporter';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert - conversions between message types
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
 Available methods are very converter-specific.
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This class is the base for various message (and message parts) converters.
 When the conversion does not change the contents of the body, most of
 the converters will return the source object.  In any case, an
-Mail::Message::Body is returned with the conversion applied but as
+M<Mail::Message::Body> is returned with the conversion applied but as
 much of the other meta data stored in the source body unchanged.
 
 In most cases, converters are created by Mail::Message when they are
@@ -29,56 +29,47 @@ The following converters are currently available:
 
 =over 4
 
-=item * Mail::Message::Convert::Html
+=item * M<Mail::Message::Convert::Html>
 
 Plays tricks with HTML/XMHTML without help of external modules.
 
-=item * Mail::Message::Convert::HtmlFormatText
+=item * M<Mail::Message::Convert::HtmlFormatText>
 
 Converts HTML body objects to plain text objects using the
 HTML::FormatText module.
 
-=item * Mail::Message::Convert::HtmlFormatPS
+=item * M<Mail::Message::Convert::HtmlFormatPS>
 
 Converts HTML body objects to Postscript objects using the
-HTML::FormatPS module.
+M<HTML::FormatPS> module.
 
-=item * Mail::Message::Convert::MailInternet
+=item * M<Mail::Message::Convert::MailInternet>
 
-Converts the simple Mail::Internet messages into Mail::Message
+Converts the simple M<Mail::Internet> messages into M<Mail::Message>
 objects.
 
-=item * Mail::Message::Convert::MimeEntity
+=item * M<Mail::Message::Convert::MimeEntity>
 
-Converts the more complicated MIME::Entity messages into
-C<Mail::Message> objects.
+Converts the more complicated M<MIME::Entity> messages into
+M<Mail::Message> objects.
 
-=item * Mail::Message::Convert::TextAutoformat
+=item * M<Mail::Message::Convert::TextAutoformat>
 
-Converts a text message into text using Text::Autoformat.
+Converts a text message into text using M<Text::Autoformat>.
 
 =back
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =option  fields NAMES|ARRAY-OF-NAMES|REGEXS
 =default fields <see description>
 
-Select the fields of a header which are to be handled.  Other fields will not
-be used.  The value of this option is passed to Mail::Message::Head::grepNames()
-whenever converters feel a need for header line selection.
+Select the fields of a header which are to be handled.  Other
+fields will not be used.  The value of this option is passed to
+M<Mail::Message::Head::Complete::grepNames()> whenever converters feel
+a need for header line selection.
 By default, the C<To>, C<From>, C<Cc>, C<Bcc>, C<Date>, C<Subject>, and their
 C<Resent-> counterparts will be selected.  Specify an empty list to get all
 fields.
@@ -97,18 +88,13 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Converting
-
-=cut
-
-#------------------------------------------
+=section Converting
 
 =method selectedFields HEAD
 
 Returns a list of fields to be included in the format.  The list is
 an ordered selection of the fields in the actual header, and filtered
-through the information as specified with the C<fields> option for
-new().
+through the information as specified with M<new(fields)>.
 
 =cut
 
@@ -118,5 +104,9 @@ sub selectedFields($)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

@@ -6,11 +6,11 @@ use base 'Mail::Message::Convert';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert::Html - Format messages from or to HTML
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Message::Convert::Html;
  my $Html = Mail::Message::Convert::Html->new;
@@ -20,23 +20,13 @@ Mail::Message::Convert::Html - Format messages from or to HTML
  print $html->headToHtmlTable($head);
  print $html->textToHtml($text);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The package contains various translators which handle HTML or XHTML
 without the help of external modules.  There are more HTML related modules,
 which do require extra packages to be installed.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -46,7 +36,7 @@ which do require extra packages to be installed.
 Whether to replace e-mail addresses in some header lines with links.
 
 =option  produce 'HTML'|'XHTML'
-=default produce 'HTML'
+=default produce C<'HTML'>
 
 Produce HTML or XHTML output.  The output is slightly different, even
 html browsers will usually accept the XHTML data.
@@ -74,17 +64,13 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Converting
-
-=cut
-
-#------------------------------------------
+=section Converting
 
 =method textToHtml LINES
 
 Translate one or more LINES from text into HTML.  Each line is taken one
-after the other, and only simple things are translated.  The C<plainToHtml>
-method is able to convert large plain texts in a descent fashion.  In scalar
+after the other, and only simple things are translated.  C<textToHtml>
+is able to convert large plain texts in a descent fashion.  In scalar
 context, the resulting lines are returned as one.
 
 =cut
@@ -106,7 +92,7 @@ sub textToHtml(@)
 
 Reformat one header line field to HTML.  The FIELD's name
 is printed in bold, followed by the formatted field content,
-which is produced by the C<fieldContentsToHtml> method.
+which is produced by M<fieldContentsToHtml()>.
 
 =cut
 
@@ -120,11 +106,10 @@ sub fieldToHtml($;$)
 
 =method headToHtmlTable HEAD, [TABLE-PARAMS]
 
-Produce a display of the selected fields of the header (see
-selectedFields()) in a table shape.  The optional
-TABLE-PARAMS are added as parameters to the produced TABLE tag.
-In list context, the separate lines are returned.  In scalar
-context, everything is returned as one.
+Produce a display of the M<selectedFields()> of the header in a
+table shape.  The optional TABLE-PARAMS are added as parameters to the
+produced TABLE tag.  In list context, the separate lines are returned.
+In scalar context, everything is returned as one.
 
 =examples
 
@@ -163,15 +148,8 @@ sub headToHtmlTable($;$)
 
 Translate the selected header lines (fields) to an html page header.  Each
 selected field will get its own meta line with the same name as the line.
-Furthermore:
-
-=over 4
-
-=item * the C<Subject> field will become the C<title>,
-
-=item * C<From> is used for the C<Author>
-
-=back
+Furthermore, the C<Subject> field will become the C<title>,
+and C<From> is used for the C<Author>.
 
 Besides, you can specify your own meta fields, which will overrule header
 fields.  Empty fields will not be included.  When a C<title> is specified,

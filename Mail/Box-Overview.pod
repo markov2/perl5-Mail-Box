@@ -1,26 +1,26 @@
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box-Overview - objects used by Mail::Box
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-=head2 Introduction
+=section Introduction
 
 The MailBox package is a suite of classes for accessing and managing
 email folders in a folder-independent manner. This package is an
-alternative to the Mail::Folder and MIME::* packages. It abstracts the
+alternative to the C<Mail::Folder> and C<MIME::*> packages. It abstracts the
 details of messages, message storage, and message threads, while
 providing better performance than older mail packages. It is meant to
 provide an object-oriented toolset for all kinds of e-mail applications,
 under which Mail User-Agents (MUA) and mail filtering programs.
 
 This package is modular --parts of it can be used independently of the
-rest. For example, the Mail::Box::Manager can automatically determine
+rest. For example, the M<Mail::Box::Manager> can automatically determine
 that a folder is in Mbox format and return an object of the
-Mail::Box::Mbox class, or the user program can bypass the manager and
-create Mail::Box::Mbox objects directly. Similarly, if the user program
-is only manipulating a single message, a Mail::Message.
+M<Mail::Box::Mbox> class, or the user program can bypass the manager and
+create M<Mail::Box::Mbox> objects directly. Similarly, if the user program
+is only manipulating a single message, a M<Mail::Message>.
 
 The Mail::Box package has special features to help MUA's access folder
 data quickly in random order.  You will not really benefit (neither
@@ -32,21 +32,21 @@ module can be marked as stable.  Read the STATUS file enclosed in the package
 for more details.  You may also want to have a look at the sample
 scripts in the C<scripts> directory.
 
-=head2 The class relations
+=section The class relations
 
-Mail::Box::Manager objects play a central role in any program which
+M<Mail::Box::Manager> objects play a central role in any program which
 is built with MailBox.  Each program will create one manager, and
 then open folders via that manager.  Besides folders, the manager can
 also be used to discover message threads: sequences of messages with
 their follow-ups.
 
-                       <has-a>      Mail::Box::Mbox
-  Mail::Box::Manager <---------*    (Mail::Box::MH)
-         ^                :         (Mail::Box::Maildir)
-         |           (maintains)    (Mail::Box::POP3)
+                       <has-a>      M<Mail::Box::Mbox>
+  M<Mail::Box::Manager> <---------*    (M<Mail::Box::MH>)
+         ^                :         (M<Mail::Box::Maildir>)
+         |           (maintains)    (M<Mail::Box::POP3>)
          |                :
          |                :
-         `---------------------*  Mail::Box::Thread::Manager
+         `---------------------*  M<Mail::Box::Thread::Manager>
                       (<has-a>)
 
 
@@ -55,27 +55,27 @@ differences between folder types and kinds of messages.  Your program can
 be used for MBOX, MH, Maildir, and POP3 folders with no change at all (as
 long as you stick to the rules).
 
- Mail::Box::Mbox  <-----------* Mail::Box::Mbox::Message
+ M<Mail::Box::Mbox>  <-----------* M<Mail::Box::Mbox::Message>
         ^             <has-a>            ^
         | <isa>                          | <isa>
         |                                |
-    Mail::Box     ............. Mail::Box::Message
+    M<Mail::Box>     ............. M<Mail::Box::Message>
                                          ^
                                          | <isa>
                                          |
-                                   Mail::Message
+                                   M<Mail::Message>
                                         / \
                                        <has-a>  
                                       /     \
-                           Mail::Message   Mail::Message 
+                           M<Mail::Message>   M<Mail::Message> 
                              ::Body            ::Head
 
 The situation for MH and Maildir folders is a little more complicated,
-because they have an extra intermediate level of abstraction: Mail::Box::Dir.
-The POP3 folder has an intermediate Mail::Box::Net.
+because they have an extra intermediate level of abstraction: M<Mail::Box::Dir>.
+The POP3 folder has an intermediate M<Mail::Box::Net>.
 
 In the future, when more Mbox-like folder types get implemented, there
-may be a Mail::Box::File level too.  The following is also true
+may be a M<Mail::Box::File> level too.  The following is also true
 for the mail boxes
 
  MB::MH::Message                 MB::POP3::Message
@@ -92,14 +92,14 @@ for the mail boxes
                      Mail::Message
 
 
-=head2 The Manager:  Mail::Box::Manager
+=section The Manager:  
 
-The mailbox manager encapsulates folder management issues. It maintains a
-set of open mail folders (mailboxes), and provides methods for opening and
-closing them, efficiently moving messages between folders, and
-efficiently appending messages to folders.  It contains Mail::Box objects
-which may be of different types.  Most folder types can be detected
-automatically.
+The mailbox manager M<Mail::Box::Manager> encapsulates folder management
+issues. It maintains a set of open mail folders (mailboxes), and provides
+methods for opening and closing them, efficiently moving messages between
+folders, and efficiently appending messages to folders.  It contains
+M<Mail::Box> objects which may be of different types.  Most folder types
+can be detected automatically.
 
 The main manager also manages message-thread detector objects, and informs them
 when the contents of a folder have changed. This manager class is the
@@ -109,63 +109,63 @@ provided by your folder manager.
 You are strongly advised to use this object, but you can often do without it
 and open a specific folder-type directly.
 
-=head2 The Messages
+=section The Messages
 
 =over 4
 
-=item Mail::Message
+=item M<Mail::Message>
 
 A base class that defines an interface for manipulating the head and
 body of a message.  There are various header object types
-(Mail::Message::Head's) and a bunch of body object types
-(Mail::Message::Body's).  
+(M<Mail::Message::Head>'s) and a bunch of body object types
+(M<Mail::Message::Body>'s).  
 
-The Mail::Message::Construct package is loaded when more complex tasks
+The M<Mail::Message::Construct> package is loaded when more complex tasks
 have to be performed on messages, like creating replies, bounces, or a
 forward message.  These
 functionalities are described and implemented in the ::Construct
-file, but are automatically added to the Mail::Message namespace when used.
+file, but are automatically added to the M<Mail::Message> namespace when used.
 
 Message types which are foreign to MailBox can be used in the
 MailBox environment: there are some converters implemented via
-Mail::Message::Convert.  Particularly the popular Mail::Internet
-and MIME::Entity are supported.
+M<Mail::Message::Convert>.  Particularly the popular M<Mail::Internet>
+and M<MIME::Entity> are supported.
 
-=item Mail::Box::Message
+=item M<Mail::Box::Message>
 
 An abstract base class which defines an interface for mail messages
-which are stored in any folder.  It inherits from Mail::Message, and
+which are stored in any folder.  It inherits from M<Mail::Message>, and
 adds the basic idea of I<location> to a message.
 
-=item Mail::Message::Body
+=item M<Mail::Message::Body>
 
 This is the base class for all message bodies.  It describes what you
 can do with any kind of body.  The body types differ on the way how the
 keep the body content during the run of your program.
 
-One special case of the body types is the Mail::Message::Body::Multipart, which
-contains a set of Mail::Message::Part objects.  These are just like
+One special case of the body types is the M<Mail::Message::Body::Multipart>, which
+contains a set of M<Mail::Message::Part> objects.  These are just like
 normal messages, except that they are contained in an other message.
-The Mail::Message::Body::Nested body type is comparible, but contains only
+The M<Mail::Message::Body::Nested> body type is comparible, but contains only
 one message: they are used for C<message/rfc822> message encodings.
 
 When needed, the functionality of the body objects is extended with
-Mail::Message::Body::Construct and Mail::Message::Body::Encode.  The
+M<Mail::Message::Body::Construct> and M<Mail::Message::Body::Encode>.  The
 former package implements things like concatenation, the later controls message
 encoding and decoding.  In the current implementation this is limited to
-transfer encodings (implemented in the Mail::Message::TransferEnc packages).
+transfer encodings (implemented in the M<Mail::Message::TransferEnc> packages).
 Automatic character and mime recodings are on the wish-list.
 
-=item Mail::Message::Head
+=item M<Mail::Message::Head>
 
-The header for a single message. Maintains a set of Mail::Message::Field
+The header for a single message. Maintains a set of M<Mail::Message::Field>
 objects, each containing one header line.  Fields are the only
 objects which have no logging and tracing facilities, purely for reasons
 of performance.
 
-The header object has three sub-classes: the Mail::Message::Head::Complete
-version knows all lines for sure, Mail::Message::Head::Subset maintains
-an unknown subset of lines, and the Mail::Message::Head::Delayed has no
+The header object has three sub-classes: the M<Mail::Message::Head::Complete>
+version knows all lines for sure, M<Mail::Message::Head::Subset> maintains
+an unknown subset of lines, and the M<Mail::Message::Head::Delayed> has no
 lines yet but knows where to get them.
 
 The latter two will automatically get the missing header lines from the
@@ -175,125 +175,125 @@ header really is on the moment.
 
 =back
 
-=head2 The Folder types
+=section The Folder types
 
 =over 4
 
-=item Mail::Box
+=item M<Mail::Box>
 
 A base class that defines a standard interface for mail boxes which
 is independent of mailbox type. Objects of this class contain
-a Mail::Box::Locker and a list of Mail::Box::Message objects.
+a M<Mail::Box::Locker> and a list of M<Mail::Box::Message> objects.
 
-=item Mail::Box::Dir
+=item M<Mail::Box::Dir>
 
 The base class for all folders which use a directory organization: each
 message is a separate entity (file) grouped in a directory.  Each
-Mail::Box::Dir::Message represents one message, one such entity.
+M<Mail::Box::Dir::Message> represents one message, one such entity.
 
-=item Mail::Box::Net
+=item M<Mail::Box::Net>
 
 The base class for all folders which have the messages outside direct
 reach of the MailBox library, for instance on a remote system, or in
 a database.
 
-=item Mail::Box::Mbox
+=item M<Mail::Box::Mbox>
 
-This class derives from Mail::Box, and implements its interface for
-mbox-style folders. It maintains a set of Mail::Box::Mbox::Message
-objects, which are derived from a Mail::Box::Message.
+This class derives from M<Mail::Box>, and implements its interface for
+mbox-style folders. It maintains a set of M<Mail::Box::Mbox::Message>
+objects, which are derived from a M<Mail::Box::Message>.
 
 Mbox-style folders have one file containing multiple messages per
 folder.  When folders get large, access tends to get slow.
 
-=item Mail::Box::MH
+=item M<Mail::Box::MH>
 
-This class derives from Mail::Box::Dir, and implements its interface for
-MH-style folders. It maintains a set of Mail::Box::MH::Message
-objects, which are derived from a Mail::Box::Dir::Message.
+This class derives from M<Mail::Box::Dir>, and implements its interface for
+MH-style folders. It maintains a set of M<Mail::Box::MH::Message>
+objects, which are derived from a M<Mail::Box::Dir::Message>.
 
 MH-style folders are represented by a directory, where each message is
 stored in a separate file.  The message files are sequentially numbered.
 It is fast to open one single message, but hard to get an overview.
 
-=item Mail::Box::MH::Index
+=item M<Mail::Box::MH::Index>
 
 The base class for MH mailbox indexes which provides methods for reading,
 writing, and managing message indexes.  These indexes are used to
 speed-up access to directory based folders.
 
-=item Mail::Box::MH::Labels
+=item M<Mail::Box::MH::Labels>
 
 Also for efficiency reasons, a separate file is maintained which contains
 flags about the messages.  This file for instance lists new files.  This
 way, the MH message files do not have to be opened to find that out.
 
-=item Mail::Box::Maildir
+=item M<Mail::Box::Maildir>
 
-Like the MH folder type, this class derives from Mail::Box::Dir.  It
+Like the MH folder type, this class derives from M<Mail::Box::Dir>.  It
 implements its interface for Maildir-style folders. It maintains a set
-of Mail::Box::Maildir::Message objects, which are derived from a
-Mail::Box::Dir::Message.
+of M<Mail::Box::Maildir::Message> objects, which are derived from a
+M<Mail::Box::Dir::Message>.
 
-=item Mail::Box::POP3
+=item M<Mail::Box::POP3>
 
-Implements the POP3 protocol based on Mail::Box::Net.  The
-Mail::Transport::POP3 implementation handles the protocol details.  In this
+Implements the POP3 protocol based on M<Mail::Box::Net>.  The
+M<Mail::Transport::POP3> implementation handles the protocol details.  In this
 kind of folders, you can only read and delete messages.
 
 =back
 
-=head2 Various Other Classes
+=section Various Other Classes
 
 =over 4
 
-=item Mail::Box::Thread::Manager
+=item M<Mail::Box::Thread::Manager>
 
 Maintains a set of message-threads over one or more folders.  A
 message-tread is a start message with all the replies on it.  And the
 replies on replies, and so on.  This object is used to construct the
 thread for a set of open folders.
 
-This object maintains linked lists of Mail::Box::Thread::Node objects.
-Mail::Message::Dummy's fill-up some holes.
+This object maintains linked lists of M<Mail::Box::Thread::Node> objects.
+M<Mail::Message::Dummy>'s fill-up some holes.
 
-=item Mail::Box::Locker
+=item M<Mail::Box::Locker>
 
-Provides a folder locking interface which is inherited by the Mail::Box
+Provides a folder locking interface which is inherited by the M<Mail::Box>
 class.  Currently it supports dot-file locking (C<filename.lock>),
 flock filehandle locking, and locking over NFS.  Each is implemented in a
 separate class.  A multi-locker, using a set of lock-methods at the
 same time is also available.
 
-=item Mail::Box::Search
+=item M<Mail::Box::Search>
 
 The set of search packages implement various search techniques in an uniformal
 way.  Although implementing your own search algorithm is simple in general,
 in practice multiparts, encodings, and mime-types complicate things.
 
-=item Mail::Box::Parser
+=item M<Mail::Box::Parser>
 
 The parser reads messages, and transforms them into data-structures such
 that the content of header and body can be used within the program.  The
 first parser is implemented in pure Perl.  A second parser is under development,
 and will written in C, to gain speed.
 
-=item Mail::Box::Tie
+=item M<Mail::Box::Tie>
 
-Provides hash (Mail::Box::Tie::HASH>) or array tied (Mail::Box::Tie::ARRAY)
-access to any mail folder derived from Mail::Box.  This beautifies your code
-in some applications.
+Provides hash (M<Mail::Box::Tie::HASH>) or array tied
+(M<Mail::Box::Tie::ARRAY>) access to any mail folder derived from
+M<Mail::Box>.  This beautifies your code in some applications.
 
-=item Mail::Transport
+=item M<Mail::Transport>
 
 Various ways of sending and receiving messages are implemented.  Sending
 is possible via external programs, like C<mail>, C<Mailx>, C<sendmail>, or
 autonomously with direct SMTP.  Receiving is currently only implemented
 via POP3.
 
-=item Mail::Reporter
+=item M<Mail::Reporter>
 
-A debugging and logging class which is inherited by most of the Mail::*
+A debugging and logging class which is inherited by most of the Mail::
 modules.  For each object, you can say what log and error reports must be
 kept or directly presented to the user.  This way you can decide to have
 Mail::Box report about problems, or do it all yourself.
@@ -301,3 +301,4 @@ Mail::Box report about problems, or do it all yourself.
 =back
 
 All classes are written to be extensible.  
+

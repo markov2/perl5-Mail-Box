@@ -4,38 +4,29 @@ use warnings;
 package Mail::Message::Field::Unstructured;
 use base 'Mail::Message::Field::Full';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::Unstructured - unstructured "Full" field
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
+ !! UNDER CONSTRUCTION !!
  my $f = Mail::Message::Field::Unstructured->new(Comments => 'hi!');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Unstructured fields do contain information which is not restricted in
 any way.  RFC2822 defines some unstructured fields, but by default all
 unknown fields are unstructured as well.  Things like attributes and
 comments have no meaning for unstructured fields, but encoding does.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new DATA
 
-=default attributes C<not accepted>
-=default extra C<not accepted>
-=default is_structured 0
+=default attributes    <not accepted>
+=default extra         <not accepted>
+=default is_structured <false>
 
 When the DATA is specified as single line, the content part is considered to
 be correcly (character) encoded and escaped.  Typically, it is a line as
@@ -86,34 +77,20 @@ sub init($)
 
 #------------------------------------------
 
-=head2 The Field
-
-=cut
-
-#------------------------------------------
+=section Access to the content
 
 =method addAttribute ...
 
 Attributes are not supported for unstructured fields.
 
-=cut
-
-#------------------------------------------
-
 =method addComment ...
 
 Comments are not supported for unstructured fields.
-
-=cut
-
-#------------------------------------------
 
 =method addExtra ...
 
 Extras are not supported for unstructured fields.
 
 =cut
-
-#------------------------------------------
 
 1;

@@ -9,15 +9,15 @@ use IO::Lines;
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body::Lines - body of a Mail::Message stored as array of lines
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Message::Body
+ See M<Mail::Message::Body>
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The body (content) of a message can be stored in various ways.  In this
 documentation you find the description of extra functionality you have
@@ -27,24 +27,14 @@ Storing a whole message as an array of lines is useful when the data is not
 encoded, and you want to process it on a line-by-line basis (a common practice
 for inspecting message bodies).
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =error Unable to read file $filename for message body lines: $!
 
-A Mail::Message::Body::Lines object is to be created from a named file, but
-it is impossible to read that file to retrieve the lines within.
+A M<Mail::Message::Body::Lines> object is to be created from a named file,
+but it is impossible to read that file to retrieve the lines within.
 
 =cut
 
@@ -88,22 +78,10 @@ sub _data_from_lines(@)
 
 #------------------------------------------
 
-=head2 The Body
-
-=cut
-
-#------------------------------------------
-
 sub clone()
 {   my $self  = shift;
     ref($self)->new(data => [ $self->lines ], based_on => $self);
 }
-
-#------------------------------------------
-
-=head2 About the Payload
-
-=cut
 
 #------------------------------------------
 
@@ -120,12 +98,6 @@ sub size()
     $size += length $_ foreach @{$self->{MMBL_array}};
     $self->{MMBL_size} = $size;
 }
-
-#------------------------------------------
-
-=head2 Access to the Payload
-
-=cut
 
 #------------------------------------------
 
@@ -157,12 +129,6 @@ sub printEscapedFrom($)
         $fh->print($_);
     }
 }
-
-#------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
 
 #------------------------------------------
 

@@ -6,39 +6,29 @@ use base 'Mail::Transport::Send';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::Exim - transmit messages using external Exim program
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $sender = Mail::Transport::Exim->new(...);
  $sender->send($message);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Implements mail transport using the external C<'Exim'> program.
 When instantiated, the mailer will look for the binary in specific system
 directories, and the first version found is taken.
 
-If you have Exim installed in a non-standard location, you will need to 
-specify the path, using Mail::Transport::new(proxy)
-
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default via 'exim'
+If you have Exim installed in a non-standard location, you will need to 
+specify the path, using M<new(proxy)>.
+
+=default via C<'exim'>
 
 =cut
 
@@ -77,7 +67,7 @@ sub trySend($@)
 
     my $program = $self->{MTS_program};
     if(open(MAILER, '|-')==0)
-    {   { exec $program, '-f', $from, @to; }  # {} to avoid warning
+    {   { exec $program, '-i', '-f', $from, @to; }  # {} to avoid warning
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
         return 0;
     }

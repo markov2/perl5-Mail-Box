@@ -7,15 +7,15 @@ use base 'Mail::Box::Locker';
 use IO::File;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Locker::Multi - lock a folder in all ways which work
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Box::Locker
+ See M<Mail::Box::Locker>
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The C<::Multi> locker locks a folder in each way it can.  This way, the
 chance is highest that any other program will leave the folder alone
@@ -25,19 +25,11 @@ NFS-lock and Flock are tried.  More may be added when the ways to
 lock are extended.  DotLock overlaps with NFS-lock, but NFS-lock is
 safer, so that version is preferred.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
+
+=default method C<'MULTI'>
 
 =option  use ARRAY
 =default use <all possible>
@@ -82,29 +74,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Locker
-
-=cut
-
-#-------------------------------------------
-
 sub name() {'MULTI'}
-
-#-------------------------------------------
-
-=method lockers
-
-Returns a list with all locker objects used by this object.
-
-=cut
-
-sub lockers() { @{shift->{MBLM_lockers}} }
-
-#-------------------------------------------
-
-=head2 Locking
-
-=cut
 
 #-------------------------------------------
 
@@ -163,6 +133,18 @@ sub isLocked()
     $self->unlock;
     1;
 }
+
+#-------------------------------------------
+
+=section The Locker
+
+=method lockers
+
+Returns a list with all locker objects used by this object.
+
+=cut
+
+sub lockers() { @{shift->{MBLM_lockers}} }
 
 #-------------------------------------------
 

@@ -13,16 +13,16 @@ use File::Spec;
 use File::Basename;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::IMAP4 - handle IMAP4 folders as client
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::IMAP4;
  my $folder = new Mail::Box::IMAP4 folder => $ENV{MAIL}, ...;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 UNDER DEVELOPMENT: CANNOT BE USED YET!
 
@@ -32,17 +32,7 @@ using the IMAP4 protocol.  This class uses Mail::Transport::IMAP4 to
 hide the transport of information, and focusses solely on the correct
 handling of messages within a IMAP4 folder.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -52,10 +42,10 @@ specify a pop-client object, or separate options for user, password,
 pop-server and server-port.
 
 =default server_port  143
-=default message_type 'Mail::Box::IMAP4::Message'
+=default message_type M<Mail::Box::IMAP4::Message>
 
 =option  authenticate 'KERBEROS_V4'|'GSSAPI'|'SKEY'|'AUTO'
-=default authenticate 'AUTO'
+=default authenticate C<'AUTO'>
 
 IMAP defines various authentications mechanisms.
 See Mail::Transport::IMAP4::new(authenticate).
@@ -64,7 +54,7 @@ See Mail::Transport::IMAP4::new(authenticate).
 =default imap_client undef
 
 You may want to specify your own imap-client object.  The object
-which is passed must extend Mail::Transport::IMAP4.
+which is passed must extend M<Mail::Transport::IMAP4>.
 
 =option  sub_sep CHARACTER
 =default sub_sep <autodetect>
@@ -97,13 +87,6 @@ sub init($)
     $self;
 }
 
-
-#-------------------------------------------
-
-=head2 Opening folders
-
-=cut
-
 #-------------------------------------------
 
 sub create($@)
@@ -125,19 +108,7 @@ sub foundIn(@)
 
 #-------------------------------------------
 
-=head2 On open folders
-
-=cut
-
-#-------------------------------------------
-
 sub type() {'imap4'}
-
-#-------------------------------------------
-
-=head2 Closing the folder
-
-=cut
 
 #-------------------------------------------
 
@@ -149,12 +120,6 @@ sub close()
 
     $self->SUPER::close;
 }
-
-#-------------------------------------------
-
-=head2 Sub-folders
-
-=cut
 
 #-------------------------------------------
 
@@ -185,15 +150,11 @@ sub nameOfSubfolder($)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method imapClient
 
-Returns the imap client object: a Mail::Transport::IMAP4 object.
+Returns the IMAP client object: a M<Mail::Transport::IMAP4> object.
 This does not establish the connection.
 
 =error Cannot create IMAP4 client $url.
@@ -371,11 +332,13 @@ sub writeMessages($@)
 
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=section Error handling
 
-=head2 How IMAP4 folders work
+=chapter DETAILS
 
-=head2 This implementation
+=section How IMAP4 folders work
+
+=section This implementation
 
 =cut
 

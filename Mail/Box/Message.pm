@@ -8,11 +8,11 @@ use base 'Mail::Message';
 use Date::Parse;
 use Scalar::Util 'weaken';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Message - manage one message within a mail-folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  # Usually these message objects are created indirectly
  use Mail::Box::Manager;
@@ -22,34 +22,23 @@ Mail::Box::Message - manage one message within a mail-folder
  $msg->delete;
  $msg->size;   # and much more
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 These pages do only describe methods which relate to folders.  If you
-access the knowledge of a message, then read Mail::Message.
+access the knowledge of a message, then read M<Mail::Message>.
 
 During its life, a message will pass through certain stages.  These
 stages were introduced to reduce the access-time to the folder.  Changing
 from stage, the message's body and head objects may change.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=option  folder FOLDER
-=default folder <required>
+=requires folder FOLDER
 
-(obligatory) The folder where this message appeared in.  The argument is
-an instance of (a sub-class of) a Mail::Box.
+The folder where this message appeared in.  The argument is
+an instance of (a sub-class of) a M<Mail::Box>.
 
 =option  body_type CODE|CLASS
 =default body_type <from folder>
@@ -90,13 +79,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Constructing a Message
-
-=cut
-
-#-------------------------------------------
-
-=method coerce MESSAGE
+=c_method coerce MESSAGE
 
 Coerce a message to be included in a folder.  The folder itself
 is not specified, but the type of the message is transformed correctly.
@@ -117,11 +100,34 @@ sub coerce($)
 
 #-------------------------------------------
 
-=head2 The Message
+sub head(;$)
+{   my $self  = shift;
+    return $self->SUPER::head unless @_;
 
-=cut
+    my $new   = shift;
+    my $old   = $self->head;
+    $self->SUPER::head($new);
+
+    return unless defined $new || defined $old;
+
+    my $folder = $self->folder
+        or return $new;
+
+    if(!defined $new && defined $old && !$old->isDelayed)
+    {   $folder->messageId($self->messageId, undef);
+        $folder->toBeUnthreaded($self);
+    }
+    elsif(defined $new && !$new->isDelayed)
+    {   $folder->messageId($self->messageId, $self);
+        $folder->toBeThreaded($self);
+    }
+
+    $new || $old;
+}
 
 #-------------------------------------------
+
+=section The Message
 
 =method folder [FOLDER]
 
@@ -179,7 +185,7 @@ sub copyTo($)
 =method moveTo FOLDER
 
 Move the message from this folder to the FOLDER specified.  This will
-create a copy (using clone()) first, and flag this original message
+create a copy using M<clone()> first, and flag this original message
 to be deleted.  So until the source folder is closed, two copies of
 the message stay in memory.  The newly created message (part of the
 destination folder) is returned.
@@ -195,49 +201,12 @@ sub moveTo($)
 
 #-------------------------------------------
 
-=head2 The Header
-
-=cut
-
-#-------------------------------------------
-
-sub head(;$)
-{   my $self  = shift;
-    return $self->SUPER::head unless @_;
-
-    my $new   = shift;
-    my $old   = $self->head;
-    $self->SUPER::head($new);
-
-    return unless defined $new || defined $old;
-
-    my $folder = $self->folder
-        or return $new;
-
-    if(!defined $new && defined $old && !$old->isDelayed)
-    {   $folder->messageId($self->messageId, undef);
-        $folder->toBeUnthreaded($self);
-    }
-    elsif(defined $new && !$new->isDelayed)
-    {   $folder->messageId($self->messageId, $self);
-        $folder->toBeThreaded($self);
-    }
-
-    $new || $old;
-}
-
-#-------------------------------------------
-
-=head2 Labels
-
-=cut
-
-#-------------------------------------------
+=section Flags
 
 =method delete
 
 Flag the message to be deleted.  The real deletion only takes place on
-a synchronization of the folder.  See deleted().
+a synchronization of the folder.  See M<deleted()> as well.
 
 The time stamp of the moment of deletion is stored as value.  When the same
 message is deleted more than once, the first time stamp will stay.
@@ -256,9 +225,9 @@ sub delete() { shift->{MBM_deleted} ||= time }
 
 =method deleted [BOOLEAN]
 
-Set the delete flag for this message.  Without argument, the method returns
-the same is the isDeleted() method, which is prefered.  When a true value
-is given, delete() is called.
+Set the delete flag for this message.  Without argument, the method
+returns the same as M<isDeleted()>, which is prefered.  When a true
+value is given, M<delete()> is called.
 
 =examples
 
@@ -301,57 +270,17 @@ sub isDeleted() { shift->{MBM_deleted} }
 
 #-------------------------------------------
 
-=head2 Logging and Tracing
-
-=cut
-
-#-------------------------------------------
-
-=method shortString
-
-Convert the message header to a short string, representing the most
-important facts (for debugging purposes only).
-
-=cut
-
-sub shortSize(;$)
-{   my $self = shift;
-    my $size = shift || $self->head->guessBodySize;
-
-      !defined $size     ? '?'
-    : $size < 1_000      ? sprintf "%3d "  , $size
-    : $size < 10_000     ? sprintf "%3.1fK", $size/1024
-    : $size < 100_000    ? sprintf "%3.0fK", $size/1024
-    : $size < 1_000_000  ? sprintf "%3.2fM", $size/(1024*1024)
-    : $size < 10_000_000 ? sprintf "%3.1fM", $size/(1024*1024)
-    :                      sprintf "%3.0fM", $size/(1024*1024);
-}
-
-sub shortString()
-{   my $self    = shift;
-    my $subject = $self->head->get('subject') || '';
-    chomp $subject;
-
-    sprintf "%4s(%2d) %-30.30s", $self->shortSize, $subject;
-}
-
-#-------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method readBody PARSER, HEAD [, BODYTYPE]
 
 Read the body of one message.  The PARSER gives access to the folder file.
-The HEAD has been read with readHead().  The optional BODYTYPE supplies
+The HEAD has been read with M<readHead()>.  The optional BODYTYPE supplies
 the class name of the body to be created, or a code reference to a
 routine which can produce a body type based on the head (passed as
 first argument).
 
-By default, the BODYTYPE will call Mail::Box::determineBodyType()
+By default, the BODYTYPE will call M<Mail::Box::determineBodyType()>
 where the message will be added to.
 
 =cut
@@ -385,6 +314,38 @@ sub forceLoad() {   # compatibility
    my $self = shift;
    $self->loadBody(@_);
    $self;
+}
+
+#-------------------------------------------
+
+=section Error handling
+
+=method shortString
+
+Convert the message header to a short string, representing the most
+important facts (for debugging purposes only).
+
+=cut
+
+sub shortSize(;$)
+{   my $self = shift;
+    my $size = shift || $self->head->guessBodySize;
+
+      !defined $size     ? '?'
+    : $size < 1_000      ? sprintf "%3d "  , $size
+    : $size < 10_000     ? sprintf "%3.1fK", $size/1024
+    : $size < 100_000    ? sprintf "%3.0fK", $size/1024
+    : $size < 1_000_000  ? sprintf "%3.2fM", $size/(1024*1024)
+    : $size < 10_000_000 ? sprintf "%3.1fM", $size/(1024*1024)
+    :                      sprintf "%3.0fM", $size/(1024*1024);
+}
+
+sub shortString()
+{   my $self    = shift;
+    my $subject = $self->head->get('subject') || '';
+    chomp $subject;
+
+    sprintf "%4s(%2d) %-30.30s", $self->shortSize, $subject;
 }
 
 #-------------------------------------------

@@ -4,18 +4,18 @@ use warnings;
 package Mail::Transport::Receive;
 use base 'Mail::Transport';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::Receive - receive messages
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $receiver = Mail::Transport::POP3->new(...);
  my $message = $receiver->receive($id);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Each object which extends L<Mail::Transport::Receive> implement
+Each object which extends M<Mail::Transport::Receive> implement
 a protocol which can get messages into your application.  The internals
 of each implementation can differ quite a lot, so have a look at each
 separate manual page as well.
@@ -24,35 +24,15 @@ Current message receivers:
 
 =over 4
 
-=item * Mail::Transport::POP3
+=item * M<Mail::Transport::POP3>
 
-Implements the POP3 protocol.  See also Mail::Box::POP3.
+Implements the POP3 protocol.  See also M<Mail::Box::POP3>.
 
 =back
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 Receiving Mail
-
-=cut
-
-#------------------------------------------
+=section Receiving mail
 
 =method receive [UNIQUE-MESSAGE-ID]
 
@@ -65,5 +45,11 @@ specified ID.
 sub receive(@) {shift->notImplemented}
 
 #------------------------------------------
+
+=section Server connection
+
+=section Error handling
+
+=cut
 
 1;

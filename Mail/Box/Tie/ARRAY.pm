@@ -4,11 +4,11 @@ package Mail::Box::Tie::ARRAY;
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Tie::ARRAY - access an existing message folder as array
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Manager;
  my $mgr    = Mail::Box::Manager->new;
@@ -34,7 +34,7 @@ Mail::Box::Tie::ARRAY - access an existing message folder as array
  my $folder = tied @inbox;
  untie @inbox;
    
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Certainly when you look at a folder as a list of messages, it is logical to
 access the folder through an array.
@@ -47,23 +47,15 @@ Examples what you I<cannot> do:
 
  shift/unshift/pop/splice @inbox;
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
+=section Constructors
 
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
-
-=no_method tie ARRAY, 'Mail::Box::Tie::ARRAY', FOLDER
+=tie TIEARRAY 'Mail::Box::Tie::ARRAY', FOLDER
 
 Create the tie on an existing folder.
 
-=examples
+=example tie an array to a folder
 
  my $mgr   = Mail::Box::Manager->new;
  my $inbox = $mgr->new(folder => $ENV{MAIL});
@@ -81,21 +73,19 @@ sub TIEARRAY(@)
 
 #-------------------------------------------
 
-=head2 Tied Interface
-
-=cut
-
-#-------------------------------------------
+=section Tied Interface
 
 =method FETCH INDEX
 
 Get the message which is at the indicated location in the list of
 messages contained in this folder.  Deleted messages will be returned
-as C<undef>
+as C<undef>.
 
 =example
 
- print $inbox[3];
+ print $inbox[3];     # 4th message in the folder
+ print @inbox[3,0];   # 4th and first of the folder
+ print $inbox[-1];    # last message
 
 =cut
 
@@ -112,11 +102,12 @@ sub FETCH($)
 Random message replacement is is not permitted--doing so would disturb threads
 etc.  An error occurs if you try to do this. The only thing which is allowed
 is to store a message at the first free index at the end of the folder (which
-is also achievable with PUSH--see below).
+is also achievable with M<PUSH()>).
 
 =examples
 
- $inbox[$#inbox] = $add;
+ $inbox[8] = $add;
+ $inbox[-1] = $add;
  push @inbox, $add;
 
 =cut
@@ -126,7 +117,7 @@ sub STORE($$)
     my $folder = $self->{MBT_folder};
 
     croak "Cannot simply replace messages in a folder: use delete old, then push new."
-        if $index != $folder->messages;
+        unless $index == $folder->messages;
 
     $folder->addMessages($msg);
     $msg;
@@ -202,17 +193,15 @@ sub STORESIZE($)
 
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=chapter DETAILS
 
 This module implements C<TIEARRAY>, C<FETCH>, C<STORE>, C<FETCHSIZE>,
 C<STORESIZE>, C<DELETE>, C<PUSH>, and C<DESTROY>.
 
 This module does not implement all other methods as described in
-the Tie::Array documentation, because the real array of messages
+the M<Tie::Array> documentation, because the real array of messages
 is not permitted to shrink or be mutilated.
 
 =cut
-
-#-------------------------------------------
 
 1;

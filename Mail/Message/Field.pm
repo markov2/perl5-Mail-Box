@@ -11,24 +11,13 @@ use Date::Parse;
 our %_structured;  # not to be used directly: call isStructured!
 my $default_wrap_length = 78;
 
-use overload qq("") => sub { $_[0]->unfoldedBody }
-           , '+0'   => 'toInt'
-           , bool   => sub {1}
-           , cmp    => sub { $_[0]->unfoldedBody cmp "$_[1]" }
-           , '<=>'  => sub { $_[2]
-                           ? $_[1]        <=> $_[0]->toInt
-                           : $_[0]->toInt <=> $_[1]
-                           }
-           , fallback => 1;
-
-
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field - one line of a message header
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- my $field = Mail::Message::Field->new(From => 'me@example.com');
+ my $field = Mail::Message::Field->new(From => 'fish@tux.aq');
  print $field->name;
  print $field->body;
  print $field->comment;
@@ -38,7 +27,7 @@ Mail::Message::Field - one line of a message header
  print "$field\n";
  print $field->attribute('charset') || 'us-ascii';
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 These objects each store one header line, and facilitates access routines to
 the information hidden in it.  Also, you may want to have a look at the
@@ -56,7 +45,7 @@ added methods of a message:
 
  my $other   = $message->get('Reply-To');
 
-=head2 Header Fields
+=section Header fields
 
 This implementation follows the guidelines of rfc2822 as close as possible,
 and may there produce a different output than implementations based on
@@ -69,7 +58,7 @@ indicates the start of something refered to as I<comment>.  This comment
 is often used to contain I<attributes>: key-value pairs of information,
 which is of course much more important than simply accompanying text.
 
-=head2 folding
+=section Folding
 
 Many implementations of mail transfer agents (MTAs) have problems with
 lines longer than 998 characters.  Many implementations of mail user agents
@@ -88,50 +77,109 @@ Some fields are called C<structured>: their structure is well-defined by
 the RFC.  In these fields, their is more flexibility where folding may
 take place.  Other fields only permit folding on white-spaces.
 
-=head2 consideration
+=section Performance consideration
 
-Mail::Message::Field is the only object in the Mail::Box suite
-which is not derived from a Mail::Reporter.  The consideration is
+C<Mail::Message::Field> is the only object in the Mail::Box suite
+which is not derived from a C<Mail::Reporter>.  The consideration is
 that fields are so often created, and such a small objects at the
 same time, that setting-up a logging for each of the objects is relatively
 expensive and not really useful.
 
-For the same reason, the are two types of fields: the flexible and
-the fast:
+On the other hand: full understanding of fields is really, really
+expensive.  It should be used as rarely as possible to keep a little
+performance in your program.
+
+For this performance reason only, the are three types of fields: the
+fast, the flexible, and the full understander:
 
 =over 4
 
-=item * Mail::Message::Field::Flex
+=item * M<Mail::Message::Field::Flex>
 
-The flexible implementation uses a has to store the data.  The new()
+The flexible implementation uses a has to store the data.  The M<new()>
 and C<init> are split, so this object is extensible.
 
-=item * Mail::Message::Field::Fast
+=item * M<Mail::Message::Field::Fast>
 
 The fast implementation uses an array to store the same data.  That
 will be faster.  Furthermore, it is less extensible because the object
 creation and initiation is merged into one method.
 
+=item * M<Mail::Message::Field::Full>
+
+With a full implementation of all applicable RFCs (about 5), the best
+understanding of the fields is reached.  However, this comes with
+a serious memory and performance penalty.  These objects are created
+from fast or flex header fields when M<Mail::Message::study()> or
+M<Mail::Message::Head::study()> are called.
+
 =back
 
 As user of the object, there is not visible difference.
 
-=head1 METHODS
+=chapter OVERLOADED
+
+=overload ""
+
+(stringification) produces the unfolded body of the field, which may
+be what you expect.  This is what makes what the field object seems
+to be a simple string. The string is produced by M<unfoldedBody()>.
+
+=example
+
+ print $msg->get('subject');  # via overloading
+ print $msg->get('subject')->unfoldedBody; # same
+
+ my $subject = $msg->get('subject') || 'your mail';
+ print "Re: $subject\n";
+
+=overload +0
+
+(numification) When the field is numeric, the value will be returned.
+The result is produced by M<toInt()>.  If the value is not correct,
+a C<0> is produced, to simplify calculations.
+
+=overload bool
+
+Always true, to make it possible to say C<if($field)>.
+
+=overload cmp
+
+(string comparison) Compare the unfolded body of a field with an other
+field or a string, using the buildin C<cmp>.
+
+=overload <=>
+
+(numeric comparison) Compare the integer field contents with something
+else.
+
+=example
+
+ if($msg->get('Content-Length') > 10000) ...
+ if($msg->size > 10000) ... ; # same, but better
 
 =cut
 
+use overload qq("") => sub { $_[0]->unfoldedBody }
+           , '+0'   => sub { $_[0]->toInt || 0 }
+           , bool   => sub {1}
+           , cmp    => sub { $_[0]->unfoldedBody cmp "$_[1]" }
+           , '<=>'  => sub { $_[2]
+                           ? $_[1]        <=> $_[0]->toInt
+                           : $_[0]->toInt <=> $_[1]
+                           }
+           , fallback => 1;
+
 #------------------------------------------
 
-=head2 Initiation
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
+=section Constructors
 
 =c_method new DATA
 
-See Mail::Message::Field::Fast::new(), Mail::Message::Field::Flex::new(),
-and Mail::Message::Field::Full::new().
+See M<Mail::Message::Field::Fast::new()>, M<Mail::Message::Field::Flex::new()>,
+and M<Mail::Message::Field::Full::new()>.
 By default, a C<Fast> field is produced.
 
 =cut
@@ -147,12 +195,6 @@ sub new(@)
 
 #------------------------------------------
 
-=head2 The Field
-
-=cut
-
-#------------------------------------------
-
 =method clone
 
 Create a copy of this field object.
@@ -160,6 +202,8 @@ Create a copy of this field object.
 =cut
 
 #------------------------------------------
+
+=section The field
 
 =method length
 
@@ -170,9 +214,12 @@ field's name, body and folding characters.
 
 #------------------------------------------
 
-=method isStructured
+=ci_method isStructured
 
-(object method or class method)
+Some fields are described in the RFCs as being I<structured>: having a
+well described syntax.  These fields have common ideas about comments
+and the like, what they do not share with unstructured fields, like
+the C<Subject> field.
 
 =examples
 
@@ -204,28 +251,93 @@ sub isStructured(;$)
 
 #------------------------------------------
 
-=head2 Access to the Field
+=method print [FILEHANDLE]
+
+Print the whole header-line to the specified file-handle. One line may
+result in more than one printed line, because of the folding of long
+lines.  The FILEHANDLE defaults to the selected handle.
 
 =cut
 
+sub print(;$)
+{   my $self = shift;
+    my $fh   = shift || select;
+    $fh->print(scalar $self->folded);
+}
+
 #------------------------------------------
+
+=method string [WRAP]
+
+Returns the field as string.  By default, this returns the same as
+M<folded()>. However, the optional WRAP will cause to re-fold to take
+place (without changing the folding stored inside the field).
+
+=cut
+
+sub toString(;$) {my $self = shift;$self->string(@_)}
+sub string(;$)
+{   my $self  = shift;
+    return $self->folded unless @_;
+
+    my $wrap  = shift || $default_wrap_length;
+    my $name  = $self->Name;
+    my @lines = $self->fold($name, $self->unfoldedBody, $wrap);
+    $lines[0] = $name . ':' . $lines[0];
+    wantarray ? @lines : join('', @lines);
+}
+
+#------------------------------------------
+
+=method toDisclose
+
+Returns whether this field can be disclosed to other people, for instance
+when sending the message to an other party.  Returns a C<true> or C<false>
+condition.
+See also M<Mail::Message::Head::Complete::printUndisclosed()>.
+
+=cut
+
+sub toDisclose()
+{   shift->name !~ m!^(?: (?:x-)?status
+                      |   (?:resent-)?bcc
+                      |   Content-Length
+                      |   x-spam-
+                      ) $!x;
+}
+
+#------------------------------------------
+
+=method nrLines
+
+Returns the number of lines needed to display this header-line.
+
+=cut
+
+sub nrLines() { my @l = shift->foldedBody; scalar @l }
+
+#------------------------------------------
+
+=method size
+
+Returns the number of bytes needed to display this header-line.
+
+=cut
+
+sub size() {length shift->toString}
+
+#------------------------------------------
+
+=section Access to the name
 
 =method name
 
 Returns the name of this field, with all characters lower-cased for
-ease of comparison.  See Name() as well.
-
-=cut
-
-#------------------------------------------
+ease of comparison.  See M<Name()> as well.
 
 =method Name
 
-Returns the name of this field in original casing.  See name() as well.
-
-=cut
-
-#------------------------------------------
+Returns the name of this field in original casing.  See M<name()> as well.
 
 =method wellformedName [STRING]
 
@@ -235,10 +347,12 @@ and returned.  When a STRING is used, that one is formatted.
 
 =examples
 
- print Mail::Message::Field->Name('content-type') # Content-Type
+ print Mail::Message::Field->Name('content-type')
+   # -->  Content-Type
 
  my $field = $head->get('date');
- print $field->Name;                              # Date
+ print $field->Name;
+   # -->  Date
 
 =cut
 
@@ -264,15 +378,18 @@ sub wellformedName(;$)
 
 #------------------------------------------
 
+=section Access to the body
+
 =method folded
 
-Returns the folded version of the whole header.  When the header is shorter
-than the wrap length, a list of one line is returned.  Otherwise more
-lines will be returned, all but the first starting with at least one blank.
-See also foldedBody() to get the same information without the field's name.
+Returns the folded version of the whole header.  When the header is
+shorter than the wrap length, a list of one line is returned.  Otherwise
+more lines will be returned, all but the first starting with at least
+one blank.  See also M<foldedBody()> to get the same information without
+the field's name.
 
 In scalar context, the lines are delived into one string, which is
-faster because that's the way they are stored...
+a little faster because that's the way they are stored internally...
 
 =examples
 
@@ -286,13 +403,14 @@ faster because that's the way they are stored...
 
 =method body
 
+This method may be what you want, but usually, the M<foldedBody()> and
+M<unfoldedBody()> are what you are looking for.  This method is
+cultural heritage, and should be avoided.
+
 Returns the body of the field.  When this field is structured, it will
 be B<stripped> from everything what is behind the first semi-color (C<;>).
 In aby case, the string is unfolded.  
-
-Whether the field is structured is defined by isStructured().
-This method may be what you want, but usually, the foldedBody() and
-unfoldedBody() are what you are looking for.
+Whether the field is structured is defined by M<isStructured()>.
 
 =cut
 
@@ -338,15 +456,65 @@ folding size.
 
 #------------------------------------------
 
+=ci_method stripCFWS [STRING]
+
+Remove the I<comments> and I<folding white
+spaces> from the STRING.  Without string and only as instance method, the
+M<unfoldedBody()> is being stripped and returned.
+
+WARNING: This operation is only allowed for structured header fields (which
+are defined by the various RFCs as being so.  You don't want parts within
+braces which are in the Subject header line to be removed, to give an
+example.
+
+=cut
+
+sub stripCFWS($)
+{   my $thing  = shift;
+
+    # get (folded) data
+    my $string = @_ ? shift : $thing->foldedBody;
+
+    # remove comments
+    my $r          = '';
+    my $in_dquotes = 0;
+    my $open_paren = 0;
+
+    my @s = split m/([()"])/, $string;
+    while(@s)
+    {   my $s = shift @s;
+
+           if(length $r && substr($r, -1) eq "\\") { $r .= $s } # esc'd special
+        elsif($s eq '"')   { $in_dquotes = not $in_dquotes; $r .= $s }
+        elsif($s eq '(' && !$in_dquotes) { $open_paren++ }
+        elsif($s eq ')' && !$in_dquotes) { $open_paren-- }
+        elsif($open_paren) {}  # in comment
+        else               { $r .= $s }
+    }
+
+    # beautify and unfold at the same time
+    for($r)
+    {  s/\s+/ /gs;
+       s/\s+$//;
+       s/^\s+//;
+    }
+
+    $r;
+}
+
+#------------------------------------------
+
+=section Access to the content
+
 =method comment [STRING]
 
 Returns the unfolded comment (part after a semi-colon) in a structureed
 header-line. optionally after setting it to a new STRING first.
 When C<undef> is specified as STRING, the comment is removed.
-Whether the field is structured is defined by isStructured().
+Whether the field is structured is defined by M<isStructured()>.
 
 The I<comment> part of a header field often contains C<attributes>.  Often
-it is preferred to use attributes() on them.
+it is preferred to use M<attribute()> on them.
 
 =cut
 
@@ -383,11 +551,19 @@ returned.
 =examples
 
  my $field = Mail::Message::Field->new(
-    'Content-Type: text/plain; charset="us-ascii"');
+  'Content-Type: text/plain; charset="us-ascii"');
 
- print $field->attribute('charset');        # --> us-ascii
- print $field->attribute('bitmap') || 'no'  # --> no
- $field->atrribute(filename => '/tmp/xyz'); # sets field
+ print $field->attribute('charset');
+   # --> us-ascii
+
+ print $field->attribute('bitmap') || 'no'
+   # --> no
+
+ $field->atrribute(filename => '/tmp/xyz');
+ $field->print;
+   # --> Content-Type: text/plain; charset="us-ascii";
+   #       filename="/tmp/xyz"
+   # Automatically folded, and no doubles created.
 
 =cut
 
@@ -426,44 +602,6 @@ sub attribute($;$)
 
     $self->unfoldedBody($body);
     $value;
-}
-
-#------------------------------------------
-
-=method print [FILEHANDLE]
-
-Print the whole header-line to the specified file-handle. One line may
-result in more than one printed line, because of the folding of long
-lines.  The FILEHANDLE defaults to the selected handle.
-
-=cut
-
-sub print(;$)
-{   my $self = shift;
-    my $fh   = shift || select;
-    $fh->print($self->folded);
-}
-
-#------------------------------------------
-
-=method string [WRAP]
-
-Returns the field as string.  By default, this returns the same as
-folded(). However, the optional WRAP will cause to re-fold to take
-place (without changing the folding stored inside the field).
-
-=cut
-
-sub toString(;$) {my $self = shift;$self->string(@_)}
-sub string(;$)
-{   my $self  = shift;
-    return $self->folded unless @_;
-
-    my $wrap  = shift || $default_wrap_length;
-    my $name  = $self->Name;
-    my @lines = $self->fold($name, $self->unfoldedBody, $wrap);
-    $lines[0] = $name . ':' . $lines[0];
-    wantarray ? @lines : join('', @lines);
 }
 
 #------------------------------------------
@@ -510,62 +648,35 @@ your timezone set right, especially when this script runs automatically.
 
 =cut
 
+my @weekday = qw/Sun Mon Tue Wed Thu Fri Sat Sun/;
+my @month   = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
+
 sub toDate($)
 {   my $class = shift;
     use POSIX 'strftime';
     my @time  = @_ ? localtime(shift) : localtime;
-    strftime "%a, %d %b %Y %H:%M:%S %z", @time;
+    strftime "$weekday[$time[6]], %d $month[$time[4]] %Y %H:%M:%S %z", @time;
 }
 
 #------------------------------------------
 
-=ci_method stripCFWS [STRING]
+=method addresses
 
-Remove the I<comments> and I<folding white
-spaces> from the STRING.  Without string and only as instance method, the
-unfoldedBody() is being stripped and returned.
+Returns a list of M<Mail::Address> objects, which represent the
+e-mail addresses found in this header line.
 
-WARNING: This operation is only allowed for structured header fields (which
-are defined by the various RFCs as being so.  You don't want parts within
-braces which are in the Subject header line to be removed, to give an
-example.
+=example
+
+ my @addr = $message->head->get('to')->addresses;
+ my @addr = $message->to;
 
 =cut
 
-sub stripCFWS($)
-{   my $thing  = shift;
+sub addresses() { Mail::Address->parse(shift->unfoldedBody) }
 
-    # get (folded) data
-    my $string = @_ ? shift : $thing->foldedBody;
-
-    # remove comments
-    my $r          = '';
-    my $in_dquotes = 0;
-    my $open_paren = 0;
-
-    my @s = split m/([()"])/, $string;
-    while(@s)
-    {   my $s = shift @s;
-
-           if(length $r && substr($r, -1) eq "\\") { $r .= $s } # esc'd special
-        elsif($s eq '"')   { $in_dquotes = not $in_dquotes; $r .= $s }
-        elsif($s eq '(' && !$in_dquotes) { $open_paren++ }
-        elsif($s eq ')' && !$in_dquotes) { $open_paren-- }
-        elsif($open_paren) {}  # in comment
-        else               { $r .= $s }
-    }
-
-    # beautify and unfold at the same time
-    for($r)
-    {  s/\s+/ /gs;
-       s/\s+$//;
-       s/^\s+//;
-    }
-
-    $r;
-}
-      
 #------------------------------------------
+
+=section Other methods
 
 =ci_method dateToTimestamp STRING
 
@@ -583,68 +694,10 @@ sub dateToTimestamp($)
     str2time($string, 'GMT');
 }
 
-#------------------------------------------
-
-=method addresses
-
-Returns a list of Mail::Address objects, which represent the
-e-mail addresses found in this header line.
-
-=example
-
- my @addr = $message->head->get('to')->addresses;
- my @addr = $message->to;
-
-=cut
-
-sub addresses() { Mail::Address->parse(shift->unfoldedBody) }
 
 #------------------------------------------
 
-=method nrLines
-
-Returns the number of lines needed to display this header-line.
-
-=cut
-
-sub nrLines() { my @l = shift->foldedBody; scalar @l }
-
-#------------------------------------------
-
-=method size
-
-Returns the number of bytes needed to display this header-line.
-
-=cut
-
-sub size() {length shift->toString}
-
-#------------------------------------------
-
-=method toDisclose
-
-Returns whether this field can be disclosed to other people, for instance
-when sending the message to an other party.  Returns a C<true> or C<false>
-condition.
-See also Mail::Message::printUndisclosed()
-
-=cut
-
-sub toDisclose()
-{   shift->name !~ m!^(?: (?:x-)?status
-                      |   (?:resent-)?bcc
-                      |   Content-Length
-                      |   x-spam-
-                      ) $!x;
-}
-
-#------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
+=section Internals
 
 =method consume LINE | (NAME,BODY|OBJECTS)
 
@@ -653,7 +706,7 @@ the latter case, the BODY data may be specified as array of OBJECTS which
 are stringified.  Returned is a nicely formatted pair of two strings: the
 field's name and a folded body.
 
-This method is called by new(), and usually not be an application
+This method is called by M<new()>, and usually not be an application
 program.
 
 =warning Illegal character in field name $name
@@ -716,7 +769,7 @@ sub consume($;$)
 =method setWrapLength [LENGTH]
 
 Force the wrapping of this field to the specified LENGTH characters. The
-wrapping is performed with fold() and the results stored within
+wrapping is performed with M<fold()> and the results stored within
 the field object.
 
 Without LENGTH, the message will be folded, unless it is already folded.
@@ -805,8 +858,8 @@ sub fold($$;$)
 
 =method unfold STRING
 
-The reverse of fold(): all lines which form the body of a field are
-joined into one by removing all line terminators (even the last).
+The reverse action of M<fold()>: all lines which form the body of a field
+are joined into one by removing all line terminators (even the last).
 Possible leading blanks on the first line are removed as well.
 
 =cut
@@ -821,5 +874,9 @@ sub unfold($)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

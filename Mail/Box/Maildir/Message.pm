@@ -7,37 +7,21 @@ use File::Copy;
 use Carp;
 use warnings;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Maildir::Message - one message in a Maildir folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder = new Mail::Box::Maildir ...
  my $message = $folder->message(10);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Box::Maildir::Message represents one message in an
-Maildir-folder. Each message is stored in a separate file.
+A C<Mail::Box::Maildir::Message> represents one message in an
+M<Mail::Box::Maildir> folder. Each message is stored in a separate file.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =method filename [FILENAME]
 
@@ -84,15 +68,9 @@ sub filename(;$)
 
 #-------------------------------------------
 
-=head2 Header Shortcuts
-
-=cut
-
-#-------------------------------------------
-
 =method guessTimestamp
 
-The filename of a Mail::Box::Maildir::Message contains a timestamp.  This
+The filename of a C<Mail::Box::Maildir::Message> contains a timestamp.  This
 is a wild guess about the actual time of sending of the message: it is the
 time of receipt which may be seconds to hours off.  But is still a good
 guess...  When the message header is not parsed, then this date is used.
@@ -106,12 +84,6 @@ sub guessTimestamp()
 
     $self->filename =~ m/(\d+)/ ? $1 : undef;
 }
-
-#-------------------------------------------
-
-=head2 Labels
-
-=cut
 
 #-------------------------------------------
 
@@ -138,11 +110,7 @@ sub label(@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method accept
 

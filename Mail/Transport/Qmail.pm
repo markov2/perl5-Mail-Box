@@ -6,36 +6,26 @@ use base 'Mail::Transport::Send';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::Qmail - transmit messages using external Qmail program
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $sender = Mail::Transport::Qmail->new(...);
  $sender->send($message);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Implements mail transport using the external programs C<'qmail-inject'>,
 part of the qmail mail-delivery system.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default proxy 'qmail-inject'
-=default via 'qmail'
+=default proxy C<'qmail-inject'>
+=default via C<'qmail'>
 
 =cut
 
@@ -53,16 +43,6 @@ sub init($)
 
     $self;
 }
-
-#------------------------------------------
-
-=head2 Sending Mail
-
-=error Errors when closing Qmail mailer $program: $!
-
-The qmail mailer could be started, but did not accept the message correctly.
-
-=cut
 
 #------------------------------------------
 

@@ -5,17 +5,17 @@ use warnings;
 package Mail::Message::TransferEnc::SevenBit;
 use base 'Mail::Message::TransferEnc';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::TransferEnc::SevenBit - encode/decode 7bit message bodies
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $decoded = $msg->decoded;
  my $encoded = $msg->encode(transfer => '7bit');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Encode or decode message bodies for 7bit transfer encoding.  This is
 only very little encoding.  According to the specs:
@@ -32,37 +32,11 @@ RFC-2045 Section 2.7 defines legal `7bit' data:
 As you can safely conclude: decoding of these bodies is no work
 at all.
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 The Encoder
-
-=cut
-
-#------------------------------------------
 
 sub name() { '7bit' }
-
-#------------------------------------------
-
-=head2 Encoding
-
-=cut
 
 #------------------------------------------
 

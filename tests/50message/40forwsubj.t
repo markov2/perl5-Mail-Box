@@ -10,7 +10,7 @@ use warnings;
 use lib qw(. t);
 
 use Tools;
-use Mail::Message::Construct;
+use Mail::Message::Construct::Forward;
 
 BEGIN {plan tests => 7}
 

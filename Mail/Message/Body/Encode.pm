@@ -10,11 +10,11 @@ use Carp;
 use MIME::Types;
 my MIME::Types $mime_types;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body::Encode - organize general message encodings
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $decoded = $msg->decoded;
@@ -25,11 +25,11 @@ Mail::Message::Body::Encode - organize general message encodings
  my $decoded = $body->decoded;
  my $encoded = $body->encode(transfer_encoding => '7bit');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Manages the message's body encodings and decodings on request of the
-main program.  This package adds functionality to the Mail::Message::Body
-class when the C<decoded> or C<encode> method is called.
+main program.  This package adds functionality to the M<Mail::Message::Body>
+class when the M<decoded()> or M<encode()> method is called.
 
 Four types of encodings are handled (in the right order)
 
@@ -49,7 +49,7 @@ characters and binary files (like images and archives) must be encoded
 during transmission to an ASCII representation.
 
 The implementation of the required encoders and decoders is found in
-the Mail::Message::TransferEnc set of packages.  The related
+the M<Mail::Message::TransferEnc> set of packages.  The related
 manual page lists the transfer encodings which are supported.
 
 =item * mime-type translation
@@ -62,55 +62,14 @@ NOT IMPLEMENTED YET
 
 =back
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
 
-#------------------------------------------
-
-=head2 About the Payload
-
-=cut
-
-#------------------------------------------
-
-=method isBinary
-
-Returns true when the un-encoded message is binary data.  This information
-is retrieved from knowledge provided by MIME::Types.
-
-=cut
-
-sub isBinary()
-{   my $self = shift;
-    $mime_types ||= MIME::Types->new(only_complete => 1);
-    my $type = $self->type                    or return 1;
-    my $mime = $mime_types->type($type->body) or return 1;
-    $mime->isBinary;
-}
- 
-#------------------------------------------
-
-=method isText
-
-Returns true when the un-encoded message contains printable
-text.
-
-=cut
-
-sub isText() { not shift->isBinary }
-
-#------------------------------------------
-
-=head2 Constructing a Body
-
-=cut
-
-#------------------------------------------
+=section Constructing a body
 
 =method encode OPTIONS
 
-Encode (translate) a Mail::Message::Body object into a different format.
+Encode (translate) a M<Mail::Message::Body> into a different format.
 See the DESCRIPTION above.  Options which are not specified will not trigger
 conversions.
 
@@ -121,7 +80,7 @@ conversions.
 =default mime_type undef
 
 Convert into the specified mime type, which can be specified as STRING
-or FIELD.  The FIELD is a Mail::Message::Field, and the STRING is
+or FIELD.  The FIELD is a M<Mail::Message::Field>, and the STRING is
 converted in such object before use.
 
 =option  result_type CLASS
@@ -129,7 +88,7 @@ converted in such object before use.
 
 The type of body to be created when the body is changed to fulfill the request
 on re-coding.  Also the intermediate stages in the translation process (if
-needed) will use this type. CLASS must extend Mail::Message::Body.
+needed) will use this type. CLASS must extend M<Mail::Message::Body>.
 
 =option  transfer_encoding STRING|FIELD
 =default transfer_encoding undef
@@ -312,6 +271,38 @@ sub unify($)
 
 #------------------------------------------
 
+=section About the payload
+
+=method isBinary
+
+Returns true when the un-encoded message is binary data.  This information
+is retrieved from knowledge provided by M<MIME::Types>.
+
+=cut
+
+sub isBinary()
+{   my $self = shift;
+    $mime_types ||= MIME::Types->new(only_complete => 1);
+    my $type = $self->type                    or return 1;
+    my $mime = $mime_types->type($type->body) or return 1;
+    $mime->isBinary;
+}
+ 
+#------------------------------------------
+
+=method isText
+
+Returns true when the un-encoded message contains printable
+text.
+
+=cut
+
+sub isText() { not shift->isBinary }
+
+#------------------------------------------
+
+=section Internals
+
 =method getTransferEncHandler TYPE
 
 Get the transfer encoder/decoder which is able to handle TYPE, or return
@@ -352,7 +343,7 @@ Relate the NAMEd transfer encoding to an OBJECTs or object of the specified
 CLASS.  In the latter case, an object of that CLASS will be created on the
 moment that one is needed to do encoding or decoding.
 
-The CLASS or OBJECT must extend Mail::Message::TransferEnc.  It will
+The CLASS or OBJECT must extend M<Mail::Message::TransferEnc>.  It will
 replace existing class and object for this NAME.
 
 Why aren't you contributing this class to MailBox?
@@ -375,7 +366,5 @@ sub addTransferEncHandler($$)
     $transfer_encoder_classes{$name} = $class;
     $this;
 }
-
-#------------------------------------------
 
 1;

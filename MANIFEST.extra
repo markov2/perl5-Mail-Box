@@ -1,0 +1,6 @@
+MANIFEST.extra
+README.oodoc
+html
+mkdist
+mkdoc
+bin/count

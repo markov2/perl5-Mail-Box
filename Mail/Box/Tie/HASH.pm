@@ -4,11 +4,11 @@ package Mail::Box::Tie::HASH;
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Tie::HASH - access an existing message folder as a hash
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  tie my(%inbox), 'Mail::Box::Tie::HASH', $folder;
 
@@ -19,7 +19,7 @@ Mail::Box::Tie::HASH - access an existing message folder as a hash
 
  $inbox{$msg->messageId} = $msg;
    
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Certainly when you look at a folder as being a set of related messages
 based on message-id, it is logical to access the folder through a hash.
@@ -31,19 +31,11 @@ folder, one will be flagged for deletion and the other will be returned.
 This implementation uses basic folder access routines which are related
 to the message-id.
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
+=section Constructors
 
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
-
-=no_method tie HASH, 'Mail::Box::Tie::HASH', FOLDER
+=tie TIEHASH 'Mail::Box::Tie::HASH', FOLDER
 
 Connects the FOLDER object to a HASH.
 
@@ -65,11 +57,7 @@ sub TIEHASH(@)
 
 #-------------------------------------------
 
-=head2 Tied Interface
-
-=cut
-
-#-------------------------------------------
+=section Tied Interface
 
 =method FETCH MESSAGEID
 
@@ -88,7 +76,7 @@ sub FETCH($) { shift->{MBT_folder}->messageId(shift) }
 
 #-------------------------------------------
 
-=meethod STORE undef, MESSAGE
+=method STORE undef, MESSAGE
 
 Store a message in the folder.  The key must be C<undef>, because the
 message-id of the specified message is taken.  This is shown in the
@@ -116,9 +104,9 @@ sub STORE($$)
 
 #-------------------------------------------
 
-=item FIRSTKEY
+=method FIRSTKEY
 
-See NEXTKEY()
+See M<NEXTKEY()>.
 
 =cut
 
@@ -132,15 +120,15 @@ sub FIRSTKEY()
 
 #-------------------------------------------
 
-=item NEXTKEY PREVIOUS
+=method NEXTKEY PREVIOUS
 
-FIRSTKEY returns the first message-id/message pair from the folder, and
-NEXTKEY returns the message-id/message pair for the next message, in the order
-in which the message is stored in the folder.
+M<FIRSTKEY()> returns the first message-id/message pair from the folder,
+and NEXTKEY returns the message-id/message pair for the next message,
+in the order in which the message is stored in the folder.
 
 Messages flagged for deletion will B<not> be returned. See the
-Mail::Box::messages() method of the folder type for more information about
-the folder message order.
+M<Mail::Box::messages()> method of the folder type for more information
+about the folder message order.
 
 =examples
 
@@ -208,7 +196,7 @@ sub DELETE($)
 
 #-------------------------------------------
 
-=item CLEAR
+=method CLEAR
 
 Remove the contents of the hash.  This is not really possible, but all
 the messages will be flagged for deletion.

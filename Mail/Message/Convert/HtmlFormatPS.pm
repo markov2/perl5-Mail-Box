@@ -9,37 +9,27 @@ use Mail::Message::Body::String;
 use HTML::TreeBuilder;
 use HTML::FormatText;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert::HtmlFormatPS - Convert HTML into PostScript
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Message::Convert::HtmlFormatPS;
  my $af = Mail::Message::Convert::HtmlFormatPS->new;
 
  my $postscript = $af->format($body);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Translate an HTML/XHTML message body into a postscript body
-using HTML::FormatPS.
+using M<HTML::FormatPS>.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-OPTIONS which start with capitals are blindly passed to HTML::FormatPS.
+OPTIONS which start with capitals are blindly passed to M<HTML::FormatPS>.
 As of this writing, that package
 defines BottomMargin, FontFamily, FontScale, HorizontalMargin, Leading,
 LeftMargin, PageNo, PaperHeight, PaperSize, PaperWidth, RightMargin,
@@ -63,11 +53,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Converting
-
-=cut
-
-#------------------------------------------
+=section Converting
 
 =method format BODY
 

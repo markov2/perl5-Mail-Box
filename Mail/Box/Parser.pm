@@ -5,15 +5,17 @@ package Mail::Box::Parser;
 use base 'Mail::Reporter';
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Parser - reading and writing messages
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+ # Not instatiatiated itself
 
-The Mail::Box::Parser manages the parsing of folders.  Usually, you won't
+=chapter DESCRIPTION
+
+The C<Mail::Box::Parser> manages the parsing of folders.  Usually, you won't
 need to know anything about this module, except the options which are
 involved with this code.
 
@@ -21,32 +23,22 @@ There are two implementations of this module planned:
 
 =over 4
 
-=item * Mail::Box::Parser::Perl
+=item * M<Mail::Box::Parser::Perl>
 
 A slower parser which only uses plain Perl.  This module is a bit slower,
 and does less checking and less recovery.
 
-=item * Mail::Box::Parser::C
+=item * M<Mail::Box::Parser::C>
 
-A fast parser written in C<C>.  However, this parser is still under
-development.
+A fast parser written in C<C>.  This package is released as separate
+module on CPAN, because the module distribution via CPAN can not
+handle XS files which are not located in the root directory of the
+module tree.  If a C compiler is available on your system, it will be
+used automatically.
 
 =back
 
-On the moment the C parser comes available, and a C compiler is available
-on your system, it will be used automatically.
-
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -55,10 +47,9 @@ mbox-like mailboxes, this object can be used to read a whole folder.  In
 case of MH-like mailboxes, each message is contained in a single file,
 so each message has its own parser object.
 
-=option  filename FILENAME
-=default filename <required>
+=requires  filename FILENAME
 
-(Required) The name of the file to be read.
+The name of the file to be read.
 
 =option  file FILE-HANDLE
 =default file undef
@@ -67,7 +58,7 @@ Any C<IO::File> or C<GLOB> which can be used to read the data from.  In
 case this option is specified, the C<filename> is informational only.
 
 =option  mode OPENMODE
-=default mode 'r'
+=default mode C<'r'>
 
 File-open mode, which defaults to C<'r'>, which means `read-only'.
 See C<perldoc -f open> for possible modes.  Only applicable 
@@ -108,56 +99,7 @@ sub init(@)
 
 #------------------------------------------
 
-=head2 The Parser
-
-=cut
-
-#------------------------------------------
-
-=ci_method defaultParserType [CLASS]
-
-Returns the parser to be used to parse all subsequent
-messages, possibly first setting the parser using the optional argument.
-Usually, the parser is autodetected; the C<C>-based parser will be used
-when it can be, and the Perl-based parser will be used otherwise.
-
-The CLASS argument allows you to specify a package name to force a
-particular parser to be used (such as your own custom parser). You have
-to C<use> or C<require> the package yourself before calling this method
-with an argument. The parser must be a sub-class of Mail::Box::Parser.
-
-=cut
-
-my $parser_type;
-
-sub defaultParserType(;$)
-{   my $class = shift;
-
-    # Select the parser manually?
-    if(@_)
-    {   $parser_type = shift;
-        return $parser_type if $parser_type->isa( __PACKAGE__ );
-
-        confess "Parser $parser_type does not extend "
-              . __PACKAGE__ . "\n";
-    }
-
-    # Already determined which parser we want?
-    return $parser_type if $parser_type;
-
-    # Try to use C-based parser.
-    eval 'require Mail::Box::Parser::C';
-#   warn "C-PARSER errors $@\n" if $@;
-
-    return $parser_type = 'Mail::Box::Parser::C'
-        unless $@;
-
-    # Fall-back on Perl-based parser.
-    require Mail::Box::Parser::Perl;
-    $parser_type = 'Mail::Box::Parser::Perl';
-}
-
-#------------------------------------------
+=section The parser
 
 =method start OPTIONS
 
@@ -197,10 +139,11 @@ When a message parser starts working, it takes size and modification time
 of the file at hand.  If the folder is written, it checks wether there
 were changes in the file made by external programs.
 
-Calling C<update> on a folder before it being closed will read these new
-messages.  But the real source of this problem is locking: some external
-program (for instance the mail transfer agent, like sendmail) uses a
-different locking mechanism as you do and therefore violates your rights.
+Calling M<Mail::Box::update()> on a folder before it being closed
+will read these new messages.  But the real source of this problem is
+locking: some external program (for instance the mail transfer agent,
+like sendmail) uses a different locking mechanism as you do and therefore
+violates your rights.
 
 =cut
 
@@ -241,19 +184,6 @@ sub restart()
 
 #------------------------------------------
 
-=method takeFileInfo
-
-Capture some data about the file being parsed, to be compared later.
-
-=cut
-
-sub takeFileInfo()
-{   my $self     = shift;
-    @$self{ qw/MBP_size MBP_mtime/ } = (stat $self->filename)[7,9];
-}
-
-#------------------------------------------
-
 =method fileChanged
 
 Returns whether the file which is parsed has changed after the last
@@ -283,11 +213,7 @@ sub filename() {shift->{MBP_filename}}
 
 #------------------------------------------
 
-=head2 Parsing
-
-=cut
-
-#------------------------------------------
+=section Parsing
 
 =method filePosition [POSITION]
 
@@ -346,9 +272,8 @@ sub readSeparator($) {shift->notImplemented}
 
 =method readHeader
 
-Read the whole message-header and return it as list
-C<< field => value, field => value >>.  Mind that some fields will
-appear more than once.
+Read the whole message-header and return it as list of field-value
+pairs.  Mind that some fields will appear more than once.
 
 The first element will represent the position in the file where the
 header starts.  The follows the list of header field names and bodies.
@@ -440,21 +365,14 @@ sub lineSeparator() {shift->{MBP_linesep}}
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
+=section Internals
 
 =method openFile ARGS
 
 Open the file to be parsed.  ARGS is a ref-hash of options.
 
-=option  filename FILENAME
-=default filename <required>
-
-=option  mode STRING
-=default mode <required>
+=requires filename FILENAME
+=requires mode STRING
 
 =cut
 
@@ -471,6 +389,70 @@ Close the file which was being parsed.
 sub closeFile(@) {shift->notImplemented}
 
 #------------------------------------------
+
+=method takeFileInfo
+
+Capture some data about the file being parsed, to be compared later.
+
+=cut
+
+sub takeFileInfo()
+{   my $self     = shift;
+    @$self{ qw/MBP_size MBP_mtime/ } = (stat $self->filename)[7,9];
+}
+
+#------------------------------------------
+
+=ci_method defaultParserType [CLASS]
+
+Returns the parser to be used to parse all subsequent
+messages, possibly first setting the parser using the optional argument.
+Usually, the parser is autodetected; the C<C>-based parser will be used
+when it can be, and the Perl-based parser will be used otherwise.
+
+The CLASS argument allows you to specify a package name to force a
+particular parser to be used (such as your own custom parser). You have
+to C<use> or C<require> the package yourself before calling this method
+with an argument. The parser must be a sub-class of C<Mail::Box::Parser>.
+
+=cut
+
+my $parser_type;
+
+sub defaultParserType(;$)
+{   my $class = shift;
+
+    # Select the parser manually?
+    if(@_)
+    {   $parser_type = shift;
+        return $parser_type if $parser_type->isa( __PACKAGE__ );
+
+        confess "Parser $parser_type does not extend "
+              . __PACKAGE__ . "\n";
+    }
+
+    # Already determined which parser we want?
+    return $parser_type if $parser_type;
+
+    # Try to use C-based parser.
+    eval 'require Mail::Box::Parser::C';
+#   warn "C-PARSER errors $@\n" if $@;
+
+    return $parser_type = 'Mail::Box::Parser::C'
+        unless $@;
+
+    # Fall-back on Perl-based parser.
+    require Mail::Box::Parser::Perl;
+    $parser_type = 'Mail::Box::Parser::Perl';
+}
+
+#------------------------------------------
+
+=section Error handling
+
+=section Cleanup
+
+=cut
 
 sub DESTROY
 {   my $self = shift;

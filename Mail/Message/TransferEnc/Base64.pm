@@ -7,17 +7,17 @@ use base 'Mail::Message::TransferEnc';
 
 use MIME::Base64;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::TransferEnc::Base64 - encode/decode base64 message bodies
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $decoded = $msg->decoded;
  my $encoded = $msg->encode(transfer => 'base64');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Encode or decode message bodies with base64.  The e-mail protocol and
 user agents can not handle binary data.  Therefore, binary data -but
@@ -31,37 +31,11 @@ C<[A-Za-z0-9+/]>.  This way, three data bytes become 4 base64 bytes.
 The encoded data will be trailed by C<'='> characters to align on
 four bytes.
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 The Encoder
-
-=cut
-
-#------------------------------------------
 
 sub name() { 'base64' }
-
-#------------------------------------------
-
-=head2 Encoding
-
-=cut
 
 #------------------------------------------
 

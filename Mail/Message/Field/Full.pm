@@ -13,13 +13,14 @@ use MIME::QuotedPrint ();
 use Carp;
 my $atext = q[a-zA-Z0-9!#\$%&'*+\-\/=?^_`{|}~];  # from RFC
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::Full - one line of a message header
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- !! THE IMPLEMENTATION OF THIS MODULE IS NOT COMPLETELY FINISHED YET!!
+ !! UNDER CONSTRUCTION !!
+ !! THE DETAILS OF THIS MODULE ARE NOT FINISHED YET!!
 
  # Getting to understand the complexity of a header field ...
 
@@ -34,7 +35,8 @@ Mail::Message::Field::Full - one line of a message header
 
  my @encode = (charset => 'jp', use_continuations => 1);
 
- my $f = Mail::Message::Field::Full->new('Content-Type' => 'text/html');
+ my $f = Mail::Message::Field::Full
+            ->new('Content-Type' => 'text/html');
  $f->addExtra(" and more", @encode);
 
  $f->addPhrase("text ", @encode);
@@ -48,7 +50,7 @@ Mail::Message::Field::Full - one line of a message header
 
  $f->addComment('just me', $encode);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This is the full implementation of a header field: it will be quite slow,
 because header fields can be very complex.  Of course, this class delivers
@@ -59,20 +61,10 @@ This class supports the common header description from RFC2822 (formerly
 RFC822), the extensions with respect to character-set encodings as specified
 in RFC2047, and the extensions on language specification and long parameter
 wrapping from RFC2231.  If you do not need the latter two, then the
-Mail::Message::Field::Fast and Mail::Message::Field::Flex are enough for your
-application.
+M<Mail::Message::Field::Fast> and M<Mail::Message::Field::Flex>
+are enough for your application.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new DATA
 
@@ -89,7 +81,12 @@ parts:
 
 =item * B<new> LINE
 
+Pass a LINE as it could be found in a file: a (possibly folded) line
+which is terminated by a new-line.
+
 =item * B<new> NAME, BODY, [ATTRIBUTES], OPTIONS
+
+A set of values which shape the line.
 
 =back
 
@@ -97,16 +94,16 @@ The NAME is a wellformed header name (you may use wellformedName()) to
 be sure about the casing.  The BODY is a string, one object, or an
 ref-array of objects.  In case of objects, they must fit to the
 constructor of the field: the types which are accepted may differ.
-The optional ATTRIBUTE list contains Mail::Message::Field::Attribute
+The optional ATTRIBUTE list contains M<Mail::Message::Field::Attribute>
 objects.  Finally, there are some OPTIONS.
 
 =option  attributes ATTRS
-=default attributes []
+=default attributes C<[]>
 
 There are various ways to specify these attributes: pass a reference
 to an array which list of key-value pairs representing attributes,
 or reference to a hash containing these pairs, or an array with
-Mail::Message::Field::Attribute objects.
+M<Mail::Message::Field::Attribute> objects.
 
 =option  extra STRING
 =default extra undef
@@ -116,30 +113,30 @@ Text which is appended after the line (preceded by a semicolon).
 =option  is_structured BOOLEAN
 =default is_structured C<depends>
 
-If the name of the field is known, than the internals know whether the field
-is structured or not.  If you call the constructor on your own class which is
-derived from Mail::Message::Field::Full, the default is C<true>.  If you have
-no own implementation for an unknown field, the boolean is considered C<false>.
+If the name of the field is known, than the internals know whether the
+field is structured or not.  If you call the constructor on your own
+class which is derived from M<Mail::Message::Field::Full>, the default
+is C<true>.  If you have no own implementation for an unknown field,
+the boolean is considered C<false>.
 
 For fields which are not known, C<true> means that a
-Mail::Message::Field::Structured will be created.  The C<false> value will
-create a Mail::Message::Field::Unstructured.
+M<Mail::Message::Field::Structured> will be created.  The C<false> value will
+create a M<Mail::Message::Field::Unstructured>.
 
 =option  charset STRING
-=default charset C<undef>
+=default charset undef
 
-The body is specified in utf8, and must become 7bits ascii to be
-transmited.  Specify a charset to which the multi-byte
-utf8 is converted before it gets encoded.  See encode(), which does the
-job.
+The body is specified in utf8, and must become 7-bits ascii to be
+transmited.  Specify a charset to which the multi-byte utf8 is converted
+before it gets encoded.  See M<encode()>, which does the job.
 
 =option  language STRING
-=default language C<undef>
+=default language undef
 
 The language used can be specified, however is rarely used my mail clients.
 
 =option  encoding 'q'|'Q'|'b'|'B'
-=default encoding 'q'
+=default encoding C<'q'>
 
 Non-ascii characters are encoded using Quoted-Printable ('q' or 'Q') or
 Base64 ('b' or 'B') encoding.
@@ -230,19 +227,84 @@ sub init($)
     $self;
 }
 
+#------------------------------------------
+
+sub clone()
+{   my $self = shift;
+    croak;
+}
 
 #------------------------------------------
 
+sub length()
+{   my $self = shift;
+    croak;
+}
+
+#------------------------------------------
+
+sub name() { lc shift->{MMFF_name}}
+
+#------------------------------------------
+
+sub Name() { shift->{MMFF_name}}
+
+#------------------------------------------
+
+sub folded(;$)
+{   my $self = shift;
+    return $self->{MMFF_name}.':'.$self->foldedBody
+        unless wantarray;
+
+    my @lines = $self->foldedBody;
+    my $first = $self->{MMFF_name}. ':'. shift @lines;
+    ($first, @lines);
+}
+
+#------------------------------------------
+
+sub unfoldedBody($;@)
+{   my $self = shift;
+    if(@_)
+    {   my $part = join ' ', @_;
+        $self->{MMFF_body}  = $self->fold($self->{MMFF_name}, $part);
+        $self->{MMFF_parts} = [ $part ];
+        return $part;
+    }
+
+    join(' ', @{$self->{MMFF_parts}});
+}
+
+#------------------------------------------
+
+sub foldedBody($)
+{   my ($self, $body) = @_;
+
+       if(@_==2) { $self->{MMFF_body} = $body }
+    elsif($body = $self->{MMFF_body}) { ; }
+    else
+    {   # Create a new folded body from the parts.
+        $self->{MMFF_body} = $body
+           = $self->fold($self->{MMFF_name}, join(' ', @{$self->{MMFF_parts}}));
+    }
+
+    wantarray ? (split /^/, $body) : $body;
+}
+
+#------------------------------------------
+
+=section Constructors
+
 =c_method from FIELD, OPTIONS
 
-Convert any FIELD (a Mail::Message::Field object) into a new
-Mail::Message::Field::Full object.  This conversion is done the hard
+Convert any FIELD (a M<Mail::Message::Field> object) into a new
+M<Mail::Message::Field::Full> object.  This conversion is done the hard
 way: the string which is produced by the original object is parsed
 again.  Usually, the string which is parsed is exactly the line (or lines)
 as found in the original input source, which is a good thing because Full
 fields are much more carefull with the actual content.
 
-OPTIONS are passed to the constructor (see new()).  In any case, some
+OPTIONS are passed to the constructor (see M<new()>).  In any case, some
 extensions of this Full field class is returned.  It depends on which
 field is created what kind of class we get.
 
@@ -264,11 +326,29 @@ sub from($@)
 
 #------------------------------------------
 
-=head2 The Field
+=section Access to the body
+
+=method decodedBody OPTIONS
+
+Returns the unfolded body of the field, where encodings are resolved.  The
+returned line will still contain comments and such.  The OPTIONS are passed
+to the decoder, see M<decode()>.
+
+BE WARNED: if the field is a structured field, the content may change syntax,
+because of encapsulated special characters.  By default, the body is decoded
+as text, which results in a small difference within comments as well
+(read the RFC).
 
 =cut
 
+sub decodedBody()
+{   my $self = shift;
+    $self->decode($self->unfoldedBody, @_);
+}
+
 #------------------------------------------
+
+=section Access to the content
 
 =method addAttribute OBJECT|(STRING, OPTIONS)|(NAME,VALUE,OPTIONS)
 
@@ -276,15 +356,16 @@ Add an attribute to the field.  The attributes are added left-to-right into
 the string representation of the field, although the order of the attributes
 is un-important, according to the RFCs.
 
-You may pass a fully prepared Mail::Message::Field::Attribute OBJECT, if you
-like to do all preparations for correct representation of the data yourself.
-You may also pass one STRING, which is a fully prepared attribute.  This
-STRING will not be changed, so be careful about quoting and encodings.
+You may pass a fully prepared M<Mail::Message::Field::Attribute> OBJECT,
+if you like to do all preparations for correct representation of the
+data yourself.  You may also pass one STRING, which is a fully prepared
+attribute.  This STRING will not be changed, so be careful about quoting
+and encodings.
 
-As third possibility, you can specify an attribute NAME and its VALUE.  An
-attribute object will be created for you implicitly in both cases where such
-object is not supplied, passing the OPTIONS.
-See Mail::Message::Field::Attributes::new() about the available OPTIONS.
+As third possibility, you can specify an attribute NAME and its VALUE.
+An attribute object will be created for you implicitly in both
+cases where such object is not supplied, passing the OPTIONS.  See
+M<Mail::Message::Field::Attribute::new()> about the available OPTIONS.
 
 The attribute object is returned, however, when continuations are used this
 may be an object you already know about.  C<undef> is returned when
@@ -340,9 +421,10 @@ sub attribute($;$)
 
 =method attributes
 
-Returns a list with all attributes, which are all Mail::Message::Field::Attribute
-objects.  The attributes are not ordered in any way.  The list may be empty.
-Double attributes or continuations are folded into one.
+Returns a list with all attributes, which are all
+M<Mail::Message::Field::Attribute> objects.  The attributes are not
+ordered in any way.  The list may be empty.  Double attributes or
+continuations are folded into one.
 
 =cut
 
@@ -360,7 +442,7 @@ These backslashes will be added automatically if needed (don't worry!).
 Backslashes will stay, except at the end, where it will be doubled.
 
 The OPTIONS are C<charset>, C<language>, and C<encoding> as always.
-See addComment().  The created comment is returned.
+See M<addComment()>.  The created comment is returned.
 
 =cut
 
@@ -387,7 +469,7 @@ sub createComment($@)
 
 =method addComment COMMENT, OPTIONS
 
-Creates a comment (see createComment()) and adds it immediately to
+Creates a comment (see M<createComment()>) and adds it immediately to
 this field.  Empty or undefined COMMENTs are ignored.  The created comment
 is returned.
 
@@ -443,7 +525,7 @@ sub addExtra($)
         return;
     }
 
-    if(defined $extra && length $extra)
+    if(defined $extra && CORE::length $extra)
     {   push @{$self->{MMFF_parts}}, '; '.$extra;
         delete $self->{MMFF_body};
     }
@@ -455,10 +537,10 @@ sub addExtra($)
 
 =ci_method createPhrase STRING, OPTIONS
 
-A phrase is a text which plays a well defined role.  This is the main difference
-with comments, which have do specified meaning.  Some special characters
-in the phrase will cause it to be surrounded with double quotes: do not specify
-them yourself.
+A phrase is a text which plays a well defined role.  This is the main
+difference with comments, which have do specified meaning.  Some special
+characters in the phrase will cause it to be surrounded with double
+quotes: do not specify them yourself.
 
 The OPTIONS are C<charset>, C<language>, and C<encoding> as always.
 See addPhrase().
@@ -484,7 +566,7 @@ sub createPhrase($)
 
 =method addPhrase STRING, OPTIONS
 
-Create a phrase (see createPhrase()) and immediately add it to this field.
+Create a phrase (see M<createPhrase()>) and immediately add it to this field.
 Empty or undefined values of STRING are ignored.  The created phrase is
 returned.
 
@@ -505,101 +587,7 @@ sub addPhrase($)
 
 #------------------------------------------
 
-sub clone()
-{   my $self = shift;
-    croak;
-}
-
-#------------------------------------------
-
-sub length()
-{   my $self = shift;
-    croak;
-}
-
-#------------------------------------------
-
-=head2 Access to the Field
-
-=cut
-
-#------------------------------------------
-
-sub name() { lc shift->{MMFF_name}}
-
-#------------------------------------------
-
-sub Name() { shift->{MMFF_name}}
-
-#------------------------------------------
-
-sub folded(;$)
-{   my $self = shift;
-    return $self->{MMFF_name}.':'.$self->foldedBody
-        unless wantarray;
-
-    my @lines = $self->foldedBody;
-    my $first = $self->{MMFF_name}. ':'. shift @lines;
-    ($first, @lines);
-}
-
-#------------------------------------------
-
-sub unfoldedBody($;@)
-{   my $self = shift;
-    if(@_)
-    {   my $part = join ' ', @_;
-        $self->{MMFF_body}  = $self->fold($self->{MMFF_name}, $part);
-        $self->{MMFF_parts} = [ $part ];
-        return $part;
-    }
-
-    join(' ', @{$self->{MMFF_parts}});
-}
-
-#------------------------------------------
-
-sub foldedBody($)
-{   my ($self, $body) = @_;
-
-       if(@_==2) { $self->{MMFF_body} = $body }
-    elsif($body = $self->{MMFF_body}) { ; }
-    else
-    {   # Create a new folded body from the parts.
-        $self->{MMFF_body} = $body
-           = $self->fold($self->{MMFF_name}, join(' ', @{$self->{MMFF_parts}}));
-    }
-
-    wantarray ? (split /^/, $body) : $body;
-}
-
-#------------------------------------------
-
-=method decodedBody OPTIONS
-
-Returns the unfolded body of the field, where encodings are resolved.  The
-returned line will still contain comments and such.  The OPTIONS are passed
-to the decoder, see decode().
-
-BE WARNED: if the field is a structured field, the content may change syntax,
-because of encapsulated special characters.  By default, the body is decoded
-as text, which results in a small difference within comments as well
-(read the RFC).
-
-=cut
-
-sub decodedBody()
-{   my $self = shift;
-    $self->decode($self->unfoldedBody, @_);
-}
-
-#------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
+=section Internals
 
 =method encode STRING, OPTIONS
 
@@ -607,26 +595,26 @@ Encode the (possibly utf8 encoded) STRING to a string which is acceptable
 to the RFC2047 definition of a header: only containing us-ascii characters.
 
 =option  encoding 'q'|'Q'|'b'|'B'
-=default encoding 'q'
+=default encoding C<'q'>
 
 The character encoding to be used.  With C<q> or C<Q>, quoted-printable
-encoding will be used.  With C<b> or C<B>, base64 encoding will be taken.
+encoding will be used.  With C<b > or C<B >, base64 encoding will be taken.
 
 =option  charset STRING
-=default charset 'us-ascii'
+=default charset C<'us-ascii'>
 
 STRING is an utf8 string which has to be translated into any byte-wise
 character set for transport, because MIME-headers can only contain ascii
 characters.
 
 =option  language STRING
-=default language C<undef>
+=default language undef
 
 RFC2231 defines how to specify language encodings in encoded words.  The
 STRING is a strandard iso language name.
 
 =option  force BOOLEAN
-=default force 0
+=default force <flase>
 
 Encode the string, even when it only contains us-ascii characters.  By
 default, this is off because it decreases readibility of the produced
@@ -646,8 +634,8 @@ which are not permitted by the RFCs.
 
 =warning Illegal encoding '$encoding', used 'q'
 
-The RFCs only permit base64 (C<b> or C<B>) or quoted-printable (C<q> or C<Q>)
-encoding.  Other than these four options are illegal.
+The RFCs only permit base64 (C<b > or C<B >) or quoted-printable
+(C<q> or C<Q>) encoding.  Other than these four options are illegal.
 
 =cut
 
@@ -731,8 +719,8 @@ may interfere with your markup characters.
 
 Be warned: language information, which is defined in RFC2231, is ignored.
 
-=option  is_text => BOOLEAN
-=default is_text => 1
+=option  is_text BOOLEAN
+=default is_text C<1>
 
 Encoding on text is slightly more complicated than encoding structured data,
 because it contains blanks.  Visible blanks have to be ignored between two
@@ -741,8 +729,8 @@ an unencoded word.  Phrases and comments are texts.
 
 =example
 
-   print Mail::Message::Field::Full->decode('=?iso-8859-1?Q?J=F8rgen?=');
-      # prints   JE<0slash>rgen
+ print Mail::Message::Field::Full->decode('=?iso-8859-1?Q?J=F8rgen?=');
+    # prints   JE<0slash>rgen
 
 =cut
 
@@ -767,7 +755,7 @@ sub _decoder($$$)
         return $encoded;
     }
 
-    Encode::encode($charset, $decoded, 0);
+    Encode::decode($charset, $decoded, 0);
 }
 
 sub decode($@)

@@ -8,13 +8,15 @@ use Mail::Message::Field::AddrGroup;
 use Mail::Message::Field::Address;
 use List::Util 'first';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::Addresses - Fields with e-mail addresses
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- my $f = Mail::Message::Field->new(Cc => 'Mail::Box <mailbox@overmeer.net>');
+ !! UNDER CONSTRUCTION !!
+ my $f = Mail::Message::Field->new(Cc =>
+                'Mail::Box <mailbox@overmeer.net>');
 
  my $g = Mail::Message::Field->new('Cc');
  $g->addAddress('Mail::Box <mailbox@overmeer.net>');
@@ -24,7 +26,9 @@ Mail::Message::Field::Addresses - Fields with e-mail addresses
    , comment => 'Our mailing list'     # deprecated, use phrase
    );
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
+
+UNDER CONSTRUCTION
 
 All header fields which contain e-mail addresses only.  Not all address
 fields have the same possibilities, but they are all parsed the same:
@@ -34,13 +38,7 @@ messages.
 When you try to create constructs which are not allowed for a certain
 kind of field, you will be warned.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
+=chapter METHODS
 
 =cut
 
@@ -63,11 +61,13 @@ my %accepted     =
 
 #------------------------------------------
 
+=section Constructors
+
 =c_method new DATA
 
-=default attributes    C<not accepted>
-=default extra         C<not accepted>
-=default is_structured 1
+=default attributes    <not accepted>
+=default extra         <not accepted>
+=default is_structured <true>
 
 =examples
 
@@ -166,22 +166,18 @@ sub parse($)
 
 #------------------------------------------
 
-=head2 The Field
-
-=cut
-
-#------------------------------------------
+=section Access to the content
 
 =method addAddress [ADDRESS], OPTIONS
 
 Add an ADDRESS to the field.  The addresses are organized in groups.  If no
 group is specified, the default group is taken to store the address in.  If
 no ADDRESS is specified, the option must be sufficient to create a
-Mail::Message::Field::Address from.  See the OPTIONS of
-Mail::Message::Field::Address::new().
+M<Mail::Message::Field::Address> from.  See the OPTIONS of
+M<Mail::Message::Field::Address::new()>.
 
 =option  group STRING
-=default group ''
+=default group C<''>
 
 =cut
 
@@ -203,11 +199,11 @@ sub addAddress(@)
 =method addGroup GROUP|OPTIONS
 
 Add a group of addresses to this field.  A GROUP can be specified, which
-is a Mail::Message::Field::AddrGroup object, or one is created for you
+is a M<Mail::Message::Field::AddrGroup> object, or one is created for you
 using the OPTIONS.  The group is returned.
 
 =option  name STRING
-=default name ''
+=default name C<''>
 
 =cut
 
@@ -242,7 +238,7 @@ sub group($)
 =method groups
 
 Returns all address groups which are defined in this field.  Each
-element is a Mail::Message::Field::AddrGroup object.
+element is a M<Mail::Message::Field::AddrGroup> object.
 
 =cut
 
@@ -264,7 +260,7 @@ sub groupNames() { map {$_->name} shift->groups }
 
 Returns a list with all addresses defined in any group of addresses:
 all addresses which are specified on the line.  The addresses are
-Mail::Message::Field::Address objects.
+M<Mail::Message::Field::Address> objects.
 
 =example
 
@@ -312,6 +308,8 @@ sub addExtra($@)
 }
 
 #------------------------------------------
+
+=section Internals
 
 =method consumeAddress STRING
 
@@ -361,5 +359,9 @@ sub consumeDomain($)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

@@ -10,33 +10,23 @@ use Digest::MD5 ();
 
 my $CRLF = $^O eq 'MSWin32' ? "\n" : "\015\012";
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::POP3 - receive messages via POP3
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $receiver = Mail::Transport::POP3->new(...);
  my $message = $receiver->receive($id);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Receive messages via the POP3 protocol from one remote server, as specified
 in rfc1939.  This object hides much of the complications in the protocol and
 recovers broken connections automatically.  Although it is part of the
 Mail::Box module, this object can be used separately.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -45,10 +35,10 @@ connection: for a single user to one single server.  If the server
 could not be reached, or when the login fails, this instantiating C<new>
 will return C<undef>.
 
-=default port 110
+=default port C<110>
 
 =option  authenticate 'LOGIN'|'APOP'|'AUTO'
-=default authenticate 'AUTO'
+=default authenticate C<'AUTO'>
 
 Authenthication method.  The standard defines two methods, named LOGIN and
 APOP.  The first sends the username and password in plain text to the server
@@ -72,24 +62,9 @@ sub init($)
 
 #------------------------------------------
 
-=method url
+=section Receiving mail
 
-Represent this pop3 connection as URL.
-
-=cut
-
-sub url(;$)
-{   my ($host, $port, $user, $pwd) = shift->remoteHost;
-    "pop3://$user:$pwd\@$host:$port";
-}
-
-#------------------------------------------
-
-=head2 Exchanging Information
-
-=cut
-
-#------------------------------------------
+=section Exchanging information
 
 =method ids
 
@@ -251,8 +226,8 @@ sub deleted($@)
 
 =method deleteFetched
 
-Mark all messages that have been fetched with message() for deletion.  See
-fetched().
+Mark all messages that have been fetched with M<message()> for deletion.
+See M<fetched()>.
 
 =cut
 
@@ -306,8 +281,8 @@ sub disconnect()
 
 =method fetched
 
-Returns a reference to a list of ID's that have been fetched using the
-message() method.  This can be used to update a database of messages that
+Returns a reference to a list of ID's that have been fetched using
+M<message()>.  This can be used to update a database of messages that
 were fetched (but maybe not yet deleted) from the mailbox.
 
 Please note that if the POP3 server did not support the UIDL command, this
@@ -315,7 +290,7 @@ method will always return undef because it is not possibly to reliably
 identify messages between sessions (other than looking at the contents of
 the messages themselves).
 
-See also deleteFetched().
+See also M<deleteFetched()>.
 
 =cut
 
@@ -340,7 +315,7 @@ sub id2n($;$) { shift->{MTP_uidl2n}{shift()} }
 
 #------------------------------------------
 
-=head2 Protocol [internals]
+=section Protocol internals
 
 The follow methods handle protocol internals, and should not be used
 by a normal user of this class.
@@ -357,7 +332,7 @@ was lost, it will be reconnected and the assures that internal
 state information (STAT and UIDL) is up-to-date in the object.
 
 If the contact to the server was still present, or could be established,
-an IO::Socket::INET object is returned.  Else, C<undef> is returned and
+an M<IO::Socket::INET> object is returned.  Else, C<undef> is returned and
 no further actions should be tried on the object.
 
 =error Cannot re-connect reliably to server which doesn't support UIDL.
@@ -493,9 +468,6 @@ sub _connection(;$)
 }
 
 #------------------------------------------
-
-=method login
-
 
 =method login
 
@@ -677,5 +649,24 @@ sub status($;$)
 }
 
 #------------------------------------------
+
+=section Server connection
+
+=method url
+
+Represent this pop3 connection as URL.
+
+=cut
+
+sub url(;$)
+{   my ($host, $port, $user, $pwd) = shift->remoteHost;
+    "pop3://$user:$pwd\@$host:$port";
+}
+
+#------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

@@ -13,68 +13,48 @@ use MIME::Entity;
 use MIME::Body;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert::MimeEntity - translate Mail::Message to MIME::Entity vv
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Message::Convert::MimeEntity;
  my $convert = Mail::Message::Convert::MimeEntity->new;
 
- my Mail::Message $msg    = Mail::Message->new;
+ my Mail::Message $msg    = M<Mail::Message>->new;
  my MIME::Entity  $entity = $convert->export($msg);
 
- my MIME::Entity  $entity = MIME::Entity->new;
+ my MIME::Entity  $entity = M<MIME::Entity>->new;
  my Mail::Message $msg    = $convert->from($entity);
 
  use Mail::Box::Manager;
- my $mgr     = Mail::Box::Manager->new;
+ my $mgr     = M<Mail::Box::Manager>->new;
  my $folder  = $mgr->open(folder => 'Outbox');
  $folder->addMessage($entity);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The MIME::Entity extends Mail::Internet message with multiparts
-and more methods.  The Mail::Message objects are more flexible
+The M<MIME::Entity> extends M<Mail::Internet> message with multiparts
+and more methods.  The M<Mail::Message> objects are more flexible
 in how the message parts are stored, and uses separate header and body
 objects.
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 Converting
-
-=cut
-
-#------------------------------------------
+=section Converting
 
 =method export MESSAGE, OPTIONS
 
 Returns a new message object based on the information from
-a Mail::Message object.  The MESSAGE specified is an
+a M<Mail::Message> object.  The MESSAGE specified is an
 instance of a Mail::Message.
 
 =examples
 
  my $convert = Mail::Message::Convert::MimeEntity->new;
- my Mail::Message $msg  = Mail::Message->new;
- my MIME::Entity  $copy = $convert->export($msg);
+ my Mail::Message $msg  = M<Mail::Message>->new;
+ my M<MIME::Entity>  $copy = $convert->export($msg);
 
 =cut
 
@@ -118,14 +98,14 @@ sub export($$)
 
 =method from OBJECT, [CONTAINER]
 
-Returns a new Mail::Message object based on the information from
-an message-type which is strange to the Mail::Box set of modules.
+Returns a new M<Mail::Message> object based on the information from
+an message-type which is foreign to the Mail::Box set of modules.
 
 =examples
 
  my $convert = Mail::Message::Convert::MimeEntity->new;
- my MIME::Entity  $msg  = MIME::Entity->new;
- my Mail::Message $copy = $convert->from($msg);
+ my MIME::Entity  $msg  = M<MIME::Entity>->new;
+ my M<Mail::Message> $copy = $convert->from($msg);
 
 =cut
 

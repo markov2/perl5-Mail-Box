@@ -13,7 +13,7 @@ use Tools;
 use Mail::Message;
 use Mail::Message::Head;
 use Mail::Message::Body::Lines;
-use Mail::Message::Construct;
+use Mail::Message::Construct::Forward;
 
 use Mail::Address;
 

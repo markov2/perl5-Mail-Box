@@ -5,11 +5,11 @@ use strict;
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Tie - access an existing message-folder as an array or hash
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
 As an array:
 
@@ -24,10 +24,10 @@ or as hash:
  tie my(%inbox), Mail::Box::Tie => $folder;    # deprecated
  print $inbox{'<12379.124879@example.com>'};
  
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The use of Mail::Box::Tie is deprecated, because it is succeeded by two
-separate modules: Mail::Box::Tie::ARRAY and Mail::Box::Tie::HASH.
+The use of C<Mail::Box::Tie> is B<deprecated>, because it is succeeded by two
+separate modules: M<Mail::Box::Tie::ARRAY> and M<Mail::Box::Tie::HASH>.
 However, this module still works.
 
 Folders certainly look like an array of messages, so why not just
@@ -36,7 +36,7 @@ message-ids are (give relations): why not access them from a hash
 based on this message-id?  Programs using one of these ties will
 look simpler than programs using the more traditional method calls.
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
 

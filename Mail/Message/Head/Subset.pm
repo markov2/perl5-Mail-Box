@@ -12,18 +12,18 @@ use Object::Realize::Later
 use Carp;
 use Date::Parse;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Head::Subset - subset of header information of a message
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message::Head::Subset $subset = ...;
- $subset->isa('Mail::Message::Head')  # true
+ $subset->isa('M<Mail::Message::Head>')  # true
  $subset->guessBodySize               # integer or undef
  $subset->isDelayed                   # true
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Some types of folders contain an index file which lists a few lines of
 information per messages.  Especially when it is costly to read header lines,
@@ -36,60 +36,9 @@ When you access header fields which are not in the header subset, the whole
 header has to be parsed (which may consume considerable time, depending on
 the type of folder).
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Constructing a Header
-
-=cut
-
-#-------------------------------------------
-
-=get NAME [,INDEX]
-
-Get the data which is related to the field with the NAME.  The case of the
-characters in NAME does not matter.  When a NAME is used which is not known
-yet, realization will take place.
-
-=cut
-
-sub get($;$)
-{   my $self = shift;
- 
-    if(wantarray)
-    {   my @values = $self->SUPER::get(@_);
-        return @values if @values;
-    }
-    else
-    {   my $value  = $self->SUPER::get(@_);
-        return $value  if defined $value;
-    }
-
-    $self->load->get(@_);
-}
-
-#-------------------------------------------
-
-=head2 Access to the Header
-
-=cut
-
-#-------------------------------------------
+=section Access to the header
 
 =method count NAME
 
@@ -112,6 +61,33 @@ sub count($)
 
 #-------------------------------------------
 
+=method get NAME [,INDEX]
+
+Get the data which is related to the field with the NAME.  The case of the
+characters in NAME does not matter.  When a NAME is used which is not known
+yet, realization will take place.
+
+=cut
+
+sub get($;$)
+{   my $self = shift;
+ 
+    if(wantarray)
+    {   my @values = $self->SUPER::get(@_);
+        return @values if @values;
+    }
+    else
+    {   my $value  = $self->SUPER::get(@_);
+        return $value  if defined $value;
+    }
+
+    $self->load->get(@_);
+}
+
+
+#-------------------------------------------
+
+=section About the body
 
 =method guessBodySize
 
@@ -158,11 +134,9 @@ sub guessTimestamp()
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=section Internals
 
 =cut
-
-#-------------------------------------------
 
 sub load() {$_[0] = $_[0]->message->loadHead}
 

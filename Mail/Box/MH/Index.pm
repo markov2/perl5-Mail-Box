@@ -7,39 +7,37 @@ use base 'Mail::Reporter';
 use Mail::Message::Head::Subset;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::MH::Index - keep index files for messages.
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $index = Mail::Box::MH::Index->new;
  $index->read(...)
  $index->write(...)
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Message folders which store their data in one single file per message are
 very inefficient for producing subject overviews and for computing message
-threads.  The Mail::Box::MH::Index object is able to store and read a the
-headers of all messages in one file.
+threads.  The C<Mail::Box::MH::Index> object is able to store and read a the
+headers of a set of C<Mail::Box::MH::Message> messages which are
+part of a single C<Mail::Box::MH> folder in one file.
 
-When the Mail::Box::MH::Index functionality is enabled by specifying
-C<keep_index> when opening a folder, the index file is automatically read.
-When the folder is closed, a new index file is created.
+When the C<Mail::Box::MH::Index> functionality is enabled by specifying
+M<Mail::Box::MH::new(keep_index)> when opening a folder, the index file
+is automatically read.  When the folder is closed, a new index file is
+created.
 
 Special care is taken to avoid problems which occur when the user changes
 or removes message files without updating the index. If the index is not
 trustworthy it will not be used (costing some performance for the reader
 of the folder).
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
+=section Constructors
 
 =cut
 
@@ -47,20 +45,19 @@ of the folder).
 
 =c_method new OPTIONS
 
-=option  filename FILENAME
-=default filename <obligatory>
+=requires filename FILENAME
 
 The FILENAME which is used to store the headers of all the e-mails for
 one folder. This must be an absolute pathname.
 
 =option  head_type CLASS
-=default head_type 'Mail::Message::Head::Subset'
+=default head_type M<Mail::Message::Head::Subset>
 
 The type of headers which will be used to store header information when
 it is read from the index file.  You can not be sure the index contains
 all header line (the mailbox may have been updated without updating
 the index) so this will usually be (an sub-class of)
-Mail::Message::Head::Subset.
+M<Mail::Message::Head::Subset>.
 
 =option  head_wrap INTEGER
 =default head_wrap 72
@@ -85,9 +82,14 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Index
+=section The Index
+
+=method filename
+Returns the name of the index file.
 
 =cut
+
+sub filename() {shift->{MBMI_filename}}
 
 #-------------------------------------------
 
@@ -176,7 +178,7 @@ sub read(;$)
 
 Look if there is header info for the specified MSGFILE.  The filename
 represents one message in folder type which are organized as directory.
-This method will return an object of the C<head_type> as specified
+This method will return an object of the M<new(head_type)> as specified
 during creation of the index object, or C<undef> if the information
 is not known or not trustworthy -i.e. the file size changed.
 
@@ -189,14 +191,8 @@ sub get($)
 
 #-------------------------------------------
 
-=method filename
-
-Returns the name of the index file.
+=section Error handling
 
 =cut
-
-sub filename() {shift->{MBMI_filename}}
-
-#-------------------------------------------
 
 1;

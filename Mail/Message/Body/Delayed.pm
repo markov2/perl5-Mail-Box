@@ -10,43 +10,62 @@ use Object::Realize::Later
     warn_realization => 0,
     believe_caller   => 1;
 
-use overload '""'    => 'string_unless_carp'
-           , bool    => sub {1}
-           , '@{}'   => sub {shift->load->lines};
-
 use Carp;
 use Scalar::Util 'weaken';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body::Delayed - body of a Mail::Message but not read yet.
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Message::Body
+ See M<Mail::Message::Body>
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Message bodies of this type will be replaced by another type the moment you
 access the content.  In this documentation you will find the description of
 how a message body gets delay loaded.
 
-=head1 METHODS
+=chapter OVERLOADED
+
+=overload @{}
+
+When a body object is used as being an array reference, the lines of
+the body are returned.  This is the same as using the C<lines> method.
+
+=overload bool
+
+Always returns a true value, which is needed to have overloaded
+objects to be used as in C<if($body)>.  Otherwise, C<if(defined $body)>
+would be needed to avoid a runtime error.
+
+=overload ""
+
+(stringification) Returns the body as string --which will trigger
+completion-- unless called to produce a string for C<Carp>.  The latter
+to avoid deep recursions.
+
+=example stringification of delayed body
+
+ print $msg->body;   # implicit by print
+
+ my $body = $msg->body;
+ my $x    = "$body"; # explicit by interpolation
 
 =cut
 
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
+use overload '""'    => 'string_unless_carp'
+           , bool    => sub {1}
+           , '@{}'   => sub {shift->load->lines};
 
 #------------------------------------------
+
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=option  message MESSAGE
-=default message <required>
+=requires  message MESSAGE
 
 The MESSAGE object which contains this delayed body.
 
@@ -66,11 +85,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 The Body
-
-=cut
-
-#------------------------------------------
+=section The body
 
 =method message
 
@@ -80,12 +95,22 @@ sub message() { shift->{MMBD_message} }
 
 #------------------------------------------
 
+=section About to the payload
+
+=method modified
+
+=cut
+
 sub modified(;$)
 {   return 0 if @_==1 || !$_[1];
     shift->forceRealize(shift);
 }
 
 #------------------------------------------
+
+=method isModified
+
+=cut
 
 sub isModified() { 0 }
 
@@ -115,12 +140,6 @@ sub guessSize()   {shift->{MMBD_size}}
 
 #------------------------------------------
 
-=head2 About the Payload
-
-=cut
-
-#------------------------------------------
-
 =method nrLines
 
 =cut
@@ -144,11 +163,7 @@ sub string_unless_carp()
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
+=section Internals
 
 =method read PARSER, HEAD, BODYTYPE
 
@@ -200,5 +215,9 @@ Returns the loaded version of this body.
 sub load() {$_[0] = $_[0]->message->loadBody}
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

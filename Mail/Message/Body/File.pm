@@ -12,15 +12,15 @@ use IO::File;
 use POSIX 'tmpnam';
 use File::Copy;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body::File - body of a message temporarily stored in a file
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Message::Body
+ See M<Mail::Message::Body>
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The body (content) of a message can be stored in various ways.  In this
 documentation you find the description of extra functionality you have
@@ -29,23 +29,13 @@ when a message is stored in a file.
 Storing a whole message is a file is useful when the body is large.  Although
 access through a file is slower, it is saving a lot of memory.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =error Unable to read file $filename for message body file: $!
 
-A Mail::Message::Body::File object is to be created from a named file, but
+A M<Mail::Message::Body::File> object is to be created from a named file, but
 it is impossible to read that file to retrieve the lines within.  Therefore,
 no copy to a temporary file can be made.
 
@@ -149,12 +139,6 @@ sub _data_from_lines(@)
 
 #------------------------------------------
 
-=head2 The Body
-
-=cut
-
-#------------------------------------------
-
 sub clone()
 {   my $self  = shift;
     my $clone = ref($self)->new(based_on => $self);
@@ -166,12 +150,6 @@ sub clone()
     $clone->{MMBF_size}    = $self->{MMBF_size};
     $self;
 }
-
-#------------------------------------------
-
-=head2 About the Payload
-
-=cut
 
 #------------------------------------------
 
@@ -212,12 +190,6 @@ sub size()
     $self->{MMBF_size} = $size;
 }
 
-
-#------------------------------------------
-
-=head2 Access to the Payload
-
-=cut
 
 #------------------------------------------
 
@@ -311,12 +283,6 @@ sub printEscapedFrom($)
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
-
 sub read($$;$@)
 {   my ($self, $parser, $head, $bodytype) = splice @_, 0, 4;
     my $file = $self->tempFilename;
@@ -335,6 +301,8 @@ sub read($$;$@)
 
 #------------------------------------------
 
+=section Internals
+
 =method tempFilename [FILENAME]
 
 Returns the name of the temporary file which is used to store this body.
@@ -350,6 +318,10 @@ sub tempFilename(;$)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=section Cleanup
 
 =method DESTROY
 

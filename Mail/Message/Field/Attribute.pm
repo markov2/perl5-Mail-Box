@@ -9,11 +9,11 @@ use Encode ();
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::Attribute - one attribute of a full field
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $field    = $msg->head->get('Content-Disposition') or return;
  my $full     = $field->study;   # full understanding in unicode
@@ -25,29 +25,21 @@ Mail::Message::Field::Attribute - one attribute of a full field
  print $filename->string; # print string as was found in the file
  $filename->print(\*OUT); # print as was found in the file
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Attributes within MIME fields can be quite complex, and therefore be slow
-and consumes a lot of memory.  The Mail::Message::Field::Fast and
-Mail::Message::Field::Flex simplify them the attributes a lot, which
+and consumes a lot of memory.  The M<Mail::Message::Field::Fast> and
+M<Mail::Message::Field::Flex> simplify them the attributes a lot, which
 may result in erroneous behavior in rare cases.  With the increase of
 non-western languages on Internet, the need for the complex headers
 becomes more and more in demand.
 
-A Mail::Message::Field::Attribute can be found in any structured
-Mail::Message::Field::Full header field.
+A C<Mail::Message::Field::Attribute> can be found in any structured
+M<Mail::Message::Field::Full> header field.
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=section Constructors
 
 =c_method new (NAME, [VALUE] | STRING), OPTIONS
 
@@ -57,15 +49,15 @@ If that character is present, the argument is taken as STRING, containing
 a preformatted attribute which is processed.  Otherwise, the argument is
 taken as name without VALUE: set the value later with value().
 
-Whether encoding takes place
-depends on the OPTIONS and the existence of non-ascii characters in the VALUE.
-The NAME can only contain ascii characters, hence is never encoded.
+Whether encoding takes place depends on the OPTIONS and the existence
+of non-ascii characters in the VALUE.  The NAME can only contain ascii
+characters, hence is never encoded.
 
-To speed things up, attributes are not derived from the Mail::Reporter
+To speed things up, attributes are not derived from the M<Mail::Reporter>
 base-class.
 
 =option  charset STRING
-=default charset 'us-ascii'
+=default charset C<'us-ascii'>
 
 The VALUE is translated from utf-8 (Perl internal) to this character set,
 and the resulting string is encoded if required.  C<us-ascii> is the normal
@@ -73,22 +65,24 @@ encoding for e-mail.  Valid character sets can be found with
 Encode::encodings(':all').
 
 =option  language STRING
-=default language C<undef>
+=default language undef
 
 RFC2231 adds the possiblity to specify a language with the field.  When no
-language is specified, none is included in the encoding.  Valid language names
-are defined by RFC2130.  This module has only limited support for this feature.
+language is specified, none is included in the encoding.  Valid language
+names are defined by RFC2130.  This module has only limited support for
+this feature.
 
 =option  use_continuations BOOLEAN
-=default use_continuations 1
+=default use_continuations <true>
 
-Continuations are used to break-up long parameters into pieces which are no
-longer than 76 characters. Encodings are specified in RFC2231, but not supported
-by some Mail User Agents.
+Continuations are used to break-up long parameters into pieces which
+are no longer than 76 characters. Encodings are specified in RFC2231,
+but not supported by some Mail User Agents.
 
 =examples
 
- my $fn    = Mail::Message::Field::Attribute->new(filename => 'xyz');
+ my $fn    = Mail::Message::Field::Attribute
+                ->new(filename => 'xyz');
 
  my $fattr = 'Mail::Message::Field::Attribute';  # abbrev
  my $fn    = $fattr->new
@@ -96,7 +90,8 @@ by some Mail User Agents.
      , charset  => 'iso-8859-15'
      , language => 'nl-BE'
      );
- print $fn;   # print  filename*=iso-8859-15'nl-BE'Re%C7u
+ print $fn;
+   # -->  filename*=iso-8859-15'nl-BE'Re%C7u
 
 =warning Illegal character in parameter name '$name'
 
@@ -131,6 +126,8 @@ sub new($$@)
 }
 
 #------------------------------------------
+
+=section The attribute
 
 =method name
 
@@ -170,7 +167,9 @@ what is coming in if you can.
 
 =example
 
- my $param = Mail::Message::Field::Attribute->new('Content-Type');
+ my $param = Mail::Message::Field::Attribute
+               ->new('Content-Type');
+
  $param->addComponent("filename*=iso10646'nl-BE'%Re\47u");
 
 =cut
@@ -237,11 +236,7 @@ sub string()
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
+=section Attribute encoding
 
 =method encode
 
@@ -347,18 +342,22 @@ sub decode()
 
 #------------------------------------------
 
+=section Internals
+
 =method mergeComponent ATTRIBUTE
 
 Merge the components from the specified attribute in this attribute.  This is
 needed when components of the same attribute are created separately.  Merging
 is required by the field parsing.
 
+=error Too late to merge: value already changed.
+
 =cut
 
 sub mergeComponent($)
 {   my ($self, $comp) = @_;
     my $cont  = $self->{MMFF_cont}
-       or croak "Too late to merge: value already changed.";
+       or croak "ERROR: Too late to merge: value already changed.";
 
     defined $_ && $self->addComponent($_)
         foreach @{$comp->{MMFF_cont}};
@@ -367,5 +366,12 @@ sub mergeComponent($)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+This class does not extend M<Mail::Reporter> for obvious performance
+reasons: there is no logging or tracing available.
+
+=cut
 
 1;

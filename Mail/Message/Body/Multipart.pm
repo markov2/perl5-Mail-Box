@@ -9,13 +9,13 @@ use Mail::Message::Part;
 
 use IO::Lines;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body::Multipart - body of a message with attachments
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Message::Body, plus
+ See M<Mail::Message::Body>
 
  if($body->isMultipart) {
     my @attachments = $body->parts;
@@ -25,34 +25,24 @@ Mail::Message::Body::Multipart - body of a message with attachments
     $body->part(1)->delete;
  }
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The body (content) of a message can be stored in various ways.  In this
 manual-page you find the description of extra functionality you have
 when a message contains attachments (parts).
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default mime_type  'multipart/mixed'
+=default mime_type  C<'multipart/mixed'>
 
 =option  boundary STRING
 =default boundary undef
 
 Separator to be used between parts of the message.  This separator must
 be unique in case the message contains nested multiparts (which are not
-unusual).  If <undef>, a nice unique boundary will be generated.
+unusual).  If C<undef>, a nice unique boundary will be generated.
 
 =option  epilogue BODY|STRING
 =default epilogue undef
@@ -61,17 +51,17 @@ The text which is included in the main body after the final boundary.  This
 is usually empty, and has no meaning.
 
 Provide a BODY object or a STRING which will automatically translated
-into a text/plain body.
+into a C<text/plain> body.
 
 =option  parts ARRAY-OF-(MESSAGES|BODIES)
 =default parts undef
 
 Specifies an initial list of parts in this body.  These may be full
 MESSAGES, or BODIES which transformed into messages before use.  Each
-message is coerced into a Mail::Message::Part object.
+message is coerced into a M<Mail::Message::Part> object.
 
-C<MIME::Entity> and C<Mail::Internet> objects are acceptable in the
-list, because they are coercible into Mail::Message::Part's.  Values
+M<MIME::Entity> and M<Mail::Internet> objects are acceptable in the
+list, because they are coercible into M<Mail::Message::Part>'s.  Values
 of C<undef> will be skipped silently.
 
 =option  preamble BODY|STRING
@@ -87,7 +77,7 @@ into a text/plain body.
 
 =examples
 
- my $intro = Mail::Message::Body->new(data => ['part one']);
+ my $intro = M<Mail::Message::Body>->new(data => ['part one']);
  my $pgp   = Mail::Message::Body->new(data => ['part three']);
 
  my $body  = Mail::Message::Body::Multipart->new
@@ -98,7 +88,7 @@ into a text/plain body.
 
 =error Data not convertible to a message (type is $type)
 
-An object which is not coercable into a Mail::Message::Part object was
+An object which is not coercable into a M<Mail::Message::Part> object was
 passed to the initiation.  The data is ignored.
 
 =cut
@@ -159,12 +149,6 @@ sub init($)
 
 #------------------------------------------
 
-=head2 The Body
-
-=cut
-
-#------------------------------------------
-
 sub isMultipart() {1}
 
 #------------------------------------------
@@ -188,12 +172,6 @@ sub clone()
      );
 
 }
-
-#------------------------------------------
-
-=head2 About the Payload
-
-=cut
 
 #------------------------------------------
 
@@ -221,12 +199,6 @@ sub size()
 
     $bytes;
 }
-
-#------------------------------------------
-
-=head2 Access to the Payload
-
-=cut
 
 #------------------------------------------
 
@@ -308,6 +280,86 @@ sub printEscapedFrom($)
 
 #------------------------------------------
 
+sub check()
+{   my $self = shift;
+    $self->foreachComponent( sub {$_[1]->check} );
+}
+
+#------------------------------------------
+
+sub encode(@)
+{   my ($self, %args) = @_;
+    $self->foreachComponent( sub {$_[1]->encode(%args)} );
+}
+
+#------------------------------------------
+
+sub encoded()
+{   my $self = shift;
+    $self->foreachComponent( sub {$_[1]->encoded} );
+}
+
+#------------------------------------------
+
+sub read($$$$)
+{   my ($self, $parser, $head, $bodytype) = @_;
+
+    my $boundary = $self->boundary;
+
+    $parser->pushSeparator("--$boundary");
+    my @msgopts  = ($self->logSettings);
+
+    my @sloppyopts = 
+      ( mime_type         => 'text/plain'
+      , transfer_encoding => ($head->get('Content-Transfer-Encoding') || undef)
+      );
+
+    # Get preamble.
+    my $headtype = ref $head;
+
+    my $begin    = $parser->filePosition;
+    my $preamble = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
+       ->read($parser, $head);
+
+    $self->{MMBM_preamble} = $preamble if defined $preamble;
+
+    # Get the parts.
+
+    my @parts;
+    while(my $sep = $parser->readSeparator)
+    {   last if $sep eq "--$boundary--\n";
+
+        my $part = Mail::Message::Part->new
+         ( @msgopts
+         , container => $self
+         );
+
+        last unless $part->readFromParser($parser, $bodytype);
+        push @parts, $part;
+    }
+    $self->{MMBM_parts} = \@parts;
+
+    # Get epilogue
+
+    $parser->popSeparator;
+    my $epilogue = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
+        ->read($parser, $head);
+
+    $self->{MMBM_epilogue} = $epilogue if defined $epilogue;
+    my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
+            : @parts            ? ($parts[-1]->fileLocation)[1]
+            : defined $preamble ? ($preamble->fileLocation)[1]
+            :                      $begin;
+
+    $self->fileLocation($begin, $end);
+
+    $self;
+}
+
+#------------------------------------------
+
+=section Constructing a body
+
 =method foreachComponent CODE
 
 Execute the CODE for each component of the message: the preamble, the
@@ -379,6 +431,50 @@ sub foreachComponent($)
 
 #------------------------------------------
 
+=method attach MESSAGES|BODIES
+
+Attach a list of MESSAGES to this multipart.  A new body is returned.
+When you specify BODIES, they will first be translated into
+real messages.  M<MIME::Entity> and M<Mail::Internet> objects may be
+specified too.  In any case, the parts will be coerced into
+M<Mail::Message::Part>'s.
+
+=cut
+
+sub attach(@)
+{   my $self  = shift;
+    my $new   = ref($self)->new
+      ( based_on => $self
+      , parts    => [$self->parts, @_]
+      );
+}
+
+#-------------------------------------------
+
+=method stripSignature OPTIONS
+
+Removes all parts which contains data usually defined as being signature.
+The M<MIME::Type> module provides this knowledge.  A new multipart is
+returned, containing the remaining parts.  No OPTIONS are defined yet,
+although some may be specified, because this method overrules the
+C<stripSignature> method for normal bodies.
+
+=cut
+
+sub stripSignature(@)
+{   my $self  = shift;
+
+    my @allparts = $self->parts;
+    my @parts    = grep {$_->body->mimeType->isSignature} @allparts;
+
+    @allparts==@parts ? $self
+    : (ref $self)->new(based_on => $self, parts => \@parts);
+}
+
+#------------------------------------------
+
+=section Access to the payload
+
 =method preamble
 
 Returns the preamble; the text before the first message part (before the
@@ -407,9 +503,9 @@ sub epilogue() {shift->{MMBM_epilogue}}
 
 =method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
 
-Return all parts by default, or when ALL is specified.  ACTIVE returns
-the parts which are not flagged for deletion, as opposite to DELETED.
-RECURSE descents into all nested multiparts to collect all parts.
+Return all parts by default, or when ALL is specified.  C<ACTIVE> returns
+the parts which are not flagged for deletion, as opposite to C<DELETED>.
+C<RECURSE> descents into all nested multiparts to collect all parts.
 
 You may also specify a code reference which is called for each nested
 part.  The first argument will be the message part.  When the code
@@ -426,8 +522,8 @@ returns true, the part is incorporated in the return list.
 
 =error Unknown criterium $what to select parts.
 
-Valid choices fdr part selections are C<'ALL'>, C<'ACTIVE'>, C<'DELETED'>,
-C<'RECURSE'> or a code reference.  However, some other argument was passed.
+Valid choices fdr part selections are C<ALL>, C<ACTIVE>, C<DELETED>,
+C<RECURSE> or a code reference.  However, some other argument was passed.
 
 =cut
 
@@ -454,7 +550,7 @@ Returns only the part with the specified INDEX.  You may use a negative
 value here, which counts from the back in the list.  Parts which are
 flagged to be deleted are included in the count.
 
-Example:
+=examples
 
  $message->body->part(2)->print;
  $body->part(1)->delete;
@@ -488,138 +584,10 @@ sub boundary(;$)
     $self->type->attribute(boundary => $boundary);
 }
 
-#------------------------------------------
-
-=head2 Constructing a Body
-
-=cut
-
-#------------------------------------------
-
-sub check()
-{   my $self = shift;
-    $self->foreachComponent( sub {$_[1]->check} );
-}
-
-#------------------------------------------
-
-sub encode(@)
-{   my ($self, %args) = @_;
-    $self->foreachComponent( sub {$_[1]->encode(%args)} );
-}
-
-#------------------------------------------
-
-sub encoded()
-{   my $self = shift;
-    $self->foreachComponent( sub {$_[1]->encoded} );
-}
-
 #-------------------------------------------
 
-=method attach MESSAGES|BODIES
-
-Attach a list of MESSAGES to this multipart.  A new body is returned.
-When you specify BODIES, they will first be translated into
-real messages.  C<MIME::Entity> and C<Mail::Internet> objects may be
-specified too.  In any case, the parts will be coerced into
-Mail::Message::Part's.
+=section Error handling
 
 =cut
-
-sub attach(@)
-{   my $self  = shift;
-    my $new   = ref($self)->new
-      ( based_on => $self
-      , parts    => [$self->parts, @_]
-      );
-}
-
-#-------------------------------------------
-
-=method stripSignature OPTIONS
-
-Removes all parts which contains data usually defined as being signature.
-The C<MIME::Type> module provides this knowledge.  A new multipart is
-returned, containing the remaining parts.  No OPTIONS are defined yet,
-although some may be specified, because this method overrules the
-C<stripSignature> method for normal bodies.
-
-=cut
-
-sub stripSignature(@)
-{   my $self  = shift;
-
-    my @allparts = $self->parts;
-    my @parts    = grep {$_->body->mimeType->isSignature} @allparts;
-
-    @allparts==@parts ? $self
-    : (ref $self)->new(based_on => $self, parts => \@parts);
-}
-
-#-------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
-
-sub read($$$$)
-{   my ($self, $parser, $head, $bodytype) = @_;
-
-    my $boundary = $self->boundary;
-
-    $parser->pushSeparator("--$boundary");
-    my @msgopts  = ($self->logSettings);
-
-    my @sloppyopts = 
-      ( mime_type         => 'text/plain'
-      , transfer_encoding => ($head->get('Content-Transfer-Encoding') || undef)
-      );
-
-    # Get preamble.
-    my $headtype = ref $head;
-
-    my $begin    = $parser->filePosition;
-    my $preamble = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
-       ->read($parser, $head);
-
-    $self->{MMBM_preamble} = $preamble if defined $preamble;
-
-    # Get the parts.
-
-    my @parts;
-    while(my $sep = $parser->readSeparator)
-    {   last if $sep eq "--$boundary--\n";
-
-        my $part = Mail::Message::Part->new
-         ( @msgopts
-         , container => $self
-         );
-
-        last unless $part->readFromParser($parser, $bodytype);
-        push @parts, $part;
-    }
-    $self->{MMBM_parts} = \@parts;
-
-    # Get epilogue
-
-    $parser->popSeparator;
-    my $epilogue = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
-        ->read($parser, $head);
-
-    $self->{MMBM_epilogue} = $epilogue if defined $epilogue;
-    my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
-            : @parts            ? ($parts[-1]->fileLocation)[1]
-            : defined $preamble ? ($preamble->fileLocation)[1]
-            :                      $begin;
-
-    $self->fileLocation($begin, $end);
-
-    $self;
-}
-
-#-------------------------------------------
 
 1;

@@ -8,54 +8,35 @@ use IO::File;
 use Sys::Hostname;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Locker::NFS - lock a folder with a separate file, NFS-safe
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  See Mail::Box::Locker
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Like the C<::DotLock> locker, but then in an NFS-safe fashion.  Over NFS,
 the creation of a file is not atomic.  The C<::DotLock> locker depends
-on an atomic C<open()> hence in not usable.  The C<::NFS> locker is more
-complicated (so slower), but will work for NFS -and for local disks too.
+on an atomic C<open> system call, hence in not usable to lock a folder
+which accessed over NFS.  The C<::NFS>
+locker is therefore more complicated (so therefore slower), but will work
+for NFS --and for local disks as well.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=cut
-
-#-------------------------------------------
-
-=head2 The Locker
+=default method C<'NFS'>
 
 =cut
-
-#-------------------------------------------
 
 sub name() {'NFS'}
 
 #-------------------------------------------
 
-=head2 Locking
-
-=cut
-
-#-------------------------------------------
 # METHOD nfs
 # This hack is copied from the Mail::Folder packages, as written
 # by Kevin Jones.  Cited from his code:
@@ -118,13 +99,13 @@ sub _unlock($$)
 =warning Removed expired lockfile $filename.
 
 A lock file was found which was older than the expiration period as
-specified with the C<timeout> option.  The lock file was succesfully
+specified with M<new(timeout)>.  The lock file was succesfully
 removed.
 
 =error Unable to remove expired lockfile $lockfile: $!
 
 A lock file was found which was older than the expiration period as
-specified with the C<timeout> option.  It is impossible to remove that
+specified with the M<new(timeout)> option.  It is impossible to remove that
 lock file, so we need to wait until it vanishes by some external cause.
 
 =cut

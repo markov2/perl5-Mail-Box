@@ -8,29 +8,20 @@ use Mail::Message::Field;
 use List::Util 'sum';
 use IO::File;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Parser::Perl - reading messages from file using Perl
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The Mail::Box::Parser::Perl implements parsing of messages in Perl.
-This may be a little slower than the C<C> based parser, but will also
-work on platforms where no C compiler is available.
+The C<Mail::Box::Parser::Perl> implements parsing of messages
+in Perl.  This may be a little slower than the C<C> based parser
+M<Mail::Box::Parser::C>, but will also work on platforms where no C
+compiler is available.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -38,7 +29,7 @@ work on platforms where no C compiler is available.
 =default trusted <false>
 
 Is the input from the file to be trusted, or does it require extra
-tests.  Related to Mail::Box::new(trusted).
+tests.  Related to M<Mail::Box::new(trusted)>.
 
 =option  fix_header_errors BOOLEAN
 =default fix_header_errors <false>
@@ -60,37 +51,6 @@ sub init(@)
     $self;
 }
 
-#------------------------------------------
-
-=head2 The Parser
-
-=cut
-
-#------------------------------------------
-
-=head2 Parsing
-
-=cut
-
-#------------------------------------------
-
-=method fixHeaderErrors [BOOLEAN]
-
-If set to C<true>, parsing of a header will not stop on an error, but
-attempt to add the erroneous this line to previous field.  Without BOOLEAN,
-the current setting is returned.
-
-=example
-
- $folder->parser->fixHeaderErrors(1);
- my $folder = $mgr->open('folder', fix_header_errors => 1);
-
-=cut
-
-sub fixHeaderErrors(;$)
-{   my $self = shift;
-    @_ ? ($self->{MBPP_fix} = shift) : $self->{MBPP_fix};
-}
 
 #------------------------------------------
 
@@ -370,12 +330,6 @@ sub bodyAsFile($;$$)
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
-
 sub bodyDelayed(;$$)
 {   my ($self, $exp_chars, $exp_lines) = @_;
     my $file  = $self->{MBPP_file};
@@ -433,6 +387,27 @@ sub closeFile()
     my $file = delete $self->{MBPP_file} or return;
     $file->close;
     $self;
+}
+#------------------------------------------
+
+=section The parser
+
+=method fixHeaderErrors [BOOLEAN]
+
+If set to C<true>, parsing of a header will not stop on an error, but
+attempt to add the erroneous this line to previous field.  Without BOOLEAN,
+the current setting is returned.
+
+=example
+
+ $folder->parser->fixHeaderErrors(1);
+ my $folder = $mgr->open('folder', fix_header_errors => 1);
+
+=cut
+
+sub fixHeaderErrors(;$)
+{   my $self = shift;
+    @_ ? ($self->{MBPP_fix} = shift) : $self->{MBPP_fix};
 }
 
 #------------------------------------------

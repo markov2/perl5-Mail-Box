@@ -60,7 +60,7 @@ my $orig = $folder->message($msgnr);
 
 #
 # Create the reply prelude.
-# The default only produces the quotePrelude line, but we extend it
+# The default only produces the replyPrelude line, but we extend it
 # a little.
 #
 
@@ -72,7 +72,7 @@ do not be disturbed.  Best wishes, Me, myself, and I.
 
 PRELUDE
 
-$prelude .= $orig->quotePrelude($orig->get('From'));  # The usual quote line.
+$prelude .= $orig->replyPrelude($orig->get('From'));  # The usual quote line.
 
 #
 # The postlude is appended after the inlined source text.  It is

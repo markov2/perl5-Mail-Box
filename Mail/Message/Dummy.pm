@@ -6,36 +6,26 @@ use base 'Mail::Message';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Dummy - a placeholder for a missing messages
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Dummy messages are used by modules which maintain ordered lists of
-messages, usually based on message-id.  A good example is
-Mail::Box::Thread::Manager, which detects related messages by scanning the
-known message headers for references to other messages.  As long as the
-referenced messages are not found inside the mailbox, their place is
-occupied by a dummy.
+Dummy messages are used by modules which maintain ordered lists
+of messages, usually based on message-id.  A good example is
+M<Mail::Box::Thread::Manager>, which detects related messages by
+scanning the known message headers for references to other messages.
+As long as the referenced messages are not found inside the mailbox,
+their place is occupied by a dummy.
 
 Be careful when using modules which may create dummies.  Before trying to
-access the header or body use isDummy() to check if the message is a
+access the header or body use M<isDummy()> to check if the message is a
 dummy message.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new MESSAGE-ID, OPTIONS
 
@@ -46,10 +36,8 @@ a real message with the specified MESSAGE-ID.
 =default field_type <not used>
 =default head <not used>
 =default head_type <not used>
-=default log 'WARNINGS'
 =default messageId <required>
 =default modified <always false>
-=default trace 'WARNINGS'
 =default trusted <always true>
 
 =examples
@@ -78,30 +66,14 @@ sub init($)
  
 #-------------------------------------------
 
-=head2 The Message
-
-=cut
-
-#-------------------------------------------
-
 sub isDummy()    { 1 }
 
 #-------------------------------------------
-
-=head2 The Header
-
-=cut
 
 sub head()
 {    shift->log(INTERNAL => "You cannot take the head of a dummy");
      ();
 }
-
-#-------------------------------------------
-
-=head2 The Body
-
-=cut
 
 #-------------------------------------------
 

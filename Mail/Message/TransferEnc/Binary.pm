@@ -5,52 +5,26 @@ use warnings;
 package Mail::Message::TransferEnc::Binary;
 use base 'Mail::Message::TransferEnc';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::TransferEnc::Binary - encode/decode binary message bodies
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $decoded = $msg->decoded;
  my $encoded = $msg->encode(transfer => 'binary');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Encode or decode message bodies for binary transfer encoding.  This is
 totally no encoding.
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 The Encoder
-
-=cut
-
-#------------------------------------------
 
 sub name() { 'binary' }
-
-#------------------------------------------
-
-=head2 Encoding
-
-=cut
 
 #------------------------------------------
 

@@ -19,49 +19,40 @@ use File::Copy;
 use File::Spec;
 use File::Basename;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Net - handle folders which are stored remote.
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- # Do not instantiate this object yourself
+ # Do not instantiate this object directly
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 At the moment, this object is extended by
 
 =over 4
 
-=item * Mail::Box::POP3
+=item * M<Mail::Box::POP3>
 
-=item * Mail::Box::IMAP4
+Implements the POP3 protocol.
 
-UNDER DEVELOPMENT
+=item * M<Mail::Box::IMAP4>
+
+Implements the IMAP4 protocol.  B<UNDER DEVELOPMENT>
 
 =back
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default body_type 'Mail::Message::Body::Lines'
-
+=default body_type M<Mail::Message::Body::Lines>
 =default folderdir <not used>
-=default lock_type 'NONE'
+=default lock_type C<'NONE'>
 =default remove_when_empty <false>
-=default trusted <false>
-=default folder '/'
+=default trusted   <false>
+=default folder    C<'/'>
 
 =option  server_name HOSTNAME
 =default server_name undef
@@ -105,13 +96,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-=method create FOLDER, OPTIONS
+=ci_method create FOLDER, OPTIONS
 
 Create a new folder on the remote server.
 
@@ -131,12 +116,6 @@ the C<undef>.
 =cut
 
 sub folderdir(;$) { undef }
-
-#-------------------------------------------
-
-=head2 On open folders
-
-=cut
 
 #-------------------------------------------
 

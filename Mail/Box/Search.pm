@@ -7,11 +7,11 @@ use warnings;
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Search - select messages within a mail box
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Manager;
  my $mgr    = Mail::Box::Manager->new;
@@ -21,9 +21,9 @@ Mail::Box::Search - select messages within a mail box
  my @msgs   = $filter->search($folder, ...);
  if($filter->search($message)) {...}
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-This Mail::Box::Search class is the base class for various message scan
+This C<Mail::Box::Search> class is the base class for various message scan
 algorithms.  The selected messages can be labeled.  Boolean operations on
 messages are supported.
 
@@ -31,35 +31,23 @@ Currently implemented searches:
 
 =over 4
 
-=item Mail::Box::Search::Grep
+=item M<Mail::Box::Search::Grep>
 
 Match header or body against a regular expression in a UNIX C<grep> like
 fashion.
 
-=item Mail::Box::Search::SpamAssassin
+=item M<Mail::Box::Search::SpamAssassin>
 
-Try to detect spam, using Mail::SpamAssassin.
+Try to detect spam, using M<Mail::SpamAssassin>.
 
-=item Mail::Box::Search::IMAP
+=item M<Mail::Box::Search::IMAP>
 
 Search an IMAP folder for special interface IMAP folders provide for it.
-UNDER CONSTRUCTION till Mail::Transport::IMAP4 is complete.
-
-=item
+UNDER CONSTRUCTION till M<Mail::Transport::IMAP4> is complete.
 
 =back
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -90,7 +78,7 @@ to an array, the information about the matches is collected as a list
 of hashes, one hash per match.
 
 =option  in 'HEAD'|'BODY'|'MESSAGE'
-=default in 'BODY;
+=default in C<'BODY'>
 
 Where to look for the match.
 
@@ -115,7 +103,7 @@ not specified, the message will not get a label; search() also returns
 a list of selected messages.
 
 =option  limit NUMBER
-=default limit 0
+=default limit C<0>
 
 Limit the search to the specified NUMBER of messages.  When the NUMBER
 is positive, the search starts at the first message in the folder or
@@ -123,7 +111,7 @@ thread.  A negative NUMBER starts at the end of the folder.  If the limit
 is set to zero, there is no limit.
 
 =option  logical 'REPLACE'|'AND'|'OR'|'NOT'|'AND NOT'|'OR NOT'
-=default logical 'REPLACE'
+=default logical C<'REPLACE'>
 
 Only applicable in combination with a C<label>.
 How to handle the existing labels.  In case of C<REPLACE>, messages
@@ -133,7 +121,7 @@ be selected by this search and already carry the label, otherwise the
 label will not be set.  Specify C<OR> to have newly selected messages
 added to the set of already selected messages.
 
-C<NOT> is true for messages which do not fulfill the search.  The
+C<NOT> is true for messages which do not fulfil the search.  The
 details output will still contain the places where the the match was
 found, however those messages will complementary set of messages will
 be labeled and returned.
@@ -152,13 +140,13 @@ The C<in> option defines only three names.
 
 =error Cannot search in header.
 
-Th search object does not implement inHead(), and can therefore not search
-a message header.
+Th search object does not implement M<inHead()>, and can therefore
+not search a message header.
 
 =error Cannot search in body.
 
-Th search object does not implement inBody(), and can therefore not search
-a message body.
+Th search object does not implement M<inBody()>, and can therefore
+not search a message body.
 
 =error Don't know how to deliver via results in $way.
 
@@ -210,18 +198,14 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Searching
-
-=cut
-
-#-------------------------------------------
+=section Searching
 
 =method search FOLDER|THREAD|MESSAGE|ARRAY-OF-MESSAGES
 
 Check which messages from the FOLDER (Mail::Box) match the
 search parameters.  The matched messages are returned as list.  You
-can also specify a THREAD (Mail::Box::Thread::Node), one single
-MESSAGE (Mail::Message), or an array of messages.
+can also specify a THREAD (a M<Mail::Box::Thread::Node>), one single
+MESSAGE (a M<Mail::Message>), or an array of messages.
 
 Sometimes we know how only one match is needed.  In this case, this
 searching will stop at the first match.  For instance, when C<limit> is C<-1>
@@ -367,15 +351,11 @@ sub inBody(@) {shift->notImplemented}
 
 #-------------------------------------------
 
-=head2 The Results
-
-=cut
-
-#-------------------------------------------
+=section The Results
 
 =method printMatch [FILEHANDLE], HASH
 
-Print the information about the match (see search(deliver)) in
+Print the information about the match (see M<new(deliver)>) in
 some understandable way.  If no file handle
 is specified, the output will go to the selected filehandle (see
 C<perldoc -f select>).
@@ -385,5 +365,9 @@ C<perldoc -f select>).
 sub printMatch($) {shift->notImplemented}
 
 #-------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

@@ -8,11 +8,11 @@ use Carp;
 use File::Spec;
 use Errno 'EAGAIN';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::Send - send a message
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $message = Mail::Message->new(...);
 
@@ -20,10 +20,10 @@ Mail::Transport::Send - send a message
  $message->send;
  $message->send(via => 'sendmail');
 
- my $sender = Mail::Transport::SMTP->new(...);
+ my $sender = M<Mail::Transport::SMTP>->new(...);
  $sender->send($message);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Send a message to the destinations as specified in the header.  The
 C<Mail::Transport::Send> module is capable of autodetecting which of the
@@ -32,32 +32,31 @@ without C<via> options to get a message transported.
 
 =over 4
 
-=item * Mail::Transport::Sendmail
+=item * M<Mail::Transport::Sendmail>
 
 Use sendmail to process and deliver the mail.  This requires the
 C<sendmail> program to be installed on your system.  Whether this
 is an original sendmail, or a replacement from Postfix does matter.
 
-=item * Mail::Transport::Exim
+=item * M<Mail::Transport::Exim>
 
 Use C<exim> to distribute the message.
 
-=item * Mail::Transport::Qmail
+=item * M<Mail::Transport::Qmail>
 
 Use C<qmail-inject> to distribute the message.
 
-=item * Mail::Transport::SMTP
+=item * M<Mail::Transport::SMTP>
 
 In this case, Perl is handling mail transport on its own.  This is less
 desired but more portable than sending with sendmail or qmail.
-
 The advantage is that this sender is environment independent, and easier to
 configure.  However, there is no daemon involved which means that your
 program will wait until the message is delivered, and the message is
 lost when your program is interrupted during delivery (which may
 take hours to complete).
 
-=item * Mail::Transport::Mailx
+=item * M<Mail::Transport::Mailx>
 
 Use the external C<mail>, C<mailx>, or C<Mail> programs to send the
 message.  Usually, the result is poor, because some versions of these
@@ -66,21 +65,11 @@ known to have exploitable security breaches.
 
 =back
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default via 'sendmail'
+=default via C<'sendmail'>
 
 =cut
 
@@ -91,20 +80,19 @@ sub new(@)
 
 #------------------------------------------
 
-=head2 Sending Mail
-
-=cut
-
-#------------------------------------------
+=section Sending mail
 
 =method send MESSAGE, OPTIONS
 
 Transmit the MESSAGE, which may be anything what can be coerced into a
-Mail::Message, so including Mail::Internet and MIME::Entity
+M<Mail::Message>, so including M<Mail::Internet> and M<MIME::Entity>
 messages.  It returns true when the transmission was successfully completed.
 
-As OPTIONS, you can specify an C<interval> and a C<retry> count, which
-will overrule the setting at initiation of the transporter object.
+=option  interval SECONDS
+=default interval M<new(interval)>
+
+=option  retry INTEGER
+=default retry M<new(retry)>
 
 =cut
 
@@ -145,7 +133,7 @@ the exit status of the command which was started.
 
 =error Transporters of type $class cannot send.
 
-The Mail::Transporter object of the specified type can not send messages,
+The M<Mail::Transport> object of the specified type can not send messages,
 but only receive message.
 
 =cut
@@ -195,10 +183,10 @@ Determine the destination for this message.  If a valid ADDRESS is defined,
 this is used to overrule the addresses within the message.  If the ADDRESS
 is C<undef> it is ignored.
 
-If no ADDRESS is specified, the message is scanned for resent groups (see
-Mail::Message::Head::resentGroups()).  The addresses found in the first
-(is latest added) group are used.  If no resent groups are found, the
-normal C<To>, C<Cc>, and C<Bcc> lines are taken.
+If no ADDRESS is specified, the message is scanned for resent groups
+(see M<Mail::Message::Head::Complete::resentGroups()>).  The addresses
+found in the first (is latest added) group are used.  If no resent groups
+are found, the normal C<To>, C<Cc>, and C<Bcc> lines are taken.
 
 =cut
 
@@ -226,5 +214,11 @@ sub destinations($;$)
 }
 
 #------------------------------------------
+
+=section Server connection
+
+=section Error handling
+
+=cut
 
 1;

@@ -12,25 +12,26 @@ use Scalar::Util 'weaken';
 
 #-------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Manager - manage a set of folders
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Manager;
  my $mgr     = new Mail::Box::Manager;
  $mgr->registerType(mbox => 'Mail::Box::Mbox');
 
  # Create folder objects.
- my $folder  = $mgr->open(folder => $ENV{MAIL});
- my $message = $folder->message(0);
- my ($message1, $message2) = ($folder->message(1), $folder->message(2));
+ my $folder   = $mgr->open(folder => $ENV{MAIL});
+ my $message1 = $folder->message(0);
  $mgr->copyMessage('Draft', $message);
- $mgr->moveMessage('Outbox', $message1, $message2, create => 1 );
+
+ my @messages = $folder->message(0,3);
+ $mgr->moveMessage('Outbox', @messages, create => 1 );
  $mgr->close($folder);
 
- # Create thread-detectors (see Mail::Box::Thread::Manager)
+ # Create thread-detectors (see M<Mail::Box::Thread::Manager>)
  my $t       = $mgr->threads($inbox, $outbox);
 
  my $threads = $mgr->threads(folder => $folder);
@@ -38,24 +39,14 @@ Mail::Box::Manager - manage a set of folders
  {   $thread->print;
  }
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The manager keeps track on a set of open folders and a set of message-thread
 supporting objects.  You are not obliged to use this object (you can
-directly create a Mail::Box::Mbox if you prefer), but you will create
+directly create a M<Mail::Box::Mbox> if you prefer), but you will create
 more portable and safer code if you do use it.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new ARGS
 
@@ -66,20 +57,20 @@ Add one or more new folder types to the list of known types.  The order is
 important: when you open a file without specifying its type, the
 manager will start trying the last added list of types, in order.
 
-Each TYPE is specified as an array which contains name, class, and defaults
-for options which overrule the usual defaults.
-You may specify folder-specific defaults as OPTIONS.  They override
-the settings of the manager.
+Each TYPE is specified as an array which contains name, class, and
+defaults for options which overrule the usual defaults.  You may specify
+folder-specific defaults as OPTIONS.  They override the settings of
+the manager.
 
 =option  default_folder_type NAME|CLASS
-=default default_folder_type 'mbox'
+=default default_folder_type C<'mbox'>
 
 Specifies the default folder type for newly created folders.  If this
 option is not specified, the most recently registered type is used (see
-C<registerType> and the C<folder_types> option.
+M<registerType()> and the M<new(folder_types)> option.
 
 =option  folderdir DIRECTORY
-=default folderdir [ '.' ]
+=default folderdir C<[ '.' ]>
 
 The default directory, or directories, where folders are
 located.  C<Mail::Box::Manager> can autodetect the existing folder-types.
@@ -87,8 +78,8 @@ There may be different kinds of folders opened at the same time, and
 messages can be moved between those types, although that may result in
 a loss of information depending on the folder types.
 
-=option  folderdirs [ DIRECTORY, ... ]
-=default folderdirs <synonym for folderdir>
+=option  folderdirs [DIRECTORIES]
+=default folderdirs <synonym for C<folderdir>>
 
 =cut
 
@@ -146,11 +137,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Manage Folders
-
-=cut
-
-#-------------------------------------------
+=section Manage folders
 
 =method registerType TYPE, CLASS [,OPTIONS]
 
@@ -177,11 +164,9 @@ sub registerType($$@)
 #-------------------------------------------
 
 =method folderTypes
-
-The C<folderTypes> returns the list of currently defined folder types.
+Returns the list of currently defined folder types.
 
 =example
-
  print join("\n", $manager->folderTypes), "\n";
 
 =cut
@@ -193,45 +178,6 @@ sub folderTypes()
     sort keys %uniq;
 }
 
-#-------------------------------------------
-
-=method decodeFolderURL URL
-
-Try to decompose a folder name which is specified as URL (see open())
-into separate options.
-
-=cut
-
-sub decodeFolderURL($)
-{   my ($self, $name) = @_;
-
-    return unless
-       my ($type, $username, $password, $hostname, $port, $path)
-          = $name =~ m!^(\w+)\:             # protocol
-                       (?://
-                          (?:([^:@./]*)     # username
-                            (?:\:([^@/]*))? # password
-                           \@)?
-                           ([\w.-]+)?       # hostname
-                           (?:\:(\d+))?     # port number
-                        )?
-                        (.*)                # foldername
-                      !x;
-
-    $username ||= $ENV{USER} || $ENV{LOGNAME};
-
-    $password ||= '';        # decode password from url
-    $password =~ s/\+/ /g;
-    $password =~ s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
-
-    $hostname ||= 'localhost';
-    $path     ||= '=';
-
-    ( type        => $type,     folder      => $path
-    , username    => $username, password    => $password
-    , server_name => $hostname, server_port => $port
-    );
-}
 
 #-------------------------------------------
 
@@ -244,7 +190,7 @@ the C<type> is specified.
 C<open> carries options for the manager which are described here, but
 may also have additional options for the folder type.  For a
 description of the folder options, see the options to the constructor
-(the Mail::Box::new() method) for each type of mail box.
+M<Mail::Box::new()> for each type of mail box.
 
 =option  create BOOLEAN
 =default create <false>
@@ -253,7 +199,7 @@ Create the folder if it does not exist. By default, this is not done.
 The C<type> option specifies which type of folder is created.
 
 =option  folder NAME|URL
-=default folder $ENV{MAIL}
+=default folder C<$ENV{MAIL}>
 
 Which folder to open, specified by NAME or special URL.
 The URL format is composed as
@@ -270,12 +216,12 @@ When you specify anything which does not match the URL format, it is
 passed directly to the C<new> method of the folder which is opened.
 
 =option  folderdir DIRECTORY
-=default folderdir '.'
+=default folderdir C<'.'>
 
 The directory where the folders are usually stored.
 
 =option  type FOLDERTYPENAME|FOLDERTYPE
-=default type <first, usually mbox>
+=default type <first, usually C<mbox>>
 
 Specify the type of the folder.  If you do not specify this option while
 opening a folder for reading, the manager checks all registered folder
@@ -284,27 +230,32 @@ folder for writing, then the default will be the most recently registered
 type. (If you add more than one type at once, the first of the list is
 used.)
 
-=examples
+=examples opening folders via the manager
 
- my $jack  = $manager->open(folder => '=jack', type => 'mbox');
- my $rcvd  = $manager->open(type => 'Mail::Box::Mbox', access => 'rw');
+ my $jack  = $manager->open(folder => '=jack',
+    type => 'mbox');
+
+ my $rcvd  = $manager->open('myMail',
+    type => 'Mail::Box::Mbox', access => 'rw');
 
  my $inbox = $manager->open('Inbox')
     or die "Cannot open Inbox.\n";
 
- my $send  = $manager->open('pop3://myself:secret@pop3.server.com:120/x');
- my $send  = $manager->open(folder => '/x', type => 'pop3'
-   , username    => 'myself', password => 'secret'
-   , server_name => 'pop3.server.com', server_port => '120');
+ my $pop   = 'pop3://myself:secret@pop3.server.com:120/x';
+ my $send  = $manager->open($url);
+
+ my $send  = $manager->open(folder => '/x',
+   type => 'pop3', username => 'myself', password => 'secret'
+   server_name => 'pop3.server.com', server_port => '120');
 
 =error Illegal folder URL '$url'.
 
 The folder name was specified as URL, but not according to the syntax.
-See decodeFolderURL() for an description of the syntax.
+See M<decodeFolderURL()> for an description of the syntax.
 
 =error No foldername specified to open.
 
-The open() needs a folder name as first argument (before the list of options),
+C<open()> needs a folder name as first argument (before the list of options),
 or with the C<folder> option within the list.  If no name was found, the
 MAIL environment variable is checked.  When even that does not result in
 a usable folder, then this error is produced.  The error may be caused by
@@ -312,23 +263,24 @@ an accidental odd-length option list.
 
 =error Will never create a folder $name without having write access.
 
-You have set the C<create> flag, but only want to read the folder.  Create is
-only useful for folders which have write or append access modes (see access()).
+You have set M<open(create)>, but only want to read the folder.  Create is
+only useful for folders which have write or append access modes
+(see M<Mail::Box::new(access)>).
 
 =warning Folder type $type is unknown, using autodetect.
 
-The specified folder type (see type(), possibly derived from the folder name
-when specified as url) is not known to the manager.  This may mean that
-you forgot to require the Mail::Box extension which implements this folder
-type, but probably it is a typo.  Usually, the manager is able to figure-out
-which type to use by itself.
+The specified folder type (see M<open(type)>, possibly derived from
+the folder name when specified as url) is not known to the manager.
+This may mean that you forgot to require the M<Mail::Box> extension
+which implements this folder type, but probably it is a typo.  Usually,
+the manager is able to figure-out which type to use by itself.
 
 =warning Folder does not exist, failed opening $type folder $name.
 
-The folder does not exist and creating is not permitted (see the C<create>
-flag) or did not succeed.  When you do not have sufficient access rights
-to the folder (for instance wrong password for POP3), this warning will
-be produced as well.
+The folder does not exist and creating is not permitted (see
+M<open(create)>) or did not succeed.  When you do not have sufficient
+access rights to the folder (for instance wrong password for POP3),
+this warning will be produced as well.
 
 The manager tried to open a folder of the specified type.  It may help
 to explicitly state the type of your folder with the C<type> option.
@@ -460,7 +412,6 @@ sub open(@)
 #-------------------------------------------
 
 =method openFolders
-
 Returns a list of all open folders.
 
 =cut
@@ -470,7 +421,6 @@ sub openFolders() { @{shift->{MBM_folders}} }
 #-------------------------------------------
 
 =method isOpenFolder FOLDER
-
 Returns true if the FOLDER is currently open.
 
 =example
@@ -490,8 +440,8 @@ sub isOpenFolder($)
 
 C<close> removes the specified folder from the list of open folders.
 Indirectly it will update the files on disk if needed (depends on
-the C<save_on_exit> flag for each folder). OPTIONS are passed to
-the C<close> method of each folder.
+the M<Mail::Box::new(save_on_exit)> flag for each folder). OPTIONS are
+passed to M<Mail::Box::close()> of the folder.
 
 The folder's messages will also be withdrawn from the known message threads.
 You may also close the folder directly. The manager will be informed
@@ -542,19 +492,35 @@ END {map {defined $_ && $_->closeAllFolders} @managers}
 
 #-------------------------------------------
 
-=head2 Move Messages to Folders
+=method delete FOLDERNAME [,OPTIONS]
+
+Remove the named folder, including all its sub-folders.  The OPTIONS
+are the same as those for M<open()>.
+
+The deletion of a folder can take some time.  Dependent on the type of
+folder, the folder must be read first.  For some folder-types this will
+be fast.
 
 =cut
 
+sub delete($@)
+{   my ($self, $name, @options) = @_;
+    my $folder = $self->open(folder => $name, @options) or return;
+    $folder->delete;
+}
+
 #-------------------------------------------
 
-=method appendMessages [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+=section Move messages to folders
 
-Append one or more messages to a folder. You may specify a FOLDERNAME or
-an opened folder as the first argument. When the name is that of an
-open folder, it is treated as if the folder-object was specified, and
-not directly access the folder-files.  You may also specify the
-foldername as part of the options list.
+=method appendMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+
+Append one or more messages to a folder (therefore, an C<appendMessages()>
+is defined as well). You may specify a FOLDERNAME or an opened folder
+as the first argument. When the name is that of an open folder, it is
+treated as if the folder-object was specified, and not directly access
+the folder-files.  You may also specify the foldername as part of the
+options list.
 
 If a message is added to an already opened folder, it is only added to
 the structure internally in the program.  The data will not be written to
@@ -562,7 +528,7 @@ disk until a write of that folder takes place.  When the name of an
 unopened folder is given, the folder is opened, the messages stored on
 disk, and then the folder is closed.
 
-A message must be an instance of an Mail::Message.  The actual message
+A message must be an instance of a M<Mail::Message>.  The actual message
 type does not have to match the folder type--the folder will try to
 resolve the differences with minimal loss of information.  The coerced
 messages (how the were actually written) are returned as list.
@@ -572,8 +538,8 @@ the default options for the detected folder type.
 
 =examples
 
- $mgr->appendMessages('=send', $message, folderdir => '/');
- $mgr->appendMessages($received, $inbox->messages);
+ $mgr->appendMessage('=send', $message, folderdir => '/');
+ $mgr->appendMessage($received, $inbox->messages);
 
  my @appended = $mgr->appendMessages($inbox->messages,
     folder => 'Drafts');
@@ -582,7 +548,7 @@ the default options for the detected folder type.
 =error Folder $name is not a Mail::Box; cannot add a message.
 
 The folder where the message should be appended to is an object which is
-not a folder type which extends Mail::Box.  Probably, it is not a folder
+not a folder type which extends M<Mail::Box>.  Probably, it is not a folder
 at all.
 
 =warning Use moveMessage() or copyMessage() to move between open folders.
@@ -692,16 +658,18 @@ which can be specified when opening a folder.
  my $outbox = $mgr->open(folder => 'Outbox');
  $mgr->copyMessage($outbox, $drafts->message(0));
 
- $mgr->copyMessage('=Trash', $drafts->message(1), $drafts->message(2),
+ my @messages = $drafts->message(1,2);
+ $mgr->copyMessage('=Trash', @messages.
     folderdir => '/tmp', create => 1);
 
- $mgr->copyMessage($drafts->message(1), folder => '=Drafts'
-    folderdir => '/tmp', create => 1);
+ $mgr->copyMessage($drafts->message(1),
+    folder => '=Drafts' folderdir => '/tmp',
+    create => 1);
 
 =error Use appendMessage() to add messages which are not in a folder.
 
-You do not need to copy this message into the folder, because you do not share
-the message between folders.
+You do not need to copy this message into the folder, because you do
+not share the message between folders.
 
 =cut
 
@@ -763,26 +731,7 @@ sub moveMessage(@)
 
 #-------------------------------------------
 
-=method delete FOLDERNAME [,OPTIONS]
-
-Remove the named folder, including all its sub-folders.  The OPTIONS
-are the same as those for open().
-
-The deletion of a folder can take some time.  Dependent on the type of
-folder, the folder must be read first.  For some folder-types this will
-be fast.
-
-=cut
-
-sub delete($@)
-{   my ($self, $name, @options) = @_;
-    my $folder = $self->open(folder => $name, @options) or return;
-    $folder->delete;
-}
-
-#-------------------------------------------
-
-=head2 Manage Threads
+=section Manage message threads
 
 =cut
 
@@ -790,10 +739,10 @@ sub delete($@)
 
 =method threads [FOLDERS], OPTIONS
 
-Create a new object which keeps track of message threads.  You can read
-about the possible options in the Mail::Box::Thread::Manager documentation.
-As OPTIONS specify one folder or an array of FOLDERS.  It is also
-permitted to specify folders before the options.
+Create a new object which keeps track of message threads.  You can
+read about the possible options in M<Mail::Box::Thread::Manager>.
+As OPTIONS specify one folder or an array of FOLDERS.
+It is also permitted to specify folders before the options.
 
 =examples
 
@@ -848,6 +797,8 @@ sub threads(@)
 
 #-------------------------------------------
 
+=section Internals
+
 =method toBeThreaded FOLDER, MESSAGES
 
 Signal to the manager that all thread managers which are using the
@@ -877,5 +828,49 @@ sub toBeUnthreaded($@)
 }
 
 #-------------------------------------------
+
+=method decodeFolderURL URL
+
+Try to decompose a folder name which is specified as URL (see open())
+into separate options.
+
+=cut
+
+sub decodeFolderURL($)
+{   my ($self, $name) = @_;
+
+    return unless
+       my ($type, $username, $password, $hostname, $port, $path)
+          = $name =~ m!^(\w+)\:             # protocol
+                       (?://
+                          (?:([^:@./]*)     # username
+                            (?:\:([^@/]*))? # password
+                           \@)?
+                           ([\w.-]+)?       # hostname
+                           (?:\:(\d+))?     # port number
+                        )?
+                        (.*)                # foldername
+                      !x;
+
+    $username ||= $ENV{USER} || $ENV{LOGNAME};
+
+    $password ||= '';        # decode password from url
+    $password =~ s/\+/ /g;
+    $password =~ s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
+
+    $hostname ||= 'localhost';
+    $path     ||= '=';
+
+    ( type        => $type,     folder      => $path
+    , username    => $username, password    => $password
+    , server_name => $hostname, server_port => $port
+    );
+}
+
+#-------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

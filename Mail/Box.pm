@@ -12,10 +12,6 @@ use File::Spec;
 use Carp;
 use Scalar::Util 'weaken';
 
-use overload '@{}' => sub { shift->{MB_messages} }
-           , '""'  => 'name'
-           , 'cmp' => sub {$_[0]->name cmp "${_[1]}"};
-
 #-------------------------------------------
 # Clean exist required to remove lockfiles and to save changes.
 
@@ -23,13 +19,13 @@ $SIG{INT} = $SIG{QUIT} = $SIG{PIPE} = $SIG{TERM} = sub {exit 0};
 
 #-------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box - manage a mailbox, a folder with messages
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- use Mail::Box::Manager;
+ use M<Mail::Box::Manager>;
  my $mgr    = Mail::Box::Manager->new;
  my $folder = $mgr->open(folder => $ENV{MAIL}, ...);
  print $folder->name;
@@ -44,49 +40,58 @@ Mail::Box - manage a mailbox, a folder with messages
  my $emails = $folder->messages;
 
  # Iterate over the messages.
- foreach ($folder->messages) {...}     # all messages
- foreach (@$folder) {...}              # all messages
+ foreach ($folder->messages) {...} # all messages
+ foreach (@$folder) {...}          # all messages
 
- $folder->addMessage(new Mail::Box::Message(...));
+ $folder->addMessage(M<Mail::Box::Message>->new(...));
 
-Tied-interface:   (See Mail::Box::Tie)
+Tied-interface:
 
- tie my(@inbox), 'Mail::Box::Tie::ARRAY', $inbox;
- $inbox[3]->print        # same as $folder->message(3)->print
+ tie my(@inbox), 'M<Mail::Box::Tie::ARRAY>', $inbox;
 
- tie my(%inbox), 'Mail::Box::Tie::HASH', $inbox;
- $inbox{$msgid}->print   # same as $folder->messageId($msgid)->print
+ # Four times the same:
+ $inbox[3]->print;                 # tied
+ $folder->[3]->print;              # overloaded folder
+ $folder->message(3)->print;       # usual
+ print $folder->[3];               # overloaded message
 
-=head1 DESCRIPTION
+ tie my(%inbox), 'M<Mail::Box::Tie::HASH>', $inbox;
 
-A Mail::Box::Manager creates Mail::Box objects.  But you already
-knew, because you started with the Mail::Box-Overview manual page.
+ # Twice times the same
+ $inbox{$msgid}->print;            # tied
+ $folder->messageId($msgid)->print;# usual
+
+=chapter DESCRIPTION
+
+A M<Mail::Box::Manager> creates C<Mail::Box> objects.  But you already
+knew, because you started with the M<Mail::Box-Overview> manual page.
 That page is obligatory reading, sorry!
 
-Mail::Box is the base class for accessing various types of mailboxes (folders)
-in a uniform manner.  The various folder types vary on how they store their
-messages, but when some effort those differences could be hidden behind
-a general API. For example, some folders store many messages in one single file,
-where other store each message in a separate file withing the same directory.
+C<Mail::Box> is the base class for accessing various types of mailboxes
+(folders) in a uniform manner.  The various folder types vary on how
+they store their messages, but when some effort those differences could
+be hidden behind a general API. For example, some folders store many
+messages in one single file, where other store each message in a separate
+file withing the same directory.
 
-No object in your program will be of type Mail::Box: it is only used as base
-class for the real folder types.  Mail::Box is extended by
+No object in your program will be of type C<Mail::Box>: it is only used
+as base class for the real folder types.  C<Mail::Box> is extended by
 
 =over 4
 
-=item * Mail::Box::Mbox
+=item * M<Mail::Box::Mbox>
 
 a folder type in which all related messages are stored in one file.  This
 is very common folder type for UNIX.
 
-=item * Mail::Box::MH
+=item * M<Mail::Box::MH>
 
 this folder creates a directory for each folder, and a message is one
 file inside that directory.  The message files are numbered sequentially
 on order of arrival.  A special C<.mh_sequences> file maintains flags
 about the messages.
 
-=item * Mail::Box::Maildir
+=item * M<Mail::Box::Maildir>
 
 maildir folders have a directory for each folder, although the first
 implementation only supported one folder in total.  A folder directory
@@ -97,7 +102,7 @@ the C<cur> directory (accepted).  Each message is one file with a name
 starting with timestamp.  The name also contains flags about the status
 of the message.
 
-=item * Mail::Box::POP3
+=item * M<Mail::Box::POP3>
 
 Pop3 is a protocol which can be used to retreive messages from a
 remote system.  After the connection to a POP server is made, the
@@ -109,17 +114,55 @@ system.
 Other folder types are on the (long) wishlist to get implemented.  Please,
 help implementing more of them.
 
-=head1 METHODS
-
 =cut
 
 #-------------------------------------------
 
-=head2 Initiation
+=chapter OVERLOADED
+
+=overload @{}
+
+When the folder is used as if it is a reference to an array, it will
+show the messages, like M<messages()> and M<message()> would do.
+
+=examples use overloaded folder as array
+
+ my $msg = $folder->[3];
+ my $msg = $folder->message(3);          # same
+
+ foreach my $msg (@$folder) ...
+ foreach my $msg ($folder->messages) ... # same
+
+=overload ""
+
+(stringification)
+The folder objects stringify to their name.  This simplifies especially
+print statements and sorting a lot.
+
+=example use overloaded folder as string
+
+ # Three lines with overloading: resp. cmp, @{}, and ""
+ foreach my $folder (sort @folders)
+ {   my $msgcount = @$folder;
+     print "$folder contains $msgcount messages\n";
+ }
+
+=overload cmp
+
+(string comparison) folders are compared based on their name.  The sort
+rules are those of the build-in C<cmp>.
 
 =cut
 
+use overload '@{}' => sub { shift->{MB_messages} }
+           , '""'  => 'name'
+           , 'cmp' => sub {$_[0]->name cmp "${_[1]}"};
+
 #-------------------------------------------
+
+=chapter METHODS
+
+=section Constructors
 
 =c_method new OPTIONS
 
@@ -133,7 +176,7 @@ a set of C<*_type> options are available. C<extract> determines whether
 we want delay-loading.
 
 =option  access MODE
-=default access 'r'
+=default access C<'r'>
 
 Access-rights to the folder. MODE can be read-only (C<"r">), append (C<"a">),
 and read-write (C<"rw">).  Folders are opened for read-only (C<"r">)
@@ -153,10 +196,10 @@ Automatically create the folder when it does not exist yet.  This will only
 work when access is granted for writing or appending to the folder.
 
 Be careful: you may create a different folder type than you expect unless you
-explicitly specify the C<type> (See Mail::Box::Manager::open(type)).
+explicitly specify M<Mail::Box::Manager::open(type)>.
 
 =option  folder FOLDERNAME
-=default folder $ENV{MAIL}
+=default folder C<$ENV{MAIL}>
 
 Which folder to open (for reading or writing). When used for reading (the
 C<access> option set to C<"r"> or C<"a">) the mailbox should already exist
@@ -190,7 +233,7 @@ because it is considered useless to store the same message twice.
 =default save_on_exit <true>
 
 Sets the policy for saving the folder when it is closed.
-A folder can be closed manually (see close()) or in a number of
+A folder can be closed manually (see M<close()>) or in a number of
 implicit ways, including on the moment the program is terminated.
 
 =option  remove_when_empty BOOLEAN
@@ -206,14 +249,14 @@ messages nor sub-folders.
 Flags whether to trust the data in the folder or not.  Folders which
 reside in your C<folderdir> will be trusted by default (even when the
 names if not specified staring with C<=>).  Folders which are outside
-the folderdir or read from STDIN (Mail::Message::Construct::read()) are
+the folderdir or read from STDIN (M<Mail::Message::Construct::read()>) are
 not trused by default, and require some extra checking.
 
 If you do not check encodings of received messages, you may print
 binary data to the screen, which is a security risk.
 
 =option  extract INTEGER | CODE | METHOD | 'LAZY'|'ALWAYS'
-=default extract 10240
+=default extract C<10240>
 
 Defines when to parse (process) the content of the message.
 When the header of a message is read, you may want to postpone the
@@ -234,10 +277,10 @@ body or not. The subroutine is called with the following arguments:
  CODE->(FOLDER, HEAD)
 
 where FOLDER is a reference to the folder we are reading.  HEAD refers to the
-Mail::Message::Head::Complete head of the message at hand.  The routine must
+M<Mail::Message::Head::Complete> head of the message at hand.  The routine must
 return a C<true> value (extract now) or a C<false> value (be lazy, do not
-parse yet).  Think about using the Mail::Message::guessBodySize() and
-Mail::Message::guessTimestamp() on the header to determine your choice.
+parse yet).  Think about using the M<Mail::Message::Head::guessBodySize()> and
+M<Mail::Message::guessTimestamp()> on the header to determine your choice.
 
 The third possibility is to specify the NAME of a method.  In that case,
 for each message is called:
@@ -246,8 +289,8 @@ for each message is called:
 
 Where each component has the same meaning as described above.
 
-The fourth way to use this option involves constants: with C<'LAZY'>
-all messages will be delayed. With C<'ALWAYS'> you enforce unconditional
+The fourth way to use this option involves constants: with C<LAZY>
+all messages will be delayed. With C<ALWAYS> you enforce unconditional
 parsing, no delaying will take place.  The latter is usuful when you are
 sure you always need all the messages in the folder.
 
@@ -262,9 +305,10 @@ sure you always need all the messages in the folder.
     defined $size ? $size < 10000 : 1
  };
 
- # method call by name, useful for Mail::Box extensions
- # The example selects all messages sent by you to be loaded
- # without delay.  Other messages will be delayed.
+ # method call by name, useful for Mail::Box
+ # extensions. The example selects all messages
+ # sent by you to be loaded without delay.
+ # Other messages will be delayed.
  $folder->new(extract => 'sent_by_me');
  sub Mail::Box::send_by_me($) {
      my ($self, $header) = @_;
@@ -276,8 +320,7 @@ sure you always need all the messages in the folder.
 
 When messages are read from a folder-file, the headers will be stored in
 a C<head_type> object.  For the body, however, there is a range of
-choices about type, which are all described in the Mail::Message::Body
-manual page.
+choices about type, which are all described in M<Mail::Message::Body>.
 
 Specify a CODE-reference which produces the body-type to be created, or
 a CLASS of the body which is used when the body is not a multipart or
@@ -301,23 +344,23 @@ For instance:
  }
 
 The default depends on the mail-folder type, although the general default
-is Mail::Message::Body::Lines.  Please check the applicable
+is M<Mail::Message::Body::Lines>.  Please check the applicable
 manual pages.
 
 =option  multipart_type CLASS
-=default multipart_type 'Mail::Message::Body::Multipart'
+=default multipart_type M<Mail::Message::Body::Multipart>
 
 The default type of objects which are to be created for multipart message
 bodies.
 
 =option  body_delayed_type CLASS
-=default body_delayed_type 'Mail::Message::Body::Delayed'
+=default body_delayed_type M<Mail::Message::Body::Delayed>
 
 The bodies which are delayed: which will be read from file when it
 is needed, but not before.
 
 =option  coerce_options ARRAY
-=default coerce_options []
+=default coerce_options C<[]>
 
 Keep configuration information for messages which are coerced into the
 specified folder type, starting with a different folder type (or even
@@ -329,31 +372,31 @@ does not need to be kept here.
 =default field_type undef
 
 The type of the fields to be used in a header. Must extend
-Mail::Message::Field.
+M<Mail::Message::Field>.
 
 =option  head_type CLASS
-=default head_type 'Mail::Message::Head::Complete'
+=default head_type M<Mail::Message::Head::Complete>
 
 The type of header which contains all header information.  Must extend
-Mail::Message::Head::Complete.
+M<Mail::Message::Head::Complete>.
 
 =option  head_delayed_type CLASS
-=default head_delayed_type 'Mail::Message::Head::Delayed'
+=default head_delayed_type M<Mail::Message::Head::Delayed>
 
 The headers which are delayed: which will be read from file when it
 is needed, but not before.
 
 =option  lock_type CLASS|STRING
-=default lock_type 'Mail::Box::Locker::DotLock'
+=default lock_type M<Mail::Box::Locker::DotLock>
 
 The type of the locker object.  This may be the full name of a CLASS
 which extends Mail::Box::Locker, or one of the known locker types
-C<'DotLock'>, C<'File'>, C<'Multi'>, C<'NFS'>, C<'POSIX'>, or C<'NONE'>.
+C<DotLock>, C<File>, C<Multi>, C<NFS>, C<POSIX>, or C<NONE>.
 
 =option  locker OBJECT
 =default locker undef
 
-An OBJECT which extends Mail::Box::Locker, and will handle folder locking
+An OBJECT which extends M<Mail::Box::Locker>, and will handle folder locking
 replacing the default lock behavior.
 
 =option  lock_file FILENAME
@@ -378,14 +421,14 @@ SECONDS to wait before failing on opening this folder.
 =default manager undef
 
 A reference to the object which manages this folder -- typically an
-Mail::Box::Manager instance.
+M<Mail::Box::Manager> instance.
 
 =option  message_type CLASS
-=default message_type 'Mail::Box::Message'
+=default message_type M<Mail::Box::Message>
 
-What kind of message-objects are stored in this type of folder.  The
-default is Mail::Box::Message (which is a sub-class of Mail::Message).
-The class you offer must be an extension of Mail::Box::Message.
+What kind of message objects are stored in this type of folder.  The
+default is M<Mail::Box::Message> (which is a sub-class of M<Mail::Message>).
+The class you offer must be an extension of M<Mail::Box::Message>.
 
 =option  fix_headers BOOLEAN
 =default fix_headers <false>
@@ -393,12 +436,12 @@ The class you offer must be an extension of Mail::Box::Message.
 Broken MIME headers usually stop the parser: all lines not parsed are
 added to the body of the message.  With this flag set, the erroneous line
 is added to the previous header field and parsing is continued.
-See Mail::Box::Parser::Perl(fix_header_errors).
+See M<Mail::Box::Parser::Perl::new(fix_header_errors)>.
 
 =error No folder name specified.
 
-You did not specify the name of a folder to be opened.  Use the C<folder>
-option or set the C<MAIL> environment variable.
+You did not specify the name of a folder to be opened.  Use the
+M<new(folder)> option or set the C<MAIL> environment variable.
 
 =cut
 
@@ -510,36 +553,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-=method clone OPTIONS
-
-Create a new folder, with the same settings as this folder.  One of
-the specified options must be new folder to be opened.  Other options
-overrule those of the folder where this is a clone from.
-
-=example
-
- my $folder2 = $folder->clone(folder => '=jan');
-
-=cut
-
-sub clone(@)
-{   my $self  = shift;
-
-    (ref $self)->new
-     ( @{$self->{MB_init_options}}
-     , @_
-     );
-}
-
-#-------------------------------------------
-
-=c_method create FOLDERNAME, OPTIONS
+=ci_method create FOLDERNAME, OPTIONS
 
 Create a folder.  If the folder already exists, it will
 be left unchanged.  As options, you may specify:
@@ -555,6 +569,8 @@ will be searched for the named folder.
 sub create($@) {shift->notImplemented}
 
 #-------------------------------------------
+
+=section The folder
 
 =method folderdir [DIRECTORY]
 
@@ -575,9 +591,9 @@ sub folderdir(;$)
 
 #-------------------------------------------
 
-=method foundIn [FOLDERNAME], OPTIONS
+=c_method foundIn [FOLDERNAME], OPTIONS
 
-(class method) Determine if the specified folder is of the type handled by the
+Determine if the specified folder is of the type handled by the
 folder class. This method is extended by each folder sub-type.
 
 The FOLDERNAME specifies the name of the folder, as is specified by the
@@ -585,7 +601,7 @@ application.  You need to specified the C<folder> option when you skip
 this first argument.
 
 OPTIONS is a list of extra information for the request.  Read
-the documentation for each type of folder for folder-specific options, but
+the documentation for each type of folder for type specific options, but
 each folder class will at least support the C<folderdir> option:
 
 =option  folderdir DIRECTORY
@@ -597,18 +613,13 @@ to be found in this default DIRECTORY.
 
 =examples
 
- Mail::Box::Mbox->foundIn('=markov', folderdir => "$ENV{HOME}/Mail");
+ Mail::Box::Mbox->foundIn('=markov',
+     folderdir => "$ENV{HOME}/Mail");
  Mail::Box::MH->foundIn(folder => '=markov');
 
 =cut
 
 sub foundIn($@) { shift->notImplemented }
-
-#-------------------------------------------
-
-=head2 On open folders
-
-=cut
 
 #-------------------------------------------
 
@@ -642,7 +653,7 @@ sub type() {shift->notImplemented}
 =method url
 
 Represent the folder as a URL (Universal Resource Locator) string.  You may
-pass such a URL as folder name to Mail::Box::Manager::open().
+pass such a URL as folder name to M<Mail::Box::Manager::open()>.
 
 =example
 
@@ -660,102 +671,6 @@ sub url()
 
 #-------------------------------------------
 
-=method writable
-
-Checks whether the current folder is writable.
-
-=examples
-
- $folder->addMessage($msg) if $folder->writable;
-
-=cut
-
-sub writable()  {shift->{MB_access} =~ /w|a/ }
-sub writeable() {shift->writable}  # compatibility [typo]
-sub readable()  {1}  # compatibility
-
-#-------------------------------------------
-
-=method write OPTIONS
-
-Write the data to disk.  The folder (a C<true> value) is returned if
-successful.  Deleted messages are transformed into destroyed messages:
-their memory is freed.
-
-WARNING: When moving messages from one folder to another, be sure to write
-(or close()) the destination folder before writing (or closing) the source
-folder: otherwise you may lose data if the system crashes or if there are
-software problems.
-
-To write a folder to a different file, you must first create
-a new folder, then move all the messages, and then write or close() that
-new folder.
-
-=option  force BOOLEAN
-=default force <false>
-
-Override write-protection by the C<access> option while opening the folder
-(whenever possible, it may still be blocked by the operating system).
-
-=option  save_deleted BOOLEAN
-=default save_deleted <false>
-
-Do also write messages which where flagged to be deleted to their folder.  The
-flag for deletion is conserved (when possible), which means that a re-open of
-the folder may remove the messages for real.  See close(save_deleted).
-
-=error Folder $name is opened read-only
-
-You can not write to this folder unless you have opened the folder to
-write or append (see new(access)), or the C<force> option is set true.
-
-=error Writing folder $name failed
-
-For some reason (you probably got more error messages about this problem)
-it is impossible to write the folder, although you should because there
-were changes made.
-
-=cut
-
-sub write(@)
-{   my ($self, %args) = @_;
-
-    unless($args{force} || $self->writable)
-    {   $self->log(ERROR => "Folder $self is opened read-only.\n");
-        return;
-    }
-
-    my (@keep, @destroy);
-    if($args{save_deleted}) {@keep = $self->messages }
-    else
-    {   foreach ($self->messages)
-        {   if($_->isDeleted)
-            {   push @destroy, $_;
-                $_->diskDelete;
-            }
-            else {push @keep, $_}
-        }
-    }
-
-    unless(@destroy || $self->isModified)
-    {   $self->log(PROGRESS => "Folder $self not changed, so not updated.");
-        return $self;
-    }
-
-    $args{messages} = \@keep;
-    unless($self->writeMessages(\%args))
-    {   $self->log(WARNING => "Writing folder $self failed.");
-        return undef;
-    }
-
-    $self->modified(0);
-    $self->{MB_messages} = \@keep;
-
-    $self;
-}
-
-#-------------------------------------------
-
 =method update OPTIONS
 
 Read new messages from the folder, which where received after opening
@@ -765,7 +680,7 @@ the wrong kind of locks.  This method reads the changes (not always
 failsafe) and incorporates them in the open folder administration.
 
 The OPTIONS are extra values which are passed to the
-updateMessages() method which is doing the actual work here.
+M<updateMessages()> method which is doing the actual work here.
 
 =cut
 
@@ -790,8 +705,8 @@ sub update(@)
 
 =method organization
 
-Returns how the folder is organized: as one C<'FILE'> with many messages,
-a C<'DIRECTORY'> with one message per file, or by a C<'REMOTE'> server.
+Returns how the folder is organized: as one C<FILE> with many messages,
+a C<DIRECTORY> with one message per file, or by a C<REMOTE> server.
 
 =cut
 
@@ -799,56 +714,15 @@ sub organization() { shift->notImplemented }
 
 #-------------------------------------------
 
-=method modified [BOOLEAN]
-
-Sets whether the folder is modified or not.
-
-=cut
-
-sub modified(;$)
-{   my $self = shift;
-    return $self->isModified unless @_;   # compat 2.036
-
-    return
-      if $self->{MB_modified} = shift;    # force modified flag
-
-    # unmodify all messages
-    $_->modified(0) foreach $self->messages;
-    0;
-}
-
-#-------------------------------------------
-
-=method isModified
-
-Checks if the folder is modified.  A folder is modified when any of the
-messages is to be deleted, any of the messages has changed, or messages
-are added after the folder was read from file.
-
-=cut
-
-sub isModified()
-{   my $self     = shift;
-    return 1 if $self->{MB_modified};
-
-    foreach (@{$self->{MB_messages}})
-    {    return $self->{MB_modified} = 1
-            if $_->isDeleted || $_->isModified;
-    }
-
-    0;
-}
-
-#-------------------------------------------
-
 =method addMessage  MESSAGE
 
 =method addMessages MESSAGE [, MESSAGE, ...]
 
-Add a message to the folder.  A message is usually a Mail::Box::Message
-object or a sub-class thereof.  The message shall not be in an other folder,
-when you use this method.  In case it is, use moveMessage() or
-copyMessage() via the manager.
+Add a message to the folder.  A message is usually a
+M<Mail::Box::Message> object or a sub-class thereof.  The message
+shall not be in an other folder, when you use this method.
+In case it is, use M<Mail::Box::Manager::moveMessage()> or
+M<Mail::Box::Manager::copyMessage()> via the manager.
 
 Messages with id's which already exist in this folder are not added.
 
@@ -919,11 +793,11 @@ about how this works.
 =option  subfolders BOOLEAN|'FLATTEN'|'RECURSE'
 =default subfolders <folder type dependent>
 
-How to handle sub-folders.  When false (0 or C<undef>), sub-folders
-are simply ignored.  With 'FLATTEN', messages from sub-folders are
-included in the main copy.  'RECURSE' recursively copies the
+How to handle sub-folders.  When false (C<0> or C<undef>), sub-folders
+are simply ignored.  With C<FLATTEN>, messages from sub-folders are
+included in the main copy.  C<RECURSE> recursively copies the
 sub-folders as well.  By default, when the destination folder
-supports sub-folders 'RECURSE' is used, otherwise 'FLATTEN'.  A value
+supports sub-folders C<RECURSE> is used, otherwise C<FLATTEN>.  A value
 of true will select the default.
 
 =examples
@@ -939,7 +813,7 @@ of true will select the default.
 =error Destination folder $name is not writable.
 
 The folder where the messages are copied to is not opened with write
-access (see new(access)).  This has no relation with write permission
+access (see M<new(access)>).  This has no relation with write permission
 to the folder which is controled by your operating system.
 
 =error Copying failed for one message.
@@ -1029,12 +903,6 @@ sub _copy_to($@)
 
 #-------------------------------------------
 
-=head2 Closing the folder
-
-=cut
-
-#-------------------------------------------
-
 =method close OPTIONS
 
 Close the folder, which usually implies writing the changes.  This will
@@ -1046,27 +914,27 @@ destination folder before writing and closing the source folder.  Otherwise
 you may lose data if the system crashes or if there are software problems.
 
 =option  write 'ALWAYS'|'NEVER'|'MODIFIED'
-=default write 'MODIFIED'
+=default write C<MODIFIED>
 
 Specifies whether the folder should be written.  As could be expected,
-C<'ALWAYS'> means always (even if there are no changes), C<'NEVER'> means that
-changes to the folder will be lost, and C<'MODIFIED'>
+C<ALWAYS> means always (even if there are no changes), C<NEVER> means that
+changes to the folder will be lost, and C<MODIFIED>
 only saves the folder if there are any changes.
 
 =option  force BOOLEAN
 =default force <false>
 
-Override the C<access> setting specified when the folder was opened. This
-option only has an effect if its value is TRUE. NOTE: Writing to the folder
-may not be permitted by the operating system, in which case even C<force> will
-not help.
+Override the M<new(access)> setting which was specified when the folder
+was opened. This option only has an effect if its value is TRUE. NOTE:
+Writing to the folder may not be permitted by the operating system,
+in which case even C<force> will not help.
 
 =option  save_deleted BOOLEAN
 =default save_deleted C<false>
 
 Do also write messages which where flagged to be deleted to their folder.  The
 flag for deletion is conserved (when possible), which means that a re-open of
-the folder may remove the messages for real.  See write(save_deleted).
+the folder may remove the messages for real.  See M<write(save_deleted)>.
 
 =example
 
@@ -1081,10 +949,10 @@ the folder may remove the messages for real.  See write(save_deleted).
 
 =warning Changes not written to read-only folder $self.
 
-You have opened the folder read-only (which is the default, see new(access)),
-made modifications, and now want to close it.  Set option C<force> if you
-want to overrule the access mode, or close the folder with option
-C<write> set to C<'NEVER'>.
+You have opened the folder read-only --which is the default set
+by M<new(access)>--, made modifications, and now want to close it.
+Set M<close(force)> if you want to overrule the access mode, or close
+the folder with M<close(write)> set to C<NEVER>.
 
 =cut
 
@@ -1145,7 +1013,7 @@ data if the system crashes or if there are software problems.
 
 =error Folder $name not deleted: not writable.
 
-The folder must be opened with write access (see new(access)), otherwise
+The folder must be opened with write access via M<new(access)>, otherwise
 removing it will be refused.  So, you may have write-access according to
 the operating system, but that will not automatically mean that this
 C<delete> method permits you to.  The reverse remark is valid as well.
@@ -1179,33 +1047,115 @@ sub delete()
 
 #-------------------------------------------
 
-=method DESTROY
+=c_method appendMessages OPTIONS
 
-This method is called by Perl when an folder-object is no longer accessible
-by the rest of the program.
+Append one or more messages to an unopened folder.
+Usually, this method is called by the M<Mail::Box::Manager::appendMessage()>,
+in which case the correctness of the folder type is checked.
+
+This method takes a list of labeled parameters, which may contain
+any option which can be used when a folder is opened, most importantly
+M<new(folderdir)>.
+
+=requires folder FOLDERNAME
+
+The name of the folder to which the messages are to be appended.  The folder
+implementation will avoid opening the folder when possible, because this is
+resource consuming.
+
+=option  message MESSAGE
+=default message undef
+
+=option  messages ARRAY-OF-MESSAGES
+=default messages undef
+
+One reference to a MESSAGE or a reference to an ARRAY of MESSAGEs, which may
+be of any type.  The messages will be first coerced into the correct
+message type to fit in the folder, and then will be added to it.
+
+=examples
+
+ my $message = Mail::Message->new(...);
+ Mail::Box::Mbox->appendMessages
+  ( folder    => '=xyz'
+  , message   => $message
+  , folderdir => $ENV{FOLDERS}
+  );
+
+better:
+
+ my Mail::Box::Manager $mgr;
+ $mgr->appendMessages($message, folder => '=xyz');
 
 =cut
 
-sub DESTROY
+sub appendMessages(@) {shift->notImplemented}
+
+#-------------------------------------------
+
+=section Folder flags
+
+=method writable
+Checks whether the current folder is writable.
+
+=examples
+ $folder->addMessage($msg) if $folder->writable;
+
+=cut
+
+sub writable()  {shift->{MB_access} =~ /w|a/ }
+sub writeable() {shift->writable}  # compatibility [typo]
+sub readable()  {1}  # compatibility
+
+#-------------------------------------------
+
+=method modified [BOOLEAN]
+Sets whether the folder is modified or not.
+
+=cut
+
+sub modified(;$)
 {   my $self = shift;
-    $self->close unless $self->inGlobalDestruction || $self->{MB_is_closed};
+    return $self->isModified unless @_;   # compat 2.036
+
+    return
+      if $self->{MB_modified} = shift;    # force modified flag
+
+    # unmodify all messages
+    $_->modified(0) foreach $self->messages;
+    0;
 }
 
 #-------------------------------------------
 
-=head2 The messages
+=method isModified
+Checks if the folder is modified.  A folder is modified when any of the
+messages is to be deleted, any of the messages has changed, or messages
+are added after the folder was read from file.
 
 =cut
 
+sub isModified()
+{   my $self     = shift;
+    return 1 if $self->{MB_modified};
+
+    foreach (@{$self->{MB_messages}})
+    {    return $self->{MB_modified} = 1
+            if $_->isDeleted || $_->isModified;
+    }
+
+    0;
+}
+
 #-------------------------------------------
 
-=method message INDEX [,MESSAGE]
+=section The messages
 
+=method message INDEX [,MESSAGE]
 Get or set a message with on a certain index.  Messages which are flagged
 for deletion are counted.  Negative indexes start at the end of the folder.
 
 =examples
-
  my $msg = $folder->message(3);
  $folder->message(3)->delete;   # status changes to `deleted'
  $folder->message(3, $msg);
@@ -1233,8 +1183,8 @@ case blanks (which origin from header line folding) are removed too.  Other
 info around the angles will be removed too.
 
 WARNING: when the message headers are delay-parsed, the message might be in
-the folder but not yet parsed into memory. In this case, use the find()
-method instead of C<messageId> if you really need a thorough search.
+the folder but not yet parsed into memory. In this case, use M<find()>
+instead of C<messageId()> if you really need a thorough search.
 
 =examples
 
@@ -1307,7 +1257,7 @@ sub messageID(@) {shift->messageId(@_)} # compatibility
 
 =method find MESSAGE-ID
 
-Like messageId(), this method searches for a message with the
+Like M<messageId()>, this method searches for a message with the
 MESSAGE-ID, returning the corresponding message object.  However, C<find>
 will cause unparsed message in the folder to be parsed until the message-id
 is found.  The folder will be scanned back to front.
@@ -1333,10 +1283,10 @@ sub find($)
 
 =method messages ['ALL',RANGE,'ACTIVE','DELETED',LABEL,!LABEL,FILTER]
 
-Returns multiple messages from the folder.  The default is 'ALL'
+Returns multiple messages from the folder.  The default is C<ALL>
 which will return (as expected maybe) all the messages in the
-folder.  The 'ACTIVE' flag will return the messages not flagged for
-deletion.  This is the opposite of 'DELETED', which returns all
+folder.  The C<ACTIVE> flag will return the messages not flagged for
+deletion.  This is the opposite of C<DELETED>, which returns all
 messages from the folder which will be deleted when the folder is
 closed.
 
@@ -1356,18 +1306,27 @@ simply a code reference.  The message is passed as only argument.
 
  foreach my $message ($folder->messages) {...}
  foreach my $message (@$folder) {...}
- my @messages   = $folder->messages;
- my @messages   = $folder->messages('ALL');    # same
 
+ # twice the same
+ my @messages   = $folder->messages;
+ my @messages   = $folder->messages('ALL');
+
+ # Selection based on a range (begin, end)
  my $subset     = $folder->messages(10,-8);
 
- my @not_deleted= grep {not $_->isDeleted} $folder->messages;
- my @not_deleted= $folder->messages('ACTIVE'); # same
+ # twice the same:
+ my @not_deleted= grep {not $_->isDeleted}
+                     $folder->messages;
+ my @not_deleted= $folder->messages('ACTIVE');
 
- my $nr_of_msgs = $folder->messages;           # scalar context
- $folder->[2];                  # third message, via overloading
+ # scalar context the number of messages
+ my $nr_of_msgs = $folder->messages;
 
- $mgr->moveMessages($spamfolder, $inbox->message('spam'));
+ # third message, via overloading
+ $folder->[2];
+
+ # Selection based on labels
+ $mgr->moveMessages($spam, $inbox->message('spam'));
  $mgr->moveMessages($archive, $inbox->message('seen'));
 
 =cut
@@ -1429,8 +1388,8 @@ sub allMessageIDs() {shift->messageIds}  # compatibility
 Some mail-readers keep the I<current> message, which represents the last
 used message.  This method returns [after setting] the current message.
 You may specify a NUMBER, to specify that that message number is to be
-selected as current, or a MESSAGE/MESSAGE-ID (as long as you are sure that the
-header is already loaded, otherwise they are not recognized).
+selected as current, or a MESSAGE/MESSAGE-ID (as long as you are sure
+that the header is already loaded, otherwise they are not recognized).
 
 =examples
 
@@ -1455,18 +1414,46 @@ sub current(;$)
 
 #-------------------------------------------
 
-=method scanForMessages MESSAGE, MESSAGE-IDS, TIMESTAMP, WINDOW
+=method scanForMessages MESSAGE, MESSAGE-IDS, TIMESPAN, WINDOW
 
-The MESSAGE which is known contains references to messages before
-it in the message thread, but which are not found yet because of the
-lazy extraction if messages from file.  The folder is Scanned from
-back to front, in search for the MESSAGE-IDS (which may be
-one string or a reference to an array of strings).  The TIMESTAMP
-and WINDOW (see option descriptions in new()) may limit the search.
+You start with a MESSAGE, and are looking for a set of messages
+which are related to it.  For instance, messages which appear in
+the 'In-Reply-To' and 'Reference' header fields of that message.
+These messages are known by their MESSAGE-IDS and you want to find
+them in the folder.
 
-This method returns the message-ids which were not found during the
-scan.  Be warned that a message-id could already be known and therefore
-not found: check that first.
+When all message-ids are known, then looking-up messages is simple:
+they are found in a plain hash using M<messageId()>.  But Mail::Box
+is lazy where it can, so many messages may not have been read from
+file yet, and that's the prefered situation, because that saves
+time and memory.
+
+It is not smart to search for the messages from front to back in
+the folder: the chances are much higher that related message
+reside closely to each other.  Therefore, this method starts
+scanning the folder from the specified MESSAGE, back to the front
+of the folder.
+
+The TIMESPAN can be used to terminate the search based on the time
+enclosed in the message.  When the constant string C<EVER> is used as
+TIMESPAN, then the search is not limited by that.  When an integer
+is specified, it will be used as absolute time in time-ticks as
+provided by your platform dependent C<time> function.  In other cases,
+it is passed to M<timespan2seconds()> to determine the threshold
+as time relative to the message's time.
+
+The WINDOW is used to limit the search in number of messages to be
+scanned as integer or constant string C<ALL>.
+
+Returned are the message-ids which were not found during the scan.
+Be warned that a message-id could already be known and therefore not
+found: check that first.
+
+=example scanning through a folder for a message
+
+ my $refs   = $msg->get('References') or return;
+ my @msgids = $ref =~ m/\<([^>]+\>/g;
+ my @failed = $folder->scanForMessages($msg, \@msgids, '3 days', 50);
 
 =cut
 
@@ -1474,21 +1461,20 @@ sub scanForMessages($$$$)
 {   my ($self, $startid, $msgids, $moment, $window) = @_;
 
     # Set-up msgid-list
-    my %search = map {($_, 1)} ref $msgids ? @$msgids : $msgids;
+    my %search = map {($_ => 1)} ref $msgids ? @$msgids : $msgids;
     return () unless keys %search;
 
     # do not run on empty folder
     my $nr_messages = $self->messages
         or return keys %search; 
 
+    my $startmsg = $self->messageId($startid)
+        if defined $startid;
+
     # Set-up window-bound.
-    my $bound;
-    if($window eq 'ALL')
-    {   $bound = 0;
-    }
-    elsif(defined $startid)
-    {   my $startmsg = $self->messageId($startid);
-        $bound = $startmsg->seqnr - $window if $startmsg;
+    my $bound = 0;
+    if($window ne 'ALL' && defined $startmsg)
+    {   $bound = $startmsg->seqnr - $window;
         $bound = 0 if $bound < 0;
     }
 
@@ -1496,9 +1482,11 @@ sub scanForMessages($$$$)
     return keys %search if defined $bound && $bound > $last;
 
     # Set-up time-bound
-    my $after = $moment eq 'EVER' ? 0 : $moment;
+    my $after = $moment eq 'EVER'   ? 0
+              : $moment =~ m/^\d+$/ ? $moment
+              : $startmsg->timestamp - $self->timespan2seconds($moment);
 
-    while(!defined $bound || $last >= $bound)
+    while($last >= $bound)
     {   my $message = $self->message($last);
         my $msgid   = $message->messageId; # triggers load
 
@@ -1516,22 +1504,17 @@ sub scanForMessages($$$$)
 
 #-------------------------------------------
 
-=head2 Sub-folders
-
-=cut
-
-#-------------------------------------------
+=section Sub-folders
 
 =ci_method listSubFolders OPTIONS
 
 List the names of all sub-folders to this folder, not recursively
-decending.  Use these names as argument to openSubFolder(), to get
+decending.  Use these names as argument to M<openSubFolder()>, to get
 access to that folder.
 
 For MBOX folders, sub-folders are simulated.
 
-=option  folder FOLDERNAME
-=default folder <obligatory>
+=requires folder FOLDERNAME
 
 The folder whose sub-folders should be listed.
 
@@ -1619,21 +1602,17 @@ sub nameOfSubfolder($)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method read OPTIONS
 
 Read messages from the folder into memory.  The OPTIONS are folder
-specific.  Do not call C<read> yourself: it will be called for you
+specific.  Do not call C<read()> yourself: it will be called for you
 when you open the folder via the manager or instantiate a folder
 object directly.
 
 NOTE: if you are copying messages from one folder to another, use
-addMessages() instead of C<read>.
+M<addMessages()> instead of C<read()>.
 
 =examples
 
@@ -1677,6 +1656,85 @@ sub read(@)
 
 #-------------------------------------------
 
+=method write OPTIONS
+
+Write the data to disk.  The folder (a C<true> value) is returned if
+successful.  Deleted messages are transformed into destroyed messages:
+their memory is freed.
+
+WARNING: When moving messages from one folder to another, be sure to
+write (or M<close()>) the destination folder before writing (or closing)
+the source folder: otherwise you may lose data if the system crashes or
+if there are software problems.
+
+To write a folder to a different file, you must first create a new folder,
+then move all the messages, and then write or M<close()> that new folder.
+
+=option  force BOOLEAN
+=default force <false>
+
+Override write-protection with M<new(access)> while opening the folder
+(whenever possible, it may still be blocked by the operating system).
+
+=option  save_deleted BOOLEAN
+=default save_deleted <false>
+
+Do also write messages which where flagged to be deleted to their folder.  The
+flag for deletion is conserved (when possible), which means that a re-open of
+the folder may remove the messages for real.  See M<close(save_deleted)>.
+
+=error Folder $name is opened read-only
+
+You can not write to this folder unless you have opened the folder to
+write or append with M<new(access)>, or the C<force> option is set true.
+
+=error Writing folder $name failed
+
+For some reason (you probably got more error messages about this problem)
+it is impossible to write the folder, although you should because there
+were changes made.
+
+=cut
+
+sub write(@)
+{   my ($self, %args) = @_;
+
+    unless($args{force} || $self->writable)
+    {   $self->log(ERROR => "Folder $self is opened read-only.\n");
+        return;
+    }
+
+    my (@keep, @destroy);
+    if($args{save_deleted}) {@keep = $self->messages }
+    else
+    {   foreach ($self->messages)
+        {   if($_->isDeleted)
+            {   push @destroy, $_;
+                $_->diskDelete;
+            }
+            else {push @keep, $_}
+        }
+    }
+
+    unless(@destroy || $self->isModified)
+    {   $self->log(PROGRESS => "Folder $self not changed, so not updated.");
+        return $self;
+    }
+
+    $args{messages} = \@keep;
+    unless($self->writeMessages(\%args))
+    {   $self->log(WARNING => "Writing folder $self failed.");
+        return undef;
+    }
+
+    $self->modified(0);
+    $self->{MB_messages} = \@keep;
+
+    $self;
+}
+
+#-------------------------------------------
+
 =method determineBodyType MESSAGE, HEAD
 
 Determine which kind of body will be created for this message when
@@ -1712,7 +1770,7 @@ sub lazyPermitted($)
 =method storeMessage MESSAGE
 
 Store the message in the folder without the checks as performed by
-addMessage().
+M<addMessage()>.
 
 =cut
 
@@ -1761,7 +1819,7 @@ sub lineSeparator(;$)
 =method coerce MESSAGE
 
 Coerce the MESSAGE to be of the correct type to be placed in the
-folder.  You can specify Mail::Internet and MIME::Entity objects
+folder.  You can specify M<Mail::Internet> and M<MIME::Entity> objects
 here: they will be translated into Mail::Message messages first.
 
 =cut
@@ -1776,13 +1834,13 @@ sub coerce($)
 
 =method readMessages OPTIONS
 
-Called by read() to actually read the messages from one specific
-folder type.  The read() organizes the general activities.
+Called by M<read()> to actually read the messages from one specific
+folder type.  The M<read()> organizes the general activities.
 
 The OPTIONS are C<trusted>, C<head_type>, C<field_type>,
 C<message_type>, C<body_delayed_type>, and C<head_delayed_type> as
 defined by the folder at hand.  The defaults are the constructor
-defaults (see new()).
+defaults (see M<new()>).
 
 =cut
 
@@ -1792,7 +1850,7 @@ sub readMessages(@) {shift->notImplemented}
 
 =method updateMessages OPTIONS
 
-Called by update() to read messages which arrived in the folder
+Called by M<update()> to read messages which arrived in the folder
 after it was opened.  Sometimes, external applications dump messages
 in a folder without locking (or using a different lock than your
 application does).
@@ -1801,7 +1859,7 @@ Although this is quite a dangerous, it only fails when a folder is
 updated (reordered or message removed) at exactly the same time as
 new messages arrive.  These collisions are sparse.
 
-The options are the same as for readMessages().
+The options are the same as for M<readMessages()>.
 
 =cut
 
@@ -1811,13 +1869,12 @@ sub updateMessages(@) {shift}
 
 =method writeMessages OPTIONS
 
-Called by write() to actually write the messages from one specific
+Called by M<write()> to actually write the messages from one specific
 folder type.  The C<write> organizes the general activities.  All options
-to C<write> are passed to writeMessages as well.  Besides, a few extra
-are added by C<write>.
+to M<write()> are passed to C<writeMessages> as well.  Besides, a few extra
+are added by C<write> itself.
 
-=option  messages ARRAY
-=default messages <required>
+=requires messages ARRAY
 
 The messages to be written, which is a sub-set of all messages in the
 current folder.
@@ -1828,54 +1885,6 @@ sub writeMessages(@) {shift->notImplemented}
 
 #-------------------------------------------
 
-=c_method appendMessages OPTIONS
-
-Append one or more messages to an unopened folder.
-Usually, this method is called by the Mail::Box::Manager (its method
-appendMessage()), in which case the correctness of the
-folder type is checked.
-
-This method takes a list of labeled parameters, which may contain
-any option which can be used when a folder is opened (most importantly
-C<folderdir>).
-
-=option  folder FOLDERNAME
-=default folder <obligatory>
-
-The name of the folder to which the messages are to be appended.  The folder
-implementation will avoid opening the folder when possible, because this is
-resource consuming.
-
-=option  message MESSAGE
-=default message undef
-
-=option  messages ARRAY-OF-MESSAGES
-=default messages undef
-
-One reference to a MESSAGE or a reference to an ARRAY of MESSAGEs, which may
-be of any type.  The messages will be first coerced into the correct
-message type to fit in the folder, and then will be added to it.
-
-=examples
-
- my $message = Mail::Message->new(...);
- Mail::Box::Mbox->appendMessages
-  ( folder    => '=xyz'
-  , message   => $message
-  , folderdir => $ENV{FOLDERS}
-  );
-
-better:
-
- my Mail::Box::Manager $mgr;
- $mgr->appendMessages($message, folder => '=xyz');
-
-=cut
-
-sub appendMessages(@) {shift->notImplemented}
-
-#-------------------------------------------
-
 =method locker
 
 Returns the locking object.
@@ -1883,12 +1892,6 @@ Returns the locking object.
 =cut
 
 sub locker() { shift->{MB_locker}}
-
-#-------------------------------------------
-
-=head2 Message threads [internals]
-
-=cut
 
 #-------------------------------------------
 
@@ -1932,11 +1935,7 @@ sub toBeUnthreaded(@)
 
 #-------------------------------------------
 
-=head2 Other Methods
-
-=cut
-
-#-------------------------------------------
+=section Other methods
 
 =ci_method timespan2seconds TIME
 
@@ -1962,6 +1961,24 @@ sub timespan2seconds($)
     {   $_[0]->log(ERROR => "Invalid timespan '$_' specified.\n");
         undef;
     }
+}
+
+#-------------------------------------------
+
+=section Error handling
+
+=section Cleanup
+
+=method DESTROY
+
+This method is called by Perl when an folder-object is no longer accessible
+by the rest of the program.
+
+=cut
+
+sub DESTROY
+{   my $self = shift;
+    $self->close unless $self->inGlobalDestruction || $self->{MB_is_closed};
 }
 
 

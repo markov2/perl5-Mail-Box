@@ -6,11 +6,11 @@ package Mail::Reporter;
 use Carp;
 use Scalar::Util 'dualvar';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Reporter - base-class and error reporter for Mail::Box
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  $folder->log(WARNING => 'go away');
  print $folder->trace;        # current level
@@ -18,31 +18,20 @@ Mail::Reporter - base-class and error reporter for Mail::Box
  print $folder->errors;
  print $folder->report('PROGRESS');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Read C<Mail::Box-Overview> first.  There are a few objects which produce
-error messages, but which will not break the program.  For instance, an
-erroneous message doesn't break a whole folder.
+The C<Mail::Reporter> class is the base class for all classes, except
+M<Mail::Message::Field::Fast> because it would become slow...  This
+base class is used during initiation of the objects, and for configuring
+and logging error messages.
 
-The C<Mail::Reporter> class is the base class for each object which can
-produce errors, and can be configured for each mailbox, mail message,
-and mail manager separately.
-
-=head1 METHODS
+=chapter METHODS
 
 The C<Mail::Reporter> class is the base for nearly all other
 objects.  It can store and report problems, and contains the general
-constructor new().
+constructor M<new()>.
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=section Constructors
 
 =c_method new OPTIONS
 
@@ -51,29 +40,28 @@ as there is no need for an other base object)  The constructor always accepts
 the following OPTIONS related to error reports.
 
 =option  log LEVEL
-=default log 'WARNINGS'
+=default log C<'WARNINGS'>
 
 Log messages which have a priority higher or equal to the specified
 level are stored internally and can be retrieved later.  The global
-default for this option can be changed with defaultTrace().
+default for this option can be changed with M<defaultTrace()>.
 
-Known levels are C<'INTERNAL'>, C<'ERRORS'>, C<'WARNINGS'>, C<'PROGRESS'>,
-C<'NOTICES'> C<'DEBUG'>, and C<'NONE'>.  The C<PROGRESS> level relates to
+Known levels are C<INTERNAL>, C<ERRORS>, C<WARNINGS>, C<PROGRESS>,
+C<NOTICES> C<DEBUG>, and C<NONE>.  The C<PROGRESS> level relates to
 the reading and writing of folders.  C<NONE> will cause only C<INTERNAL>
 errors to be logged.
 By the way: C<ERROR> is an alias for C<ERRORS>, as C<WARNING> is an alias
 for C<WARNINGS>, and C<NOTICE> for C<NOTICES>.
 
 =option  trace LEVEL
-=default trace 'WARNINGS'
+=default trace C<'WARNINGS'>
 
 Trace messages which have a level higher or equal to the specified level
 are directly printed using warn.  The global default for this option can
-be changed with defaultTrace().
+be changed with M<defaultTrace()>.
 
 =cut
 
-# synchronize this with C code in Mail::Box::Parser.
 my @levelname = (undef, qw(DEBUG NOTICE PROGRESS WARNING ERROR NONE INTERNAL));
 
 my %levelprio = (ERRORS => 5, WARNINGS => 4, NOTICES => 2);
@@ -96,11 +84,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Logging and Tracing
-
-=cut
-
-#------------------------------------------
+=section Error handling
 
 =ci_method defaultTrace [LEVEL, [LEVEL]
 
@@ -150,7 +134,7 @@ sub defaultTrace(;$$)
 Change the trace LEVEL of the object. When no arguments are specified, the
 current level is returned only.  It will be returned in one scalar which
 contains both the number which is internally used to represent the level,
-and the string which represents it.  See logPriority().
+and the string which represents it.  See M<logPriority()>.
 
 =cut
 
@@ -174,14 +158,15 @@ sub trace(;$)
 As instance method this function has three different purposes.  Without
 any argument, it returns one scalar containing the number which is internally
 used to represent the current log level, and the textual representation of
-the string at the same time. See Scalar::Util::dualvar() for an explanation.
+the string at the same time. See M<Scalar::Util> method C<dualvar> for
+an explanation.
 
-With one argument, a new level of logging detail
-is set (specify a number of one of the predefined strings).
-With more arguments, it is a report which may need to be logged or traced.
+With one argument, a new level of logging detail is set (specify a number
+of one of the predefined strings).  With more arguments, it is a report
+which may need to be logged or traced.
 
 As class method, only a message can be passed.  The global configuration
-value set with defaultTrace() is used to decide whether the message is
+value set with M<defaultTrace()> is used to decide whether the message is
 shown or ignored.
 
 Each log-entry has a LEVEL and a text string which will
@@ -352,15 +337,9 @@ sub warnings(@) {shift->report('WARNINGS')}
 
 #-------------------------------------------
 
-=head2 Other Methods
-
-=cut
-
-#------------------------------------------
-
 =method notImplemented
 
-A special case of log(), which logs a C<INTERNAL>-error
+A special case of M<log()>, which logs a C<INTERNAL>-error
 and then croaks.  This is used by extension writers.
 
 =error Package $package does not implement $method.
@@ -386,10 +365,10 @@ sub notImplemented(@)
 
 =ci_method logPriority LEVEL
 
-One error level (log or trace) has more
-than one representation: a numeric value and one or more strings.  For
-instance, 4, 'WARNING', and 'WARNINGS' are all the same.  You can specify
-any of these, and in return you get a dualvar (see Scalar::Util::dualvar())
+One error level (log or trace) has more than one representation: a
+numeric value and one or more strings.  For instance, C<4>, C<'WARNING'>,
+and C<'WARNINGS'> are all the same.  You can specify any of these,
+and in return you get a dualvar (see M<Scalar::Util> method C<dualvar>)
 back, which contains the number and the singular form.
 
 The higher the number, the more important the message.
@@ -415,7 +394,7 @@ sub logPriority($)
 
 =method logSettings
 
-Returns a list of (key => value) pairs which can be used to initiate
+Returns a list of C<(key => value)> pairs which can be used to initiate
 a new object with the same log-settings as this one.
 
 =examples
@@ -431,9 +410,30 @@ sub logSettings()
 
 #-------------------------------------------
 
+=method AUTOLOAD
+
+By default, produce a nice warning if the sub-classes cannot resolve
+a method.
+
+=cut
+
+sub AUTOLOAD(@)
+{   my $thing   = shift;
+    our $AUTOLOAD;
+    my $class   = ref $thing || $thing;
+    (my $method = $AUTOLOAD) =~ s/^.*\:\://;
+
+    $Carp::MaxArgLen=20;
+    confess "Method $method() is not defined for a $class.\n";
+}
+
+#-------------------------------------------
+
+=section Cleanup
+
 =method inGlobalDestruction
 
-Returns whether the program is breaking down.  This is used in DESTROY(),
+Returns whether the program is breaking down.  This is used in M<DESTROY()>,
 where during global destructions references cannot be used.
 
 =cut
@@ -446,29 +446,11 @@ sub inGlobalDestruction() {$global_destruction}
 
 =method DESTROY
 
-Cleanup.
+Cleanup the object.
 
 =cut
 
 sub DESTROY {shift}
-
-#-------------------------------------------
-
-=method AUTOLOAD
-
-produce a nice warning if the sub-classes cannot resolve a method.
-
-=cut
-
-sub AUTOLOAD(@)
-{   my $thing   = shift;
-    our $AUTOLOAD;
-    my $class   = ref $thing || $thing;
-    (my $method = $AUTOLOAD) =~ s/^$class\:\://;
-
-    $Carp::MaxArgLen=20;
-    confess "Method $method() is not defined for a $class.\n";
-}
 
 #-------------------------------------------
 

@@ -8,36 +8,27 @@ use base 'Mail::Box::Net::Message';
 use File::Copy;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::POP3::Message - one message on a POP3 server
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder = new Mail::Box::POP3 ...
  my $message = $folder->message(10);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Box::POP3::Message represents one message on a POP3 server, maintained
-by a Mail::Box::POP3 folder. Each message is stored as separate entity on the
-server, and maybe temporarily in your program as well.
+A C<Mail::Box::POP3::Message> represents one message on a POP3 server,
+maintained by a M<Mail::Box::POP3> folder. Each message is stored as
+separate entity on the server, and maybe temporarily in your program
+as well.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default body_type 'Mail::Message::Body::Lines';
+=default body_type M<Mail::Message::Body::Lines>
 
 =cut
 
@@ -49,12 +40,6 @@ sub init($)
     $self->SUPER::init($args);
     $self;
 }
-
-#-------------------------------------------
-
-=head2 The Message
-
-=cut
 
 #-------------------------------------------
 
@@ -75,12 +60,6 @@ sub size($)
 
     $self->folder->popClient->messageSize($self->unique);
 }
-
-#-------------------------------------------
-
-=head2 Labels
-
-=cut
 
 #-------------------------------------------
 
@@ -105,11 +84,9 @@ sub deleted(;$)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=section Internals
 
 =cut
-
-#-------------------------------------------
 
 sub loadHead()
 {   my $self     = shift;

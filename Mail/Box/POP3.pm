@@ -13,49 +13,38 @@ use File::Spec;
 use File::Basename;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::POP3 - handle POP3 folders as client
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::POP3;
  my $folder = new Mail::Box::POP3 folder => $ENV{MAIL}, ...;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Maintain a folder which has its messages stored on a remote server.  The
 communication between the client application and the server is implemented
-using the POP3 protocol.  This class uses Mail::Transport::POP3 to
+using the POP3 protocol.  This class uses M<Mail::Transport::POP3> to
 hide the transport of information, and focusses solely on the correct
 handling of messages within a POP3 folder.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-For authentications, you
-have three choices: specify a foldername which resembles an URL, or
-specify a pop-client object, or separate options for user, password,
-pop-server and server-port.
+For authentications, you have three choices: specify a foldername which
+resembles an URL, or specify a pop-client object, or separate options
+for user, password, pop-server and server-port.
 
 =default create <not applicable>
 
 =default server_port  110
-=default message_type 'Mail::Box::POP3::Message'
+=default message_type M<Mail::Box::POP3::Message>
 
 =option  authenticate 'LOGIN'|'APOP'|'AUTO'
-=default authenticate 'AUTO'
+=default authenticate C<'AUTO'>
 
 POP3 can use two methods of authentication: the old LOGIN protocol, which
 transmits a username and password in plain text, and the newer APOP
@@ -67,14 +56,16 @@ if that fails LOGIN.
 =default pop_client undef
 
 You may want to specify your own pop-client object.  The object
-which is passed must extend Mail::Transport::POP3.
+which is passed must extend M<Mail::Transport::POP3>.
 
 =examples
 
- my $pop = Mail::Box::POP3->new('pop3://user:password@pop.xs4all.nl');
+ my $url = 'pop3://user:password@pop.xs4all.nl'
+ my $pop = Mail::Box::POP3->new($url);
 
- my $pop = $mgr->open(type => 'pop3', username => 'myname',
-    password => 'mypassword', server_name => 'pop.xs4all.nl');
+ my $pop = $mgr->open(type => 'pop3',
+    username => 'myname', password => 'mypassword',
+    server_name => 'pop.xs4all.nl');
 
 =cut
 
@@ -91,16 +82,9 @@ sub init($)
     $self;
 }
 
-
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-=method create FOLDER, OPTIONS
+=ci_method create FOLDER, OPTIONS
 
 It is not possible to create a new folder on a POP3 server.  This method
 will always return C<false>.
@@ -119,12 +103,6 @@ sub foundIn(@)
        (exists $options{type}   && lc $options{type} eq 'pop3')
     || (exists $options{folder} && $options{folder} =~ m/^pop/);
 }
-
-#-------------------------------------------
-
-=head2 On open folders
-
-=cut
 
 #-------------------------------------------
 
@@ -158,7 +136,7 @@ sub addMessage($)
 
 =method addMessages MESSAGES
 
-As useless as addMessage().  The only acceptable call to this method
+As useless as M<addMessage()>.  The only acceptable call to this method
 is without any message.
 
 =cut
@@ -176,12 +154,6 @@ sub addMessages(@)
 #-------------------------------------------
 
 sub type() {'pop3'}
-
-#-------------------------------------------
-
-=head2 Closing the folder
-
-=cut
 
 #-------------------------------------------
 
@@ -221,15 +193,24 @@ sub delete()
 
 #-------------------------------------------
 
-=head2 Sub-folders
+=ci_method listSubFolders OPTIONS
+
+The standard POP3 protocol does not support sub-folders, so an
+empty list will be returned in any case.
 
 =cut
-
-#-------------------------------------------
 
 sub listSubFolders(@) { () }     # no
 
 #-------------------------------------------
+
+=method openSubFolder OPTIONS
+
+It is not possible to open a sub-folder for a POP3 folder, because that
+is not supported by the official POP3 protocol. In any case, C<undef>
+is returned to indicate a failure.
+
+=cut
 
 sub openSubFolder($@) { undef }  # fails
 
@@ -245,11 +226,7 @@ sub update() {shift->notImplemented}
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method popClient
 

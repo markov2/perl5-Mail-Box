@@ -7,40 +7,30 @@ use base 'Mail::Message::Convert';
 use Mail::Message::Body::String;
 use Text::Autoformat;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert::TextAutoformat - Reformat plain text messages
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Message::Convert::TextAutoformat;
  my $af = Mail::Message::Convert::TextAutoformat->new;
 
  my $beautified_body = $af->autoformatBody($body);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Play trics with plain text, for instance bodies with type C<text/plain>
-using Damian Conways Text::Autoformat.
+using Damian Conway's M<Text::Autoformat>.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =option  options HASH-REF
-=default options { all => 1 }
+=default options C<{ (all, 1) }>
 
-Options to pass to Text::Autoformat, when its C<autoformat> method
+Options to pass to M<Text::Autoformat>, when its C<autoformat> method
 is called.
 
 =cut
@@ -56,7 +46,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Converting
+=section Converting
 
 =cut
 
@@ -64,9 +54,9 @@ sub init($)
 
 =method autoformatBody BODY
 
-Formats a single message body (a Mail::Message::Body object)
-into a new body object using Text::Autoformat.  If the
-Text::Autoformat is not installed, C<undef> is returned.
+Formats a single message body (a M<Mail::Message::Body> object)
+into a new body object using M<Text::Autoformat>.  If the
+M<Text::Autoformat> is not installed, C<undef> is returned.
 
 =cut
 

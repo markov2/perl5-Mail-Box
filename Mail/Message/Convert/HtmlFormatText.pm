@@ -9,43 +9,36 @@ use Mail::Message::Body::String;
 use HTML::TreeBuilder;
 use HTML::FormatText;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Convert::HtmlFormatText - Convert HTML into Text
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Message::Convert::HtmlFormatText;
  my $af = Mail::Message::Convert::HtmlFormatText->new;
 
  my $plain_body = $af->format($body);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Convert HTML/XHTML message body objects into plain text bodies
-using HTML::FormatText.
+Convert HTML/XHTML message body objects into plain text bodies using
+M<HTML::FormatText>.  This package requires M<HTML::TreeBuilder> and
+M<HTML::FormatText> which are not installed by default together with
+Mail::Box.  See also M<Mail::Message::rebuild()> with rule
+C<text_alternative_for_html>.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 =option  leftmargin INTEGER
-=default leftmargin 3
+=default leftmargin C<3>
 
 The column of the left margin, passed to the formatter.
 
 =option  rightmargin INTEGER
-=default rightmargin 72
+=default rightmargin C<72>
 
 The column of the right margin, passed to the formatter.
 
@@ -66,11 +59,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Converting
-
-=cut
-
-#------------------------------------------
+=section Converting
 
 =method format BODY
 

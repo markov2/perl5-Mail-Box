@@ -54,6 +54,13 @@ Mail/Message/Body/Multipart.pm
 Mail/Message/Body/Nested.pm
 Mail/Message/Body/String.pm
 Mail/Message/Construct.pm
+Mail/Message/Construct/Bounce.pm
+Mail/Message/Construct/Build.pm
+Mail/Message/Construct/Forward.pm
+Mail/Message/Construct/Read.pm
+Mail/Message/Construct/Rebuild.pm
+Mail/Message/Construct/Reply.pm
+Mail/Message/Construct/Text.pm
 Mail/Message/Convert.pm
 Mail/Message/Convert/Html.pm
 Mail/Message/Convert/HtmlFormatPS.pm
@@ -63,9 +70,9 @@ Mail/Message/Convert/MimeEntity.pm
 Mail/Message/Convert/TextAutoformat.pm
 Mail/Message/Dummy.pm
 Mail/Message/Field.pm
+Mail/Message/Field/AddrGroup.pm
 Mail/Message/Field/Address.pm
 Mail/Message/Field/Addresses.pm
-Mail/Message/Field/AddrGroup.pm
 Mail/Message/Field/Attribute.pm
 Mail/Message/Field/Fast.pm
 Mail/Message/Field/Flex.pm
@@ -186,6 +193,7 @@ tests/50message/21reply.t
 tests/50message/30bounce.t
 tests/50message/40forwsubj.t
 tests/50message/41forward.t
+tests/50message/50rebuild.t
 tests/50message/58clone.t
 tests/50message/Definition.pm
 tests/51folder/10copyto.t

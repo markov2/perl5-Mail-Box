@@ -7,11 +7,11 @@ use base 'Mail::Reporter';
 use Carp;
 use File::Spec;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport - base class for message exchange
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $message = Mail::Message->new(...);
 
@@ -19,34 +19,26 @@ Mail::Transport - base class for message exchange
  $message->send;
  $message->send(via => 'sendmail');
 
- my $sender = Mail::Transport::SMTP->new(...);
+ my $sender = M<Mail::Transport::SMTP>->new(...);
  $sender->send($message);
 
  # Some extensions implement receiving:
- my $receiver = Mail::Transport::POP3->new(...);
+ my $receiver = M<Mail::Transport::POP3>->new(...);
  $message = $receiver->receive;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Objects which extend Mail::Transport implement sending and/or
+Objects which extend C<Mail::Transport> implement sending and/or
 receiving of messages, using various protocols.
 
-Mail::Transport::Send extends this class, and offers general
-functionality for send protocols, like SMTP.  Mail::Transport::Receive
+M<Mail::Transport::Send> extends this class, and offers general
+functionality for send protocols, like SMTP.  M<Mail::Transport::Receive>
 also extends this class, and offers receive method.  Some transport
 protocols will implement both sending and receiving.
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
 
 my %mailers =
  ( exim     => '::Exim'
@@ -65,13 +57,13 @@ my %mailers =
 =c_method new OPTIONS
 
 =option  hostname HOSTNAME|ARRAY-OF-HOSTNAMES
-=default hostname 'localhost'
+=default hostname C<'localhost'>
 
 The host on which the server runs.  Some protocols accept an array
 of alternatives for this option.
 
 =option  interval SECONDS
-=default interval 30
+=default interval C<30>
 
 The time between tries to contact the remote server for sending or
 receiving a message in SECONDS.  This number must be larger than 0.
@@ -101,7 +93,7 @@ The number of retries before the sending will fail.  If C<undef>, the
 number of retries is unlimited.
 
 =option  timeout SECONDS
-=default timeout 120
+=default timeout C<120>
 
 SECONDS till time-out while establishing the connection to a remote server.
 
@@ -111,13 +103,14 @@ SECONDS till time-out while establishing the connection to a remote server.
 Some protocols require a user to login.
 
 =option  via CLASS|NAME
-=default via 'sendmail'
+=default via C<'sendmail'>
 
-Which CLASS (extending Mail::Transport) will transport the data.  Some
-predefined NAMEs avoid long class names: C<mail> and C<mailx> are handled
-by the Mail::Transport::Mailx module, C<sendmail> and C<postfix> belong to
-C<::Sendmail>, and C<smtp> is implemented in C<::SMTP>.  The C<pop> or
-C<pop3> protocol implementation can be found in C<::POP3>.
+Which CLASS (extending C<Mail::Transport>) will transport the data.
+Some predefined NAMEs avoid long class names: C<mail> and C<mailx>
+are handled by the M<Mail::Transport::Mailx> module, C<sendmail>
+and C<postfix> belong to M<Mail::Transport::Sendmail>, and C<smtp>
+is implemented in M<Mail::Transport::SMTP>.  The C<pop> or C<pop3>
+protocol implementation can be found in M<Mail::Transport::POP3>.
 
 =option  executable FILENAME
 =default executable C<undef>
@@ -197,11 +190,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Server Connection
-
-=cut
-
-#------------------------------------------
+=section Server connection
 
 =method remoteHost
 
@@ -236,7 +225,7 @@ Look for a binary with the specified NAME in the directories which
 are defined to be safe.  The list of standard directories is followed
 by the optional DIRECTORIES.  The full pathname is returned.
 
-You may specify a C<proxy> option, which specifies the absolute name
+You may specify M<new(proxy)>, which specifies the absolute name
 of the binary to be used.
 
 =cut
@@ -259,5 +248,9 @@ sub findBinary($@)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

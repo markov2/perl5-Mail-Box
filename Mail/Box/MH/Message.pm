@@ -8,43 +8,22 @@ use base 'Mail::Box::Dir::Message';
 use File::Copy;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
-Mail::Box::MH::Message - one message in a MH-folder
+Mail::Box::MH::Message - one message in an MH-folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder = new Mail::Box::MH ...
  my $message = $folder->message(10);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Box::MH::Message represents one message in an MH-folder. Each
-message is stored in a separate file.
+A C<Mail::Box::MH::Message> represents one message in an
+M<Mail::Box::MH> folder . Each message is stored in a separate file,
+as for all M<Mail::Box::Dir> folder types.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#-------------------------------------------
-
-=head2 The Message
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =method seqnr [INTEGER]
 
@@ -53,8 +32,10 @@ change the number (unless you understand the implications).
 
 WARNING:  This sequence number has nothing to do with the message's
 filename, which in case of MH folders are also numbers!  If you need
-that one, use C<< basename $msg->filename >>.
+that one, use the M<File::Basename::basename()> of the filename.
 
 =cut
+
+# implementation in Mail::Box::Message.  It is only "helpful" text.
 
 1;

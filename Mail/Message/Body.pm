@@ -11,20 +11,15 @@ use Mail::Message::Body::File;
 use Carp;
 use Scalar::Util 'weaken';
 
-use overload bool  => sub {1}   # $body->print if $body
-           , '""'  => 'string_unless_carp'
-           , '@{}' => 'lines'
-           , '=='  => sub {$_[0]->{MMB_seqnr}==$_[1]->{MMB_seqnr}}
-           , '!='  => sub {$_[0]->{MMB_seqnr}!=$_[1]->{MMB_seqnr}};
 
 use MIME::Types;
 my $mime_types = MIME::Types->new;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body - the data of a body in a message
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $body  = $msg->body;
@@ -39,14 +34,14 @@ Mail::Message::Body - the data of a body in a message
     charset => 'us-ascii', transfer_encoding => 'none');
  my $decoded  = $body->decoded;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The encoding and decoding functionality of a Mail::Message::Body is
-implemented in the Mail::Message::Body::Encode package.  That package is
+The encoding and decoding functionality of a M<Mail::Message::Body> is
+implemented in the M<Mail::Message::Body::Encode> package.  That package is
 automatically loaded when encoding and decoding of messages needs to take
 place.
 
-The body of a message (a Mail::Message object) is stored in one of the
+The body of a message (a M<Mail::Message> object) is stored in one of the
 body types.  The functionality of each body type is equivalent, but there
 are performance differences.  Each body type has its own documentation
 which contains details about its implementation.
@@ -60,7 +55,7 @@ be written to a file or send to somewhere: they will be encoded if needed.
 
 For example:
 
- my $body    = Mail::Message::Body::String->new(mime_type => 'image/gif');
+ my $body    = M<Mail::Message::Body::String>->new(mime_type => 'image/gif');
  $body->print(\*OUT);    # this is binary image data...
 
  my $encoded = $message->body($body);
@@ -72,35 +67,35 @@ is used.
   
 =over 4
 
-=item * Mail::Message::Body::Lines
+=item * M<Mail::Message::Body::Lines>
 
 Each line of the message body is stored as single scalar.  This is a
 useful representation for a detailed look in the message body, which is
 usually line-organized.
 
-=item * Mail::Message::Body::String
+=item * M<Mail::Message::Body::String>
 
 The whole message body is stored in one scalar.  Small messages can be
 contained this way without performance penalties.
 
-=item * Mail::Message::Body::File
+=item * M<Mail::Message::Body::File>
 
 The message body is stored in an external temporary file.  This type of
 storage is especially useful when the body is large, the total folder is
 large, or memory is limited.
 
-=item * Mail::Message::Body::Delayed
+=item * M<Mail::Message::Body::Delayed>
 
 The message-body is not yet read, but the exact location of the
 body is known so the message can be read when needed.
 
-=item * Mail::Message::Body::Multipart
+=item * M<Mail::Message::Body::Multipart>
 
 The message body contains a set of sub-messages (which can contain
 multipart bodies themselves).  Each sub-message is an instance
-of Mail::Message::Part, which is an extension of Mail::Message.
+of M<Mail::Message::Part>, which is an extension of M<Mail::Message>.
 
-=item * Mail::Message::Body::Nested
+=item * M<Mail::Message::Body::Nested>
 
 Nested messages, like C<message/rfc822>: they contain a message in
 the body.  For most code, they simply behave like multiparts.
@@ -123,26 +118,77 @@ C<::External> object only uses a file when the folder is open.
 
 Each body type has methods to produce the storage of the other types.
 As example, you can ask any body type for the message as a list of lines,
-but this call will be most efficient for the MM::Body::Lines type.
+but this call will be most efficient for the M<Mail::Message::Body::Lines>
+type.
 
-=head1 METHODS
+=chapter OVERLOADED
+
+=overload @{}
+
+When a body object is used as being an array reference, the lines of
+the body are returned.  This is the same as using M<lines()>.
+
+=example using a body as array
+
+ print $body->lines->[1];  # second line
+ print $body->[1];         # same
+
+ my @lines = $body->lines;
+ my @lines = @$body;       # same
+
+=overload bool
+
+Always returns a true value, which is needed to have overloaded
+objects to be used as in C<if($body)>.  Otherwise, C<if(defined $body)>
+would be needed to avoid a runtime error.
+
+=overload ""
+
+(stringification) Returns the body as string --which will trigger
+completion-- unless called to produce a string for C<Carp>.  The latter
+to avoid deep recursions.
+
+=example stringification of body
+
+ print $msg->body;   # implicit by print
+
+ my $body = $msg->body;
+ my $x    = "$body"; # explicit by interpolation
+
+=overload '==' and '!='
+
+(numeric comparison) compares if two references point to the
+same message.  This only produces correct results is both arguments
+are message references B<within the same folder>.
+
+=example use of numeric comparison on a body
+
+ my $skip = $folder->message(3);
+ foreach my $msg (@$folder)
+ {   next if $msg == $skip;
+     $msg->send;
+ }
 
 =cut
 
+use overload bool  => sub {1}   # $body->print if $body
+           , '""'  => 'string_unless_carp'
+           , '@{}' => 'lines'
+           , '=='  => sub {$_[0]->{MMB_seqnr}==$_[1]->{MMB_seqnr}}
+           , '!='  => sub {$_[0]->{MMB_seqnr}!=$_[1]->{MMB_seqnr}};
+
 #------------------------------------------
 
-=head2 Initiation
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
+=section Constructors
 
 =c_method new OPTIONS
 
 BE WARNED that, what you specify here are encodings and such which are
 already in place.  The options will not trigger conversions.  When you
 need conversions, first create a body with options which tell what you've
-got, and then call encode() for what you need.
+got, and then call M<encode()> for what you need.
 
 =option  based_on BODY
 =default based_on undef
@@ -151,7 +197,7 @@ The information about encodings must be taken from the specified BODY,
 unless specified differently.
 
 =option  charset STRING
-=default charset 'us-ascii'
+=default charset C<'us-ascii'>
 
 Defines the character-set which is used in the data.  Only useful in
 combination with a C<mime_type> which refers to C<text> in any shape.
@@ -197,7 +243,7 @@ The C<filename> attribute specifies a name to which is suggested to the
 reader of the message when it is extracted.
 
 =option  eol 'CR'|'LF'|'CRLF'|'NATIVE'
-=default eol 'NATIVE'
+=default eol C<'NATIVE'>
 
 Convert the message into having the specified string as line terminator
 for all lines in the body.  C<NATIVE> is used to represent the C<\n>
@@ -219,12 +265,12 @@ type C<IO::Handle>.
 The message where this body belongs to.
 
 =option  mime_type STRING|FIELD|MIME
-=default mime_type 'text/plain'
+=default mime_type C<'text/plain'>
 
 The type of data which is added.  You may specify a content of a header
-line as STRING, or a FIELD object.  You may also specify a C<MIME::Type>
+line as STRING, or a FIELD object.  You may also specify a M<MIME::Type>
 object.  In any case, it will be kept internally as
-a real field (a Mail::Message::Field object).  This relates to the
+a real field (a M<Mail::Message::Field> object).  This relates to the
 C<Content-Type> header field.
 
 A mime-type specification consists of two parts: a general class (C<text>,
@@ -234,10 +280,10 @@ field is case-insensitive but case preserving.  The default mime-type
 is C<text/plain>,
 
 =option  transfer_encoding STRING|FIELD
-=default transfer_encoding 'NONE'
+=default transfer_encoding C<'NONE'>
 
 The encoding that the data has.  If the data is to be encoded, than you
-will have to call encode() after the body is created.  That will
+will have to call M<encode()> after the body is created.  That will
 return a new encoded body.  This field is case-insensitive and relates
 to the C<Content-Transfer-Encoding> field in the header.
 
@@ -382,22 +428,93 @@ sub init($)
 
 #------------------------------------------
 
-=head2 The Body
-
-=cut
-
-#------------------------------------------
-
 =method clone
 
 Return a copy of this body, usually to be included in a cloned
-message (see Mail::Message::clone()).
+message. Use M<Mail::Message::clone()> for a whole message.
 
 =cut
 
 sub clone() {shift->notImplemented}
 
 #------------------------------------------
+
+=section Constructing a body
+
+=method decoded OPTIONS
+
+Returns a body, an object which is (a sub-)class of a M<Mail::Message::Body>,
+which contains a simplified representation of textual data.  The returned
+object may be the object where this is called on, but may also be a new
+body of any type.
+
+ my $dec = $body->decoded;
+ 
+is equivalent with
+
+ my $dec = $body->encode(mime_type => 'text/plain', charset => 'us-ascii',
+    transfer_encoding => 'NONE');
+
+The C<$dec> which is returned is a body.  Ask with the M<mimeType()> method
+what is produced.  This C<$dec> body is B<not related to a header>.
+
+=option  result_type CLASS
+=default result_type <same as current>
+
+=cut
+
+sub decoded(@)
+{   my $self = shift;
+    $self->encode
+     ( mime_type         => 'text/plain'
+     , charset           => 'us-ascii'
+     , transfer_encoding => 'none'
+     , @_
+     );
+}
+
+#------------------------------------------
+
+=method eol ['CR'|'LF'|'CRLF'|'NATIVE']
+
+Returns the character (or characters) which are used to separate lines
+within this body.  When a kind of separator is specified, the body
+is translated to contain the specified line endings.
+
+=cut
+
+sub eol(;$)
+{   my $self = shift;
+    return $self->{MMB_eol} unless @_;
+
+    my $eol  = shift;
+    if($eol eq 'NATIVE')
+    {   $eol = $^O =~ m/^win/i ? 'CRLF'
+             : $^O =~ m/^mac/i ? 'CR'
+             :                   'LF';
+    }
+
+    return $eol if $eol eq $self->{MMB_eol} && $self->checked;
+    my $lines = $self->lines;
+
+       if($eol eq 'CR')    {s/[\015\012]+$/\015/     foreach @$lines}
+    elsif($eol eq 'LF')    {s/[\015\012]+$/\012/     foreach @$lines}
+    elsif($eol eq 'CRLF')  {s/[\015\012]+$/\015\012/ foreach @$lines}
+    else
+    {   carp "Unknown line terminator $eol ignored.";
+        return $self->eol('NATIVE');
+    }
+
+    (ref $self)->new
+      ( based_on => $self
+      , eol      => $eol
+      , data     => $lines
+      );
+}
+
+#------------------------------------------
+
+=section The body
 
 =method message [MESSAGE]
 
@@ -418,65 +535,11 @@ sub message(;$)
 
 #------------------------------------------
 
-=method modified [BOOLEAN]
-
-Change the body modification flag.  This will force a re-write of the body
-to a folder file when it is closed.  It is quite dangerous to change the
-body: especially be warned that you have to change the message-id as well:
-no two messages should have the same id.
-
-Without value, the current setting is returned, although you can better use
-isModified().
-
-=cut
-
-sub modified(;$)
-{  my $self = shift;
-   return $self->isModified unless @_;  # compat 2.036
-   $self->{MMB_modified} = shift;
-}
-
-#------------------------------------------
-
-=method isModified
-
-Returns whether the body has changed.
-
-=cut
-
-sub isModified() {  shift->{MMB_modified} }
-
-#------------------------------------------
-
-=method print [FILEHANDLE]
-
-Print the body to the specified FILEHANDLE (defaults to the selected handle).
-The handle may be a GLOB, an IO::File object, or... any object with a
-C<print> method will do.  Nothing useful is returned.
-
-=cut
-
-sub print(;$) {shift->notImplemented}
-
-#------------------------------------------
-
-=method printEscapedFrom FILEHANDLE
-
-Print the body to the specified FILEHANDLE but all lines which start
-with 'From ' (optionally already preceded by E<gt>'s) will habe an E<gt>
-added in front.  Nothing useful is returned.
-
-=cut
-
-sub printEscapedFrom($) {shift->notImplemented}
-
-#------------------------------------------
-
 =method isDelayed
 
 Returns a true or false value, depending on whether the body of this
 message has been read from file.  This can only false for a
-Mail::Message::Body::Delayed.
+M<Mail::Message::Body::Delayed>.
 
 =cut
 
@@ -485,7 +548,6 @@ sub isDelayed() {0}
 #------------------------------------------
 
 =method isMultipart
-
 Returns whether this message-body contains parts which are messages
 by themselves.
 
@@ -498,7 +560,7 @@ sub isMultipart() {0}
 =method isNested
 
 Only true for a message body which contains exactly one sub-message:
-the C<::Nested> body type.
+the C<Mail::Message::Body::Nested> body type.
 
 =cut
 
@@ -506,46 +568,7 @@ sub isNested() {0}
 
 #------------------------------------------
 
-=method decoded OPTIONS
-
-Returns a body (an object which is (a sub-)class of a Mail::Message::Body)
-which contains a simplified representation of textual data.  The returned
-object may be the object where this is called on, but may also be a new
-body of any type.
-
- my $dec = $body->decoded;
- 
-is equivalent with
-
- my $dec = $body->encode(mime_type => 'text/plain', charset => 'us-ascii',
-    transfer_encoding => 'NONE');
-
-The C<$dec> which is returned is a body.  Ask with the mimeType() method
-what is produced.  This body is B<not related to a header>, so you can
-not ask C<< $dec->get('Content-Type') >>!
-
-=option  result_type CLASS
-=default result_type <same as current>
-
-=cut
-
-sub decoded(@)
-{   my $self = shift;
-    $self->encode
-     ( mime_type         => 'text/plain'
-     , charset           => 'us-ascii'
-     , transfer_encoding => 'none'
-     , @_
-     );
-}
-
-#------------------------------------------
-
-=head2 About the Payload
-
-=cut
-
-#------------------------------------------
+=section About the payload
 
 =method type
 
@@ -553,9 +576,9 @@ Returns the type of information the body contains.  The type is taken from
 the header field C<Content-Type>, but may have changed during encoding
 --or decoding-- of the body (see the C<encode> method).
 
-The returned is a reference to a Mail::Message::Field object, where
+The returned is a reference to a M<Mail::Message::Field> object, where
 you can ask for the C<body> (main content of the field) and the comment
-(after a semicolon).  To get to the body, you can better use mimeType().
+(after a semicolon).  To get to the body, you can better use M<mimeType()>.
 
 =examples
 
@@ -583,8 +606,8 @@ sub type() { shift->{MMB_type} }
 
 =method mimeType
 
-Returns a MIME::Type object which is related to this body's type.  This
-differs from the C<type> method, which results in a Mail::Message::Field.
+Returns a M<MIME::Type> object which is related to this body's type.  This
+differs from the C<type> method, which results in a M<Mail::Message::Field>.
 
 =example
 
@@ -619,7 +642,7 @@ sub charset() { shift->type->attribute('charset') }
 =method transferEncoding [STRING|FIELD]
 
 Returns the transfer-encoding of the data within this body.  If it
-needs to be changed, call the encode() or decoded() method.
+needs to be changed, call the M<encode()> or M<decoded()> method.
 
 The optional STRING or FIELD enforces a new encoding to be set, without the
 actual required translations.
@@ -680,45 +703,6 @@ sub checked(;$)
 
 #------------------------------------------
 
-=method eol ['CR'|'LF'|'CRLF'|'NATIVE']
-
-Returns the character (or characters) which are used to separate lines
-within this body.  When a kind of separator is specified, the body
-is translated to contain the specified line endings.
-
-=cut
-
-sub eol(;$)
-{   my $self = shift;
-    return $self->{MMB_eol} unless @_;
-
-    my $eol  = shift;
-    if($eol eq 'NATIVE')
-    {   $eol = $^O =~ m/^win/i ? 'CRLF'
-             : $^O =~ m/^mac/i ? 'CR'
-             :                   'LF';
-    }
-
-    return $eol if $eol eq $self->{MMB_eol} && $self->checked;
-    my $lines = $self->lines;
-
-       if($eol eq 'CR')    {s/[\015\012]+$/\015/     foreach @$lines}
-    elsif($eol eq 'LF')    {s/[\015\012]+$/\012/     foreach @$lines}
-    elsif($eol eq 'CRLF')  {s/[\015\012]+$/\015\012/ foreach @$lines}
-    else
-    {   carp "Unknown line terminator $eol ignored.";
-        return $self->eol('NATIVE');
-    }
-
-    (ref $self)->new
-      ( based_on => $self
-      , eol      => $eol
-      , data     => $lines
-      );
-}
-
-#------------------------------------------
-
 =method nrLines
 
 Returns the number of lines in the message body.  For multi-part messages,
@@ -735,7 +719,7 @@ sub nrLines(@)  {shift->notImplemented}
 The total number of bytes in the message body. The size of the body
 is computed in the shape it is in. For example, if this is a base64
 encoded message, the size of the encoded data is returned; you may
-want to call Mail::Message::decode() first.
+want to call M<Mail::Message::decoded()> first.
 
 =cut
 
@@ -743,11 +727,7 @@ sub size(@)  {shift->notImplemented}
 
 #------------------------------------------
 
-=head2 Access to the Payload
-
-=cut
-
-#------------------------------------------
+=section Access to the payload
 
 =method string
 
@@ -780,13 +760,13 @@ reference to an array of lines (in SCALAR context).  In scalar context the
 array of lines is cached to avoid needless copying and therefore provide
 much faster access for large messages.
 
-To just get the number of lines in the body, use the nrLines() method,
+To just get the number of lines in the body, use the M<nrLines()> method,
 which is usually much more efficient.
 
 BE WARNED: For some types of bodies the reference will refer to the
-original data. You must not change the referenced data! If you do some of
-the internal values maintained by the Mail::Message::Body may not be
-updated.   Use the data() method instead.
+original data. You must not change the referenced data! If you do, some of
+the essential internal variables of the M<Mail::Message::Body> may not be
+updated.
 
 =examples
 
@@ -812,10 +792,9 @@ Return the content of the body as a file handle.  The returned stream may
 be a real file, or a simulated file in any form that Perl supports.  While
 you may not be able to write to the file handle, you can read from it.
 
-WARNING: Even if the file handle supports writing, do not write to the
-file handle. If you do some of the internal values maintained by the
-Mail::Message::Body may not be updated.  Use only the data() method
-instead.
+WARNING: Even if the file handle supports writing, do not write
+to the file handle. If you do, some of the internal values of the
+M<Mail::Message::Body> may not be updated.
 
 =cut
 
@@ -823,36 +802,31 @@ sub file(;$) {shift->notImplemented}
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
+=method print [FILEHANDLE]
+
+Print the body to the specified FILEHANDLE (defaults to the selected handle).
+The handle may be a GLOB, an M<IO::File> object, or... any object with a
+C<print()> method will do.  Nothing useful is returned.
 
 =cut
 
+sub print(;$) {shift->notImplemented}
+
 #------------------------------------------
 
-=method AUTOLOAD
+=method printEscapedFrom FILEHANDLE
+
+Print the body to the specified FILEHANDLE but all lines which start
+with 'From ' (optionally already preceded by E<gt>'s) will habe an E<gt>
+added in front.  Nothing useful is returned.
 
 =cut
 
-my @in_encode = qw/check encode encoded eol isBinary isText unify/;
-my %in_module = map { ($_ => 'encode') } @in_encode;
-
-sub AUTOLOAD(@)
-{   my $self  = shift;
-    our $AUTOLOAD;
-    (my $call = $AUTOLOAD) =~ s/.*\:\://g;
-
-    my $mod = $in_module{$call} || 'construct';
-    if($mod eq 'encode'){ require Mail::Message::Body::Encode    }
-    else                { require Mail::Message::Body::Construct }
-
-    no strict 'refs';
-    return $self->$call(@_) if $self->can($call);  # now loaded
-
-    # Try parental AUTOLOAD
-    Mail::Reporter->$call(@_);
-}   
+sub printEscapedFrom($) {shift->notImplemented}
 
 #------------------------------------------
+
+=section Internals
 
 =method read PARSER, HEAD, BODYTYPE [,CHARS [,LINES]]
 
@@ -873,6 +847,37 @@ of the header.
 =cut
 
 sub read(@) {shift->notImplemented}
+
+#------------------------------------------
+
+=method modified [BOOLEAN]
+
+Change the body modification flag.  This will force a re-write of the body
+to a folder file when it is closed.  It is quite dangerous to change the
+body: the same body may be shared between messages within your program.
+
+Especially be warned that you have to change the message-id when you
+change the body of the message: no two messages should have the same id.
+
+Without value, the current setting is returned, although you can better use
+M<isModified()>.
+
+=cut
+
+sub modified(;$)
+{  my $self = shift;
+   return $self->isModified unless @_;  # compat 2.036
+   $self->{MMB_modified} = shift;
+}
+
+#------------------------------------------
+
+=method isModified
+Returns whether the body has changed.
+
+=cut
+
+sub isModified() {  shift->{MMB_modified} }
 
 #------------------------------------------
 
@@ -916,6 +921,39 @@ Be sure that the body is loaded.  This returns the loaded body.
 =cut
 
 sub load() {shift}
+
+#------------------------------------------
+
+=section Error handling
+
+=method AUTOLOAD
+
+When an unknown method is called on a message body object, this may
+not be problematic.  For performance reasons, some methods are
+implemented in separate files, and only demand-loaded.  If this
+delayed compilation of additional modules does not help, an error
+will be produced.
+
+=cut
+
+my @in_encode = qw/check encode encoded eol isBinary isText unify/;
+my %in_module = map { ($_ => 'encode') } @in_encode;
+
+sub AUTOLOAD(@)
+{   my $self  = shift;
+    our $AUTOLOAD;
+    (my $call = $AUTOLOAD) =~ s/.*\:\://g;
+
+    my $mod = $in_module{$call} || 'construct';
+    if($mod eq 'encode'){ require Mail::Message::Body::Encode    }
+    else                { require Mail::Message::Body::Construct }
+
+    no strict 'refs';
+    return $self->$call(@_) if $self->can($call);  # now loaded
+
+    # Try parental AUTOLOAD
+    Mail::Reporter->$call(@_);
+}   
 
 #------------------------------------------
 

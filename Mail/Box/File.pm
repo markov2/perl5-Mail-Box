@@ -19,77 +19,68 @@ use File::Basename;
 use POSIX ':unistd_h';
 use IO::File ();
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::File - handle file-based folders
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Mail::Box::File is the base-class for all file-based folders: folders which
-bundle multiple messages into one single file.  Usually, these messages are
-separated by a special line which indicates the start of the next one.
+C<Mail::Box::File> is the base-class for all file-based folders: folders
+which bundle multiple messages into one single file.  Usually, these
+messages are separated by a special line which indicates the start of
+the next one.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default folderdir $ENV{HOME}.'/Mail'
+=default folderdir C<$ENV{HOME}.'/Mail'>
 =default lock_file <foldername>.<lock-extension>
 
-=default message_type 'Mail::Box::File::Message'
+=default message_type M<Mail::Box::File::Message>
 
 =option  lock_extension FILENAME|STRING
-=default lock_extension '.lock'
+=default lock_extension C<'.lock'>
 
 When the dotlock locking mechanism is used, the lock is created with a
-hardlink to the folder file.  For Mail::Box::File type of folders, this
+hardlink to the folder file.  For C<Mail::Box::File> type of folders, this
 file is by default named as the folder-file itself followed by
-C<.lock>.  For example: the F<Mail/inbox> folder file will have a hardlink
-made as F<Mail/inbox.lock>.
+C<.lock>.  For example: the C<Mail/inbox> folder file will have a hardlink
+made as C<Mail/inbox.lock>.
 
 You may specify an absolute filename, a relative (to the folder's
 directory) filename, or an extension (preceded by a dot).  So valid
 examples are:
 
- .lock                  # appended to the folder's filename
+ .lock        # appended to the folder's filename
  my_own_lockfile.test   # full filename, same dir
  /etc/passwd            # somewhere else
 
 When the program runs with less priviledges (as normal user), often the
-default inbox folder can not be locked with the lockfile name which is produced
-by default.
+default inbox folder can not be locked with the lockfile name which is
+produced by default.
 
 =option  write_policy 'REPLACE'|'INPLACE'|undef
 =default write_policy undef
 
-Sets the default write policy (see write(policy)).  With C<undef>, the best
-policy is autodetected.
+Sets the default write policy, as default for a later call to
+M<write(policy)>.  With C<undef>, the best policy is autodetected.
 
 =option  body_type CLASS|CODE
 =default body_type <see description>
 
-The C<body_type> option for File folders defaults to
+The default C<body_type> option for C<File> folders, which will cause
+messages larger than 10kB to be stored in files and smaller files
+in memory, is implemented like this:
 
  sub determine_body_type($$)
  {   my $head = shift;
      my $size = shift || 0;
-     'Mail::Message::Body::' . ($size > 10000 ? 'File' : 'Lines');
+     'Mail::Message::Body::'
+        . ($size > 10000 ? 'File' : 'Lines');
  }
-
-which will cause messages larger than 10kB to be stored in files, and
-smaller files in memory.
 
 =error Cannot get a lock on $type folder $self.
 
@@ -98,9 +89,9 @@ specify the NONE lock type.
 
 =warning Folder $name file $filename is write-protected.
 
-The folder is opened writable or for appending (see new(access)), but the
-operating system does not permit writing to the file.  The folder will be
-opened read-only.
+The folder is opened writable or for appending via M<new(access)>,
+but the operating system does not permit writing to the file.  The folder
+will be opened read-only.
 
 =cut
 
@@ -174,7 +165,7 @@ sub init($)
 
 #-------------------------------------------
 
-=c_method create FOLDERNAME, OPTIONS
+=ci_method create FOLDERNAME, OPTIONS
 
 =error Cannot create directory $dir for folder $name.
 
@@ -191,7 +182,8 @@ the directory where the folder file should be stored.
 =cut
 
 sub create($@)
-{   my ($class, $name, %args) = @_;
+{   my ($thingy, $name, %args) = @_;
+    my $class     = ref $thingy      || $thingy;
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $subext    = $args{subfolder_extension};    # not always available
     my $filename  = $class->folderToFilename($name, $folderdir, $subext);
@@ -233,34 +225,7 @@ sub foundIn($@)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
 sub organization() { 'FILE' }
-
-#-------------------------------------------
-
-=head2 On open folders
-
-=cut
-
-#-------------------------------------------
-
-=method filename
-
-Returns the filename for this folder, which may be an absolute or relative
-path to the file.
-
-=examples
-
- print $folder->filename;
-
-=cut
-
-sub filename() { shift->{MBF_filename} }
 
 #-------------------------------------------
 
@@ -278,18 +243,6 @@ sub close(@)
 
 #-------------------------------------------
 
-=head2 The messages
-
-=cut
-
-#-------------------------------------------
-
-=head2 Sub-folders
-
-=cut
-
-#-------------------------------------------
-
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
     $self->openRelatedFolder(@_, folder => "$self/$name");
@@ -297,11 +250,74 @@ sub openSubFolder($@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=c_method appendMessages OPTIONS
+
+=error Cannot append messages to folder file $filename: $!
+
+Appending messages to a not-opened file-organized folder may fail when the
+operating system does not allow write access to the file at hand.
 
 =cut
 
+sub appendMessages(@)
+{   my $class  = shift;
+    my %args   = @_;
+
+    my @messages
+      = exists $args{message}  ? $args{message}
+      : exists $args{messages} ? @{$args{messages}}
+      :                          return ();
+
+    my $folder   = $class->new(lock_type => 'NONE', @_, access => 'w+')
+       or return ();
+ 
+    my $filename = $folder->filename;
+
+    my $out      = IO::File->new($filename, 'a');
+    unless($out)
+    {   $class->log(ERROR => "Cannot append messages to folder file $filename: $!");
+        return ();
+    }
+
+    my $msgtype = 'Mail::Box::File::Message';
+    my @coerced;
+
+    foreach my $msg (@messages)
+    {   my $coerced
+           = $msg->isa($msgtype) ? $msg
+           : $msg->can('clone')  ? $msgtype->coerce($msg->clone)
+           :                       $msgtype->coerce($msg);
+
+        $coerced->write($out);
+        push @coerced, $coerced;
+    }
+
+    my $ok = $folder->close;
+    return 0 unless $out->close && $ok;
+
+    @coerced;
+}
+
 #-------------------------------------------
+
+=section The folder
+
+=method filename
+
+Returns the filename for this folder, which may be an absolute or relative
+path to the file.
+
+=examples
+
+ print $folder->filename;
+
+=cut
+
+sub filename() { shift->{MBF_filename} }
+
+#-------------------------------------------
+
+=section Internals
 
 =method parser
 
@@ -373,7 +389,7 @@ sub readMessages(@)
 =default policy undef
 
 In what way will the mail folder be updated.  If not specified during the
-write, the value of the C<write_policy> at folder creation is taken.
+write, the value of the M<new(write_policy)> at folder creation is taken.
 
 Valid values:
 
@@ -383,8 +399,7 @@ Valid values:
 
 First a new folder is written in the same directory as the folder which has
 to be updated, and then a call to move will throw away the old immediately
-replacing it by the new.  The name of the folder's temporary file is
-produced in tmpNewFolder().
+replacing it by the new.
 
 Writing in C<REPLACE> module is slightly optimized: messages which are not 
 modified are copied from file to file, byte by byte.  This is much
@@ -418,9 +433,10 @@ possible as well.
 
 =warning Cannot remove folder $name file $filename: $!
 
-Writing an empty folder will usually remove that folder (see
-new(remove_when_empty) to change that), but for the indicated reason
-removal fails.
+Writing an empty folder will usually cause that folder to be removed,
+which fails for the indicated reason.  M<new(remove_when_empty)>
+controls whether the empty folder will removed; setting it to false
+(C<0>) may be needed to avoid this message.
 
 =error Unable to update folder $self.
 
@@ -621,56 +637,6 @@ sub _write_inplace($)
 
 #-------------------------------------------
 
-=c_method appendMessages OPTIONS
-
-=error Cannot append messages to folder file $filename: $!
-
-Appending messages to a not-opened file-organized folder may fail when the
-operating system does not allow write access to the file at hand.
-
-=cut
-
-sub appendMessages(@)
-{   my $class  = shift;
-    my %args   = @_;
-
-    my @messages
-      = exists $args{message}  ? $args{message}
-      : exists $args{messages} ? @{$args{messages}}
-      :                          return ();
-
-    my $folder   = $class->new(lock_type => 'NONE', @_, access => 'w+')
-       or return ();
- 
-    my $filename = $folder->filename;
-
-    my $out      = IO::File->new($filename, 'a');
-    unless($out)
-    {   $class->log(ERROR => "Cannot append messages to folder file $filename: $!");
-        return ();
-    }
-
-    my $msgtype = 'Mail::Box::File::Message';
-    my @coerced;
-
-    foreach my $msg (@messages)
-    {   my $coerced
-           = $msg->isa($msgtype) ? $msg
-           : $msg->can('clone')  ? $msgtype->coerce($msg->clone)
-           :                       $msgtype->coerce($msg);
-
-        $coerced->write($out);
-        push @coerced, $coerced;
-    }
-
-    my $ok = $folder->close;
-    return 0 unless $out->close && $ok;
-
-    @coerced;
-}
-
-#-------------------------------------------
-
 =ci_method folderToFilename FOLDERNAME, FOLDERDIR, [SUBEXT]
 
 Translate a folder name into a filename, using the
@@ -692,9 +658,9 @@ sub tmpNewFolder($) { shift->filename . '.tmp' }
 
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=chapter DETAILS
 
-=head2 How file-based folders work
+=section How file-based folders work
 
 File-based folders store many messages in one file (let's call this a
 `file-based' folder, in comparison to a `directory-based' folder types

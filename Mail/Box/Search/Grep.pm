@@ -9,11 +9,11 @@ use Carp;
 
 #-------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Search::Grep - select messages within a mail box like grep does
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Manager;
  my $mgr    = Mail::Box::Manager->new;
@@ -33,34 +33,24 @@ Mail::Box::Search::Grep - select messages within a mail box like grep does
 
  if($filter->search($message)) {...}
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Try to find some text strings in the header and footer of messages.  Various
 ways to limit the search to certain header fields, the whole header, only
 the body, the whole message, but even binary multiparts, are provided for.
 
-The name `grep' is derived from the UNIX tool `grep', which means: "Get
+The name I<grep> is derived from the UNIX tool I<grep>, which means: "Get
 Regular Expression and Print".  Although you can search using regular
 expressions (the Perl way of them), you do not have to print those as
 result.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 Create a UNIX-grep like search filter.
 
-=default in <$field ? 'HEAD' : 'BODY'>
+=default in <$field ? C<'HEAD'> : C<'BODY'>>
 
 =option  deliver undef|CODE|'DELETE'|LABEL|'PRINT'|REF-ARRAY
 =default deliver undef
@@ -71,14 +61,14 @@ much longer when this feature is enabled.
 When an ARRAY is specified it will contain a list of references to hashes.
 Each hash contains the information of one match.  A match in a header
 line will result in a line with fields C<message>, C<part>, and C<field>, where
-the field is a Mail::Message::Field object.  When the match is in
+the field is a M<Mail::Message::Field> object.  When the match is in
 the body the hash will contain a C<message>, C<part>, C<linenr>, and C<line>.
 
 In case of a CODE reference, that routine is called for each match. The
 first argument is this search object and the second a reference to same
 hash as would be stored in the array.
 
-The C<PRINT> will call printMatchedHead() or printMatchedBody() when
+The C<PRINT> will call M<printMatchedHead()> or M<printMatchedBody()> when
 any matching header resp body line was found.  The output is minimized
 by not reprinting the message info on multiple matches in the same
 message.
@@ -90,15 +80,14 @@ is matched, the whole message will be flagged for deletion.
 =option  field undef|STRING|REGEX|CODE
 =default field undef
 
-Not valid in combination with C<< in => BODY >>.
+Not valid in combination with C<in> set to C<BODY>.
 The STRING is one full field name (case-insensitive).  Use a REGEX
 to select more than one header line to be scanned. CODE is a routine which
 is called for each field in the header.   The CODE is called with the header
 as first, and the field as second argument.  If the CODE returns true, the
 message is selected.
 
-=option  match STRING|REGEX|CODE
-=default match <obligatory>
+=requires match STRING|REGEX|CODE
 
 The pattern to be search for can be a REGular EXpression, or a STRING.  In
 both cases, the match succeeds if it is found anywhere within the selected
@@ -114,7 +103,7 @@ The C<$head> resp C<$body> are one message's head resp. body object.  The
 C<$field> is a header line which matches.  The C<$line> and C<$linenr>
 tell the matching line in the body.
 
-Be warned that when you search C<< in => MESSAGE >> the code must accept
+Be warned that when you search in C<MESSAGE> the code must accept
 both formats.
 
 =cut
@@ -152,12 +141,6 @@ sub init($)
 
     $self;
 }
-
-#-------------------------------------------
-
-=head2 Searching
-
-=cut
 
 #-------------------------------------------
 
@@ -218,7 +201,7 @@ sub inBody(@)
 
 #-------------------------------------------
 
-=head2 The Results
+=section The Results
 
 =cut
 

@@ -10,14 +10,11 @@ use Mail::Message::Field::Fast;
 use Carp;
 use Scalar::Util 'weaken';
 
-use overload qq("") => 'string_unless_carp'
-           , bool   => 'isEmpty';
-
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Head - the header of one message
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $head = Mail::Message::Head->new;
  $head->add('From: me@localhost');
@@ -27,33 +24,37 @@ Mail::Message::Head - the header of one message
  my Mail::Message::Field @rec = $head->get('received');
  $head->delete('From');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Mail::Message::Head MIME headers are part of Mail::Message messages,
-which are stored by Mail::Box folders.
+C<Mail::Message::Head> MIME headers are part of M<Mail::Message> messages,
+which are grouped in M<Mail::Box> folders.
+
+B<ATTENTION!!!> most functionality about e-mail headers is described
+in M<Mail::Message::Head::Complete>, which is a matured header object.
+Other kinds of headers will be translated to that type when time comes.
 
 The header of a MIME message object contains a set of lines, which are
-called I<fields> (by default represented by Mail::Message::Field
+called I<fields> (by default represented by M<Mail::Message::Field>
 objects).  Dependent on the situation, the knowledge about the fields can
 be in one of three situations, each represented by a sub-class of this
 module:
 
 =over 4
 
-=item * Mail::Message::Head::Complete
+=item * M<Mail::Message::Head::Complete>
 
 In this case, it is sure that all knowledge about the header is available.
-When you get() information from the header and it is not there, it will
+When you M<get()> information from the header and it is not there, it will
 never be there.
 
-=item * Mail::Message::Head::Subset
+=item * M<Mail::Message::Head::Subset>
 
 There is no certainty whether all header lines are known (probably not).  This
 may be caused as result of reading a fast index file, as described in
-Mail::Box::MH::Index.  The object is automatically transformed
-into a Mail::Message::Head::Complete when all header lines must be known.
+M<Mail::Box::MH::Index>.  The object is automatically transformed
+into a M<Mail::Message::Head::Complete> when all header lines must be known.
 
-=item * Mail::Message::Head::Delayed
+=item * M<Mail::Message::Head::Delayed>
 
 In this case, there is no single field known.  Access to this header will
 always trigger the loading of the full header.
@@ -63,36 +64,70 @@ always trigger the loading of the full header.
 On this page, the general methods which are available on any header are
 described.  Read about differences in the sub-class specific pages.
 
-=head1 METHODS
+=chapter OVERLOADED
+
+=overload ""
+
+(stringifaction) The header, when used as string, will format as if
+M<Mail::Message::Head::Complete::string()> was called, so return a
+nicely folder full header.  An exception is made for Carp, which will
+get a simplified string to avoid unreadible messages from C<croak>
+and C<confess>.
+
+=example using a header object as string
+
+ print $head;     # implicit stringification by print
+ $head->print;    # the same
+
+ print "$head";   # explicit stringication
+
+=overload bool
+
+When the header does not contain any lines (which is illegal, according
+to the RFCs), false is returned.  In all other cases, a true value is
+produced.
 
 =cut
 
+use overload qq("") => 'string_unless_carp'
+           , bool   => 'isEmpty';
+
+# To satisfy overload in static resolving.
+sub toString() { shift->load->toString }
+sub string()   { shift->load->string }
+
+sub string_unless_carp()
+{   my $self = shift;
+    return $self->toString unless (caller)[0] eq 'Carp';
+
+    (my $class = ref $self) =~ s/^Mail::Message/MM/;
+    "$class object";
+}
+
 #------------------------------------------
 
-=head2 Initiation
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
+=section Constructors
 
 =c_method new OPTIONS
 
 Create a new message header object.  The object will store all the
 fields of a header.  When you get information from the header, it
-will be returned to you as Mail::Message::Field objects, although
+will be returned to you as M<Mail::Message::Field> objects, although
 the fields may be stored differently internally.
 
-If you try to instantiate a Mail::Message::Head, you will automatically
-be upgraded to a Mail::Message::Head::Complete --a full head.
+If you try to instantiate a M<Mail::Message::Head>, you will automatically
+be upgraded to a M<Mail::Message::Head::Complete> --a full head.
 
 =option  modified BOOLEAN
 =default modified <false>
 
 =option  field_type CLASS
-=default field_type 'Mail::Message::Field::Fast'
+=default field_type M<Mail::Message::Field::Fast>
 
 The type of objects that all the fields will have.  This must be
-an extension of Mail::Message::Field.
+an extension of M<Mail::Message::Field>.
 
 =option  message MESSAGE
 =default message undef
@@ -133,9 +168,11 @@ sub init($)
 
 =method build FIELDS
 
-A fast way to construct a header with many lines.  The FIELDS are
-name--content pairs of the header.   A header is created, and each
-pair is added.  Doubles are permitted.
+A fast way to construct a header with many lines.
+The FIELDS are (name, content) pairs of the header.   A
+M<Mail::Message::Head::Complete> header is created by simply calling
+M<Mail::Message::Head::Complete::build()>, and then each field
+is added.  Double field names are permitted.
 
 =examples
 
@@ -146,22 +183,19 @@ pair is added.  Doubles are permitted.
   , Received => 'two'
   );
 
+ print ref $head;
+  # -->  Mail::Message::Head::Complete
+
 =cut
 
 sub build(@)
-{   my $self = shift;
-    my $head = $self->new;
-    $head->add(shift, shift) while @_;
-    $head;
+{   shift;
+    Mail::Message::Head::Complete->build(@_);
 }
 
 #------------------------------------------
 
-=head2 The Header
-
-=cut
-
-#------------------------------------------
+=section The header
 
 =method isDelayed
 
@@ -176,24 +210,10 @@ sub isDelayed { 1 }
 
 #------------------------------------------
 
-=method isMultipart
-
-Returns whether the body of the related message is a multipart body.
-May trigger completion.
-
-=cut
-
-sub isMultipart()
-{   my $type = shift->get('Content-Type');
-    $type && $type->body =~ m[^multipart/]i;
-}
-
-#------------------------------------------
-
 =method modified [BOOLEAN]
 
 Sets the modified flag to BOOLEAN.  Without value, the current setting is
-returned, but in that case you can better use isModified().
+returned, but in that case you can better use M<isModified()>.
 Changing this flag will not trigger header completion.
 
 =examples
@@ -213,11 +233,9 @@ sub modified(;$)
 #------------------------------------------
 
 =method isModified
-
 Returns whether the header has been modified after being read.
 
 =examples
-
  if($head->isModified) { ... }
 
 =cut
@@ -257,21 +275,29 @@ sub message(;$)
 
 #------------------------------------------
 
-=head2 Constructing a Header
+=method orderedFields
+
+Retuns the fields ordered the way they were read or added.
 
 =cut
 
-#------------------------------------------
-
-sub setField($$) {shift->add(@_)} # compatibility
+sub orderedFields() { grep {defined $_} @{shift->{MMH_order}} }
 
 #------------------------------------------
 
-=head2 Access to the Header
+=method knownNames
+
+Like M<Mail::Message::Head::Complete::names()>, but only returns the known
+header fields, which may be less than C<names> for header types which are
+partial.  C<names()> will trigger completion, where C<knownNames()> does not.
 
 =cut
 
+sub knownNames() { keys %{shift->{MMH_fields}} }
+
 #------------------------------------------
+
+=section Access to the header
 
 =method get NAME [,INDEX]
 
@@ -326,56 +352,44 @@ sub get($;$)
 }
 
 sub get_all(@) { my @all = shift->get(@_) }   # compatibility, force list
- 
-#------------------------------------------
-
-=method knownNames
-
-Like names(), but only returns the known header fields, which
-may be less than names() for header types which are partial.
-names() will trigger completion, where C<knownNames> does not.
-
-=cut
-
-sub knownNames() { keys %{shift->{MMH_fields}} }
+sub setField($$) {shift->add(@_)} # compatibility
 
 #------------------------------------------
 
-=method printUndisclosed [FILEHANDLE]
+=section About the body
 
-Like the usual print(), the header lines are printed to the specified
-FILEHANDLE, by default the selected filehandle.  In this case, however,
-C<Bcc> and C<Resent-Bcc> lines are included.
+=method guessBodySize
+
+Try to estimate the size of the body of this message, but without parsing
+the header or body.  The result might be C<undef> or a few percent of
+the real size.  It may even be very far of the real value, that's why
+this is a guess.
 
 =cut
 
 #------------------------------------------
-# To satisfy overload in static resolving.
-    
-sub toString() { shift->load->toString }
-sub string()   { shift->load->string }
 
-sub string_unless_carp()
-{   my $self = shift;
-    return $self->toString unless (caller)[0] eq 'Carp';
+=method isMultipart
 
-    (my $class = ref $self) =~ s/^Mail::Message/MM/;
-    "$class object";
+Returns whether the body of the related message is a multipart body.
+May trigger completion, when the C<Content-Type> field is not defined.
+
+=cut
+
+sub isMultipart()
+{   my $type = shift->get('Content-Type');
+    $type && $type->body =~ m[^multipart/]i;
 }
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
+=section Internals
 
 =method read PARSER
 
 Read the header information of one message into this header structure.  This
-method is called by the folder object (some Mail::Box sub-class), which
-passes the PARSER as an argument.  Do not call this method yourself!
+method is called by the folder object (some M<Mail::Box> sub-class), which
+passes the PARSER as an argument.
 
 =cut
 
@@ -392,16 +406,6 @@ sub read($)
 
     $self;
 }
-
-#------------------------------------------
-
-=method orderedFields
-
-Retuns the fields ordered the way they were read or added.
-
-=cut
-
-sub orderedFields() { grep {defined $_} @{shift->{MMH_order}} }
 
 #------------------------------------------
 
@@ -485,9 +489,10 @@ sub setNoRealize($)
 
 =method addNoRealize FIELD
 
-Add a field, like add() does, but avoid the loading of a possibly partial
-header.  This method does not test the validity of the argument, nor flag
-the header as changed.  This does not trigger completion.
+Add a field, like M<Mail::Message::Head::Complete::add()> does, but
+avoid the loading of a possibly partial header.  This method does not
+test the validity of the argument, nor flag the header as changed.
+This does not trigger completion.
 
 =cut
 
@@ -511,5 +516,9 @@ sub addNoRealize($)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

@@ -5,44 +5,34 @@ use base 'Mail::Reporter';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Thread::Node - one node in a message thread
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $node = Mail::Box::Thread::Node->new;
  $node->addMessage($message);
  ...
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-The Mail::Box::Thread::Node maintains one node in the linked list of threads.
-Each node contains one message, and a list of its follow-ups.  Next to
-that, it refers to its own ancestor and contains information about the
-trustworthiness of that relationship.
+The C<Mail::Box::Thread::Node> maintains one node in the linked list of
+threads.  Each node contains one message, and a list of its follow-ups.
+Next to that, it refers to its own ancestor and contains information
+about the trustworthiness of that relationship.
 
-To complicate things a little, because the thread-manager can maintain multiple
-folders, and merge there content, you may find the same message in more folders.
-All versions of the same message (based on message-id) are stored in the
-same node.
+To complicate things a little, because the thread-manager can maintain
+multiple folders, and merge there content, you may find the same message
+in more folders.  All versions of the same message (based on message-id)
+are stored in the same node.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-You will not call this method yourself. The Mail::Box::Thread::Manager
-object will use it to construct Mail::Box::Thread::Node objects.
+You will not call this method yourself. The M<Mail::Box::Thread::Manager>
+object will call it to construct C<Mail::Box::Thread::Node> objects.
 Either a C<message> or a C<messageId> must be supplied.
 
 =option  message MESSAGE
@@ -61,7 +51,7 @@ specify it when you don't have the message yet.
 =default dummy_type undef
 
 Indicates the class name of dummy messages. Dummy messages are
-placeholders in a Mail::Box::Thread::Manager data structure.
+placeholders in a M<Mail::Box::Thread::Manager> data structure.
 
 =cut
 
@@ -90,11 +80,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Thread Node
-
-=cut
-
-#-------------------------------------------
+=section The thread node
 
 =method message
 
@@ -106,7 +92,7 @@ In scalar context, this method returns the first instance of the
 message that is not deleted. If all instances are flagged for deletion,
 then you get the first deleted message. When the open folders only
 contain references to the message, but no instance, you get a dummy
-message (see Mail::Message::Dummy).
+message (see M<Mail::Message::Dummy>).
 
 In list context, all instances of the message which have been found are
 returned.
@@ -197,11 +183,30 @@ sub messageID() { shift->messageID } # compatibility
 
 #-------------------------------------------
 
-=head2 The Thread Order
+=method expand [BOOLEAN]
+
+Returns whether this (part of the) folder has to be shown expanded or not.
+This is simply done by a label, which means that most folder types can
+store this.
 
 =cut
 
+sub expand(;$)
+{   my $self = shift;
+    return $self->message->label('folded') || 0
+        unless @_;
+
+    my $fold = not shift;
+    $_->label(folded => $fold) foreach $self->message;
+    $fold;
+}
+
+sub folded(;$)    # compatibility <2.0
+{  @_ == 1 ? shift->expand : shift->expand(not shift) }
+
 #-------------------------------------------
+
+=section The thread order
 
 =method repliedTo
 
@@ -221,12 +226,12 @@ related. Values for the STRING may be:
 
 =over 4
 
-=item * 'REPLY'
+=item * C<'REPLY'>
 
 This relation was directly derived from an `in-reply-to' message header
 field. The relation has a high confidence.
 
-=item * 'REFERENCE'
+=item * C<'REFERENCE'>
 
 This relation is based on information found in a `Reference' message
 header field.  One message may reference a list of messages which
@@ -234,7 +239,7 @@ precede it in the thread. The heuristic attempts to determine
 relationships between messages assuming that the references are in order.
 This relation has a lower confidence.
 
-=item * 'GUESS'
+=item * C<'GUESS'>
 
 The relation is a big guess, with low confidence.  It may be based on
 a subject which seems to be related, or commonalities in the message's
@@ -348,7 +353,7 @@ sub followUps()
 
 =method sortedFollowUps [PREPARE [,COMPARE]]
 
-Returns the list of followUps(), but sorted.  By default
+Returns the list of M<followUps()>, but sorted.  By default
 sorting is based on the estimated time of the reply. See
 startTimeEstimate().
 
@@ -365,30 +370,7 @@ sub sortedFollowUps()
 
 #-------------------------------------------
 
-=method expand [BOOLEAN]
-
-Returns whether this (part of the) folder has to be shown expanded or not.
-This is simply done by a label, which means that most folder types can
-store this.
-
-=cut
-
-sub expand(;$)
-{   my $self = shift;
-    return $self->message->label('folded') || 0
-        unless @_;
-
-    my $fold = not shift;
-    $_->label(folded => $fold) foreach $self->message;
-    $fold;
-}
-
-sub folded(;$)    # compatibility <2.0
-{  @_ == 1 ? shift->expand : shift->expand(not shift) }
-
-#-------------------------------------------
-
-=head2 Whole Threads
+=section On the whole thread
 
 Some convenience methods are added to threads, to simplify retrieving
 information from it.
@@ -416,24 +398,24 @@ In the first example below, this routine is called seven times.
 
 may result in
 
-   Subject of this message
-   |- Re: Subject of this message
-   |-*- Re: Re: Subject of this message
-   | |- Re(2) Subject of this message
-   | |- [3] Re(2) Subject of this message
-   | `- Re: Subject of this message (reply)
-   `- Re: Subject of this message
+ Subject of this message
+ |- Re: Subject of this message
+ |-*- Re: Re: Subject of this message
+ | |- Re(2) Subject of this message
+ | |- [3] Re(2) Subject of this message
+ | `- Re: Subject of this message (reply)
+ `- Re: Subject of this message
 
 The `*' represents a missing message (a "dummy" message).  The `[3]'
 presents a folded thread with three messages.
 
-   print $node->threadToString(\&show);
+ print $node->threadToString(\&show);
 
-   sub show($) {
-      my $message = shift;
-      my $subject = $message->head->get('subject');
-      length $subject ? $subject : '<no subject>';
-   }
+ sub show($) {
+    my $message = shift;
+    my $subject = $message->head->get('subject');
+    length $subject ? $subject : '<no subject>';
+ }
 
 =cut
 
@@ -600,7 +582,9 @@ node.  This list will not include dummies.
 
 =example
 
- my @t = $folder->message(3)->threadStart->threadMessages;
+ my @t = $folder->message(3)
+                ->threadStart
+                ->threadMessages;
 
 =cut
 
@@ -640,5 +624,10 @@ sub ids()
 }
 
 #-------------------------------------------
+
+=section Error handling
+
+=cut
+
 
 1;

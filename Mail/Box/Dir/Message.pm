@@ -9,47 +9,37 @@ use Carp;
 use IO::File;
 use File::Copy qw/move/;
 
-=head1 NAME
+=chapter NAME
 
-Mail::Box::Dir::Message - one message in a directory-organized folder
+Mail::Box::Dir::Message - one message in a directory organized folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder = new Mail::Box::MH ...
  my $message = $folder->message(10);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Box::Dir::Message is a base class for one message in a directory
-organized folder; each message is stored in a separate file.  There are
-no objects of type Mail::Box::Dir::Message, only extensions are allowed to
-be created.
+A C<Mail::Box::Dir::Message> is a base class for one message in a
+directory organized folder; each message is stored in a separate file.
+There are no objects of type C<Mail::Box::Dir::Message>, only extensions
+are allowed to be created.
 
 At the moment, two of these extended message types are implemented:
 
 =over 4
 
-=item * Mail::Box::MH::Message
+=item * M<Mail::Box::MH::Message>
 
-which represents one message in a Mail::Box::MH folder.
+which represents one message in a M<Mail::Box::MH> folder.
 
-=item * Mail::Box::Maildir::Message
+=item * M<Mail::Box::Maildir::Message>
 
-which represents one message in a Mail::Box::Maildir folder.
+which represents one message in a M<Mail::Box::Maildir> folder.
 
 =back
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -63,7 +53,7 @@ The file where the message is stored in.
 =option  fix_header BOOLEAN
 =default fix_header C<false>
 
-See Mail::Box::new(fix_headers).
+See M<Mail::Box::new(fix_headers)>.
 
 =cut
 
@@ -80,7 +70,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Message
+=section The Message
 
 =cut
 
@@ -128,11 +118,9 @@ sub filename(;$)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=section Internals
 
 =cut
-
-#-------------------------------------------
 
 # Asking the filesystem for the size is faster counting (in
 # many situations.  It even may be lazy.

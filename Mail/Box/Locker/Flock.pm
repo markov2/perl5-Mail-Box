@@ -8,15 +8,15 @@ use IO::File;
 use Fcntl         qw/:DEFAULT :flock/;
 use Errno         qw/EAGAIN/;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Locker::Flock - lock a folder using kernel file-locking
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Box::Locker
+ See M<Mail::Box::Locker>
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 The C<::Flock> object lock the folder by creating an exclusive lock on
 the file using the kernel's C<flock> facilities.  This lock is created
@@ -26,37 +26,17 @@ is reading.
 File locking does not work in some situations, for instance for
 operating systems do not support C<flock>.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=cut
-
-#-------------------------------------------
-
-=head2 The Locker
+=default method C<'FLOCK'>
 
 =cut
 
 #-------------------------------------------
 
 sub name() {'FLOCK'}
-
-#-------------------------------------------
-
-=head2 Locking
-
-=cut
 
 #-------------------------------------------
 

@@ -3,65 +3,21 @@ use strict;
 package Mail::Box::Mbox::Message;
 use base 'Mail::Box::File::Message';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Mbox::Message - one message in a Mbox folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder  = new Mail::Box::Mbox folder => $ENV{MAIL}, ...;
  my $message = $folder->message(0);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Maintain one message in an Mbox folder.
+Maintain one message in an M<Mail::Box::Mbox> folder.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
+=chapter METHODS
 
 =cut
-
-#-------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 Constructing a Message
-
-=cut
-
-#------------------------------------------
-
-=head2 The Message
-
-=cut
-
-#-------------------------------------------
-
-=head2 The Header
-
-=cut
-
-#-------------------------------------------
-
-=head2 Labels
-
-=cut
-
-#-------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
 
 1;

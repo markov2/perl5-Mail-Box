@@ -11,6 +11,52 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.041: Thu May  8 14:05:32 CEST 2003
+
+	Fixes:
+
+	- [Supriya Jagadeesh] showed that reply(include => NO) did not
+	  work. Apparently, no-one used it before.
+
+	- [Shagren] showed a patch to avoid an locale based date field
+	  to be produced, where rfc2822 requires an English format.
+	  As change, the locale based parts of strftime are avoided.
+
+	- sendmail and started with extra -i flag, to avoid stop at lines
+	  in message which only contain a dot.  Spotted by [Tim Sellar]
+
+	- [Bill Moseley] detected that examples/reply.pl called an
+	  non-existing quotePrelude(), which should have been replyPrelude().
+
+	- [Dimitris Glynos] Mail::Message::Field::Full:_decoder() should
+          decode, not encode :(
+
+	- [Dimitris Glynos] Mail::Message::Construct::reply() did not
+	  use the subject of the sender to create a new answer.
+
+	Improvements:
+
+	- Translated all docs to use OODoc.  Many small fixes in the docs
+	  were the result.
+
+	- Removed $folder->clone, because it implemented the same as
+	  $folder->openRelatedFolder, which has a much better name to
+	  describe the action performed.
+
+	- Rewrote documentation for Mail::Box::scanFromMessages().  It now
+	  also accepts a timespan as value.
+
+	- Documented all available overloading (which is quite important).
+
+	- Mail::Message::Construct has been taken apart in multiple
+	  Mail::Message::Construct::* packages because it grew too
+	  large and it simplifies including examples.
+
+	- Added Mail::Message::Construct::Rebuild, which can modify
+	  existing messages.  Very slick!
+
+	- Mail::Message::Part's get an empty header by default.
+
 version 2.040: Mon Apr 14 15:48:54 CEST 2003
 
 	Fixes:
@@ -58,7 +104,7 @@ version 2.040: Mon Apr 14 15:48:54 CEST 2003
 	  message.  Do never do it, but if you have to then...
 
 	- Mail::Message::Construct::reply handles nested messages and
-	  binary files better to cronstruct an answer.
+	  binary files better to construct an answer.
 
 version 2.039: Sun Mar 30 17:34:43 CEST 2003
 

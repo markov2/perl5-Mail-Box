@@ -10,77 +10,35 @@ use IO::File;
 use File::Copy;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
-Mail::Box::MH::Labels - process file which maintains message related labels
+Mail::Box::MH::Labels - maintain MH message related labels
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $labels = Mail::Box::MH::Labels->new;
  $labels->read(...)
  $labels->write(...)
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 MH type message folders use one dedicated file per folder-directory to list
 special tags to messages in that folder.  By doing this, mail agents may
 avoid parsing all the messages, which is very resource consuming.
 
 Labels can be used to group messages, for instance to reflect which
-messages have been read or which look like spam.
-
-Typically, the file which contains the labels is called C<.mh_sequences>.
-The MH messages are numbered from C<1>.  As example content for
-C<.mh_sequences>:
-
- cur: 93
- unseen: 32 35-56 67-80
-
-To generalize labels on messages, two are treated specially:
-
-=over 4
-
-=item * cur
-
-The C<cur> specifies the number of the message where the user stopped
-reading mail from this folder at last access.  Internally in these
-modules referred to as label C<current>.
-
-=item * unseen
-
-With C<unseen> is listed which message was never read.
-This must be a mistake in the design of MH: it must be a source of
-confusion.  People should never use labels with a negation in the
-name:
-
- if($seen)           if(!$unseen)    #yuk!
- if(!$seen)          if($unseen)
- unless($seen)       unless($unseen) #yuk!
-
-So: label C<unseen> is translated into C<seen> for internal use.
-
-=back
+messages have been read or which look like spam.  Some labels are
+predefined, but more can be added without limitation.
 
 =cut
 
 #-------------------------------------------
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=option  filename FILENAME
-=default filename <required>
+=requires filename FILENAME
 
 The FILENAME which is used in each directory to store the headers of all
 mails. The filename must be an absolute path.
@@ -98,14 +56,9 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Label Table
-
-=cut
-
-#-------------------------------------------
+=section The Label Table
 
 =method filename
-
 Returns the name of the index file.
 
 =cut
@@ -115,7 +68,6 @@ sub filename() {shift->{MBML_filename}}
 #-------------------------------------------
 
 =method get MSGNR
-
 Look if there is label info for message MSGNR.
 
 =cut
@@ -127,14 +79,7 @@ sub get($)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
-
 =method read
-
 Read all label information from file.
 
 =cut
@@ -179,7 +124,6 @@ sub read()
 #-------------------------------------------
 
 =method write MESSAGES
-
 Write the labels related to the specified messages to the label file.
 
 =cut
@@ -272,5 +216,45 @@ sub print($@)
 }
 
 #-------------------------------------------
+
+=section Error handling
+
+=chapter DETAILS
+
+=section MH labels
+
+Typically, the file which contains the labels is called C<.mh_sequences>.
+The MH messages are numbered from C<1>.  As example content for
+C<.mh_sequences>:
+
+ cur: 93
+ unseen: 32 35-56 67-80
+
+To generalize labels on messages, two are treated specially:
+
+=over 4
+
+=item * cur
+
+The C<cur> specifies the number of the message where the user stopped
+reading mail from this folder at last access.  Internally in these
+modules referred to as label C<current>.
+
+=item * unseen
+
+With C<unseen> is listed which message was never read.
+This must be a mistake in the design of MH: it must be a source of
+confusion.  People should never use labels with a negation in the
+name:
+
+ if($seen)           if(!$unseen)    #yuk!
+ if(!$seen)          if($unseen)
+ unless($seen)       unless($unseen) #yuk!
+
+So: label C<unseen> is translated into C<seen> for internal use.
+
+=back
+
+=cut
 
 1;

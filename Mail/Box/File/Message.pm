@@ -6,30 +6,21 @@ use base 'Mail::Box::Message';
 use POSIX 'SEEK_SET';
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::File::Message - one message in a Mbox folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder  = new Mail::Box::File folder => $ENV{MAIL}, ...;
  my $message = $folder->message(0);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Maintain one message in an file-based folder.
+Maintain one message in an file based folder, any M<Mail::Box::File>
+extension.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -55,24 +46,12 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Constructing a Message
-
-=cut
-
-#------------------------------------------
-
 sub coerce($)
 {   my ($self, $message) = @_;
     return $message if $message->isa(__PACKAGE__);
 
     $self->SUPER::coerce($message)->labelsToStatus;
 }
-
-#-------------------------------------------
-
-=head2 The Message
-
-=cut
 
 #-------------------------------------------
 
@@ -112,12 +91,6 @@ sub clone()
 
 #-------------------------------------------
 
-=head2 The Header
-
-=cut
-
-#-------------------------------------------
-
 sub head(;$$)
 {   my $self  = shift;
     return $self->SUPER::head unless @_;
@@ -130,12 +103,6 @@ sub head(;$$)
 
 #-------------------------------------------
 
-=head2 Labels
-
-=cut
-
-#-------------------------------------------
-
 sub label(@)
 {   my $self   = shift;
     my $return = $self->SUPER::label(@_);
@@ -145,11 +112,7 @@ sub label(@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
+=section The Message
 
 =method fromLine [LINE]
 
@@ -170,11 +133,16 @@ sub fromLine(;$)
     $self->{MBMM_from_line} ||= $self->head->createFromLine;
 }
 
+#------------------------------------------
+
+=section Internals
+
 #-------------------------------------------
 
-=method read PARSER
+=method readFromParser PARSER
 
-Read one message from a Mbox folder, including the message separator.
+Read one message from a M<Mail::Box::File> based folder, including the
+message separator.
 
 =cut
 
@@ -225,7 +193,7 @@ sub loadBody()
     $newbody;
 }
 
-#------------------------------------------
+#-------------------------------------------
 
 =method fileLocation
 

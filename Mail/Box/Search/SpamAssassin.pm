@@ -10,11 +10,11 @@ use Mail::Message::Wrapper::SpamAssassin;
 
 #-------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Search::SpamAssassin - select spam messages with Mail::SpamAssassin
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Manager;
  my $mgr    = Mail::Box::Manager->new;
@@ -28,11 +28,12 @@ Mail::Box::Search::SpamAssassin - select spam messages with Mail::SpamAssassin
  {   $msg->delete if $msg->label('spam');
  }
 
- my $spam2 = Mail::Box::Search::SpamAssassin->new(deliver => 'DELETE');
+ my $spam2 = Mail::Box::Search::SpamAssassin
+               ->new(deliver => 'DELETE');
  $spam2->search($folder);
  $mgr->moveMessages($folder->messages('spam'), $spamfolder);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 I<Spam> means "unsollicited e-mail", and is as name derived from a
 Monty Python scatch.  Although Monty Python is fun, spam is a pain:
@@ -44,36 +45,26 @@ of Internet.
 Happily, Mail::Box can be used as spam filter, in combination with
 the useful Mail::SpamAssassin module (which must be installed separately).
 Each message which is searched is wrapped in a
-Mail::Message::Wrapper::SpamAssassin object.
+M<Mail::Message::Wrapper::SpamAssassin> object.
 
 The spam-assassin module version 2 is not really well adapted for
-Mail::Message objects, which will make this search even slower than
+M<Mail::Message> objects, which will make this search even slower than
 spam-detection already is.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-Create a spam filter.  Internally, a Mail::SpamAssassin object is
+Create a spam filter.  Internally, a M<Mail::SpamAssassin> object is
 maintained.
 
-=default in    'MESSAGE'
+=default in    C<'MESSAGE'>
 
 Only the whole message can be searched; this is a limitation of
-the Mail::SpamAssassin module.
+the M<Mail::SpamAssassin> module.
 
 =option  label STRING|undef
-=default label 'spam'
+=default label c<'spam'>
 
 Mark all selected selected message with the specified STRING.  If this
 option is explicitly set to C<undef>, the label will not be set.
@@ -82,7 +73,7 @@ option is explicitly set to C<undef>, the label will not be set.
 =default rewrite_mail <true>
 
 Add lines to the message header describing the results of the spam
-scan. See Mail::SpamAssassin::PerMessageStatus::rewrite_mail().
+scan. See M<Mail::SpamAssassin::PerMsgStatus::rewrite_mail()>.
 
 =option  spam_assassin OBJECT
 =default spam_assassin undef
@@ -91,18 +82,16 @@ Provide a Mail::SpamAssassin object to be used for searching spam.  If
 none is specified, one is created internally.  The object can be
 retreived with assassinator().
 
-=option  sa_options     HASH_REF
-=default sa_options     {}
+=option  sa_options     HASH
+=default sa_options     C<{ }>
 
-Options to create the internal Mail::SpamAssassin object; see its
+Options to create the internal M<Mail::SpamAssassin> object; see its
 manual page for the available options.
 
 =examples
 
- my $filter = Mail::Box::Search::SpamAssassin->new
-  ( in    => 'HEAD'
-  , found => 'DELETE'
-  );
+ my $filter = Mail::Box::Search::SpamAssassin
+               ->new( found => 'DELETE' );
 
 =cut
 
@@ -126,6 +115,8 @@ sub init($)
 
 #-------------------------------------------
 
+=section Searching
+
 =method assassinator
 
 Returns the internally maintained assassinator object.  You may want
@@ -134,12 +125,6 @@ to reach this object for complex configuration.
 =cut
 
 sub assassinator() { shift->{MBSS_sa} }
-
-#-------------------------------------------
-
-=head2 Searching
-
-=cut
 
 #-------------------------------------------
 
@@ -169,12 +154,6 @@ sub inHead(@) {shift->notImplemented}
 #-------------------------------------------
 
 sub inBody(@) {shift->notImplemented}
-
-#-------------------------------------------
-
-=head2 The Results
-
-=cut
 
 #-------------------------------------------
 

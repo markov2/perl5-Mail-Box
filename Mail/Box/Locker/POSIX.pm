@@ -8,52 +8,32 @@ use POSIX;
 use Fcntl;
 use IO::File;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Locker::POSIX - lock a folder using kernel file-locking
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
- See Mail::Box::Locker
+ See M<Mail::Box::Locker>
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This locker object is created by the folder to get an exclusive lock on
 the file which contains the data using the kernel's POSIX facilities.  This
 lock is created on a separate file-handle to the folder file, so not the
 handle which is reading.  Not all platforms support POSIX locking.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=cut
-
-#-------------------------------------------
-
-=head2 The Locker
+=default method C<POSIX>
 
 =cut
 
 #-------------------------------------------
 
 sub name() {'POSIX'}
-
-#-------------------------------------------
-
-=head2 Locking
-
-=cut
 
 #-------------------------------------------
 

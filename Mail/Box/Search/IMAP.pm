@@ -9,11 +9,11 @@ use Carp;
 
 #-------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Search::IMAP - select messages within a IMAP folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Manager;
  my $mgr    = Mail::Box::Manager->new;
@@ -26,22 +26,12 @@ Mail::Box::Search::IMAP - select messages within a IMAP folder
  my @msgs   = $filter->search($folder);
  if($filter->search($message)) {...}
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-THIS PACKAGES IS NOT IMPLEMENTED YET: it waits for Mail::Transport::IMAP4
-to be available.
+THIS PACKAGES IS NOT IMPLEMENTED YET: it waits for
+M<Mail::Transport::IMAP4> to be available.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -51,18 +41,6 @@ sub init($)
 {   my ($self, $args) = @_;
     $self->notImplemented;
 }
-
-#-------------------------------------------
-
-=head2 Searching
-
-=cut
-
-#-------------------------------------------
-
-=head2 The Results
-
-=cut
 
 #-------------------------------------------
 

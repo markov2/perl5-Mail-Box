@@ -11,35 +11,21 @@ use IO::Scalar;
 use Mail::Message::Body::String;
 use Mail::Message::Body::Lines;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Body::Construct - adds functionality to Mail::Message::Body
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-This package adds complex functionality to the Mail::Message::Body
+This package adds complex functionality to the M<Mail::Message::Body>
 class.  This functions less often used, so many programs will not
 compile this package.
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
-
-=head2 Access to the Payload
-
-=cut
-
-#------------------------------------------
-
-=head2 Constructing a Body
-
-=cut
-
-#------------------------------------------
+=section Constructing a body
 
 =method foreachLine CODE
 
@@ -97,24 +83,15 @@ the body where this method is called upon (and which does not need to be
 included in the result).
 
 Specify a list of COMPONENTS.  Each component can be
-
-=over 4
-
-=item * a message (Mail::Message), the body of the message is used,
-
-=item * a body (Mail::Message::Body),
-
-=item * C<undef>, which will be skipped,
-
-=item * a scalar, which is split on new-lines,
-
-=item * an array of scalars, each providing one line.
-
-=back
+a message (M<Mail::Message>, the body of the message is used),
+a plain body (M<Mail::Message::Body>), 
+C<undef> (which will be skipped),
+a scalar (which is split into lines), or
+an array of scalars (each providing one line).
 
 =examples
 
- # all arguments are Mail::Message::Body's.
+ # all arguments are M<Mail::Message::Body>'s.
  my $sum = $body->concatenate($preamble, $body, $epilogue, "--\n" , $sig);
 
 =cut
@@ -165,21 +142,21 @@ sub concatenate(@)
 Make a multipart containing this body and the specified MESSAGES. The
 options are passed to the constructor of the multi-part body.  If you
 need more control, create the multi-part body yourself.  At least
-take a look at Mail::Message::Body::Multipart.
+take a look at M<Mail::Message::Body::Multipart>.
 
-The message-parts will be coerced into a Mail::Message::Part, so you
-may attach C<Mail::Internet> or C<MIME::Entity> objects if you want --see
-Mail::Message::coerce().  A new body with attached messages is
+The message-parts will be coerced into a M<Mail::Message::Part>, so you
+may attach M<Mail::Internet> or M<MIME::Entity> objects if you want --see
+M<Mail::Message::coerce()>.  A new body with attached messages is
 returned.
 
 =examples
 
- my $pgpkey = Mail::Message::Body::File->new(file => '.pgp');
- my $msg    = Mail::Message->buildFromBody(
+ my $pgpkey = M<Mail::Message::Body::File>->new(file => '.pgp');
+ my $msg    = M<Mail::Message>->buildFromBody(
     $message->decoded->attach($pgpkey));
 
  # The last message of the $multi multiparted body becomes a coerced $entity.
- my $entity  = MIME::Entity->new;
+ my $entity  = M<MIME::Entity>->new;
  my $multi   = $msg->body->attach($entity);
 
  # Now create a new message
@@ -229,7 +206,7 @@ The type of body to be created for the stripped body (and maybe also to
 contain the stripped signature)
 
 =option  pattern REGEX|STRING|CODE
-=default pattern qr/^--\s?$/
+=default pattern C<qr/^--\s?$/>
 
 Which pattern defines the line which indicates the separator between
 the message and the signature.  In case of a STRING, this is matched
@@ -240,7 +217,7 @@ specified subroutine as first argument.  The subroutine must return
 TRUE when the separator is found.
 
 =option  max_lines INTEGER|undef
-=default max_lines 10
+=default max_lines C<10>
 
 The maximum number of lines which can be the length of a signature.
 Specify C<undef> to remove the limit.

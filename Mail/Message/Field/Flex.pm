@@ -6,43 +6,38 @@ use base 'Mail::Message::Field';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::Flex - one line of a message header
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-This is the flexible implementation of
-a field: it can easily be extended because it stores its data in a hash
-and the constructor (C<new>) and initializer (C<init>) are split.  However,
-you pay the price in performance.
-Mail::Message::Field::Fast is faster (as the name predicts).
+This is the flexible implementation of a field: it can easily be
+extended because it stores its data in a hash and the constructor
+(C<new>) and initializer (C<init>) are split.  However, you pay the
+price in performance.  M<Mail::Message::Field::Fast> is faster (as the
+name predicts).
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new DATA
 
 If you stick to this flexible class of header fields, you have a bit
-more facilities than with Mail::Message::Field::Fast.  Amongst it, you
+more facilities than with M<Mail::Message::Field::Fast>.  Amongst it, you
 can specify options with the creation.  Possible arguments:
 
 =over 4
 
 =item * B<new> LINE
 
-=item * B<new> NAME, (BODY|OBJECTS), [ATTRIBUTES], [OPTIONS]
+ass a LINE as it could be found in a file: a (possibly folded) line
+which is terminated by a new-line.
+
+=item * B<new> NAME, (BODY|OBJECTS), [ATTRIBUTES], OPTIONS
+
+A set of values which shape the line.
 
 =back
 
@@ -50,10 +45,10 @@ To be able to distinguish the different parameters, you will have
 to specify the OPTIONS as ARRAY of option pairs, or HASH of options.
 The ATTRIBUTES are a flat list of key-value pairs.  The body is
 specified as one BODY string, one OBJECT, or a reference to an array
-of OBJECTS.  See Mail::Message::Field:
+of OBJECTS.  See M<Mail::Message::Field>:
 
 =option  attributes ATTRS
-=default attributes []
+=default attributes C<[]>
 
 Reference to array with list of key-value pairs representing attributes,
 or reference to a hash containing these pairs.  This is an alternative
@@ -101,12 +96,6 @@ sub init($)
 
 #------------------------------------------
 
-=head2 The Field
-
-=cut
-
-#------------------------------------------
-
 sub clone()
 {   my $self = shift;
     (ref $self)->new($self->Name, $self->body);
@@ -118,12 +107,6 @@ sub length()
 {   my $self = shift;
     length($self->{MMFF_name}) + 1 + length($self->{MMFF_body});
 }
-
-#------------------------------------------
-
-=head2 Access to the Field
-
-=cut
 
 #------------------------------------------
 
@@ -164,12 +147,6 @@ sub foldedBody($)
 
     wantarray ? (split /^/, $body) : $body;
 }
-
-#------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
 
 #------------------------------------------
 

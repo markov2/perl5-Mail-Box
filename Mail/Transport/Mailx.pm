@@ -6,16 +6,16 @@ use base 'Mail::Transport::Send';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::Mailx - transmit messages using external mailx program
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $sender = Mail::Transport::Mailx->new(...);
  $sender->send($message);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 Implements mail transport using the external programs C<'mailx'>,
 C<Mail>, or C<'mail'>.  When instantiated, the mailer will look for
@@ -32,21 +32,11 @@ standard,  what may cause many headers to be lost.  For these platforms (and
 probably for other platforms as well), you can better not use this transport
 mechanism.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default via 'mailx'
+=default via   C<'mailx'>
 
 =option  style 'BSD'|'RFC822'
 =default style <autodetect>
@@ -54,7 +44,7 @@ mechanism.
 There are two version of the C<mail> program.  The newest accepts
 RFC822 messages, and automagically collect information about where
 the message is to be send to.  The BSD style mail command predates
-MIME, and expects lines which start with a '~' (tilde) to specify
+MIME, and expects lines which start with a C<'~'> (tilde) to specify
 destinations and such.  This field is autodetect, however on some
 platforms both versions of C<mail> can live (like various Linux
 distributions).
@@ -85,14 +75,7 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Sending Mail
-
-=cut
-
-#------------------------------------------
-
 =method trySend MESSAGE, OPTIONS
-
 
 =error Sending via mailx mailer $program failed: $! ($?)
 

@@ -8,37 +8,27 @@ use base 'Mail::Box::Net::Message';
 use File::Copy;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::IMAP4::Message - one message on a IMAP4 server
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder = new Mail::Box::IMAP4 ...
  my $message = $folder->message(10);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Box::IMAP4::Message represents one message on a IMAP4 server,
-maintained by a Mail::Box::IMAP4 folder. Each message is stored as
+A C<Mail::Box::IMAP4::Message> represents one message on a IMAP4 server,
+maintained by a M<Mail::Box::IMAP4> folder. Each message is stored as
 separate entity on the server, and maybe temporarily in your program
 as well.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default body_type 'Mail::Message::Body::Lines';
+=default body_type M<Mail::Message::Body::Lines>
 
 =cut
 
@@ -53,16 +43,10 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Message
-
-=cut
-
-#-------------------------------------------
-
 =method size
 
 Returns the size of this message.  If the message is still on the remote
-server, POP is used to ask for the size.  When the message is already loaded
+server, IMAP is used to ask for the size.  When the message is already loaded
 onto the local system, the size of the parsed message is taken.  These
 sizes can differ because the difference in line-ending representation.
 
@@ -76,12 +60,6 @@ sub size($)
 
     $self->folder->imapClient->messageSize($self->unique);
 }
-
-#-------------------------------------------
-
-=head2 Labels
-
-=cut
 
 #-------------------------------------------
 
@@ -122,11 +100,9 @@ sub label(@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=section Internals
 
 =cut
-
-#-------------------------------------------
 
 sub loadHead()
 {   my $self     = shift;

@@ -8,32 +8,22 @@ use base 'Mail::Box::Message';
 use File::Copy;
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Net::Message - one message from a distant folder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $folder = new Mail::Box::POP3 ...
  my $message = $folder->message(10);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Box::Net::Message represents one message in a folder which
+A M<Mail::Box::Net::Message> represents one message in a folder which
 can only be accessed via some kind of protocol.  On this moment, only
 a POP3 client is available.  IMAP, DBI, and NNTP are other candidates.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -59,6 +49,8 @@ sub init($)
 
 #-------------------------------------------
 
+=section The Message
+
 =method unique [STRING]
 
 Returns the name of the file in which this message is actually stored.  This
@@ -74,7 +66,7 @@ sub unique(;$)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
+=section Internals
 
 =cut
 

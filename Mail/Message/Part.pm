@@ -6,11 +6,11 @@ use base 'Mail::Message';
 
 use Carp;
 
-=head1 NAME
+=chapter NAME
 
-Mail::Message::Part - a part of a message, but a message by itself.
+Mail::Message::Part - a part of a message, but a message by itself
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $message = ...;
  if($message->isMultipart) {
@@ -24,42 +24,34 @@ Mail::Message::Part - a part of a message, but a message by itself.
     }
  }
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-A Mail::Message::Part object contains a message which is included in
+A C<Mail::Message::Part> object contains a message which is included in
 the body of an other message.  For instance I<attachments> are I<parts>.
 
-READ Mail::Message FIRST.  A part is a special message: it has a
+READ M<Mail::Message> FIRST.  A part is a special message: it has a
 reference to its parent message, and will usually not be sub-classed
-into mail-folder-specific variants.
+into mail folder specific variants.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 Create a message part.
 
-=option  container BODY
-=default container <obligatory>
+=default  head     <empty header>
+=requires container BODY
 
-Reference to the parental Mail::Message::Body object where this
-part is a member of.  That object may be a Mail::Message::Body::Multipart
-or a Mail::Message::Body::Nested.
+Reference to the parental M<Mail::Message::Body> object where this part
+is a member of.  That object may be a M<Mail::Message::Body::Multipart>
+or a M<Mail::Message::Body::Nested>.
 
 =cut
 
 sub init($)
 {   my ($self, $args) = @_;
+    $args->{head} ||= Mail::Message::Head::Complete->new;
+
     $self->SUPER::init($args);
 
     confess "No container specified for part.\n"
@@ -71,9 +63,32 @@ sub init($)
 
 #------------------------------------------
 
-=head2 Constructing a Message
+=c_method coerce BODY|MESSAGE, MULTIPART, HEADERS
+
+Transforms a BODY or MESSAGE to a real message part.  The MULTIPART
+refers to the parental body.
+
+When ta BODY is specified, extra HEADERS can be supplied as well.
+Bodies are coerced into message parts by calling M<buildFromBody()>.
+If you specify a MESSAGE residing in a folder, this message will
+automatically be cloned.
 
 =cut
+
+sub coerce($@)
+{   my ($class, $thing, $container) = (shift, shift, shift);
+
+    return $class->buildFromBody($thing, $container, @_)
+        if $thing->isa('Mail::Message::Body');
+
+    # Although cloning is a Bad Thing(tm), we must avoid modifying
+    # header fields of messages which reside in a folder.
+    my $message = $thing->isa('Mail::Box::Message') ? $thing->clone : $thing;
+
+    my $part    = $class->SUPER::coerce($message);
+    $part->{MMP_container} = $container;
+    $part;
+}
 
 #------------------------------------------
 
@@ -113,43 +128,65 @@ sub buildFromBody($$;@)
 
 #------------------------------------------
 
-=method coerce BODY|MESSAGE, MULTIPART, HEADERS
-
-Transforms a BODY or MESSAGE to a real message part.  The MULTIPART refers
-to the parental body.
-
-When ta BODY is specified, extra HEADERS can be supplied as well.  Bodies
-are coerced into message parts by calling buildFromBody().  If you specify
-a MESSAGE residing in a folder, this message will automatically be cloned.
-
-=cut
-
-sub coerce($@)
-{   my ($class, $thing, $container) = (shift, shift, shift);
-
-    return $class->buildFromBody($thing, $container, @_)
-        if $thing->isa('Mail::Message::Body');
-
-    # Although cloning is a Bad Thing(tm), we must avoid modifying
-    # header fields of messages which reside in a folder.
-    my $message = $thing->isa('Mail::Box::Message') ? $thing->clone : $thing;
-
-    my $part    = $class->SUPER::coerce($message);
-    $part->{MMP_container} = $container;
-    $part;
+sub container(;$)
+{   my $self = shift;
+    @_ ? $self->{MMP_container} = shift : $self->{MMP_container};
 }
 
 #------------------------------------------
 
-=head2 The Message
-
-=cut
+sub toplevel()
+{   my $body = shift->container or return;
+    my $msg  = $body->message   or return;
+    $msg->toplevel;
+}
 
 #------------------------------------------
 
+sub isPart() { 1 }
+
+#------------------------------------------
+
+=method printEscapedFrom FILEHANDLE
+
+Prints the message part, but all lines which start with 'From ' will get
+a leading C<gt>.  See M<Mail::Message::Body::printEscapedFrom()>.
+
+=cut
+
+sub printEscapedFrom($)
+{   my ($self, $out) = @_;
+    $self->head->print($out);
+    $self->body->printEscapedFrom($out);
+}
+
+#------------------------------------------
+
+sub readFromParser($;$)
+{   my ($self, $parser, $bodytype) = @_;
+
+    my $head = $self->readHead($parser)
+            || Mail::Message::Head::Complete->new
+                 ( message     => $self
+                 , field_type  => $self->{MM_field_type}
+                 , $self->logSettings
+                 );
+
+    my $body = $self->readBody($parser, $head, $bodytype)
+            || Mail::Message::Body::Lines->new(data => []);
+
+    $self->head($head);
+    $self->storeBody($body);
+    $self;
+}
+
+#------------------------------------------
+
+=section Flags
+
 =method delete
 
-Do not print or send this part of the message anymore.  See deleted().
+Do not print or send this part of the message anymore.  See M<deleted()>.
 The time stamp of the moment of deletion is stored as value.  When the same
 message is deleted more than once, the first time stamp will stay.
 
@@ -168,8 +205,8 @@ sub delete() { shift->{MMP_deleted} ||= time }
 =method deleted [BOOLEAN]
 
 Set the delete flag for this part of the multipart message body.  Without
-argument, the method returns the same is the isDeleted() method, which is
-prefered.  When a true value is given, delete() is called.
+argument, the method returns the same is the M<isDeleted()> method, which is
+prefered.  When a true value is given, M<delete()> is called.
 
 =cut
 
@@ -198,66 +235,6 @@ flagged for deletion, or C<undef> when the part is not deleted.
 =cut
 
 sub isDeleted() { shift->{MMP_deleted} }
-
-#------------------------------------------
-
-sub container(;$)
-{   my $self = shift;
-    @_ ? $self->{MMP_container} = shift : $self->{MMP_container};
-}
-
-#------------------------------------------
-
-sub toplevel()
-{   my $body = shift->container or return;
-    my $msg  = $body->message   or return;
-    $msg->toplevel;
-}
-
-#------------------------------------------
-
-sub isPart() { 1 }
-
-#------------------------------------------
-
-=method printEscapedFrom FILEHANDLE
-
-Prints the message part, but all lines which start with 'From ' will get
-a leading C<gt>.  See Mail::Message::Body::printEscapedFrom().
-
-=cut
-
-sub printEscapedFrom($)
-{   my ($self, $out) = @_;
-    $self->head->print($out);
-    $self->body->printEscapedFrom($out);
-}
-
-#------------------------------------------
-
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
-
-sub readFromParser($;$)
-{   my ($self, $parser, $bodytype) = @_;
-
-    my $head = $self->readHead($parser)
-            || Mail::Message::Head::Complete->new
-                 ( message     => $self
-                 , field_type  => $self->{MM_field_type}
-                 , $self->logSettings
-                 );
-
-    my $body = $self->readBody($parser, $head, $bodytype)
-            || Mail::Message::Body::Lines->new(data => []);
-
-    $self->head($head);
-    $self->storeBody($body);
-    $self;
-}
 
 #------------------------------------------
 

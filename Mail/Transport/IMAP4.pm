@@ -5,17 +5,17 @@ use warnings;
 package Mail::Transport::IMAP4;
 use base 'Mail::Transport::Receive';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Transport::IMAP4 - handle messages via the IMAP4 protocol
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $imap = Mail::Transport::IMAP4->new(...);
  my $message = $imap->receive($id);
  $imap->send($message);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 UNDER DEVELOPMENT: Cannot be used yet.
 
@@ -24,22 +24,12 @@ verious asynchronous actions.  The main document describing IMAP is
 rfc2060.
 
 This package, as part of Mail::Box, does not implement the actual
-protocol itself, but uses Mail::IMAPClient to do the work.  The task
+protocol itself, but uses M<Mail::IMAPClient> to do the work.  The task
 for this package is to hide as much differences between that module's
-interface and the common Mail::Box folder types.  This package is used
-by Mail::Box::IMAP4 for the real work.
+interface and the common M<Mail::Box> folder types.  This package is used
+by M<Mail::Box::IMAP4> for the real work.
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
@@ -50,7 +40,7 @@ may get shared.  This is sharing is hidden for the user.
 =default port 143
 
 =option  authenticate 'KERBEROS_V4'|'GSSAPI'|'SKEY'|'AUTO'
-=default authenticate 'AUTO'
+=default authenticate C<'AUTO'>
 
 Authenthication method.  RFC1731 defines a few authentication methods
 to be (optionally) used with IMAP. NOT IMPLEMENTED YET.
@@ -87,11 +77,7 @@ sub url()
 
 #------------------------------------------
 
-=head2 Exchanging Information
-
-=cut
-
-#------------------------------------------
+=section Exchanging Information
 
 =method ids
 
@@ -317,7 +303,7 @@ sub id2n($;$) { shift->{MTP_uidl2n}{shift()} }
 
 #------------------------------------------
 
-=head2 Protocol [internals]
+=section Protocol [internals]
 
 The follow methods handle protocol internals, and should not be used
 by a normal user of this class.
@@ -434,14 +420,6 @@ sub sendList($$)
 
 #------------------------------------------
 
-sub DESTROY()
-{   my $self = shift;
-    $self->SUPER::DESTROY;
-    $self->disconnect if $self->{MTP_socket}; # only do if not already done
-}
-
-#------------------------------------------
-
 sub OK($;$) { substr(shift || '', 0, 3) eq '+OK' }
 
 #------------------------------------------
@@ -485,8 +463,8 @@ sub _reconnectok
 
 Establish a new connection to the IMAP4 server, using username and password.
 
-IMAP4 requires a username and password
-Cannot connect to $host:$port for IMAP4: $!
+=error IMAP4 requires a username and password
+=error Cannot connect to $host:$port for IMAP4: $!
 
 =cut
 
@@ -698,5 +676,22 @@ sub setFlags($@)
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=section Cleanup
+
+=method DESTROY
+
+The connection is cleanly terminated when the program is cleanly
+terminated.
+
+=cut
+
+sub DESTROY()
+{   my $self = shift;
+    $self->SUPER::DESTROY;
+    $self->disconnect if $self->{MTP_socket}; # only do if not already done
+}
 
 1;

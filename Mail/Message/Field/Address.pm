@@ -7,30 +7,22 @@ use base 'Mail::Reporter';
 use Mail::Message::Field::Full;
 my $format = 'Mail::Message::Field::Full';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Field::Address - One e-mail address
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
-=head1 DESCRIPTION
+ !! UNDER CONSTRUCTION !!
 
-=head1 METHODS
+=chapter DESCRIPTION
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new DATA
 
 =option  name STRING
-=default name ''
+=default name C<''>
 
 =option  local STRING
 =default local undef
@@ -69,6 +61,8 @@ sub init($)
 }
 
 #------------------------------------------
+
+=section Access to the content
 
 =method name
 
@@ -120,6 +114,10 @@ sub string()
 }
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 
 1;

@@ -13,39 +13,25 @@ use Carp;
 use Date::Parse;
 use Scalar::Util 'weaken';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Head::Delayed - a not-read header of a Mail::Message
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message::Head::Delayed $delayed = ...;
  $delayed->isa('Mail::Message::Head')  # true
  $delayed->guessBodySize               # undef
  $delayed->isDelayed                   # true
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This object is used as place-holder, to be replaced
-by a Mail::Message::Head when someone accesses the header of a message.
+by a M<Mail::Message::Head> when someone accesses the header of a message.
 
-=head1 METHODS
+=chapter METHODS
 
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
-
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
+=section Constructors
 
 =method build FIELDS
 
@@ -76,12 +62,6 @@ sub init($$)
 
 #------------------------------------------
 
-=head2 The Header
-
-=cut
-
-#------------------------------------------
-
 sub isDelayed() {1}
 
 #------------------------------------------
@@ -97,11 +77,7 @@ sub isModified() { 0 }
 
 #------------------------------------------
 
-=head2 Access to the Header
-
-=cut
-
-#------------------------------------------
+=section Access to the header
 
 =method get NAME [,INDEX]
 
@@ -117,15 +93,17 @@ sub get($;$)
 
 #------------------------------------------
 
+=section About the body
+
 =method guessBodySize
 
 On a delayed head, this retuns C<undef>, because when there is no header
 there is also no body.
 
 For messages in directory or network organized folders,
-Mail::Message::size() usually will give a figure for the whole message
-without much cost.  Subtract a few hundred bytes for the header, and you
-will get a good estimate.
+M<Mail::Message::size()> usually will give a figure for the whole message
+without much cost.  Subtract a few hundred bytes for the header, and
+you will get a good estimate.
 
 =cut
 
@@ -138,7 +116,7 @@ sub guessBodySize() {undef}
 Make a guess about when the message was origanally posted.
 On a delayed head, this returns C<undef>.
 For messages in directory or network organized folders,
-Mail::Message::timestamp() usually will give a figure without much cost.
+M<Mail::Message::timestamp()> usually will give a figure without much cost.
 
 =cut
 
@@ -146,11 +124,9 @@ sub guessTimestamp() {undef}
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
+=section Internals
 
 =cut
-
-#------------------------------------------
 
 sub read($)
 {   my ($self, $parser, $headtype, $bodytype)  = @_;

@@ -7,11 +7,11 @@ use Carp;
 use Mail::Box::Thread::Node;
 use Mail::Message::Dummy;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Thread::Manager - maintain threads within a set of folders
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $mgr     = Mail::Box::Thread::Manager->new;
  my $folder  = $mgr->open(folder => '/tmp/inbox');
@@ -25,46 +25,37 @@ Mail::Box::Thread::Manager - maintain threads within a set of folders
  $threads->includeFolder($folder);
  $threads->removeFolder($folder);
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 A (message-)I<thread> is a message with links to messages which followed in
 reply of that message.  And then the messages with replied to the messages,
 which replied the original message.  And so on.  Some threads are only
 one message long (never replied to), some threads are very long.
 
-The Mail::Box::Thread::Manager is very powerful.  Not only is it able to
+The C<Mail::Box::Thread::Manager> is very powerful.  Not only is it able to
 do a descent job on MH-like folders (makes a trade-off between perfection
 and speed), it also can maintain threads from messages residing in different
-opened folders.  Both facilities are rare for mail-agents.
+opened folders.  Both facilities are rare for mail-agents.  The manager
+creates flexible trees with M<Mail::Box::Thread::Node> objects.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-A Mail::Box::Thread::Manager object is created by a Mail::Box::Manager.
-One manager can produce more than one of these objects.  One thread manager can
-combine messages from a set of folders, which may be partially overlapping
-with other objects of the same type.
+A C<Mail::Box::Thread::Manager> object is usually created by a
+M<Mail::Box::Manager>.  One manager can produce more than one of these
+objects.  One thread manager can combine messages from a set of folders,
+which may be partially overlapping with other objects of the same type.
 
 =option  dummy_type CLASS
-=default dummy_type 'Mail::Message::Dummy'
+=default dummy_type M<Mail::Message::Dummy>
 
 The type of dummy messages.  Dummy messages are used to fill holes in
 detected threads: referred to by messages found in the folder, but itself
 not in the folder. 
 
 =option  folder FOLDER | REF-ARRAY-FOLDERS
-=default folder []
+=default folder C<[ ]>
 
 Specifies which folders are to be covered by the threads.  You can
 specify one or more open folders.  When you close a folder, the
@@ -72,17 +63,17 @@ manager will automatically remove the messages of that folder from
 your threads.
 
 =option  folders FOLDER | REF-ARRAY-FOLDERS
-=default folders []
+=default folders C<[ ]>
 
 Equivalent to the C<folder> option.
 
 =option  thread_type CLASS
-=default thread_type 'Mail::Box::Thread::Node'
+=default thread_type M<Mail::Box::Thread::Node>
 
 Type of the thread nodes.
 
 =option  window INTEGER|'ALL'
-=default window 10
+=default window C<10>
 
 The thread-window describes how many messages should be checked at
 maximum to fill `holes' in threads for folder which use delay-loading
@@ -93,7 +84,7 @@ to fill holes, but continue looking until the first message of the folder
 is reached.  Gives the best quality results, but may perform bad.
 
 =option  timespan TIME | 'EVER'
-=default timespan '3 days'
+=default timespan C<'3 days'>
 
 Specify how fast threads usually work: the amount of time between an
 answer and a reply.  This is used in combination with the C<window>
@@ -149,11 +140,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Grouping Folders
-
-=cut2
-
-#-------------------------------------------
+=section Grouping Folders
 
 =method folders
 
@@ -172,9 +159,9 @@ organized in the threads maintained by this object.  Duplicated
 inclusions will not cause any problems.
 
 From the folders, the messages which have their header lines parsed
-(see Mail::Box about lazy extracting) will be immediately scanned.  Messages
-of which the header is known only later will have to report this
-(see Mail::Box::toBeThreaded()).
+(see M<Mail::Box> about lazy extracting) will be immediately scanned.
+Messages of which the header is known only later will have to report this
+(see M<toBeThreaded()>).
 
 =example
 
@@ -237,11 +224,7 @@ sub removeFolder(@)
 
 #-------------------------------------------
 
-=head2 The Threads
-
-=cut
-
-#-------------------------------------------
+=section The Threads
 
 =method thread MESSAGE
 
@@ -358,7 +341,7 @@ sub all()
 
 =method sortedAll [PREPARE [COMPARE]]
 
-Returns all() the threads by default, but sorted on timestamp.
+Returns M<all()> the threads by default, but sorted on timestamp.
 
 =cut
 
@@ -379,7 +362,7 @@ hence will not be returned.
 
 The list may contain dummy messages, and messages which are scheduled
 for deletion.  Threads are detected based on explicitly calling
-inThread() and thread() with a messages from the folder.
+M<inThread()> and M<thread()> with a messages from the folder.
 
 Be warned that, each time a message's header is read from the folder,
 the return of the method can change.
@@ -395,7 +378,7 @@ sub known()
 
 =method sortedKnown [PREPARE [,COMPARE]]
 
-Returns all known() threads, in sorted order.  By default, the threads
+Returns all M<known()> threads, in sorted order.  By default, the threads
 will be sorted on timestamp, But a different COMPARE method can be
 specified.
 
@@ -447,11 +430,7 @@ sub _cleanup()
 
 #-------------------------------------------
 
-=head2 Keeping Thread Information [internals]
-
-=cut
-
-#-------------------------------------------
+=section Internals
 
 =method toBeThreaded FOLDER, MESSAGES
 
@@ -605,7 +584,7 @@ sub outThread($)
 
 Get a replacement message to be used in threads.  Be warned that a
 dummy is not a member of any folder, so the program working with
-threads must test with C<< $msg->isDummy >> before trying things only
+threads must test with M<Mail::Message::isDummy()> before trying things only
 available to real messages.
 
 =cut
@@ -618,7 +597,9 @@ sub createDummy($)
 
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=section Error handling
+
+=chapter DETAILS
 
 This module implements thread-detection on a folder.  Messages created
 by the better mailers will include C<In-Reply-To> and C<References>
@@ -626,18 +607,18 @@ lines, which are used to figure out how messages are related.  If you
 prefer a better thread detection, they are implementable, but there
 may be a serious performance hit (depends on the type of folder used).
 
-=head2 Maintaining threads
+=section Maintaining threads
 
-A Mail::Box::Thread::Manager object is created by the Mail::Box::Manager,
-using its threads() method.  Each object can monitor the thread-relations
-between messages in one or more folders.  When more than one folder
-is specified, the messages are merged while reading the threads, although
-nothing changes in the folder-structure.  Adding and removing folders
-which have to be maintained is permitted at any moment, although may
-be quite costly in performance.
+A C<Mail::Box::Thread::Manager> object is created by the
+M<Mail::Box::Manager>, using M<Mail::Box::Manager::threads()>.
+Each object can monitor the thread-relations between messages in one
+or more folders.  When more than one folder is specified, the messages
+are merged while reading the threads, although nothing changes in the
+folder-structure.  Adding and removing folders which have to be maintained
+is permitted at any moment, although may be quite costly in performance.
 
 An example of the maintained structure is shown below.  The
-Mail::Box::Manager has two open folders, and a thread-builder which
+M<Mail::Box::Manager> has two open folders, and a thread-builder which
 monitors them both.  The combined folders have two threads, the second
 is two long (msg3 is a reply on msg2).  Msg2 is in two folders at once.
 
@@ -658,13 +639,13 @@ is two long (msg3 is a reply on msg2).  Msg2 is in two folders at once.
                 `-----msg2       /
                 `-----msg3------'
 
-=head2 Delayed thread detection
+=section Delayed thread detection
 
-With all() you get the start-messages of each thread of this folder.
+With M<all()> you get the start-messages of each thread of this folder.
 When that message was not found in the folder (not saved or already
 removed), you get a message of the dummy-type.  These thread descriptions
 are in perfect state: all messages of the folder are included somewhere,
-and each missing message of the threads (`holes') are filled by dummies.
+and each missing message of the threads (I<holes>) are filled by dummies.
 
 However, to be able to detect all threads it is required to have the
 headers of all messages, which is very slow for some types of folders,
@@ -679,7 +660,7 @@ In this object, we take special care not to cause unnecessary parsing
 (loading) of messages.  Threads will only be detected on command, and
 by default only the message headers are used.
 
-The following reports the Mail::Box::Thread::Node object which is
+The following reports the M<Mail::Box::Thread::Node> which is
 related to a message:
 
  my $thread = $message->thread;
@@ -704,7 +685,5 @@ immediately.  Also, all messages where the head get loaded later, are
 automatically included.
 
 =cut
-
-#-------------------------------------------
 
 1;

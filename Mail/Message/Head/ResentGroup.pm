@@ -9,11 +9,11 @@ use Mail::Message::Field::Fast;
 
 use Sys::Hostname;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::Head::ResentGroup - a group of header fields about resending
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my $rg = Mail::Message::Head::ResentGroup->new(head => $head,
               From => 'me@home.nl', To => 'You@tux.aq');
@@ -26,44 +26,29 @@ Mail::Message::Head::ResentGroup - a group of header fields about resending
  my @rgs = $head->resentGroups;
  $rg[2]->delete if @rgs > 2;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 A I<resent group> is a set of header lines which describe a intermediate
 step in the message transport.  Resent groups B<have NOTHING to do> with
-user activety; there is no relation to the user's sense of creating
-C<reply>, C<forward> or C<bounce> messages at all!
+user activety; there is no relation to the C<user's> sense of creating
+reply, forward, or bounce messages at all!
 
-=head1 METHODS
-
-=cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-my @ordered_field_names = qw/return_path delivered_to received date from
-  sender to cc bcc message_id/;
-
-#------------------------------------------
+=chapter METHODS
 
 =c_method new [FIELDS], OPTIONS
 
 Create an object which maintains one set of resent headers.  The
-FIELDS are Mail::Message::Field objects from the same header.
+FIELDS are M<Mail::Message::Field> objects from the same header.
 
 OPTIONS which start with capitals will be used to construct additional
 fields.  These option names are prepended with C<Resent->, keeping the
 capitization of what is specified.
 
-=option  head OBJECT
-=default head <required>
+=requires head OBJECT
 
 The header where this resent group belongs to.
 
-=option  Received STRING
-=default Received <required>
+=requires Received STRING
 
 The C<Received> field is the starting line for a resent group of header
 lines, therefore it is obligatory.
@@ -75,8 +60,7 @@ When this resent-group is dispatched by the resender of the message. Like
 the C<Date> field, it is not the date and time that the message was
 actually transported.
 
-=option  From STRING|OBJECT|OBJECTS
-=default From <required>
+=requires From STRING|OBJECT|OBJECTS
 
 =option  Sender STRING|OBJECT
 =default Sender undef
@@ -107,12 +91,16 @@ must contain a message id.
 
 =error Message header required for creation of ResentGroup.
 
-It is required to know to which header the resent-group is created.  Use the
-C<head> option.
-Maybe you should use Mail::Message::Head::Complete::addResentGroup() with
-DATA, which will organize the correct initiations for you.
+It is required to know to which header the resent-group
+is created.  Use the C<head> option.  Maybe you should use
+M<Mail::Message::Head::Complete::addResentGroup()> with DATA, which will
+organize the correct initiations for you.
 
 =cut
+
+my @ordered_field_names = qw/return_path delivered_to received date from
+  sender to cc bcc message_id/;
+
 
 sub new(@)
 {   my $class = shift;
@@ -145,7 +133,7 @@ sub init($$)
 
 #------------------------------------------
 
-=head2 The Header
+=section The header
 
 =cut
 
@@ -168,13 +156,35 @@ sub delete()
     $self;
 }
 
-#------------------------------------------
+=method orderedFields
 
-=head2 Access to the Header
+Returns the fields in the order as should appear in header according
+to rfc2822.  For the C<Resent-> fields of the group, the order is
+not that important, but the C<Return-Path>, C<Delivered-To>, and C<Received>
+must come first.  Only fields mentioned in the RFC are returned.
 
 =cut
 
+sub orderedFields()
+{   my $self   = shift;
+    map { $self->{ "MMHR_$_" } || () } @ordered_field_names;
+}
+
+#-------------------------------------------
+
+=method print [FILEHANDLE]
+
+=cut
+
+sub print(;$)
+{   my $self = shift;
+    my $fh   = shift || select;
+    $_->print($fh) foreach $self->orderedFields;
+}
+
 #------------------------------------------
+
+=section Access to the header
 
 =method set (FIELD =E<gt> VALUE) | OBJECT
 
@@ -182,17 +192,12 @@ Set a FIELD to a (new) VALUE.  The FIELD names which do not start with
 'Resent-*' but need it will have that added.  It is also an option to
 specify a fully prepared message field OBJECT.  In any case, a field
 OBJECT is returned.
-See also Mail::Message::Head::resent() and
-Mail::Message::Construct::bounce().
 
 =examples
 
- my @rgs  = $msg->head->resentGroups;
- my $this = $rgs[0];
+ my $this = Mail::Message::Head::ResentGroup->new;
  $this->set(To => 'fish@tux.aq');
- $msg->send;
-
- $msg->head->resent(To => 'fish@tux.aq');   # the same
+ $msg->addResentGroup($this);
  $msg->send;
 
  $msg->bounce(To => 'fish@tux.aq')->send;   # the same
@@ -293,7 +298,7 @@ sub dateTimestamp()
 
 In scalar context, the C<Resent-From> field is returned.  In list
 context, the addresses as specified within the from field are
-returned as Mail::Address objects.
+returned as M<Mail::Address> objects.
 
 =cut
 
@@ -308,7 +313,7 @@ sub from()
 
 In scalar context, the C<Resent-Sender> field is returned.  In list
 context, the addresses as specified within the from field are
-returned as Mail::Address objects.
+returned as M<Mail::Address> objects.
 
 =cut
 
@@ -323,7 +328,7 @@ sub sender()
 
 In scalar context, the C<Resent-To> field is returned.  In list context,
 the addresses as specified within the to field are returned as
-Mail::Address objects.
+M<Mail::Address> objects.
 
 =cut
 
@@ -338,7 +343,7 @@ sub to()
 
 In scalar context, the C<Resent-Cc> field is returned.  In list context,
 the addresses as specified within the cc field are returned as
-Mail::Address objects.
+M<Mail::Address> objects.
 
 =cut
 
@@ -353,7 +358,7 @@ sub cc()
 
 In scalar context, the C<Resent-Bcc> field is returned.  In list context,
 the addresses as specified within the bcc field are returned as
-Mail::Address objects.  Bcc fields are not transmitted (hidden for
+M<Mail::Address> objects.  Bcc fields are not transmitted (hidden for
 external parties).
 
 =cut
@@ -389,39 +394,7 @@ sub messageId() { shift->{MMHR_message_id} }
 
 #------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#------------------------------------------
-
-=method orderedFields
-
-Returns the fields in the order as should appear in header according
-to rfc2822.  For the C<Resent-> fields of the group, the order is
-not that important, but the C<Return-Path>, C<Delivered-To>, and C<Received>
-must come first.  Only fields mentioned in the RFC are returned.
-
-=cut
-
-sub orderedFields()
-{   my $self   = shift;
-    map { $self->{ "MMHR_$_" } || () } @ordered_field_names;
-}
-
-#-------------------------------------------
-
-=method print [FILEHANDLE]
-
-=cut
-
-sub print(;$)
-{   my $self = shift;
-    my $fh   = shift || select;
-    $_->print($fh) foreach $self->orderedFields;
-}
-
-#-------------------------------------------
+=section Internals
 
 =method createReceived
 
@@ -452,5 +425,9 @@ sub createReceived()
 }
 
 #-------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

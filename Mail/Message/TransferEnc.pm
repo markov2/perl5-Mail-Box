@@ -5,22 +5,22 @@ use warnings;
 package Mail::Message::TransferEnc;
 use base 'Mail::Reporter';
 
-=head1 NAME
+=chapter NAME
 
 Mail::Message::TransferEnc - message transfer encoder/decoder
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  my Mail::Message $msg = ...;
  my $decoded = $msg->decoded;
  my $encoded = $msg->encode(transfer => 'base64');
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This class is the base for various encoders and decoders, which are
 used during transport of the message.  This packages, and all which are
-derived, are invoked by the message's Mail::Message::decoded() and
-Mail::Message::encode() methods:
+derived, are invoked by the message's M<Mail::Message::decoded()> and
+M<Mail::Message::encode()> methods:
 
  my $message = $folder->message(3);
  my $decoded_body = $message->decoded;
@@ -30,27 +30,27 @@ The following coders/decoders are currently available:
 
 =over 4
 
-=item * C<base64> via Mail::Message::TransferEnc::Base64
+=item * M<Mail::Message::TransferEnc::Base64>
 
-=item * C<7bit> via Mail::Message::TransferEnc::SevenBit
+C<base64> for binary information.
 
-=item * C<8bit> via Mail::Message::TransferEnc::EightBit
+=item * M<Mail::Message::TransferEnc::SevenBit>
 
-=item * C<quoted-printable> via Mail::Message::TransferEnc::QuotedPrint
+C<7bit> for plain old ASCII characters only.
+
+=item * M<Mail::Message::TransferEnc::EightBit>
+
+C<8bit> for extended character set data, not encoded.
+
+=item * M<Mail::Message::TransferEnc::QuotedPrint>
+
+C<quoted-printable> encdoded extended character set data.
 
 =back
 
-=head1 METHODS
+=chapter METHODS
 
 =cut
-
-#------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#------------------------------------------
 
 my %encoder =
  ( base64 => 'Mail::Message::TransferEnc::Base64'
@@ -61,28 +61,16 @@ my %encoder =
 
 #------------------------------------------
 
-=c_method new OPTIONS
-
-=cut
-
-#------------------------------------------
-
-=head2 The Encoder
-
-=cut
-
-#------------------------------------------
+=section The Encoder
 
 =method create TYPE, OPTIONS
 
 Create a new coder/decoder based on the required type.
 
 =warning No decoder for transfer encoding $type.
-
 A decoder for the specified type of transfer encoding is not implemented.
 
 =error Decoder for transfer encoding $type does not work: $@
-
 Compiling the required transfer encoding resulted in errors, which means
 that the decoder can not be used.
 
@@ -135,11 +123,7 @@ sub name {shift->notImplemented}
 
 #------------------------------------------
 
-=head2 Encoding
-
-=cut
-
-#------------------------------------------
+=section Encoding
 
 =method check BODY, OPTIONS
 
@@ -191,5 +175,9 @@ modified data.
 sub encode($) {shift->notImplemented}
 
 #------------------------------------------
+
+=section Error handling
+
+=cut
 
 1;

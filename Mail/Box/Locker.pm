@@ -10,11 +10,11 @@ use Scalar::Util 'weaken';
 
 #-------------------------------------------
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Locker - manage the locking of mail folders
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Locker;
  my $locker = new Mail::Box::Locker(folder => $folder);
@@ -28,35 +28,25 @@ Mail::Box::Locker - manage the locking of mail folders
  my $folder = Mail::Box->new(lock_method => 'DOTLOCK');
  print $folder->locker->type;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
-Each Mail::Box will create its own Mail::Box::Locker object which will
-handle the locking for it.  You can access of the object directly from
-the folder, as shown in the examples below.
+Each M<Mail::Box> will create its own C<Mail::Box::Locker> object which
+will handle the locking for it.  You can access of the object directly
+from the folder, as shown in the examples below.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
 Create a new lock. You may do this directly. However, in most cases the
 lock will not be separately instantiated but will be the second class in
-a multiple inheritance construction with a Mail::Box.
+a multiple inheritance construction with a M<Mail::Box>.
 
 Generally the client program specifies the locking behavior through
 options given to the folder class.
 
 =option  method METHOD | CLASS
-=default method 'DOTLOCK'
+=default method C<'DOTLOCK'>
 
 Which kind of locking, specified as one of the following names, or a
 full CLASS name.  Supported METHODs are
@@ -78,7 +68,7 @@ options to change the default behavior.
 For some folder handlers, locking is based on a file locking mechanism
 provided by the operating system.  However, this does not work on all
 systems, such as network filesystems, and such. This also doesn't work on
-folders based on directories (Mail::Box::Dir and derived).
+folders based on directories (M<Mail::Box::Dir> and derived).
 
 =item 'POSIX' | 'posix'
 
@@ -102,7 +92,7 @@ Do not use locking.
 
 =back
 
-The other option is to produce your own Mail::Box::Locker derived class,
+The other option is to produce your own C<Mail::Box::Locker> derived class,
 which implements the desired locking method. (Please consider offering it
 for inclusion in the public Mail::Box module!) Create an instance of that
 class with this parameter:
@@ -117,8 +107,7 @@ How long can a lock exist?  If a different e-mail program leaves a stale
 lock, then this lock will be removed automatically after the specified
 number of seconds.
 
-=option  folder FOLDER
-=default folder <obligatory>
+=requires folder FOLDER
 
 Which folder is locked.
 
@@ -126,7 +115,7 @@ Which folder is locked.
 =default timeout 10 seconds
 
 How long to wait while trying to acquire the lock. The lock request will
-fail when the specified number of seconds is reached.  If 'NOTIMEOUT' is
+fail when the specified number of seconds is reached.  If C<'NOTIMEOUT'> is
 specified, the module will wait until the lock can be taken.
 
 Whether it is possible to limit the wait time is platform- and
@@ -192,17 +181,13 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 The Locker
-
-=cut
-
-#-------------------------------------------
+=section The Locker
 
 =method name
 
-Returns the method used to lock the folder. See the new() method for
+Returns the method used to lock the folder. See the M<new(method)> for
 details on how to specify the lock method.  The name of the method is
-returned in uppercase.
+returned in upper-case.
 
 =examples
 
@@ -220,27 +205,36 @@ sub lockMethod($$$$)
 
 #-------------------------------------------
 
-=method DESTROY
+=method folder
 
-When the locker is destroyed, for instance when the folder is closed
-or the program ends, the lock will be automatically removed.
+Returns the folder object which is locker.
 
 =cut
 
-sub DESTROY()
+sub folder() {shift->{MBL_folder}}
+
+#-------------------------------------------
+
+=method filename [FILENAME]
+
+Returns the filename which is used to lock the folder, optionally after
+setting it to the specified FILENAME.
+
+=example
+
+ print $locker->filename;
+
+=cut
+
+sub filename(;$)
 {   my $self = shift;
-    $self->unlock if $self->hasLock;
-    $self->SUPER::DESTROY;
-    $self;
+    $self->{MBL_filename} = shift if @_;
+    $self->{MBL_filename};
 }
 
 #-------------------------------------------
 
-=head2 Locking
-
-=cut
-
-#-------------------------------------------
+=section Locking
 
 =method lock FOLDER
 
@@ -306,33 +300,22 @@ sub unlock() { shift->{MBL_has_lock} = 0 }
 
 #-------------------------------------------
 
-=method folder
+=section Error handling
 
-Returns the folder object which is locker.
+=section Cleanup
 
-=cut
+=method DESTROY
 
-sub folder() {shift->{MBL_folder}}
-
-#-------------------------------------------
-
-=method filename [FILENAME]
-
-Returns the filename which is used to lock the folder, optionally after
-setting it to the specified FILENAME.
-
-=example
-
- print $locker->filename;
+When the locker is destroyed, for instance when the folder is closed
+or the program ends, the lock will be automatically removed.
 
 =cut
 
-sub filename(;$)
+sub DESTROY()
 {   my $self = shift;
-    $self->{MBL_filename} = shift if @_;
-    $self->{MBL_filename};
+    $self->unlock if $self->hasLock;
+    $self->SUPER::DESTROY;
+    $self;
 }
-
-#-------------------------------------------
 
 1;

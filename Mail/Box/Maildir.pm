@@ -10,45 +10,32 @@ use File::Copy;
 use File::Spec;
 use Sys::Hostname;
 
-=head1 NAME
+=chapter NAME
 
 Mail::Box::Maildir - handle Maildir folders
 
-=head1 SYNOPSIS
+=chapter SYNOPSIS
 
  use Mail::Box::Maildir;
  my $folder = new Mail::Box::Maildir folder => $ENV{MAIL}, ...;
 
-=head1 DESCRIPTION
+=chapter DESCRIPTION
 
 This documentation describes how Maildir mailboxes work, and what you
 can do with the Maildir folder object C<Mail::Box::Maildir>.
-Please read C<Mail::Box-Overview> and C<Mail::Box::Dir> first.
 
-Maildir is not supported for Windows, because it create filenames
+Maildir is B<not supported for Windows>, because it create filenames
 which are not accepted by the Windows system.
-L<The internal organization and details|/"IMPLEMENTATION"> are found
-at the bottom of this manual-page.
 
-=head1 METHODS
-
-=cut
-
-#-------------------------------------------
-
-=head2 Initiation
-
-=cut
-
-#-------------------------------------------
+=chapter METHODS
 
 =c_method new OPTIONS
 
-=default folderdir $ENV{HOME}/.maildir
-=default lock_type 'NONE' (constant)
-=default lock_file <not used>
+=default folderdir    C<$ENV{HOME}/.maildir>
+=default lock_type    C<'NONE'> (constant)
+=default lock_file    <not used>
 =default lock_timeout <not used>
-=default lock_wait <not used>
+=default lock_wait    <not used>
 
 =cut
 
@@ -72,13 +59,7 @@ sub init($)
 
 #-------------------------------------------
 
-=head2 Opening folders
-
-=cut
-
-#-------------------------------------------
-
-=c_method create FOLDERNAME, OPTIONS
+=ci_method create FOLDERNAME, OPTIONS
 
 =error Cannot create Maildir folder $name.
 
@@ -88,7 +69,8 @@ could not be created.
 =cut
 
 sub create($@)
-{   my ($class, $name, %args) = @_;
+{   my ($thingy, $name, %args) = @_;
+    my $class     = ref $thingy      || $thingy;
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $directory = $class->folderToDirectory($name, $folderdir);
 
@@ -116,19 +98,7 @@ sub foundIn($@)
 
 #-------------------------------------------
 
-=head2 On open folders
-
-=cut
-
-#-------------------------------------------
-
 sub type() {'maildir'}
-
-#-------------------------------------------
-
-=head2 Sub-folders
-
-=cut
 
 #-------------------------------------------
 
@@ -186,12 +156,6 @@ sub openSubFolder($@)
 
 #-------------------------------------------
 
-=head2 Reading and Writing [internals]
-
-=cut
-
-#-------------------------------------------
-
 my $uniq = rand 1000;
 
 =method coerce MESSAGE
@@ -229,6 +193,8 @@ sub coerce($)
 
 #-------------------------------------------
 
+=section Internals
+
 =ci_method createDirs FOLDERDIR
 
 The FOLDERDIR contains the absolute path of the location where the
@@ -244,9 +210,9 @@ top folder directory could not be created for the reason indicated.
 
 =error Cannot create Maildir subdir $dir: $!
 
-Each Maildir folder has three sub-directories for administration: C<new>, C<tmp>,
-and C<cur>.  The mentioned directory could not be created for the indicated
-reason.
+Each Maildir folder has three sub-directories for administration: C<new>,
+C<tmp>, and C<cur>.  The mentioned directory could not be created for
+the indicated reason.
 
 =cut
 
@@ -273,9 +239,8 @@ sub createDirs($)
 
 #-------------------------------------------
 
-=method folderIsEmpty FOLDERDIR
+=ci_method folderIsEmpty FOLDERDIR
 
-(Instance or class method)
 Checks whether the folder whose directory is specified as absolute FOLDERDIR
 is empty or not.  A folder is empty when the C<tmp>, C<new>, and C<cur>
 subdirectories are empty and some files which are left there by application
@@ -521,12 +486,12 @@ sub appendMessages(@)
 
 #-------------------------------------------
 
-=head1 IMPLEMENTATION
+=chapter DETAILS
 
 The explanation is complicated, but for normal use you should bother
 yourself with all details.
 
-=head2 How Maildir-folders work
+=section How Maildir folders work
 
 Maildir-type folders use a directory to store the messages of one folder.
 Each message is stored in a separate file.  This seems useful, because
@@ -536,7 +501,7 @@ folder-files.
 
 However, Maildir based folders perform very bad if you need header information
 of all messages.  For instance, if you want to have full knowledge about
-all message-threads (see C<Mail::Box::Thread::Manager>) in the folder, it
+all message-threads (see M<Mail::Box::Thread::Manager>) in the folder, it
 requires to read all header lines in all message files.  And usually, reading
 your messages as threads is desired.  Maildir maintains a tiny amount
 of info visible in the filename, which may make it perform just a little
@@ -562,11 +527,11 @@ The C<@flags> are sorted alphabetically, with the following meanings:
  S = seen / (partially) read by the user
  T = trashed, flagged to be deleted later
 
-=head2 Labels
+=section Labels
 
 The filename contains flags, and those flags are translated into labels
 when the folder is opened.  Labels can be changed by the application using
-the C<labels> method. 
+M<Mail::Message::labels()>.
 
 Changes will directly reflect in a filename change.
 The C<Status> and C<X-Status> lines in the header, which are used by
