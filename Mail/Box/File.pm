@@ -123,7 +123,7 @@ sub init($)
     my $locker   = $self->locker;
 
     my $lockfile = $locker->filename;
-    if($lockfile eq '--')
+    if($lockfile eq '--')            # filename to be used not resolved yet
     {   my $lockdir   = $filename;
         $lockdir      =~ s!/([^/]*)$!!;
         my $extension = $args->{lock_extension} || '.lock';
@@ -308,14 +308,15 @@ sub readMessages(@)
     return $self if -d $filename;
 
     my @msgopts  =
-      ( $self->logSettings
-      , folder     => $self
-      , head_type  => $args{head_type}
-      , field_type => $args{field_type}
-      , trusted    => $args{trusted}
-      );
+     ( $self->logSettings
+     , folder     => $self
+     , head_type  => $args{head_type}
+     , field_type => $args{field_type}
+     , trusted    => $args{trusted}
+     );
 
-    my $parser   = $self->parser;
+    my $parser   = $self->parser
+       or return;
 
     while(1)
     {   my $message = $args{message_type}->new(@msgopts);
@@ -479,6 +480,7 @@ sub _write_replace($)
     my $ok = $new->close;
     return 0 unless $old->close && $ok;
 
+    unlink $filename;
     unless(move $tmpnew, $filename)
     {   $self->log(WARNING =>
             "Could not replace $filename by $tmpnew, to update $self: $!");

@@ -219,8 +219,7 @@ my $msg2 = Mail::Message->build
   );
 
 $folder->addMessage($msg2);
-cmp_ok($folder->messages, "==", 1);
+cmp_ok($folder->messages, "==", 1,            'one message into empty folder');
 $folder->close;
-ok(-s $sub1);
+ok(-s $sub1,                                  'subfolder must exist now');
 
-clean_dir $top;

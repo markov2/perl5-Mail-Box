@@ -74,9 +74,9 @@ is($f->string, <<'EXPECTED');
 
      * list item 1
 
-         1 list item 1.1
+         1. list item 1.1
 
-         2 list item 1.2
+         2. list item 1.2
 
      * list item 2
 EXPECTED

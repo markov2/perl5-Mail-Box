@@ -7,6 +7,29 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.032: Fri Nov 29 19:59:47 CET 2002
+
+	Fixes:
+
+	- Enforce Text::FormatPS version 2.01, because the output format
+	  has changed.  Scripts adapted to the new layout.  [Blar Zajac]
+
+	- Required Term::ReadKey for installation. [Greg Matheson]
+
+	- Silly problem with lock-filenames... detected by [Blair Zajac]
+
+	- $part->toplevel did not return a message, but a body.  Detected
+	  by [Pjotr Prins]
+
+	- $part->delete did not seem to have an effect... silly bug caused
+	  this problem, which was spotted by [Pjotr Prins].
+
+	Improvements:
+
+	- Removed dependency from Term::ReadKey.
+
+	- $msg->printStructure shows parts which are flagged to be deleted.
+
 version 2.031: Mon Nov 25 14:50:23 CET 2002
 
 	Fixes:
@@ -36,8 +59,8 @@ version 2.031: Mon Nov 25 14:50:23 CET 2002
 	- Message sizes in thread-dumps within test-scripts are ignored by
 	  a special function, but only on CRLF platforms like Windows.
 
-	- Some code has moved from Mail::Box::Parser::Perl into Mail::Box::Parser
-	  Cannot break existing code.
+	- Some code has moved from Mail::Box::Parser::Perl into
+	  Mail::Box::Parser Cannot break existing code.
 
 	- Quite some code has moved from Mail::Box::File to Mail::Box::Mbox.
 	  Cannot break existing code.

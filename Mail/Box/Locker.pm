@@ -314,9 +314,10 @@ sub folder() {shift->{MBL_folder}}
 
 #-------------------------------------------
 
-=method filename
+=method filename [FILENAME]
 
-Returns the filename which is used to lock the folder.
+Returns the filename which is used to lock the folder, optionally after
+setting it to the specified FILENAME.
 
 =example
 
@@ -324,7 +325,11 @@ Returns the filename which is used to lock the folder.
 
 =cut
 
-sub filename() { shift->{MBL_filename} }
+sub filename(;$)
+{   my $self = shift;
+    $self->{MBL_filename} = shift if @_;
+    $self->{MBL_filename};
+}
 
 #-------------------------------------------
 

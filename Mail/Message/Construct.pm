@@ -1208,7 +1208,7 @@ front of each line, and SHALL end with a blank, if specified.
     text/plain (164 bytes)
     message/rfc822 (1043 bytes)
        multipart/alternative: A multipart alternative (942 bytes)
-          text/plain (148 bytes)
+          text/plain (148 bytes, deleted)
           text/html (358 bytes)
 
 =cut
@@ -1223,7 +1223,9 @@ sub printStructure(;$$)
 
     my $type    = $self->get('Content-Type') || '';
     my $size    = $self->size;
-    $fh->print("$indent$type$subject ($size bytes)\n");
+    my $deleted = $self->can('deleted') && $self->deleted ? ', deleted' : '';
+
+    $fh->print("$indent$type$subject ($size bytes$deleted)\n");
 
     my $body    = $self->body;
     my @parts

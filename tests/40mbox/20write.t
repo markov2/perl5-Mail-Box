@@ -22,6 +22,7 @@ BEGIN {plan tests => 5}
 # over our test file.
 #
 
+unlink $cpy;
 copy $src, $cpy
     or die "Cannot create test folder: $!\n";
 
@@ -74,5 +75,3 @@ while(@folder_subjects)
 {   last unless shift(@folder_subjects) eq shift(@copy_subjects);
 }
 ok(!@folder_subjects);
-
-unlink $cpy;

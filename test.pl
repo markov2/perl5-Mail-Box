@@ -31,7 +31,7 @@ sub report();
 sub dl_format($@);
 sub check_requirement($);
 sub update_requirement($);
-sub install_module($);
+sub install_package($);
 
 my $default_install_answer = 'y';
 
@@ -252,18 +252,27 @@ sub update_requirement($)
             print $reason;
         }
 
-        require Term::ReadKey;
-        Term::ReadKey->import;
 
         print "    do you want to install $package? yes/no/all [$install] ";
+        eval "require Term::ReadKey";
 
-        ReadMode(3);   # cbreak mode
         my $key;
-        $key = ReadKey(0) until defined($key);
-        ReadMode(1);
+        if($@)
+        {    # No Term::ReadKey
+             flush STDOUT;
+             $key = <STDIN>;
+             $key = $install if $key =~ m/\n/;
+        }
+        else
+        {    # Has Term::ReadKey
+             Term::ReadKey->import;
+             ReadMode(3);   # cbreak mode
+             $key = ReadKey(0) until defined($key);
+             ReadMode(1);
 
-        $key = $install if $key =~ m/\n/;
-        print "$key\n";
+             $key = $install if $key =~ m/\n/;
+             print "$key\n";
+        }
 
         if($key eq 'a')
         {   $default_install_answer = 'a';
@@ -276,20 +285,20 @@ sub update_requirement($)
 
     return 0 unless $install eq 'y';
 
-    unless(install_module $module)
-    {   warn "    WARNING: installation of $module failed.\n";
+    unless(install_package $package)
+    {   warn "    WARNING: installation of $package ($module) failed.\n";
         return 0;
     }
 }
 
 #
-# INSTALL_MODULE MODULE
+# INSTALL_PACKAGE PACKAGE
 #
 
-sub install_module($)
-{   my $module = shift;
+sub install_package($)
+{   my $package = shift;
 
-    print "    installing $module\n";
+    print "    installing $package\n";
     require CPAN;
-    eval { CPAN::install($module) };
+    eval { CPAN::install($package) };
 }
