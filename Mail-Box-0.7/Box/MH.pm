@@ -1,13 +1,13 @@
 
 use strict;
-use v5.6.0;
+use 5.006;
 
 package Mail::Box::MH;
 use Mail::Box;
 use Mail::Box::Index;
 
 our @ISA     = qw/Mail::Box Mail::Box::Index/;
-our $VERSION = v0.6;
+our $VERSION = v0.7;
 
 use Mail::Box;
 
@@ -1351,7 +1351,25 @@ sub head()
     return $self->{MBM_head} if exists $self->{MBM_head};
     $self->folder->readMessage($self->seqnr);
     $self->head;
-    $self->head;
+}
+
+#-------------------------------------------
+
+=item messageID
+
+Retreive the message's id.  Every message has a unique message-id.  This id
+is used mainly for recognizing discussion threads.
+
+=cut
+
+# This is the only method on a non-parsed object, which implicitly depends
+# on a loaded header.  By checking the head, we know for sure that the
+# header is loaded.
+
+sub messageID(@)
+{   my $self = shift;
+    $self->head unless $self->{MBM_head};
+    $self->Mail::Box::Message::messageID(@_);
 }
 
 =back

@@ -86,3 +86,15 @@ Mark Overmeer <mark@overmeer.net>
 		Mail/Box/Mbox.pm
 		Mail/Box/MH.pm
 		Mail/Box/Message.pm
+
+
+version 0.7:  Thu Jan  4 22:44:30 CET 2001
+
+Mark Overmeer <mark@overmeer.net>
+	* Changed `use v5.6.0' (which is perfect 5.6.0 code) into
+	  `use 5.006' (which is understood by 5.005) in all modules.
+
+	* Fixed call to messageID in MH-folder, before the header is read
+	  to trigger the header to be read.
+		Mail/Box/MH.pm
+

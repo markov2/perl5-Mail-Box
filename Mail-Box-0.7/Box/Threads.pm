@@ -2,8 +2,8 @@
 package Mail::Box::Threads;
 
 use strict;
-use v5.6.0;
-our $VERSION = v0.6;
+use 5.006;
+our $VERSION = v0.7;
 
 use Mail::Box::Message;
 
@@ -504,7 +504,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.6
+This code is alpha, version 0.7
 
 =cut
 

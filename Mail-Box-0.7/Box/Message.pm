@@ -1,9 +1,11 @@
 
 use strict;
+use 5.006;
+
 use MIME::Entity;
 use Mail::Box::Threads;
 
-our $VERSION = 0.4;
+our $VERSION = 0.7;
 
 =head1 NAME
 
@@ -1139,7 +1141,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is alpha, version 0.6
+This code is alpha, version 0.7
 
 =cut
 
