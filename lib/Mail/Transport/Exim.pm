@@ -63,7 +63,7 @@ sub trySend($@)
 {   my ($self, $message, %args) = @_;
 
     my $from = $args{from} || $message->sender;
-    $from    = $from->address if $from->isa('Mail::Address');
+    $from    = $from->address if ref $from && $from->isa('Mail::Address');
     my @to   = map {$_->address} $self->destinations($message, $args{to});
 
     my $program = $self->{MTS_program};

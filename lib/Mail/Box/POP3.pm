@@ -38,6 +38,7 @@ For authentications, you have three choices: specify a foldername which
 resembles an URL, or specify a pop-client object, or separate options
 for user, password, pop-server and server-port.
 
+=default folder <not applicable>
 =default create <not applicable>
 
 =default server_port  110
@@ -73,6 +74,7 @@ sub init($)
 {   my ($self, $args) = @_;
 
     $args->{server_port} ||= 110;
+    $args->{folder}      ||= 'inbox';
 
     $self->SUPER::init($args);
 
@@ -157,14 +159,15 @@ sub type() {'pop3'}
 
 #-------------------------------------------
 
-sub close()
+sub close(@)
 {   my $self = shift;
 
-    if(my $pop = delete $self->{MBP_client})
-    {   $pop->disconnect;
-    }
+    $self->SUPER::close(@_);
 
-    $self->SUPER::close;
+    my $pop = delete $self->{MBP_client};
+    $pop->disconnect if defined $pop;
+
+    $self;
 }
 
 #-------------------------------------------

@@ -267,8 +267,7 @@ sub grepNames(@)
 
 The C<set> method is similar to the M<add()> method, and takes the same
 options. However, existing values for fields will be removed before a new
-value is added.
-
+value is added.  READ THE IMPORTANT WARNING IN M<removeField()>
 =cut
 
 my @skip_none = qw/content-transfer-encoding content-disposition/;
@@ -306,7 +305,7 @@ sub set(@)
 
 Replace the values in the header fields named by NAME with the values
 specified in the list of FIELDS. A single name can correspond to multiple
-repeated fields.
+repeated fields.  READ THE IMPORTANT WARNING IN M<removeField()>
 
 Removing fields which are part of one of the predefined field groups is
 not a smart idea.  You can better remove these fields as group, all
@@ -365,6 +364,7 @@ sub reset($@)
 Remove the field with the specified name.  If the header contained
 multiple lines with the same name, they will be replaced all together.
 This method simply calls M<reset()> without replacement fields.
+READ THE IMPORTANT WARNING IN M<removeField()>
 
 =cut
 
@@ -383,8 +383,37 @@ See also M<Mail::Message::Head::Partial::removeFields()> (mind the 's'
 at the end of the name), which accepts a string or regular expression
 as argument to select the fields to be removed.
 
-=warning Cannot remove field $name from header: not found.
+WARNING WARNING WARNING: for performance reasons, the header administration
+uses weak references (see L<Scalar::Util> method weaken()> to figure-out
+which fields have been removed.  A header is a hash of field for fast search
+and an array of weak references to remember the order of the fields, required
+for printing.  If the field is removed from the hash, the weak-ref is set to
+undef and the field not printed.
 
+However... it is easy to disturb this process.  Example:
+ my $msg = ....;                 # subject ref-count = 1 + 0 = 1
+ $msg->head->delete('Subject');  # subject ref-count =     0 = 0: clean-up
+ $msg->print;                    # subject doesn't show: ok
+
+But
+ my $msg = ....;                 # subject ref-count = 1 + 0 = 1
+ my $s = $msg->head->get('subject'); # ref-count = 1 + 1 + 0 = 2
+ $msg->head->delete('Subject');  # subject ref-count = 1 + 0 = 1: no clean-up
+ $msg->print;                    # subject DOES show: not ok
+ undef $s;                       # ref-count becomes 0: clean-up
+ $msg->print;                    # subject doesn't show: ok
+
+To avoid the latter situation, do not catch the field object, but only
+the field content.  SAVE are all methods which return the text:
+ my $s = $msg->head->get('subject')->body;
+ my $s = $msg->head->get('subject')->unfoldedBody;
+ my $s = $msg->head->get('subject')->foldedBody;
+ my $s = $msg->head->get('subject')->foldedBody;
+ my $s = $msg->get('subject');
+ my $s = $msg->subject;
+ my $s = $msg->string;
+
+=warning Cannot remove field $name from header: not found.
 You ask to remove a field which is not known in the header.  Using
 M<delete()>, M<reset()>, or M<set()> to do the job will not result
 in warnings: those methods check the existence of the field first.

@@ -28,7 +28,8 @@ use integer;
 
 sub new($) {
     my ($class, $ref) = @_;
-    my $self = { ref => $ref, data => defined($$ref) ? $$ref : '' };
+    $$ref = '' unless defined($$ref);
+    my $self = { ref => $ref, pos => 0 };
 
     bless $self, $class;
     return $self;
@@ -49,82 +50,78 @@ sub opened() { return $_[0]->{ref}; }
 sub open($) {
     my $self = $_[0];
 
+    ${$_[1]} = '' unless defined(${$_[1]});
     $self->{ref} = $_[1];
-    $self->{data} = ${$self->{ref}};
+    $self->{pos} = 0;
 }
 
 sub close() {
-    my $self = $_[0];
-
-    $self->{data} = '';
-    undef $self->{ref};
+    undef $_[0]->{ref};
 }
 
 sub eof() {
     my $self = $_[0];
 
-    return length($self->{data}) == 0;
+    return $self->{pos} >= length(${$self->{ref}});
 }
 
 sub getc() {
     my $self = $_[0];
 
-    return substr($self->{data}, 0, 1, '');
+    return substr(${$self->{ref}}, $self->{pos}++, 1);
 }
 
 sub print {
-    my $self = shift();
-    my $buf = $#_ ? join('', @_) : $_[0];
+    my $self = shift;
+    my $pos = $self->{pos};
     my $ref = $self->{ref};
-    my $len = length($self->{data});
-
-    if ($len == 0) {
-	$$ref .= $buf;
+    my $len = length($$ref);
+    
+    if ($pos >= $len) {
+	$$ref .= $_ foreach @_;
+	$self->{pos} = length($$ref);
     } else {
-	my $pos = length($$ref) - $len;
-
+	my $buf = $#_ ? join('', @_) : $_[0];
+	
 	$len = length($buf);
 	substr($$ref, $pos, $len) = $buf;
-	$self->{data} = substr($$ref, $pos + $len, -1);
+	$self->{pos} = $pos + $len;
     }
-    return 1;
+    1;
 }
 
 sub read($$;$) {
     my $self = $_[0];
-    my $buf = substr($self->{data}, 0, $_[2], '');
+    my $buf = substr(${$self->{ref}}, $self->{pos}, $_[2]);
+    $self->{pos} += $_[2];
 
     ($_[3] ? substr($_[1], $_[3]) : $_[1]) = $buf;
     return length($buf);
 }
 
 sub sysread($$;$) {
-    return shift->read(@_);
+    return shift()->read(@_);
 }
 
 sub seek($$) {
     my $self = $_[0];
     my $whence = $_[2];
-    my $ref = $self->{ref};
-    my $len = length($$ref);
-    my $pos;
+    my $len = length(${$self->{ref}});
 
     if ($whence == 0) {
-	$pos = $_[1];
+	$self->{pos} = $_[1];
     } elsif ($whence == 1) {
-	$pos = $len - length($self->{data}) + $_[1];
+	$self->{pos} += $_[1];
     } elsif ($whence == 2) {
-	$pos = $len - length($self->{data}) - $_[1];
+	$self->{pos} = $len + $_[1];
     } else {
 	return;
     }
-
-    if ($pos > $len) {
-	$pos = $len;
-    } elsif ($pos < 0) {
-	$pos = 0;
+    if ($self->{pos} > $len) {
+	$self->{pos} = $len;
+    } elsif ($self->{pos} < 0) {
+	$self->{pos} = 0;
     }
-    $self->{data} = substr($$ref, $pos);
     return 1;
 }
 
@@ -141,31 +138,29 @@ sub sref() {
 }
 
 sub getpos() {
-    my $self = $_[0];
-
-    return length(${$self->{ref}}) - length($self->{data});
+    return $_[0]->{pos};
 }
 
 sub tell() {
-    my $self = $_[0];
-
-    return length(${$self->{ref}}) - length($self->{data});
+    return $_[0]->{pos};
 }
 
 sub write($$;$) {
     my $self = $_[0];
-    my $buf = substr($_[1], $_[3] || 0, $_[2]);
+    my $pos = $self->{pos};
     my $ref = $self->{ref};
-    my $len = length($self->{data});
+    my $len = length($$ref);
 
-    if ($len == 0) {
-	$$ref .= $buf;
+    if ($pos >= $len) {
+	$$ref .= substr($_[1], $_[3] || 0, $_[2]);
+	$self->{pos} = length($$ref);
+	$len = $self->{pos} -  $len;
     } else {
-	my $pos = length($$ref) - $len;
-
+	my $buf = substr($_[1], $_[3] || 0, $_[2]);
+	
 	$len = length($buf);
 	substr($$ref, $pos, $len) = $buf;
-	$self->{data} = substr($$ref, $pos + $len, -1, '');
+	$self->{pos} = $pos + $len;
     }
     return $len;
 }
@@ -176,33 +171,37 @@ sub syswrite($;$$) {
 
 sub getline() {
     my $self = $_[0];
-    my $data = \$self->{data};
+    my $ref = $self->{ref};
+    my $pos = $self->{pos};
 
-    if ((my $idx = index($$data, $/)) == -1 || !defined($/)) {
-	my $r = $$data;
-
-	return unless (length($r) > 0);
-	$$data = '';
-	return $r;
+    if (!defined($/) || (my $idx = index($$ref, $/, $pos)) == -1) {
+	return if ($pos >= length($$ref));
+	$self->{pos} = length($$ref);
+	return substr($$ref, $pos);
     } else {
-	return substr($$data, 0, $idx + 1, '');
+	return substr($$ref, $pos, ($self->{pos} = $idx + length($/)) - $pos);
     }
 }
 
 sub getlines() {
     my $self = $_[0];
-    my $data = $self->{data};
     my @lines;
+    my $ref = $self->{ref};
+    my $pos = $self->{pos};
 
-    $self->{data} = '';
     if (defined($/)) {
 	my $idx;
-
-	while (($idx = index($data, $/)) != -1) {
-	    push(@lines, substr($data, 0, $idx + 1, ''));
+	
+	while (($idx = index($$ref, $/, $pos)) != -1) {
+	    push(@lines, substr($$ref, $pos, ($idx + 1) - $pos));
+	    $pos = $idx + 1;
 	}
     }
-    push(@lines, $data) if (length($data) > 0);
+    my $r = substr($$ref, $pos);
+    if (length($r) > 0) {
+	push(@lines, $r);
+    }
+    $self->{pos} = length($$ref);
     return wantarray() ? @lines : \@lines;
 }
 
@@ -221,5 +220,7 @@ sub CLOSE { shift()->close(@_); }
 sub SEEK { shift()->seek(@_); }
 sub TELL { shift()->tell(@_); }
 sub EOF { shift()->eof(@_); }
+
+1;
 
 1;

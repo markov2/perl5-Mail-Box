@@ -130,16 +130,16 @@ Only the HTML version of this manual page will list the sections.
 <li><strong><a name="folders">Folders</a></strong> (M<Mail::Box>)
       See separate section for type specifics below.
   <ul>
+  <li>Folder managers
+      <ul>
+      <li>L<Mail::Box::Manager/Managing open folders> (M<Mail::Box::Manager>)
+      <li>L<Mail::Box::Manager/Managing a user> (M<Mail::Box::Manage::User>)
+      </ul>
   <li>Folder types (M<Mail::Box>)
       <ul>
       <li>L<Mail::Box/Different kinds of folders>
       <li>L<Mail::Box/Available folder types>
       <li>L<Mail::Box/Folder class implementation>
-      </ul>
-  <li>The folder manager (M<Mail::Box::Manager>)
-      <ul>
-      <li>L<Mail::Box::Manager/Managing open folders>
-      <li>L<Mail::Box::Manager/Managing a user>
       </ul>
   <li>L<Mail::Box::Tie::ARRAY/Folder tied as array> (M<Mail::Box::Tie::ARRAY>)
       <ul>

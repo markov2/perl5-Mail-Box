@@ -63,9 +63,16 @@ sub _data_from_filename(@)
 
 sub _data_from_filehandle(@)
 {   my ($self, $fh) = @_;
-    my @lines = $fh->getlines;
-    $self->{MMBS_nrlines} = @lines;
-    $self->{MMBS_scalar}  = join '', @lines;
+    if(ref $fh eq 'Mail::Box::FastScalar')
+    {   my $lines = $fh->getlines;
+        $self->{MMBS_nrlines} = @$lines;
+        $self->{MMBS_scalar}  = join '', @$lines;
+    }
+    else
+    {    my @lines = $fh->getlines;
+         $self->{MMBS_nrlines} = @lines;
+         $self->{MMBS_scalar}  = join '', @lines;
+    }
     $self;
 }
 

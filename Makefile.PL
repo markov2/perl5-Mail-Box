@@ -29,7 +29,7 @@ WARN
 
 my @optional =
 ( 
-  [ Mail::Box::Parser::C => '3.001'
+  [ Mail::Box::Parser::C => '3.006'
   , reason => <<'REASON', warning => <<'WARN' ]
 Speeds-up reading mail folders, though most time is consumed by
 Perl's administration of the processed data.
@@ -114,32 +114,6 @@ my $has_readkey;
 BEGIN
 {   eval "require Term::ReadKey";
     $has_readkey = not length $@;
-}
-
-sub ask($$)
-{   my ($text, $default) = @_;
-    print "---> $text [$default] ";
-    my $key;
-
-    if(! -t STDIN) { $key = $default }
-    elsif($has_readkey)
-    {   Term::ReadKey->import;
-        ReadMode(3);   # cbreak mode
-        $key = ReadKey(0) until defined($key);
-        ReadMode(1);
-
-        $key = $default if $key =~ m/\n/;
-        print "$key\n";
-    }
-    else
-    {   # No Term::ReadKey
-        flush STDOUT;
-        my $line = <STDIN>;
-        $line    =~ m/(\S)/;
-        $key     = $1 || $default;
-    }
-
-    $key;
 }
 
 my $default_install_answer = $ENV{INSTALL_MAILBOX_OPTIONALS}
@@ -232,7 +206,7 @@ foreach my $optional (@optional)
     }
     
     my $install  = $default_install_answer;
-    my $key = ask "Do you want to install $module? yes/no/all", $install;
+    my $key = prompt "Do you want to install $module? yes/no/all", $install;
 
     if($key eq 'a')
     {   $default_install_answer = 'a';
@@ -250,7 +224,7 @@ foreach my $optional (@optional)
     print "     Added $distr version $version to the requirements\n";
 }
 
-my $tests = ask "Do you want to run the (large set of) tests? yes/no", "yes";
+my $tests = prompt "Do you want to run the (large set of) tests? yes/no", "yes";
 if($tests =~ m/n/i)
 {   open F, ">", "skiptests";
     close F;

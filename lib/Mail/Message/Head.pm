@@ -375,7 +375,7 @@ May trigger completion, when the C<Content-Type> field is not defined.
 
 sub isMultipart()
 {   my $type = shift->get('Content-Type');
-    $type && $type->body =~ m[^multipart/]i;
+    $type && scalar $type->body =~ m[^multipart/]i;
 }
 
 #------------------------------------------

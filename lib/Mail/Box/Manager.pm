@@ -95,6 +95,8 @@ my @basic_folder_types =
   , [ maildir => 'Mail::Box::Maildir' ]
   , [ pop     => 'Mail::Box::POP3'    ]
   , [ pop3    => 'Mail::Box::POP3'    ]
+  , [ imap    => 'Mail::Box::IMAP4'   ]
+  , [ imap4   => 'Mail::Box::IMAP4'   ]
   );
 
 my @managers;  # usually only one, but there may be more around :(
@@ -339,8 +341,6 @@ behaviour changed, because many nasty side-effects are to be expected.
 For instance, an M<Mail::Box::update()> on one folder handle would
 influence the second, probably unexpectedly.
 
-=error Don't know which folder I should open: no name
-
 =cut
 
 sub open(@)
@@ -348,14 +348,9 @@ sub open(@)
     my $name = @_ % 2 ? shift : undef;
     my %args = @_;
 
-    $name    = defined $args{folder} ? $args{folder} : $ENV{MAIL}
+    $name    = defined $args{folder} ? $args{folder} : ($ENV{MAIL} || '')
         unless defined $name;
 
-    unless(defined $name)
-    {   $self->log(ERROR => "Don't know which folder I should open: no name.");
-        return undef;
-    }
-      
     if($name =~ m/^(\w+)\:/ && grep { $_ eq $1 } $self->folderTypes)
     {   # Complicated folder URL
         my %decoded = $self->decodeFolderURL($name);
@@ -371,6 +366,14 @@ sub open(@)
     else
     {   # Simple folder name
         $args{folder} = $name;
+    }
+
+    my $type = $args{type};
+    if(defined $type && $type eq 'pop3')
+    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+        my $srv  = $args{server_name} ||= 'localhost';
+        my $port = $args{server_port} ||= 110;
+        $args{folder} = $name = "pop3://$un\@$srv:$port";
     }
 
     unless(defined $name && length $name)
@@ -400,7 +403,7 @@ sub open(@)
     #
 
     my ($folder_type, $class, @defaults);
-    if(my $type = $args{type})
+    if($type)
     {   # User-specified foldertype prevails.
         foreach (@{$self->{MBM_folder_types}})
         {   (my $abbrev, $class, @defaults) = @$_;
@@ -461,7 +464,7 @@ sub open(@)
     unless(defined $folder)
     {   $self->log(WARNING =>
            "Folder does not exist, failed opening $folder_type folder $name.")
-           unless $args{to_delete};
+           unless $args{access} eq 'd';
         return;
     }
 
@@ -508,6 +511,11 @@ The folder's messages will also be withdrawn from the known message threads.
 You may also close the folder directly. The manager will be informed
 about this event and take appropriate actions.
 
+=option  close_by_self BOOLEAN
+=default close_by_self <false>
+Used internally to avoid confusion about how the close was started.  Do
+not change this.
+
 =examples
 
  my $inbox = $mgr->open('inbox');
@@ -517,7 +525,7 @@ about this event and take appropriate actions.
 =cut
 
 sub close($@)
-{   my ($self, $folder, @options) = @_;
+{   my ($self, $folder, %options) = @_;
     return unless $folder;
 
     my $name      = $folder->name;
@@ -529,7 +537,9 @@ sub close($@)
     $self->{MBM_folders} = [ @remaining ];
     $_->removeFolder($folder) foreach @{$self->{MBM_threads}};
 
-    $folder->close(close_by_manager => 1, @options);
+    $folder->close(close_by_manager => 1, %options)
+       unless $options{close_by_self};
+
     $self;
 }
 

@@ -242,7 +242,7 @@ sub inferiors(;$)
                                                                                 
 =method deleted {BOOLEAN]
 =cut
-                                                                                
+
 sub deleted(;$)
 {   my $self = shift;
     @_ ? ($self->{MBI_deleted} = shift) : $self->{MBI_deleted};
@@ -323,6 +323,24 @@ sub folder(@)
     my $subs = $self->subfolders  or return undef;
     my $nest = $subs->find(shift) or return undef;
     $nest->folder(@_);
+}
+
+#-------------------------------------------
+
+=method open OPTIONS
+Open the folder which is described by this identity.  Returned is some
+M<Mail::Box>.  The options are passed to M<Mail::Box::Manager::open()>.
+=cut
+
+sub open(@)
+{   my $self = shift;
+    my $mgr  = $self->manager;
+
+    $mgr->open
+      ( $self->fullname
+      , type => $self->folderType
+      , @_
+      );
 }
 
 #-------------------------------------------

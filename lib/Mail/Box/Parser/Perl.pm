@@ -200,7 +200,7 @@ sub _read_stripped_lines(;$$)
     my @seps    = @{$self->{MBPP_separators}};
 
     my $file    = $self->{MBPP_file};
-    my @lines   = ();
+    my $lines   = [];
 
     if(@seps && $self->{MBPP_trusted})
     {   my $sep  = $seps[0];
@@ -217,7 +217,7 @@ sub _read_stripped_lines(;$$)
                 last;
             }
 
-            push @lines, $line;
+            push @$lines, $line;
         }
     }
     elsif(@seps)
@@ -236,32 +236,31 @@ sub _read_stripped_lines(;$$)
             }
 
             $line =~ s/\015$//;
-            push @lines, $line;
+            push @$lines, $line;
         }
     }
-    else
-    {   # File without separators.
-        @lines = $file->getlines;
+    else # File without separators.
+    {   $lines = ref $file eq 'Mail::Box::FastScalar' ? $file->getlines : [ $file->getlines ];
     }
 
     my $end = $file->tell;
     if($exp_lines > 0 )
-    {    while(@lines > $exp_lines && $lines[-1] =~ $empty)
-         {   $end -= length $lines[-1];
-             pop @lines;
+    {    while(@$lines > $exp_lines && $lines->[-1] =~ $empty)
+         {   $end -= length $lines->[-1];
+             pop @$lines;
          }
     }
-    elsif(@seps && @lines && $lines[-1] =~ $empty)
+    elsif(@seps && @$lines && $lines->[-1] =~ $empty)
     {   # blank line should be in place before a separator.  Only that
         # line is removed.
-        $end -= length $lines[-1];      
-        pop @lines;
+        $end -= length $lines->[-1];
+        pop @$lines;
     }
 
-    map { s/^\>(\>*From\s)/$1/ } @lines
+    map { s/^\>(\>*From\s)/$1/ } @$lines
         if $self->{MBPP_strip_gt};
 
-    $end, \@lines;
+    $end, $lines;
 }
 
 #------------------------------------------
@@ -307,7 +306,7 @@ sub bodyAsList(;$$)
     my $begin = $file->tell;
 
     my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
-    ($begin, $end, @$lines);
+    ($begin, $end, $lines);
 }
 
 #------------------------------------------

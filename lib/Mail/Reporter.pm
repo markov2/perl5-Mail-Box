@@ -77,8 +77,6 @@ sub new(@)
 }
 
 my($default_log, $default_trace, $trace_callback);
-INIT {  __PACKAGE__->defaultTrace('WARNINGS'); }
-
 sub init($)
 {   my ($self, $args) = @_;
     $self->{MR_log}   = $levelprio{$args->{log}   || $default_log};
@@ -162,6 +160,8 @@ sub defaultTrace(;$$)
 
     ($default_log, $default_trace);
 }
+
+__PACKAGE__->defaultTrace('WARNINGS');
 
 #------------------------------------------
 

@@ -207,6 +207,11 @@ will be created as well.
 =default deleted      <false>
 The folder starts as deleted.
 
+=option  create_real  BOOLEAN
+=default create_real  <true>
+When this option is false, the pysical folder will not be created, but
+only the administration is updated.
+
 =error Cannot create $name: higher levels missing
 Unless you set M<create(create_supers)>, all higher level folders must
 exist before this new one can be created.
@@ -215,9 +220,7 @@ exist before this new one can be created.
 # This feature is thoroughly tested in the Mail::Box::Netzwert distribution
 
 sub create($@)
-#{   my ($self, $name, %args) = @_;
-{   my ($self, $name) = (shift, shift);
-    my %args = @_;
+{   my ($self, $name, %args) = @_;
     my ($dir, $base) = $self->folderCollection($name);
 
     unless(defined $dir)
@@ -251,8 +254,10 @@ sub create($@)
         return undef;
     }
 
-    $self->defaultFolderType->create($id->location, %args)
-        or return undef;
+    if(!defined $args{create_real} || $args{create_real})
+    {   $self->defaultFolderType->create($id->location, %args)
+           or return undef;
+    }
 
     $id;
 }

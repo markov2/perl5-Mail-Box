@@ -13,6 +13,59 @@ MH index in append mode niet lezen.
 flock() op flock(): zelfde process op AIX en Solaris
 References/mozilla-flags
 
+version 2.058: Wed Sep 22 14:44:32 CEST 2004
+
+	Interface changes:
+
+	- [Andy Maas] rewrote Mail::Box::FastScalar, to boost performance.
+	  various bodyAsList() methods now prduce ref-arrays.  Shouldn't
+	  affect user programs. Requires Mail::Box::Parser::C v3.006
+
+	Fixes:
+
+	- [Jason Woodward ] had to wait much too long to get his
+	  twin-POP open problem solved.  Now, only one POP connection
+	  will be opened.  This may speed-up other programs as well.
+
+	- [Mike Mimic] foudn that the new INIT block in Mail::Reporter
+	  did not work well with his web-application.  Changed it into
+	  BEGIN.
+
+	- [Mail Minic] Mail::Transport::Exim did not handle strings
+	  as from address correctly.
+
+	- [Anonymous via RT] Use ExtUtils::MakeMaker::prompt() instead
+	  of own ask() in Makefile.PL, so MailBox can be installed with
+	  CPANPLUS.
+
+	- [aa29] $head->isMultipart did not return boolean in list
+	  context.
+
+	- [DH] removed INIT block from Mail::Reporter, which complains
+	  in Apache.
+
+	- [aa29] Mail::Box::MH->new failed because of initiation order
+
+	- pop3 folders do not need (have) a name, but Mail::Box::Manager::open
+	  required one.  Accidentally, sometimes that worked, because $ENV{MAIL}
+	  was used as default, however, that could cause various problems.
+
+	- {Tom Allison] found-out that imap was not autoloaded my the
+	  Mail::Box::Manager.
+
+	Improvements:
+
+	- warning message "Folder does not exist, ..." avoided when
+	  folder is opened for deletion.
+
+	- added Mail::Box::Identity::open()
+
+	- added Mail::Box::nrMessages() for simplification
+
+	- [Alessandro Zummo] showed me that docs about
+	     "why $head->delete($field) doesn't aways work" were needed.
+	  It's a nasty reference counting problem.
+
 version 2.057: Thu Aug 26 14:31:34 CEST 2004
 
 	Interface change:

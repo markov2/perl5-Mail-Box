@@ -75,8 +75,7 @@ sub init($)
         unless $self->SUPER::init($args);
 
     my $class            = ref $self;
-    my $directory        = $self->{MBD_directory}
-       = $class->folderToDirectory($self->name, $self->folderdir);
+    my $directory        = $self->directory;
 
        if(-d $directory) {;}
     elsif($args->{create} && $class->create($directory, %$args)) {;}
@@ -122,7 +121,12 @@ Returns the directory related to this folder.
 
 =cut
 
-sub directory() { shift->{MBD_directory} }
+sub directory()
+{   my $self = shift;
+
+    $self->{MBD_directory}
+       ||= $self->folderToDirectory($self->name, $self->folderdir);
+}
 
 #-------------------------------------------
                                                                                 

@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 
-my $verbose   = 1;
+my $verbose   = 0;
 
 my $home      = "$ENV{HOME}/shared/perl";
 my $realize   = "$home/ORL";
@@ -21,7 +21,8 @@ my @trees     = ($realize, $mailbox, $parserc, $mime, $identity,
 
 my @files;
 foreach my $top (@trees)
-{   my $manifest = "$top/MANIFEST";
+{   print "* $top\n";
+    my $manifest = "$top/MANIFEST";
     open MANIFEST, '<', $manifest or die "$manifest: $!";
     push @files, map {chomp; "$top/$_"} <MANIFEST>;
     close MANIFEST;
