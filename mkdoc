@@ -11,7 +11,7 @@ use lib '../OODoc/lib';         # use my latest version of OODoc
 use lib qw/. tests/;            # use my own current version
 use lib '../UserIdentity/lib';  # latest version of User::Identity
 use lib '../MimeTypes/lib';     # latest version of MIME::Types
-use lib '../Realize/Later';     # latest version of Object::Realize::Later
+use lib '../ORL/lib';           # latest version of Object::Realize::Later
 
 use OODoc;
 
@@ -85,6 +85,18 @@ $doc->processFiles
  , distribution => 'MIME::Types'
  );
 
+print "* Processing Object::Realize::Later files\n" if $verbose;
+
+$doc->processFiles
+ ( workdir => undef
+ , source  => '../ORL'
+ , select  => qr[^ lib/ .*? \.(pod|pm) $ ]x
+
+ , distribution => 'Object::Realize::Later'
+ );
+
+#
+# Prepare the collected information
 #
 # Prepare the collected information
 # Expanding the inheritance relations and such, to simplify the

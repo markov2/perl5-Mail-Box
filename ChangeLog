@@ -11,6 +11,20 @@ wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
 
+version 2.046:
+
+version 2.045: Tue Jul 29 20:23:30 CEST 2003
+
+	Fixes:
+
+	- A lot of files were missing from the distribution because OODoc
+	  had a bug.
+
+	Improvements:
+
+	- Object::Realize::Later documentation is now part of MailBox's
+	  html output too.  Join the club!
+
 version 2.044: Tue Jul 29 13:52:32 CEST 2003
 
 	Interface changes!!
