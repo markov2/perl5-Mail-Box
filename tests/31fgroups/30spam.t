@@ -99,11 +99,12 @@ my $head = $msg->head;
 ok(Mail::Message::Head::SpamGroup->habeasSweFieldsCorrect($msg));
 ok(Mail::Message::Head::SpamGroup->habeasSweFieldsCorrect($head));
 
-@sgs     = $head->spamGroups;
+@sgs     = sort {$a->type cmp $b->type} $head->spamGroups;
 cmp_ok(scalar(@sgs), '==', 2,           "message 11 with 2 groups");
-is($sgs[0]->type, 'SpamAssassin');
-is($sgs[1]->type, 'Habeas-SWE');
-ok($sgs[1]->habeasSweFieldsCorrect);
+
+is($sgs[0]->type, 'Habeas-SWE');
+ok($sgs[0]->habeasSweFieldsCorrect);
+is($sgs[1]->type, 'SpamAssassin');
 
 my $sgs  = $head->spamGroups;
 cmp_ok($sgs, '==', 2,                   "scalar context = amount");

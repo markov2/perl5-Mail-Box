@@ -79,7 +79,7 @@ $newbody->print($g);
 
 compare_message_prints($fakeout, <<'EXPECTED', 'print with attachment');
 --part-separator
-Content-Type: text/html; charset="us-ascii"
+Content-Type: text/html
 Content-Length: 12
 Lines: 2
 Content-Transfer-Encoding: 8bit
@@ -99,7 +99,7 @@ $fakeout = '';
 $newerbody->print($g);
 compare_message_prints($fakeout, <<'EXPECTED', 'print with two attachments');
 --part-separator
-Content-Type: text/html; charset="us-ascii"
+Content-Type: text/html
 Content-Length: 12
 Lines: 2
 Content-Transfer-Encoding: 8bit
@@ -107,7 +107,7 @@ Content-Transfer-Encoding: 8bit
 p1 l1
 p1 l2
 --part-separator
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: 24
 Lines: 4
 Content-Transfer-Encoding: 8bit
@@ -141,7 +141,7 @@ compare_message_prints($fakeout, <<'EXPECTED', 'with preamble and epilogue');
 preamb1
 preamb2
 --part-separator
-Content-Type: text/html; charset="us-ascii"
+Content-Type: text/html
 Content-Length: 12
 Lines: 2
 Content-Transfer-Encoding: 8bit
@@ -149,7 +149,7 @@ Content-Transfer-Encoding: 8bit
 p1 l1
 p1 l2
 --part-separator
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: 24
 Lines: 4
 Content-Transfer-Encoding: 8bit
@@ -177,7 +177,7 @@ To: you
 Date: now
 Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
-Content-Length: 327
+Content-Length: 287
 Lines: 24
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
@@ -185,7 +185,7 @@ MIME-Version: 1.0
 preamb1
 preamb2
 --part-separator
-Content-Type: text/html; charset="us-ascii"
+Content-Type: text/html
 Content-Length: 12
 Lines: 2
 Content-Transfer-Encoding: 8bit
@@ -193,7 +193,7 @@ Content-Transfer-Encoding: 8bit
 p1 l1
 p1 l2
 --part-separator
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: 24
 Lines: 4
 Content-Transfer-Encoding: 8bit
@@ -235,7 +235,7 @@ From: me
 To: you
 Date: now
 Message-Id: <simple>
-Content-Type: text/html; charset="us-ascii"
+Content-Type: text/html
 Content-Length: 12
 Lines: 2
 Content-Transfer-Encoding: 8bit

@@ -44,7 +44,7 @@ isa_ok($folder->message(0), 'Mail::Box::Message::Destructed', 'first');
 
 # some things still work
 my $msg0 = $folder->message(0);
-ok($msg0->isDeleted,   'destructed is deleted');
+ok(!$msg0->isDeleted,  'destructed is not deleted');
 ok($msg0->delete,      'delete is allowed');
 ok($msg0->messageId, 'has message id');
 

@@ -66,7 +66,7 @@ the M<Mail::SpamAssassin> module.
 =option  label STRING|undef
 =default label c<'spam'>
 
-Mark all selected selected message with the specified STRING.  If this
+Mark all selected message with the specified STRING.  If this
 option is explicitly set to C<undef>, the label will not be set.
 
 =option  rewrite_mail BOOLEAN

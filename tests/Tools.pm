@@ -253,7 +253,7 @@ sub compare_message_prints($$$)
 }
 
 #
-# Strip message text down the the things which are the same on all
+# Strip message text down the things which are the same on all
 # platforms and all situations.
 #
 

@@ -233,7 +233,7 @@ is a possibility that this message is a reply itself.
 
 Usually, all messages which are in reply of this message are dated later
 than the specified one.  All headers of messages later than this one are
-are getting parsed first, for each folder in this threads-object.
+getting parsed first, for each folder in this threads-object.
 
 =examples
 

@@ -408,7 +408,7 @@ sub replySubject($)
 
 #------------------------------------------
 
-=method replyPrelude [STRING|FIELD|ADDRESS]
+=method replyPrelude [STRING|FIELD|ADDRESS|ARRAY-OF-THINGS]
 
 Produces a list of lines (usually only one), which will preceded the
 quoted body of the message.  STRING must comply to the RFC822 email
@@ -426,6 +426,8 @@ An characteristic example of the output is
 sub replyPrelude($)
 {   my ($self, $who) = @_;
  
+    $who = $who->[0] if ref $who eq 'ARRAY';
+
     my $user
      = !defined $who                     ? undef
      : !ref $who                         ? (Mail::Address->parse($who))[0]

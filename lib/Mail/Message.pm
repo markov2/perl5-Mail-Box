@@ -41,7 +41,7 @@ Mail::Message - general message object
 A C<Mail::Message> object is a container for MIME-encoded message information,
 as defined by RFC2822.  Everything what is not specificly related to storing
 the messages in mailboxes (folders) is implemented in this class.  Methods
-which are are related to folders is implemented in the M<Mail::Box::Message>
+which are related to folders is implemented in the M<Mail::Box::Message>
 extension.
 
 The main methods are M<get()>, to get information from a message header
@@ -469,19 +469,24 @@ explicitly using the C<via> options.
 my $default_mailer;
 
 sub send(@)
-{   my ($self, @options) = @_;
+{   my $self = shift;
 
     require Mail::Transport::Send;
 
-    my $mailer
-       = (ref $_[0] && $_[0]->isa('Mail::Transport::Send')) ? shift
-       : (!@options && defined $default_mailer)             ? $default_mailer
-       : ($default_mailer = Mail::Transport::Send->new(@options));
+    my $mailer;
+    $default_mailer = $mailer = shift
+        if ref $_[0] && $_[0]->isa('Mail::Transport::Send');
 
-    $self->log(ERROR => "No default mailer found to send message."), return
-        unless defined $mailer;
+    my %args = @_;
+    if( ! $args{via} && defined $default_mailer )
+    {   $mailer = $default_mailer
+    }
+    else
+    {   my $via = delete $args{via} || 'sendmail';
+        $default_mailer = $mailer = Mail::Transport->new(via => $via);
+    }
 
-    $mailer->send($self, @options);
+    $mailer->send($self, %args);
 }
 
 #------------------------------------------
@@ -701,15 +706,10 @@ sub bcc() { map {$_->addresses} shift->head->get('Bcc') }
 
 =method date
 
-Returns the last C<Date> header line as string.
-
-=example using date() to get the C<Date> header field
-
- my $date = $message->date;
+Method has been removed for reasons of consistency.  Use M<timestamp()>
+or C<$msg->head->get('Date')>.
 
 =cut
-
-sub date() { shift->head->get('Date') }
 
 #-------------------------------------------
 
@@ -770,7 +770,10 @@ sub guessTimestamp() {shift->head->guessTimestamp}
 
 =method timestamp
 
-Get a timestamp for the message, doesn't matter how much work it is.
+Get a good timestamp for the message, doesn't matter how much work it is.
+The value returned is compatible with the platform dependent result of
+function time().
+
 In these days, the timestamp as supplied by the message (in the C<Date>
 field) is not trustable at all: many spammers produce illegal or
 unreal dates to influence their location in the displayed folder.
@@ -1552,7 +1555,7 @@ I<body>.
 The header is a list of fields, some spanning more than one line
 (I<folded>) each telling something about the message. Information stored
 in here are for instance the sender of the message, the receivers of
-the message, when it was transported, how it was transported, etc etc.
+the message, when it was transported, how it was transported, etc.
 Headers can grow quite large.
 
 In MailBox, each message object manages exactly one header object

@@ -122,7 +122,7 @@ label will not be set.  Specify C<OR> to have newly selected messages
 added to the set of already selected messages.
 
 C<NOT> is true for messages which do not fulfil the search.  The
-details output will still contain the places where the the match was
+details output will still contain the places where the match was
 found, however those messages will complementary set of messages will
 be labeled and returned.
 

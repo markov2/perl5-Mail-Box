@@ -124,12 +124,25 @@ sub coerce($)
       return ();
    }
 
-   $message->label(deleted => 1);
    $message->body(undef);
    $message->head(undef);
+   $message->modified(0);
 
    bless $message, $class;
 }
+
+#-------------------------------------------
+
+sub modified(;$)
+{  my $self = shift;
+
+   $self->log(ERROR => 'Do not set the modified flag on a destructed message')
+      if @_ && $_[0];
+
+   0;
+}
+
+sub isModified() { 0 }
 
 #-------------------------------------------
 
@@ -151,7 +164,7 @@ sub label($;@)
 
    if(@_==1)
    {   my $label = shift;
-       return 1 if $label eq 'deleted';
+       return $self->SUPER::label('deleted') if $label eq 'deleted';
        $self->log(ERROR => "Destructed message has no labels except 'deleted', requested is $label");
        return 0;
    }

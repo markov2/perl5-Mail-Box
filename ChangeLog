@@ -10,6 +10,85 @@ NOTE: The number of changes and fixes for each release seem large, but
 wat als appendMessage faalt?
 filehandle als bron folder?
 MH index in append mode niet lezen.
+gebruik Return-Path voor reply()
+flock() op flock(): zelfde process op AIX en Solaris
+
+version 2.055: Sun May 16 15:41:59 CEST 2004
+
+	Fixes:
+
+	- [Simon Sozens] reported that IMAPClient was always installed,
+	  although claiming that it was optional.  Now it is really
+	  optional.
+
+	- [Josh Miller] showed Mail::Message::Construct::Reply::replyPrelude
+	  failed the default situation of no explictly stated destination.
+
+	- [Yuval Kogman] suggested to use $CRLF from Socket.pm in Mail::
+	  Transport::POP3, because it correctly set the content for many
+	  platforms.
+
+	- [Timur I. Bakeyev] spam-flag tested for "yes", but should be
+	  "^yes\b", by reason of a possible "bayes" name in the same line.
+
+	- [Timur I. Bakeyev] ::FieldGroup->attach was broken since 2.051.
+
+	- [Timur I. Bakeyev] ::FieldGroup doc improvements.
+
+	- [Daniel P. Berrange] found a circular reference which kept
+	  folders to stay open too long in some circumstances.
+
+	- [Roderick A. Anderson] saw complaints about fileLocation() being
+	  called on message parts.  Something is fixed, which may be the
+	  cause.
+
+	- [Miah Gregory] destruct()ing messages in Maildir should not
+	  delete the message.  No message will be automatically flagged
+	  for deleting when destructed.
+
+	- [Paul Makepeace] $msg->send(via) always used sendmail, without
+	  looking at the value passed with via.
+
+	- [Roderick A. Anderson] hit a bug in ::Body::Nested::fileLocation
+
+	- [Kees Dekker] Mail::Box::update logged number of new messages,
+	  although it did not receive that info from updateMessages.  Log
+	  message removed.
+
+	- [Kees Dekker] discovered a race-condition when writing a
+	  replacement folder in Mail::Box::File.
+
+	- The probably hundredth attempt to get $msg->send to work smoothly.
+
+	- [Gilles] discovered that the charset setting of a body did not
+	  survive encode().  Content-type fields with text/* mime-types will
+	  not get charset=us-ascii added automatically.
+
+	- [Blair Zajac] typo in Makefile.PL text, and removal of stutters
+          in the documentation.
+
+	Improvements:
+
+	- [Trond Michelsen] needed a way to specify the body type for
+	  messages which where read with Mail::Message->read.
+
+	- You now can add your own spam-fighter fields to the detector
+	  of Mail::Message::Head::SpamGroup.  See method 'fighter'.
+
+	- [Roderick A. Anderson] showed that the result value of
+	  $msg->timestamp needed some more explanation.
+
+	- [Kees Dekker] Doc improvements in Mail::Box::Locker
+
+	- Easier to start multi-lockers with selection when opening
+	  a folder:
+	     $f = $mgr->open($name, lock_type => ['DOTLOCK','FLOCK'])
+
+	- [David A Golden] suggested to remove $msg->date, in favor
+	  of $msg->head->date, which is consistent.  When the need arises,
+	  maybe a new method $msg->date will appear returning some nice
+	  date object (like a DateTime).  But probably that is never
+	  needed, since there is a $msg->timestamp.
 
 version 2.054: Fri Feb  6 21:52:54 CET 2004
 
@@ -666,7 +745,7 @@ version 2.040: Mon Apr 14 15:48:54 CEST 2003
           extremely slow in seeks), which now is replaced by IO::Scalar.
 
         - Do not use eval{binmode $fh}, but carefully check whether the
-          the $fh can handle binmode before calling it in the parser.
+          $fh can handle binmode before calling it in the parser.
 
         - Remove newlines from header field data which is passed as
           objects.  When they stringify with newlines included, this
@@ -2106,7 +2185,7 @@ version 2.002: Fri Dec 13 17:46:01 CET 2001
 
         - Removed a back-reference from a locker object to the folder,
           by which the folders where kept alive although out of scope.
-          "circular reference".  According the the errors I got when
+          "circular reference".  According the errors I got when
           removing this one, there should be no strong refs left.
 
         - replaced many "warn"s by "$self->log(WARNING =>"s in

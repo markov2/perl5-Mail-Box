@@ -99,7 +99,7 @@ sub FETCH($)
 
 =method STORE INDEX, MESSAGE
 
-Random message replacement is is not permitted--doing so would disturb threads
+Random message replacement is not permitted --doing so would disturb threads
 etc.  An error occurs if you try to do this. The only thing which is allowed
 is to store a message at the first free index at the end of the folder (which
 is also achievable with M<PUSH()>).

@@ -997,7 +997,7 @@ string.  If the same fieldname appears more than once in the header,
 only the last value is returned.
 
 When M<Mail::Message::Head::get()> is called in scalar context, the
-the last field with the specified name is returned as field B<object>.
+last field with the specified name is returned as field B<object>.
 This object strinigfies into the unfolded contents of the field, including
 attributes and comments.  In list context, all appearances of the field
 in the header are returned as objects.

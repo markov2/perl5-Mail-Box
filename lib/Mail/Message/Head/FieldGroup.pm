@@ -30,7 +30,7 @@ which are based on the implementation in this class.
 
 =c_method new FIELDS, OPTIONS
 
-Construct an object which maintains one set of spam headers.  The
+Construct an object which maintains one set of header FIELDS.  The
 FIELDS may be specified as C<Mail::Message::Field> objects or as key-value
 pairs.  The OPTIONS and FIELDS (as key-value pair) can be mixed: they are
 distinguished by their name, where the fields always start with a capital.
@@ -39,7 +39,7 @@ The field objects must aways lead the OPTIONS.
 =option  head HEAD
 =default head C<undef>
 
-The header HEAD object is used to store the spam related fields in.
+The header HEAD object is used to store the grouped fields in.
 If no header is specified, a M<Mail::Message::Head::Partial> is created
 for you.  If you wish to scan the existing fields in a header, then use
 the M<from()> method.
@@ -144,7 +144,6 @@ sub head() { shift->{MMHF_head} }
 #------------------------------------------
 
 =method attach HEAD
-
 Add a group of fields to a message HEAD.  The fields will be cloned(!)
 into the header, so that the field group object can be used again.
 
@@ -154,15 +153,13 @@ into the header, so that the field group object can be used again.
  $lg->attach($msg->head);
  $msg->head->addListGroup($lg);   # same
 
+ $msg->head->addSpamGroup($sg);   # also implemented with attach
 =cut
 
 sub attach($)
 {   my ($self, $head) = @_;
-    my $lg = ref($self)->clone;
-    $self->{MMHF_head} = $head;
-
     $head->add($_->clone) for $self->fields;
-    $lg;
+    $self;
 }
 
 #------------------------------------------

@@ -47,9 +47,9 @@ WARN
 
 , [ Mail::Transport::Dbx => '0.04', reason  => <<'REASON' ]
 The wrapper to the Outlook's dbx files consists of a c-library
-named libdbx (website http://sorceforge.net/project/ol2mbox/),
+named libdbx (website http://sourceforge.net/project/ol2mbox/),
 and a wrapper which is distributed separately from Mail::Box.
-You get read-only access to the the dbx folders.
+You get read-only access to the dbx folders.
 REASON
 
 , [ Mail::SpamAssassin => '2.00', reason  => <<'REASON', warning => <<'WARN' ]
@@ -103,7 +103,6 @@ my %prereq =
  , Digest::HMAC_MD5 => 0.0
  , User::Identity => 0.07
  , Time::Zone     => 0.0
- , Mail::IMAPClient => 2.2
  );
 
 my $has_readkey;

@@ -39,6 +39,9 @@ folder.  The type names are converted into objects.
 Some locking types are not available on some platforms, so they will
 not be excluded from the default list (NFS POSIX Flock).
 
+=example using a subset of multi-lockers
+ my $locker = Mail::Box::Locker::Multy->new(use => ['DOTLOCK','FLOCK']);
+
 =cut
 
 sub init($)

@@ -45,11 +45,15 @@ a multiple inheritance construction with a M<Mail::Box>.
 Generally the client program specifies the locking behavior through
 options given to the folder class.
 
-=option  method METHOD | CLASS
+=option  method STRING|CLASS|ARRAY
 =default method C<'DOTLOCK'>
 
-Which kind of locking, specified as one of the following names, or a
-full CLASS name.  Supported METHODs are
+Which kind of locking, specified as one of the following names as STRING.
+You may also specify a CLASS name, or an ARRAY of names.  In case of an
+ARRAY, a 'multi' locker is started with all thee 
+full CLASS name.
+
+Supported locking names are
 
 =over 4
 
@@ -76,9 +80,10 @@ Use the POSIX standard fcntl locking.
 
 =item 'MULTI' | 'multi'
 
-Try more than one locking method to be used at the same time, probably
-all available, to avoid any chance that you miss a lock from a different
-application.
+Use ALL available locking methods at the same time, to have a bigger
+chance that the folder will not be modified by some other application
+which uses an unspecified locking method.  When one of the locking
+methods disallows access, the locking fails.
 
 =item 'NFS' | 'nfs'
 
@@ -108,8 +113,7 @@ lock, then this lock will be removed automatically after the specified
 number of seconds.
 
 =requires folder FOLDER
-
-Which folder is locked.
+Which FOLDER is to be locked, a M<Mail::Box> object.
 
 =option  timeout SECONDS|'NOTIMEOUT'
 =default timeout 10 seconds
@@ -147,16 +151,21 @@ sub new(@)
     # Try to figure out which locking method we really want (bootstrap)
 
     my %args   = @_;
-    my $method = defined $args{method} ? uc $args{method} : 'DOTLOCK';
+    my $method = !defined $args{method}       ? 'DOTLOCK'
+               : ref $args{method} eq 'ARRAY' ? 'MULTI'
+               :                                 uc $args{method};
+
     my $create = $lockers{$method} || $args{$method};
 
-    local $" = ' or ';
+    local $"   = ' or ';
     confess "No locking method $method defined: use @{[ keys %lockers ]}"
         unless $create;
 
     # compile the locking module (if needed)
     eval "require $create";
     confess $@ if $@;
+
+    $args{use} = $args{method} if ref $args{method} eq 'ARRAY';
 
     $create->SUPER::new(%args);
 }

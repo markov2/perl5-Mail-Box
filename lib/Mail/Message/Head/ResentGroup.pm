@@ -134,7 +134,7 @@ WARNING: this method has two very different purposes.  For backward
 compatibility reasons, without arguments M<resentFrom()> is called to
 return the C<From> field of this resent group.
 
-With any arguments, a a list of C<Mail::Message::Head::ResentGroup> objects
+With any arguments, a list of C<Mail::Message::Head::ResentGroup> objects
 is returned, taken from the specified MESSAGE or message HEAD.
 
 =cut

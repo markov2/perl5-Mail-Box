@@ -214,7 +214,7 @@ sub headToHtmlHead($@)
 =method fieldContentsToHtml FIELD, [SUBJECT]
 
 Format one field from the header to HTML.  When the header line usually
-usually contains e-mail addresses, the line is scanned and valid addresses
+contains e-mail addresses, the line is scanned and valid addresses
 are linked with an C<mailto:> anchor.  The SUBJECT can be specified to
 be included in that link.
 

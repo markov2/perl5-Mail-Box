@@ -65,7 +65,7 @@ Cc: the.rest@world.net
 Subject: Test of Bounce
 Date: Wed, 9 Feb 2000 15:44:05 -0500
 Content-Something: something
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: 53
 Lines: 2
 Content-Transfer-Encoding: 8bit

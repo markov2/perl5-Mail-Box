@@ -351,12 +351,14 @@ M<Mail::Message::Head::Complete>.
 The headers which are delayed: which will be read from file when it
 is needed, but not before.
 
-=option  lock_type CLASS|STRING
+=option  lock_type CLASS|STRING|ARRAY
 =default lock_type M<Mail::Box::Locker::DotLock>
 
 The type of the locker object.  This may be the full name of a CLASS
 which extends Mail::Box::Locker, or one of the known locker types
-C<DotLock>, C<File>, C<Multi>, C<NFS>, C<POSIX>, or C<NONE>.
+C<DotLock>, C<File>, C<Multi>, C<NFS>, C<POSIX>, or C<NONE>.  If an
+ARRAY is specified, then a Multi locker is built which uses the specified
+list.
 
 =option  locker OBJECT
 =default locker undef
@@ -669,7 +671,7 @@ M<updateMessages()> method which is doing the actual work here.
 sub update(@)
 {   my $self = shift;
 
-    my @new  = $self->updateMessages
+    $self->updateMessages
       ( trusted      => $self->{MB_trusted}
       , head_type    => $self->{MB_head_type}
       , field_type   => $self->{MB_field_type}
@@ -679,7 +681,6 @@ sub update(@)
       , @_
       );
 
-    $self->log(PROGRESS => "Found ".@new." new messages in $self");
     $self;
 }
 
@@ -1129,7 +1130,7 @@ sub isModified()
     return 1 if $self->{MB_modified};
 
     foreach (@{$self->{MB_messages}})
-    {   return $self->{MB_modified} = 1
+    {    return $self->{MB_modified} = 1
             if $_->isDeleted || $_->isModified;
     }
 
@@ -1894,7 +1895,7 @@ The options are the same as for M<readMessages()>.
 
 =cut
 
-sub updateMessages(@) {shift}
+sub updateMessages(@) { shift }
 
 #-------------------------------------------
 

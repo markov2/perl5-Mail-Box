@@ -55,6 +55,13 @@ sources interfere with your internal administration.  If you want
 fields not to be stripped (you would like to disable the stripping)
 you probably process folders yourself, which is a Bad Thing!
 
+=option  body_type CLASS
+=default body_type C<undef>
+
+Force a body type (any specific implementation of a M<Mail::Message::Body>)
+to be used to store the message content.  When the body is a multipart or
+nested, this will be overruled.
+
 =examples
 
  my $msg1 = Mail::Message->read(\*STDIN);
@@ -123,7 +130,7 @@ sub read($@)
      );
 
     my $self = $class->new(%args);
-    $self->readFromParser($parser);
+    $self->readFromParser($parser, $args{body_type});
     $self->addReport($parser);
 
     $parser->stop;

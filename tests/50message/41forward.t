@@ -166,7 +166,7 @@ Content-Transfer-Encoding: 8bit
 
 just checking
 --boundary-<removed>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: <removed>
 Lines: 1
 Content-Transfer-Encoding: 8bit
@@ -194,7 +194,7 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: <removed>
 Lines: 1
 Content-Transfer-Encoding: 8bit
@@ -210,7 +210,7 @@ X-Loop: yes
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: <removed>
 Lines: 1
 Content-Transfer-Encoding: 8bit
@@ -244,14 +244,14 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: <removed>
 Lines: 1
 Content-Transfer-Encoding: 8bit
 
 just checking
 --boundary-<removed>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: <removed>
 Lines: 1
 Content-Transfer-Encoding: 8bit
@@ -294,7 +294,7 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Length: <removed>
 Lines: 3
 

@@ -19,6 +19,9 @@ use File::Basename;
 use POSIX ':unistd_h';
 use IO::File ();
 
+my $windows;
+BEGIN { $windows = $^O =~ m/mswin32|cygwin/i }
+
 =chapter NAME
 
 Mail::Box::File - handle file-based folders
@@ -428,8 +431,12 @@ TYPE and CONFIG, a new configuration is set.
 =cut
 
 sub messageCreateOptions(@)
-{   my $self = shift;
-    $self->{MBF_create_options} = [ @_ ] if @_;
+{   my ($self, @options) = @_;
+    if(@options)
+    {   ref($_) && ref($_) =~ m/^Mail::/ && weaken $_ for @options;
+        $self->{MBF_create_options} = \@options;
+    }
+    
     @{$self->{MBF_create_options}};
 }
 
@@ -491,7 +498,8 @@ is tried.  Only when that fails, an C<INPLACE> update is performed.
 
 C<INPLACE> will be much faster than C<REPLACE> when applied on large
 folders, however requires the C<truncate> function to be implemented on
-your operating system.  It is also dangerous: when the program is interrupted
+your operating system (at least available for recent versions of Linux,
+Solaris, Tru64, HPUX).  It is also dangerous: when the program is interrupted
 during the update process, the folder is corrupted.  Data may be lost.
 
 However, in some cases it is not possible to write the folder with
@@ -635,7 +643,7 @@ sub _write_replace($)
     my $ok = $new->close;
     return 0 unless $old->close && $ok;
 
-    unlink $filename;
+    unlink $filename if $windows;
     unless(move $tmpnew, $filename)
     {   $self->log(WARNING =>
             "Cannot replace $filename by $tmpnew, to update folder $self: $!");
