@@ -3,8 +3,11 @@ use strict;
 use v5.6.0;
 
 package Mail::Box::MH;
-our @ISA     = 'Mail::Box';
-our $VERSION = v0.1;
+use Mail::Box;
+use Mail::Box::Index;
+
+our @ISA     = qw/Mail::Box Mail::Box::Index/;
+our $VERSION = v0.3;
 
 use Mail::Box;
 
@@ -22,8 +25,9 @@ Mail::Box::MH - Handle folders with a file per message.
 
 =head1 DESCRIPTION
 
-This manual-page describes Mail::Box::MH and Mail::Box::MH::*
-packages.  Read Mail::Box::Manager and Mail::Box first.
+Mail::Box::MH extends Mail::Box and Mail::Box::Index to implements
+MH-type folders.  This manual-page describes Mail::Box::MH and
+Mail::Box::MH::* packages.  Read Mail::Box::Manager and Mail::Box first.
 
 Handle file-based folders, where each folder is represented by a
 directory, and each message by a file in that directory.  Messages
@@ -72,55 +76,93 @@ headers were read.  In this case, you should use an index-file.
 
 =item new ARGS
 
-Create a new folder.  For the general options, see the manual of
-L<Mail::Box>.  Other options:
+Create a new folder.  The are many options which are taken from other
+objects.  For some, different options are set.  For MH-specific options
+see below, but first the full list.
+
+ access            Mail::Box          'r'
+ dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
+ folder            Mail::Box          $ENV{MAIL}
+ folderdir         Mail::Box          <no default>
+ index_filename    Mail::Box::Index   foldername.'/.index'
+ keep_index        Mail::Box::Index   0
+ labels_filename   Mail::Box::MH      foldername.'/.mh_sequence'
+ lazy_extract      Mail::Box          10kb
+ lockfile          Mail::Box::Locker  foldername.'/.lock'
+ lock_method       Mail::Box::Locker  'dotlock'
+ lock_timeout      Mail::Box::Locker  1 hour
+ lock_wait         Mail::Box::Locker  10 seconds
+ message_type      Mail::Box          'Mail::Box::MH::Message'
+ notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
+ notread_type      Mail::Box          'Mail::Box::MH::Message::NotParsed'
+ realhead_type     Mail::Box          'MIME::Head'
+ remove_when_empty Mail::Box          1
+ save_on_exit      Mail::Box          1
+ take_headers      Mail::Box          <specify everything you need>
+ <none>            Mail::Box::Tie
+
+MH specific options:
 
 =over 4
 
-=item * lockfile => FILENAME
+=item * labels_filename => FILENAME
 
-Which file shall be used for the dotlock-like locking mechanism.  When
-you specify an absolute pathname, that will be used.  A relative path
-will be related to the folder's directory.  The default is C<.lock>
- 
-=item * keep_index => BOOL
-
-Keep an index-file in the specified file, one file per directory.  Using
-an index-file will speed-up things considerably, because it avoids
-that all message-files have to be read on the moment that you open the
-folder.  When you open a folder, you need information like the the
-subject of each message, and it is not pleasant to open all thousands
-of messages to read them.
-
-By default, index-files are OFF (false)
-
-=item * index_filename => FILENAME
-
-The FILENAME which is used in each directory to store the headers of
-all mails.  The filename shall not contain a directory path (so: do not
-use C</usr/people/jan/.index>, nor C<subdir/.index>, but say C<.index>)
-
-The default filename is C<.index>.
+In MH-folders, messages can be labeled, for instance based on the
+sender or whether it is read or not.  This status is kept in a
+file which is usually called C<.mh_sequences>, but that name can
+be overruled with this flag.
 
 =back
 
 =cut
 
+my $default_folder_dir = "$ENV{HOME}/.mh";
+
 sub init($)
 {   my ($self, $args) = @_;
+
     $args->{message_type}     ||= 'Mail::Box::MH::Message';
     $args->{dummy_type}       ||= 'Mail::Box::Message::Dummy';
     $args->{notreadhead_type} ||= 'Mail::Box::Message::NotReadHead';
+    $args->{keep_index}       ||= 0;
+    $args->{folderdir}        ||= $default_folder_dir;
 
-    $self->SUPER::init($args);
-
-    $self->registerHeaders('REAL') if $args->{keep_index};
+    $self->Mail::Box::init($args);
 
     my $dirname                 = $self->{MB_dirname}
        = (ref $self)->folderToDirname($self->name, $self->folderdir);
-    $self->{MB_lockfile}        = $args->{lockfile};
-    $self->{MB_keep_index}      = $args->{keep_index}     || 0;
-    $self->{MB_indexfile}       = $args->{index_filename} || '.index';
+
+    for($args->{index_filename})
+    {  $args->{index_filename}
+          = !defined $_ ? "$dirname/.index"  # default
+          : m!^/!       ? $_                 # absolute
+          :               "$dirname/$_";     # relative
+    }
+
+    $self->Mail::Box::Index::init($args);
+
+    for($args->{lockfile} || undef)
+    {   $self->lockFilename
+          ( !defined $_ ? "$dirname/.index"  # default
+          : m!^/!       ? $_                 # absolute
+          :               "$dirname/$_"      # relative
+          );
+    }
+
+    for($args->{labels_filename})
+    {   $self->labelsFilename
+          ( !defined $_ ? "$dirname/.mh_sequences"  #default
+          : m!^/!       ? $_                 # absolute
+          :               "$dirname/$_"      # relative
+          );
+    }
+
+    if($args->{keep_index})
+    {   $self->registerHeaders('REAL');
+    }
+    else
+    {   $self->registerHeaders( qw/status x-status/ );
+    }
 
     # Check if we can write to the folder, if we need to.
 
@@ -140,27 +182,6 @@ sub init($)
 
 #-------------------------------------------
 
-=item lockfileName
-
-Returns the name of the lockfile, for the `dotlock' locking
-mechanism.  For Mail::Box::MH folders, this defaults to
-a file named C<.lock> in the folder directory.
-
-The C<lockfile> option to C<new> overrules the name.  If that
-name is relative, it will be taken relative to the folder-directory.
-
-=cut
-
-sub lockfileName
-{  my $self     = shift;
-   my $filename = $self->{MB_lockfile} || '.lock';
-   return $filename if $filename =~ m!/!;
-
-   $self->dirname . '/' . $filename;
-}
-
-#-------------------------------------------
-
 =item readMessages
 
 Read all messages from the folder.  This method is called at instantiation
@@ -172,6 +193,12 @@ reason.
 sub readMessages()
 {   my $self = shift;
     $self->lock;
+
+    # Prepare the labels.  The labels are related to the message-numbers,
+    # but there may be some messages lacking (f.i. manually removed), which
+    # means that after the reading, setting the labels would be harder.
+
+    my @labels = $self->readLabels;
 
     # Prepare to scan for headers we want.  To speed things up, we create
     # a regular expression which will only fit exact on the right headers.
@@ -201,10 +228,9 @@ sub readMessages()
     my $dirname    = $self->dirname;
 
     opendir DIR, $dirname or return;
-    my @messages = grep { -f && -r _ }
-                       map { "$dirname/$_" }
-                           sort {$a <=> $b}
-                               grep /^\d+$/, readdir DIR;
+    my @messages = grep { -f "$dirname/$_" && -r _ }
+                       sort {$a <=> $b}
+                           grep /^\d+$/, readdir DIR;
     closedir DIR;
 
     # Retreive the information from the index-file if that
@@ -212,12 +238,13 @@ sub readMessages()
     # a bit anxious about changes to the folder which were made
     # by other programs or the user by hand.
 
-    my @index = $self->readIndex;
+    my @index     = $self->readIndex($self->{MB_realhead_type});
     my $index_age = -M $self->indexFilename if @index;
-    my %index = map { $_->get('x-mailbox-filename') => $_ } @index;
+    my %index     = map { (scalar $_->get('x-mailbox-filename'), $_) } @index;
 
-    foreach my $msgfile (@messages)
+    foreach my $msgnr (@messages)
     {
+        my $msgfile = "$dirname/$msgnr";
         my $head;
 
         $head = $index{$msgfile}
@@ -228,6 +255,8 @@ sub readMessages()
         my @options =
           ( filename  => $msgfile
           , size      => $size
+          , msgnr     => $msgnr
+          , labels    => $labels[$msgnr] || undef
           );
 
         #
@@ -296,6 +325,7 @@ sub readMessages()
             $delayed++;
         }
 
+        $message->statusToLabels->XstatusToLabels;
         $self->addMessage($message) if $message;
 
         close MESSAGE;
@@ -305,6 +335,7 @@ sub readMessages()
 
     $self->{MB_source_mtime}  = (stat $dirname)[9];
     $self->{MB_delayed_loads} = $delayed;
+    $self->{MB_highest_msgnr} = $messages[-1];
 
     $self;
 }
@@ -320,8 +351,9 @@ that file.
 
 =cut
 
-sub writeMessages(;$)
-{   my Mail::Box::MH $self = shift;
+sub writeMessages()
+{   my $self     = shift;
+    my @messages = $self->messages;
 
     $self->lock;
 
@@ -331,8 +363,10 @@ sub writeMessages(;$)
     #       to remove the original before we are sure that the new version
     #       is on disk.
 
-    my $writer = 0;
-    foreach my $message ($self->messages)
+    my $writer = 1;
+    my %labeled;
+
+    foreach my $message (@messages)
     {
         # Remove deleted messages.
         if($message->deleted)
@@ -340,32 +374,116 @@ sub writeMessages(;$)
             next;
         }
 
-        my $new      = $self->dirname . '/' . $writer++;
+        my $new      = $self->dirname . '/' . $writer;
         my $filename = $message->filename;
 
         if($message->modified)
-        {   my $oldtmp   = "$filename.old";
+        {   # Write modified messages.
+            my $oldtmp   = "$filename.old";
             move($filename, $oldtmp);
 
-            open NEW, '>', $new or die;
-            $_->print(\*NEW);
-            close NEW;
+            my $new = FileHandle->new($new, 'w') or die;
+            $message->print($new);
+            $new->close;
 
             unlink $oldtmp;
         }
-        else
-        {   move($filename, $new);
+        elsif($filename eq $new)
+        {   # Nothing changed: content nor message-number.
         }
+        else
+        {   # Unmodified messages, but name changed.
+            move($filename, $new);
+        }
+
+        # Collect the labels.
+        my $labels = $message->labels;
+        push @{$labeled{$_}}, $writer foreach keys %$labels;
+
+        push @{$labeled{unseen}}, $writer
+            unless $labels->{seen} || 0;
+
+        $writer++;
     }
+
+    #
+    # Write the labels
+    #
+
+    $self->writeLabels(\%labeled);
 
     #
     # Write the index-file.
     #
 
-    $self->printIndex($self->messages);
+    $self->writeIndex(@messages);
     $self->unlock;
 
     1;
+}
+#-------------------------------------------
+
+=item appendMessages LIST-OF-OPTIONS
+
+(Class method) Append one or more messages to this folder.  See
+the manual-page of Mail::Box for explantion of the options.  The folder
+will not be opened.  Returns the list of written messages on success.
+
+Example:
+    my $message = Mail::Internet->new(...);
+    Mail::Box::Mbox->appendMessages
+      ( folder    => '=xyz'
+      , message   => $message
+      , folderdir => $ENV{FOLDERS}
+      );
+
+=cut
+
+sub appendMessages(@)
+{   my $class  = shift;
+    my %args   = @_;
+
+    my @messages = exists $args{message} ? $args{message}
+                 : exists $args{messages} ? @{$args{messages}}
+                 : return ();
+
+    my $self   = $class->new(@_, access => 'a');
+    $self->lock;
+
+    # Get labels from existing messages.
+    my @labels  = $self->readLabels;
+    my %labeled;
+    for(my $msgnr = 1; $msgnr < @labels; $msgnr++)
+    {   next unless defined $labels[$msgnr];
+        push @{$labeled{$_}}, $msgnr foreach @{$labels[$msgnr]};
+    }
+
+    my $msgnr  = $self->highestMessageNumber +1;
+    foreach my $message (@messages)
+    {
+        my $new = FileHandle->new($self->dirname . '/' . $msgnr, 'w')
+            or next;
+
+        $message->print($new);
+        $new->close;
+        
+        my $labels = $message->labels;
+        push @{$labeled{$_}}, $msgnr foreach keys %$labels;
+
+        push @{$labeled{unseen}}, $msgnr
+            unless $labels->{seen} || 0;
+
+        $msgnr++;
+    }
+
+    $self->writeLabels(\%labeled);
+    $self->close;
+
+    # We could update the message-index too, but for now, I just wait
+    # until someone opens the folder: then the index will be updated
+    # automatically.
+
+    @messages;
 }
 
 #-------------------------------------------
@@ -383,22 +501,6 @@ sub dirname() { shift->{MB_dirname} }
 
 #-------------------------------------------
 
-=item defaultFolderDir [FOLDERDIR]
-
-(class method)  Get or set the default directory where folders for this
-type are located.
-
-=cut
-
-my $default_folder_dir = "$ENV{HOME}/.mh";
-
-sub defaultFolderDir(;$)
-{   my $class = shift;
-    @_ ? ($default_folder_dir = shift) : $default_folder_dir;
-}
-
-#-------------------------------------------
-
 =item folderToDirname FOLDERNAME, FOLDERDIR
 
 (class method)  Translate a foldername into a filename, with use of the
@@ -408,80 +510,177 @@ FOLDERDIR to replace a leading C<=>.
 
 sub folderToDirname($$)
 {   my ($class, $name, $folderdir) = @_;
-use Carp;
-confess "folder to dirname @_.\n" unless $name;
     $name =~ /^=(.*)/ ? "$folderdir/$1" : $name;
 }
 
 #-------------------------------------------
 
-=item indexFilename
+=item highestMessageNumber
 
-Returns the index-file for a folder.  If the C<keep_index> option was
-not used when the folder was read, this returns undef.
-
-=cut
-
-sub indexFilename()
-{   my $self  = shift;
-    return unless $self->{MB_keep_index};
-
-    $self->dirname . '/' . $self->{MB_indexfile};
-}
-
-#-------------------------------------------
-
-=item printIndex MESSAGE [,MESSAGE]
-
-Write an index-file containing the specified messages, but only if the
-user requested it: the C<keep_index> option of C<new()> must have been
-specified.
+Returns the highest number which is used in the folder to store a file.  This
+method may be called when the folder is read (then this number can be
+derived without file-system access), but also when the folder is not
+read (yet).
 
 =cut
 
-sub printIndex(@)
+sub highestMessageNumber()
 {   my $self = shift;
-    my $index = $self->indexFilename || return $self;
 
-    open INDEX, '>', $index or return $self;
+    return $self->{MB_highest_msgnr}
+        if exists $self->{MB_highest_msgnr};
 
-    foreach (@_)
-    {   $_->printIndex(\*INDEX);
-        print INDEX "\n";
-    }
+    my $dirname    = $self->dirname;
 
-    close INDEX;
-    $self;
+    opendir DIR, $dirname or return;
+    my @messages = sort {$a <=> $b} grep /^\d+$/, readdir DIR;
+    closedir DIR;
+
+    $messages[-1];
 }
 
 #-------------------------------------------
 
-=item readIndex
+=back
 
-Read the index-file if it exists and the user has specified C<keep_index>
-with the constructor (C<new>) of this folder.  If that option is not
-specified, the C<readIndex> does not know under what name the index is
-stored.
+=head2 Manage message labels
+
+MH-folder use one dedicated file per folder-directory to list special
+tags to messages in the folder.  Typically, this file is called
+C<.mh_sequences>.  The messages are numbered from C<1>.
+
+Example content of C<.mh_sequences>:
+   cur: 93
+   unseen: 32 35-56 67-80
+
+To generalize labels on messages, two are treated specially:
+
+=over 4
+
+=item * cur
+
+The C<cur> specifies the number of the message where the user stopped
+reading mail from this folder at last access.  Internally in these
+modules refered to as label C<current>.
+
+=item * unseen
+
+With C<unseen> is listed which message was never read.
+This must be a mistake in the design of MH: it must be a source of
+confusion.  People should never use labels with a negation in the
+name:
+
+    if($seen)           if(!$unseen)    #yuk!
+    if(!$seen)          if($unseen)
+    unless($seen)       unless($unseen) #yuk!
+
+So: label C<unseen> is translated into C<seen> for internal use.
+
+=over 4
 
 =cut
 
-sub readIndex()
-{   my $self  = shift;
-    my $index = $self->indexFilename || return ();
+#-------------------------------------------
 
-    open INDEX, '<', $index or return ();
+=item labelsFilename [FILENAME]
 
-    my @index;
-    my $type = $self->{MB_realhead_type};
-    while(my $head = $type->read(\*INDEX))
-    {   my $message = $self->{MB_notparsed_type}->new
-              ( head => $head
-              );
-        push @index, $message;
+Returns the filename of the dedicated file which contains the label
+related to the messages in this folder-directory.
+
+=back
+
+=cut
+
+sub labelsFilename(;$)
+{   my $self = shift;
+    @_ ? $self->{MB_labelfile} = shift : $self->{MB_labelfile};
+}
+
+#-------------------------------------------
+
+=item readLabels
+
+In MH-folders, messages can be labeled to easily select sets which
+are, for instance, posted by who.  The file is usually called
+C<.mh_sequences> but that name can be overruled using the
+C<labels_filename> option of C<new()>.
+
+=cut
+
+sub readLabels()
+{   my $self = shift;
+    my $seq  = $self->labelsFilename || return ();
+
+    return unless open SEQ, '<', $seq;
+    my @labels;
+
+    while(<SEQ>)
+    {   s/\s*\#.*$//;
+        next unless length;
+        my $label;
+
+        next unless ($label) = s/^\s*(\w+)\s*\:\s*//;
+
+        my $set = 1;
+           if($label eq 'cur'   ) { $label = 'current' }
+        elsif($label eq 'unseen') { $label = 'seen'; $set = 0 }
+
+        foreach (split /\s+/)
+        {   if( /^(\d+)\-(\d+)\s*$/ )
+            {   push @{$labels[$_]}, $label, $set foreach $1..$2;
+            }
+            elsif( /^\d+\s*$/ )
+            {   push @{$labels[$_]}, $label, $set;
+            }
+        }
     }
 
-    close INDEX;
-    @index;
+    close SEQ;
+    @labels;
+}
+
+#-------------------------------------------
+
+=item writeLabels HASH
+
+Write the file which contains the relation between messages (actually
+the messages' sequence-numbers) and the labels those messages have.
+The parameter is a reference to an hash which contains for each
+label a reference to a list of message-numbers which have to be
+written.
+
+=cut
+
+sub writeLabels($)
+{   my ($self, $labeled) = @_;
+    my $filename = $self->labelsFilename || return;
+
+    my $seq      = FileHandle->new($filename, 'w') or return;
+    my $oldout   = select $seq;
+
+    print "# Generated by ",__PACKAGE__,"\n";
+
+    local $" = ' ';
+    foreach (sort keys %$labeled)
+    {
+        next if $_ eq 'seen';
+        $_ = 'cur' if $_ eq 'current';
+
+        print "$_:";
+        my @msgs  = @{$labeled->{$_}};  #they are ordered already.
+        while(@msgs)
+        {   my $start = shift @msgs;
+            my $end   = $start;
+
+            $end = shift @msgs
+                 while @msgs && $msgs[0]==$end+1;
+
+            print $start==$end ? " $start" : " $start-$end";
+        }
+    }
+
+    select $oldout;
+    $seq->close;
 }
 
 #-------------------------------------------
@@ -519,7 +718,7 @@ Example:
 
 sub foundIn($@)
 {   my ($class, $name, %args) = @_;
-    my $folderdir = $args{folderdir} || $class->defaultFolderDir;
+    my $folderdir = $args{folderdir} || $default_folder_dir;
     my $dirname   = $class->folderToDirname($name, $folderdir);
     -f "$dirname/1";
 }
@@ -544,9 +743,7 @@ List the folders in a certain directory.
 
 sub listFolders(@)
 {   my ($class, %args)  = @_;
-    my $dir             = defined $args{folderdir}
-                        ? $args{folderdir}
-                        : $class->defaultFolderDir;
+    my $dir             = $args{folderdir} || $default_folder_dir;
 
     $args{skip_empty} ||= 0;
     $args{check}      ||= 0;
@@ -660,6 +857,7 @@ sub init($)
 {   my ($self, $args) = @_;
 
     $self->{MBM_filename}   = $args->{filename};
+    $self->{MBM_msgnr}      = $args->{msgnr};
     $self;
 }
 
@@ -688,6 +886,7 @@ sub print()
         # unexplainably disappeared, we also print the internally
         # stored message.
 
+        $self->createStatus->createXStatus;
         $self->print($out);
     }
     else
@@ -741,6 +940,19 @@ will return C<undef> when the message is not read from a file.
 =cut
 
 sub filename() { shift->{MBM_filename} }
+
+#-------------------------------------------
+
+=item messageNr
+
+Returns the number of the message as is used in its filename.  MH-folders
+do put each message is a seperate file.  The files are numbers, but there
+may some numbers missing.
+
+=cut
+
+sub messageNr() { shift->{MBM_msgnr} }
+
 
 ###
 ### Mail::Box::MH::Message
@@ -851,7 +1063,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.1
+This code is alpha, version 0.3
 
 =cut
 

@@ -4,12 +4,13 @@ use v5.6.0;
 
 package Mail::Box::Mbox;
 our @ISA     = 'Mail::Box';
-our $VERSION = v0.1;
+our $VERSION = v0.3;
 
 use Mail::Box;
 
 use FileHandle;
 use File::Copy;
+use Fcntl qw(SEEK_END);
 
 =head1 NAME
 
@@ -47,8 +48,31 @@ I<folderdir> as specified at C<new>.
 
 =item new ARGS
 
-Create a new folder.  For the general options, see the manual of
-L<Mail::Box>.  Other options:
+Create a new folder.  Many options are taken from object-classes which
+Mail::Box::Mbox is an extention of.  Read below for a detailed
+description of Mbox specific options.
+
+ access            Mail::Box          'r'
+ dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
+ folder            Mail::Box          $ENV{MAIL}
+ folderdir         Mail::Box          $ENV{HOME}.'/Mail'
+ lazy_extract      Mail::Box          10kb
+ lockfile          Mail::Box::Locker  foldername.lock-extention
+ lock_extention    Mail::Box::Mbox    '.lock'
+ lock_method       Mail::Box::Locker  'dotlock'
+ lock_timeout      Mail::Box::Locker  1 hour
+ lock_wait         Mail::Box::Locker  10 seconds
+ message_type      Mail::Box          'Mail::Box::Mbox::Message'
+ notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
+ notread_type      Mail::Box          'Mail::Box::Mbox::Message::NotParsed'
+ realhead_type     Mail::Box          'MIME::Head'
+ remove_when_empty Mail::Box          1
+ save_on_exit      Mail::Box          1
+ subfolder_extention Mail::Box::Mbox  '.d'
+ take_headers      Mail::Box          <specify everything you need>
+ <none>            Mail::Box::Tie
+
+Mbox specific options:
 
 =over 4
 
@@ -63,9 +87,9 @@ You may specify an absolute filename, a relative (to the folder's
 directory) name, or an extention (preceeded by a dot).  So valid examples
 are:
 
-    .lock
-    my_own_lockfile.test
-    /etc/passwd
+    .lock                  # append to filename
+    my_own_lockfile.test   # full filename, same dir
+    /etc/passwd            # somewhere else
 
 =item * subfolder_extention => STRING
 
@@ -82,18 +106,32 @@ can be changed using this option.
 
 =cut
 
+my $default_folder_dir = $ENV{HOME} . '/Mail';
+
 sub init($)
 {   my ($self, $args) = @_;
     $args->{message_type}     ||= 'Mail::Box::Mbox::Message';
     $args->{dummy_type}       ||= 'Mail::Box::Message::Dummy';
     $args->{notreadhead_type} ||= 'Mail::Box::Message::NotReadHead';
+    $args->{folderdir}        ||= $default_folder_dir;
 
     $self->SUPER::init($args);
 
     my $filename                = $self->{MB_filename}
        = (ref $self)->folderToFilename($self->name, $self->folderdir);
 
+    $self->registerHeaders( qw/status x-status/ );
+
     $self->{MB_sub_ext}         = $args->{subfolder_extention} || '.d';
+
+    my $lockdir  = $filename;
+    $lockdir     =~ s!/([^/]*)$!!;
+    my $extent   = $args->{lock_extention} || '.lock';
+    $self->lockFilename
+      ( $extent =~ m!^/!   ? $extent
+      : $extent =~ m!^\.!  ? "$filename$extent"
+      :                      "$lockdir/$extent"
+      );
 
     # Check if we can write to the folder, if we need to.
 
@@ -103,45 +141,17 @@ sub init($)
             $self->{MB_access} = 'r';
         }
         else
-        {   unless(open CREATE, '>', $filename)
+        {   my $create = FileHandle->new($filename, 'w');
+            unless($create)
             {   warn "Cannot create folder $filename.\n";
                 return;
             }
-            close CREATE;
+            $create->close;
         }
     }
 
     $self;
 }
-
-#-------------------------------------------
-
-=item lockfileName
-
-Returns the name of the lockfile, for the `dotlock' locking
-mechanism.  For Mail::Box::Mbox folders, this defaults to
-an extention C<.lock> behind the name of the folder-file.
-
-The C<lock_extention> option to C<new> overrules the filename
-extention.  If that name is relative, it will be taken relative to
-the folder's directory.  In case of an absolute filename, that name
-is taken unmodified.
-
-=cut
-
-sub lockfileName
-{  my $self     = shift;
-   my $extent   = $self->{MB_lock_extention} || '.lock';
-
-   return $extent                   if $extent =~ m!/!;
-
-   my $filename = $self->filename;
-   return "$filename$extent" if $extent =~ m!\.!;
-
-   ($filename =~ s!/[^/]*$!!) . '/' . $extent;
-}
-
-
 
 #-------------------------------------------
 
@@ -305,6 +315,7 @@ sub readMessages(@)
               ( head => $header
               , @options
               );
+            $header->message($message);
 
             $delayed++;
         }
@@ -320,6 +331,8 @@ sub readMessages(@)
 
             $delayed++;
         }
+
+        $message->statusToLabels->XstatusToLabels;
 
         $self->addMessage($message) if $message;
     }
@@ -349,26 +362,65 @@ sub writeMessages()
     my $filename = $self->filename;
     my $tmpnew   = $self->tmpNewFolder($filename);
 
-    # Opening the file here, will avoid that each message opens the
-    # folder-file again.
     my $was_open = $self->fileIsOpen;
-    my $file     = $self->fileOpen || return 0;
+    $self->fileOpen || return;  # for delayed messages.
 
-    unless(open NEW, '>', $tmpnew)
+    my $new = FileHandle->new($tmpnew, 'w');
+    unless($new)
     {   warn "Unable to write to file $tmpnew for folder $self: $!\n";
-        $self->fileClose unless $was_open;
+        $self->fileClose;
         return 0;
     }
 
-    $_->print(\*NEW) foreach $self->messages;
+    $_->print($new) foreach $self->messages;
 
-    close NEW;
+    $new->close;
+    $self->fileClose unless $was_open;
 
     my $rc = move $tmpnew, $filename
        or warn "Could not replace $filename by $tmpnew, to update $self: $!\n";
 
-    $self->fileClose unless $was_open;
     $rc;
+}
+
+#-------------------------------------------
+
+=item appendMessages LIST-OF-OPTIONS
+
+(Class method) Append one or more messages to this folder.  See
+the manual-page of Mail::Box for explantion of the options.  The folder
+will not be opened.  Returns the list of written messages on success.
+
+Example:
+    my $message = Mail::Internet->new(...);
+    Mail::Box::Mbox->appendMessages
+      ( folder    => '=xyz'
+      , message   => $message
+      , folderdir => $ENV{FOLDERS}
+      );
+
+=cut
+
+sub appendMessages(@)
+{   my $class  = shift;
+    my %args   = @_;
+
+    my @messages = exists $args{message} ? $args{message}
+                 : exists $args{messages} ? @{$args{messages}}
+                 : return ();
+
+    my $folder = $class->new(@_, access => 'a');
+    $folder->lock;
+
+    my $file   = $folder->fileOpen || return ();
+    seek $file, 0, SEEK_END;
+
+    $_->print($file) foreach @messages;
+
+    $folder->fileClose;
+    $folder->close;
+
+    @messages;
 }
 
 #-------------------------------------------
@@ -383,22 +435,6 @@ Example:
 =cut
 
 sub filename() { shift->{MB_filename} }
-
-#-------------------------------------------
-
-=item defaultFolderDir [FOLDERDIR]
-
-(class method)  Get or set the default directory where folders for this
-type are located.
-
-=cut
-
-my $default_folder_dir = "$ENV{HOME}/Mail";
-
-sub defaultFolderDir(;$)
-{   my $class = shift;
-    @_ ? ($default_folder_dir = shift) : $default_folder_dir;
-}
 
 #-------------------------------------------
 
@@ -450,7 +486,7 @@ Example:
 
 sub foundIn($@)
 {   my ($class, $name, %args) = @_;
-    my $folderdir = $args{folderdir} || $class->defaultFolderDir;
+    my $folderdir = $args{folderdir} || $default_folder_dir;
     my $filename  = $class->folderToFilename($name, $folderdir);
     return 0 unless -f $filename;
     return 1 if -z $filename;  # empty folder is ok
@@ -488,7 +524,7 @@ sub listFolders(@)
 {   my ($class, %args)  = @_;
     my $dir             = defined $args{folderdir}
                         ? $args{folderdir}
-                        : $class->defaultFolderDir;
+                        : $default_folder_dir;
 
     $args{skip_empty} ||= 0;
     $args{check}      ||= 0;
@@ -670,6 +706,8 @@ sub print()
     {   # Modified messages are printed as they were in memory.  This
         # may change the order and content of header-lines and (of
         # course) also the body.
+
+        $self->createStatus->createXStatus;
         print $out $self->fromLine;
         $self->print($out);
         print $out "\n";
@@ -684,13 +722,13 @@ sub print()
         my $msg;
         unless(defined read($file, $msg, $size))
         {   warn "Could not read $size bytes for message from $folder.\n";
-            $folder->closeFile unless $was_open;
+            $folder->fileClose unless $was_open;
             return 0;
         }
         print $out $msg;
     }
 
-    $folder->closeFile unless $was_open;
+    $folder->fileClose unless $was_open;
     1;
 }
 
@@ -823,7 +861,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.1
+This code is alpha, version 0.3
 
 =cut
 

@@ -2,7 +2,7 @@
 package Mail::Box;
 
 use strict;
-our $VERSION = '0.1';
+our $VERSION = '0.3';
 
 use v5.6.0;
 
@@ -85,28 +85,46 @@ practices.
 
 (Class method) Create a new folder.  The ARGS is a list of labeled parameters
 defining what to do.  Each sub-class of Mail::Box will add different
-options to this method.  See their manual-pages.  Don't forget to read
-the manual-pages of the base-classes of folder (as listed above), because
-they define a considerable amount of options too.
+options to this method.  See their manual-pages.
 
-All folder-types share the following options for C<new>:
+All possible options are:  (for detail description of the Mail::Box
+specific options see below, for the other options their respective
+manual-pages)
+
+ access            Mail::Box          'r'
+ dummy_type        Mail::Box::Threads 'Mail::Box::Message::Dummy'
+ folder            Mail::Box          $ENV{MAIL}
+ folderdir         Mail::Box          <no default>
+ lazy_extract      Mail::Box          10kb
+ lockfile          Mail::Box::Locker  foldername.'.lock'
+ lock_method       Mail::Box::Locker  'dotlock'
+ lock_timeout      Mail::Box::Locker  1 hour
+ lock_wait         Mail::Box::Locker  10 seconds
+ message_type      Mail::Box          'Mail::Box::Message'
+ notreadhead_type  Mail::Box          'Mail::Box::Message::NotReadHead'
+ notread_type      Mail::Box          'Mail::Box::Message::NotParsed'
+ realhead_type     Mail::Box          'MIME::Head'
+ remove_when_empty Mail::Box          1
+ save_on_exit      Mail::Box          1
+ take_headers      Mail::Box          <specify everything you need>
+ <none>            Mail::Box::Tie
+
+The options added by Mail::Box
 
 =over 4
 
 =item * folder => FOLDERNAME
 
 Which folder to open (for read or write).  When used for reading (the
-C<access> option set to C<"r">, then the mailbox should already
+C<access> option set to C<"r">) the mailbox should already
 exist.  When opened for C<"rw">, we do not care, although write-permission
 is checked on opening.
 
 =item * access => MODE
 
-Access-rights to the folder. MODE can be read-only (C<"r">) and
-read-write (C<"rw">).  These constants are exported for you from
-C<Fcntl>.  You do not need to call that module yourself (but may).
-These modes have nothing in common with the modes actually used to
-open the folder-files within this module.
+Access-rights to the folder. MODE can be read-only (C<"r">), append (C<"a">),
+and read-write (C<"rw">).  These modes have nothing in common with the modes
+actually used to open the folder-files within this module.
 
 Folders are opened for read-only (C<"r">) by default.
 
@@ -115,15 +133,6 @@ Folders are opened for read-only (C<"r">) by default.
 Where are folders written by default?  You can specify a folder-name
 preceeded by C<=> to explicitly state that the folder is located below
 this directory.
-
-=item * lock_method =&gt; METHOD
-
-A folder is a sub-class of a Mail::Box::Locker, which maintains
-locking on folders in various ways.  You can specify a METHOD
-C<.lock>, C<file>, C<nfs>, or C<none>.  Using C<none> is dangerous,
-except in the testing-phase of you software.
-
-Read the Mail::Box::Locker manual for more details.
 
 =item * message_type => CLASS
 
@@ -264,8 +273,9 @@ sub new(@)
     $self->{MB_init_options} = [ @_ ];  # for synchronize and clone
     my %args    = @_;
 
-    my $folder  = $self->init(\%args) || return;
-    $folder->read;
+    $self->init(\%args);
+    $self->read if $self->readable;
+    $self;
 }
 
 sub init($)
@@ -276,14 +286,14 @@ sub init($)
         return;
     }
 
-    $self->{MB_message_opts} = $args->{message_options} || [];
+    $self->{MB_message_opts} = $args->{message_options}   || [];
     delete $args->{message_options};
 
     $self->{MB_folder_opts}  = [ %$args ];   # for sync() and clone()
 
-    $self->{MB_foldername}   = $args->{folder}    || $ENV{MAIL};
-    $self->{MB_access}       = $args->{access}    || 'r';
-    $self->folderdir($args->{folderdir} || (ref $self)->defaultFolderDir);
+    $self->{MB_foldername}   = $args->{folder}            || $ENV{MAIL};
+    $self->{MB_access}       = $args->{access}            || 'r';
+    $self->folderdir($args->{folderdir});
 
     $self->{MB_remove_empty} = $args->{remove_when_empty} || 1;
     $self->{MB_messages}     = [];
@@ -320,8 +330,10 @@ sub init($)
                           : $args->{take_headers}
                           ) if exists $args->{take_headers};
 
-    $self->Mail::Box::Locker::init($args);
-    $self->Mail::Box::Threads::init($args);
+    $self->Mail::Box::Locker::init($args)
+         ->Mail::Box::Threads::init($args);
+
+    $self;
 }
 
 #-------------------------------------------
@@ -511,7 +523,9 @@ sub close(@)
         $self->{MB_access} = 'rw';
     }
 
-    $write ? $self->write : 1;
+    my $rc = $write ? $self->write : 1;
+    $self->unlock;
+    $rc;
 }
 
 #-------------------------------------------
@@ -538,7 +552,7 @@ sub synchronize()
     my $type       = ref $self;
 
     $self->close;
-    $type->new(@options, folder => $name);
+    $type->new(@options);
 }
 
 #-------------------------------------------
@@ -600,14 +614,17 @@ sub name() { shift->{MB_foldername} }
 
 =item writeable
 
-Checks whether the current folder is writeable.
+=item readable
+
+Checks whether the current folder is writeable respectively readable.
 
 Example:
     $folder->addMessage($msg) if $folder->writeable;
 
 =cut
 
-sub writeable() { shift->{MB_access} eq 'rw' }
+sub writeable() { shift->{MB_access} =~ /w|a/ }
+sub readable()  { shift->{MB_access} =~ /r/ }
 
 #-------------------------------------------
 
@@ -741,12 +758,9 @@ sub addMessage($)
 {   my $self  = shift;
     my $msg   = shift || return $self;
 
-#warn "Before $msg ";
     # Be sure that the message is of the correct type.
     $msg      = $self->coerce($msg);
     $msg->folder($self);
-#warn "coerced into $msg.", $msg->folder, ".\n";
-
     my $msgid = $msg->messageID;
 
     # Threads may have created dummy place-holders.
@@ -767,6 +781,46 @@ sub addMessages(@)
 {   my Mail::Box $self = shift;
     $self->addMessage($_) foreach @_;
     $self;
+}
+
+#-------------------------------------------
+
+=item append LIST-OF-OPTIONS
+
+(Class method) Append one or more messages to an unopened folder.
+Usually, this method is called by the Mail::Box::Manager (its method
+C<appendMessage()>), in which case the correctness of the
+foldertype is checked.
+ 
+This method gets a list of labeled parameters, which may contain
+any flag which can be used when a folder is opened (most importantly
+C<folderdir>).  Next to these, two parameters shall be specified:
+
+=over 4
+
+=item * folder => FOLDERNAME
+
+The name of the folder where the messages are to be appended.  When possible,
+the folder-implementation will avoid to open the folder for real, because
+that is resource consuming.
+
+=item * message => MESSAGE
+
+=item * messages => ARRAY-OF-MESSAGES
+
+One reference to a MESSAGE or a reference to an ARRAY of MESSAGEs, which may
+be of any type.  The messages will first be coerced into the correct
+message-type to fit in the folder, and then be added to it.
+
+=back
+
+=cut
+
+sub append(@)
+{   my ($class, $foldername) = @_;
+    use Carp;
+    confess "Foldertype $class does not implement append.\n";
+    $class;
 }
 
 #-------------------------------------------
@@ -804,8 +858,9 @@ sub coerce($)
     # Reinitialize the message, but with the options as specified by the
     # creation of this folder, not the folder where the message came from.
 
-warn "Blessing $message into a $self->{MB_message_type}
-   with @{$self->{MB_message_opts}};.\n";
+#warn "Blessing $message into a $self->{MB_message_type}
+# with @{$self->{MB_message_opts}};.\n";
+
     bless ($message, $self->{MB_message_type})
        ->init(@{$self->{MB_message_opts}});
 }
@@ -901,6 +956,7 @@ sub DESTROY
 }
 
 #-------------------------------------------
+
 =back
 
 =head2 folder management methods
@@ -1032,7 +1088,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.1
+This code is alpha, version 0.3
 
 =cut
 

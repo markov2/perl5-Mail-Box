@@ -5,8 +5,8 @@ in their first months.
 
 The most important parts of the module were tested (see the test-scripts)
 but quite some things didn't get tested yet.  Please contribute with
-tests and fixed, were needed.  Even the tested parts, however, may still
-contain problems, because the number of tests is limited.
+tests and fixes, were needed.  Even the tested parts, however, may still
+contain problems, because the number of tests is still small.
 
 TO BE TESTED (and improved):
   thread discovery
@@ -14,6 +14,7 @@ TO BE TESTED (and improved):
   nfs-lock
   sub-folders
   delete folders
+  appending to unopened folders
 
 TO BE IMPLEMENTED:
   Thread lint

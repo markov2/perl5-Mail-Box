@@ -216,6 +216,11 @@ For instance, new message will be flagged modified immediately.
 
 Is the file deleted from the start?
 
+=item * labels => [ STRING => VALUE, ... ]
+
+Set the specified labels to their accompanying value.  In most cases, this
+value will only be used as boolean, but it might be more complex.
+
 =back
 
 =cut
@@ -239,7 +244,12 @@ sub init($)
     $self->{MBM_messageID} = $args->{messageID} || $unreg_msgid++;
     $self->{MBM_deleted}   = $args->{deleted}   || 0;
     $self->{MBM_modified}  = $args->{modified}  || 0;
-    $self->folder($args->{folder});
+    $self->folder($args->{folder}) if $args->{folder};
+
+    unless($self->isDummy)
+    {   $self->{MBM_labels}    = { seen => 0 };
+        $self->setLabel(@{$args->{labels}}) if $args->{labels};
+    }
 
     $self;
 }
@@ -371,6 +381,104 @@ sub deleted(;$)
     $folder->messageDeleted($self, $delete);
 
     $self->{MBM_deleted} = ($delete ? time : 0);
+}
+
+#-------------------------------------------
+
+=back
+
+=head2 Label management
+
+Labels are used to store knowledge about handling of the message within
+the folder.  Flags about whether a message was read, replied to, or
+(in some cases) scheduled for deletion.
+
+=over 4
+
+=item setLabel LIST
+
+=cut
+
+sub setLabel(@)
+{   my $self   = shift;
+    my $labels = $self->labels;
+    while(@_)
+    {   my $key = shift;          # order of two shifts in one line is not
+        $labels->{$key} = shift;  # defined.
+    }
+    $self;
+}
+
+#-------------------------------------------
+
+=item label STRING [ ,STRING ,...]
+
+Get the value related to the label(s).  This returns a list of values, which
+may be empty, undefined, or a value which evaluates to TRUE.
+
+Example:
+    if($message->label('seen')) {...}
+    my ($seen, $current) = $msg->label('seen', 'current');
+
+=cut
+
+sub label(@) { wantarray ? @{shift->labels}{@_} : shift->labels->{$_[0]} }
+
+#-------------------------------------------
+
+=item labels
+
+Returns all known labels.  In SCALAR context, it returns the knowledge
+as reference to a hash.  This is a reference to the original data, but
+you shall *not* change that data directly: call C<setLabel()> for
+changes!
+
+In LIST context, you get a list of names which are defined.  Be warned
+that they will not all evaluate to true, although most of them will.
+
+=cut
+
+sub labels()
+{   my $self = shift;
+    wantarray ? keys %{$self->{MBM_labels}} : $self->{MBM_labels};
+}
+
+sub statusToLabels()
+{   my $self   = shift;
+    my $status = $self->head->get('status') || return ();
+
+    $self->setLabel( seen => $status =~ /R/
+                   , old  => $status =~ /O/
+                   );
+}
+
+sub createStatus()
+{   my $self   = shift;
+    my ($seen, $old) = $self->labels('seen', 'old');
+
+    $self->head->replace
+      ( 'Status', ($seen ? 'RO' : $old ? '0' : ''));
+
+    $self;
+}
+
+sub XstatusToLabels()
+{   my $self   = shift;
+    my $status = $self->head->get('x-status') || return ();
+
+    $self->setLabel( replied => $status =~ /A/
+                   , flagged => $status =~ /F/
+                   );
+}
+
+sub createXStatus()
+{   my $self   = shift;
+    my ($replied, $flagged) = $self->labels('replied', 'flagged');
+
+    $self->head->replace
+      ( 'X-Status', ($replied ? 'A' : '').($flagged ? 'F' : ''));
+
+    $self;
 }
 
 #-------------------------------------------
@@ -836,7 +944,7 @@ sub new(@) { (bless {}, shift)->init( {@_} ) }
 sub init($)
 {   my ($self, $args) = @_;
     $self->{MBM_expect}  = $args->{expect};
-#   $self->{MBM_message} = $args->{message};
+    $self->{MBM_message} = $args->{message};
     $self;
 }
 
@@ -968,7 +1076,7 @@ sub AUTOLOAD
 {   my $self = $_[0];
     (my $method = $AUTOLOAD) =~ s/.*\:\://;
 
-warn "Load!! for $AUTOLOAD\n";
+#warn "Load!! for $AUTOLOAD\n";
     my $head = $self->{MBM_message}->load->head;
 
     $_[0]    = $head;   # try to infuence the handle which the caller
@@ -991,7 +1099,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.1
+This code is alpha, version 0.3
 
 =cut
 

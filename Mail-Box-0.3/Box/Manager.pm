@@ -3,7 +3,7 @@ package Mail::Box::Manager;
 
 use strict;
 use v5.6.0;
-our $VERSION = v0.1;
+our $VERSION = v0.3;
 
 use Mail::Box;
 
@@ -20,6 +20,10 @@ Mail::Box::Manager - Manage a set of folders
    $manager->close($folder);
 
 =head1 DESCRIPTION
+
+THIS CODE IS ALPHA!!!  THE TESTS SHOULD WORK, BUT MUCH IS EVEN NOT
+TESTED ONCE!!!  SO: ONLY FOR THE BRAVEST.  Please contribute tests
+and patches.
 
 The folder manager maintains a set of folders (mail-boxes).  Those
 folders may be of different types.  Most folder-types can be detected
@@ -38,14 +42,14 @@ Overview:
      Mail::Box      /                    isa
   (Mail::Box::Mbox)                  MIME::Entity
    (Mail::Box::MH)                   : :
-    : : :                             : :
-    : : :                             : Mail::Box::Message::Dummy
-    : : :                             Mail::Box::Message::NotParsed
+    : : :                            : :
+    : : :                            : Mail::Box::Message::Dummy
+    : : :                            Mail::Box::Message::NotParsed
     : : Mail::Box::Tie
     : Mail::Box::Threads
     Mail::Box::Locker
 
-All classes are written to be extendable.  The most complicated work
+All classes are written to be extendible.  The most complicated work
 is done in MIME::Entity, which is written by Eryq (eryq@zeegee.com)
 
 =head1 PUBLIC INTERFACE
@@ -376,24 +380,36 @@ sub appendMessage($@)
     # Not an open file.
     # Try to autodetect the folder-type and then add the message.
 
+    my ($name, $class, @options, $found);
+
     foreach (@{$self->{MBM_folder_types}})
-    {   my ($name, $class, @options) = @$_;
-        next unless $class->foundIn($folder, @options);
-        return $class->appendMessages(@_, @options);
+    {   ($name, $class, @options) = @$_;
+        if($class->foundIn($folder, @options))
+        {   $found++;
+            last;
+        }
     }
  
     # The folder was not found at all, so we take the default folder-type.
-    if(my $type = $self->{MBM_default_type})
+    if(!$found && my $type = $self->{MBM_default_type})
     {   foreach (@{$self->{MBM_folder_types}})
-        {   my ($name, $class, @options) = @_;
-            next unless $type eq $name || $type eq $class;
-            return $class->appendMessages(@_, @options);
+        {   ($name, $class, @options) = @_;
+            if($type eq $name || $type eq $class)
+            {   $found++;
+                last;
+            }
         }
     }
 
     # Even the default foldertype was not found.
-    my ($name, $class, @options) = @{$self->{MBM_folder_types}[1]};
-    $class->appendMessages(@_, @options);
+    ($name, $class, @options) = @{$self->{MBM_folder_types}[1]}
+       unless $found;
+
+    $class->appendMessages
+      ( folder   => $name
+      , messages => [ @_ ]
+      , @options
+      );
 }
 
 #-------------------------------------------
@@ -413,7 +429,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.1
+This code is alpha, version 0.3
 
 =cut
 

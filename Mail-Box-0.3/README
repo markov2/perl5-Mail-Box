@@ -1,0 +1,106 @@
+
+README   Mail::Box
+
+
+The Mail::Box folder is a modern mail-folder manager (at least on
+the moment of this writing)  It is written to replace Mail::Folder,
+although it interface is different.
+
+The most important manual-pages are Mail::Box::Manager, Mail::Box,
+and Mail::Box::Message.  They explain parts of the features in
+more detail than in this document.
+
+===== Features
+
+Although the implementation of Mail::Box is young, it has already
+a large number of features.  BE WARNED: NOT EVERYTHING WHAT IS
+IMPLEMENTED HAS BEEN TESTED!!!!  PLEASE HELP TESTING!
+
+= AUTOLOAD messages.
+
+Everyone who has used MIME::Entity will agree that this object is
+slow: detailed parsing of e-mail messages by MIME::Entity is twice
+as slow as the sloppy work of Mail::Internet (where it is based on).
+
+The Mail::Box folders are trying to keep the messages stored in the
+mailbox file(s) for as long as possible.  Only if the user of the
+folder really needs the content of the message, it is read from
+file and parsed.
+
+Demand-parsing/delayed parsing of messages is implemented using
+the standard AUTOLOAD mechanism, which means that it is not visible
+to the users of the folder!  This mechanism also reduces the memory
+foot-print of the program enormously.
+
+A few (or all) header-lines are available, even when a message is
+not parsed, to try to avoid autoloading as much as possible.  For
+instance the `Subject'-line is taken, because it is nearly always
+needed.
+
+Even so: messages which are written into a folder, without being
+modified (even when they were parsed) will be copied directly from
+original folder into the new one on byte-by-byte basis: no change.
+
+
+= Support for various folder-types
+
+Currently supported:
+* Mbox folders, see Mail::Box::Mbox
+  One file per folder, so many messages in each file.
+* MH folders, see Mail::Box::MH
+  One directory per folder, each message in a seperate file.
+
+On the wishlist:
+* Maildir folders
+  If anyone can tell me how they work exactly
+* Emaul folders
+  To be compatible with Mail::Folder.
+* and so on.
+
+= Support for message thread-discovery
+
+A very basic detection of message threads is implemented.  On the
+moment, only the in-reply-to and the reference fields are taken
+into account.  This could be optimized, for instance by looking
+at the subject.  Read more in Mail::Box::Threads.
+
+= Various kinds of locking
+
+There are three kinds of locking:
+* Locking via a .lock (dotlock) file.
+* Locking using flock
+* Locking via a .lock (dotlock) file which is NFS-safe.
+Read more in Mail::Box::Locker.
+
+= Managing folders
+
+A special folder manager was designed to keep track on opened
+folders.  This is the main object (read its manual-page before
+trying anything else).
+
+= Tied access
+
+If you like, you can tie a folder to an array, and fool around
+with that one.  Read Mail::Box::Tie.
+
+
+===== Differences with Mail::Folder
+
+The popular Mail::Folder package is around for many years.  It is
+written using Mail::Internet, instead of the more powerful
+MIME::Entity messages.
+
+An other large difference, is that the objects in Mail::Folder are
+less clear than in Mail::Box.  The supported mail-box types are
+seperately implemented, and share less code than they could.
+The folders manage themselves instead of a seperate folder-manager
+object.
+
+Mail::Folder does not support discussion-thread detection, nor
+autoloading of message data.  Therefore, it is much slower in
+accessing the folders.
+
+======
+
+Author: Mark Overmeer
+        mark@overmeer.net

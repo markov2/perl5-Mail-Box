@@ -3,7 +3,7 @@ use Test;
 use File::Compare;
 use lib '..';
 
-BEGIN {plan tests => 6}
+BEGIN {plan tests => 7}
 
 use Mail::Box::Mbox;
 
@@ -29,6 +29,7 @@ ok($folder->messages == 45);
 #
 
 my $message = $folder->message(2);
+ok(defined $message);
 ok($message->isa('Mail::Box::Message'));
 
 #

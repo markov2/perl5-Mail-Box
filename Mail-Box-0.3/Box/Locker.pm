@@ -3,7 +3,7 @@ package Mail::Box::Locker;
 
 use strict;
 use v5.6.0;
-our $VERSION = v0.1;
+our $VERSION = v0.3;
 
 use Fcntl         qw/:DEFAULT :flock/;
 use IO::File;
@@ -108,11 +108,18 @@ seconds.  The default is one hour.
 How long to wait for receiving the lock.  The lock-request may fail.
 If SECONDS equals 'NOTIMEOUT', then we wait till the lock can be taken.
 
+=item lockfile => FILENAME
+
+Name of the file to take the lock on or to represent a lock (depends on
+the kind of lock used).
+
+=back
+
 =cut
 
 my %lock_methods
-= ( 'dotlock' => [ qw/dot_lock   dot_test_lock  dot_unlock/  ]
-  , file    => [ qw/file_lock  file_test_lock file_unlock/  ]
+= ( dotlock => [ qw/dot_lock   dot_test_lock  dot_unlock/  ]
+  , file    => [ qw/file_lock  file_test_lock file_unlock/ ]
   , nfs     => [ qw/nfs_lock   nfs_test_lock  nfs_unlock/  ]
   , NONE    => [ sub {1}, sub {0}, sub {} ]
   );
@@ -120,8 +127,7 @@ my %lock_methods
 sub new(@) { (bless {}, shift)->init( {@_} ) }
 
 sub init($)
-{   my Mail::Box::Locker $self = shift;
-    my $args = shift;
+{   my ($self, $args) = @_;
 
     my $method = $args->{lock_method} || 'dotlock';
     unless(exists $lock_methods{$method})
@@ -129,10 +135,12 @@ sub init($)
         $method = 'NONE';
     }
 
-    $self->{MFL_method}   = $method;
-    $self->{MFL_timeout}  = 3600;
-    $self->{MFL_wait}     = 10;
-    $self->{MFL_haslock}  = 0;
+    $self->{MBL_method}   = $method;
+    $self->{MBL_timeout}  = 3600;
+    $self->{MBL_wait}     = 10;
+    $self->{MBL_haslock}  = 0;
+    $self->lockFilename($args->{lockfile}) if $args->{lockfile};
+
     $self;
 }
 
@@ -176,7 +184,7 @@ Examples:
 sub lock(;$$)
 {   my $self     = shift;
     my $folder   = ref $_[0] ? shift : $self;
-    my $method   = @_ ? shift : $self->{MFL_method};
+    my $method   = @_ ? shift : $self->{MBL_method};
 
     # Never lock twice.
     return 1 if $folder->hasLock;
@@ -206,7 +214,7 @@ Examples:
 sub isLocked(;$$)
 {   my $self     = shift;
     my $folder   = ref $_[0] ? shift : $self;
-    my $method   = @_ ? shift : $self->{MFL_method};
+    my $method   = @_ ? shift : $self->{MBL_method};
 
     my $function = $lock_methods{$method}[1];
     unless(defined $function)
@@ -233,7 +241,7 @@ Examples:
 sub hasLock(;$)
 {   my $self   = shift;
     my $folder = ref $_[0] ? shift : $self;
-    $self->{MFL_haslock};
+    $self->{MBL_haslock};
 }
 
 #-------------------------------------------
@@ -251,7 +259,7 @@ Examples:
 sub unlock(;$$)
 {   my $self     = shift;
     my $folder   = ref $_[0] ? shift : $self;
-    my $method   = @_ ? shift : $self->{MFL_method};
+    my $method   = @_ ? shift : $self->{MBL_method};
 
     my $function = $lock_methods{$method}[2];
     unless(defined $function)
@@ -261,7 +269,21 @@ sub unlock(;$$)
 
     no strict 'refs';
     ref $function ? $function->($folder) : $self->$function($folder);
-    delete $self->{MFL_haslock};
+    delete $self->{MBL_haslock};
+}
+
+#-------------------------------------------
+
+=item lockFilename [FILENAME]
+
+Returns the filename which is used to lock the folder.  It depends on the
+locking method how this file is used.
+
+=cut
+
+sub lockFilename(;$)
+{   my $self = shift;
+    @_ ? $self->{MBL_lockfile} = shift : $self->{MBL_lockfile};
 }
 
 #-------------------------------------------
@@ -273,7 +295,7 @@ sub try_dot_lock($)
     my $lock = IO::File->new($lockfile,
         O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK, 0600) or return 0;
 
-    $self->{MFL_haslock} = $lockfile;
+    $self->{MBL_haslock} = $lockfile;
     close $lock;
 
     1;
@@ -281,16 +303,16 @@ sub try_dot_lock($)
 
 sub do_dot_unlock($)
 {   my $self = shift;
-    my $lock = $self->{MFL_haslock};
+    my $lock = $self->{MBL_haslock};
     unlink $lock or warn "Couldn't remove lockfile $lock: $!\n";
-    delete $self->{MFL_haslock};
+    delete $self->{MBL_haslock};
     $self;
 }
 
 sub dot_lock
 {   my ($self, $folder) = @_;
-    my $lockfile = $folder->lockfileName;
-    my $end  = $self->{MFL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MFL_timeout};
+    my $lockfile = $folder->lockFilename;
+    my $end  = $self->{MBL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MBL_timeout};
 
     my $timer = 0;
 
@@ -300,7 +322,7 @@ sub dot_lock
 warn "Failed $lockfile.\n";
 
         if(   -e $lockfile
-           && -A $lockfile > ($self->{MFL_timeout}/86400)
+           && -A $lockfile > ($self->{MBL_timeout}/86400)
            && unlink $lockfile
           )
         {   warn "Removed expired lockfile $lockfile.\n";
@@ -316,7 +338,7 @@ warn "Failed $lockfile.\n";
 
 sub dot_test_lock($)
 {   my ($self, $folder) = @_;
-    my $lockfile = $folder->lockfileName;
+    my $lockfile = $folder->lockFilename;
 
     $self->try_dot_lock($lockfile) or return 0;
     $self->do_dot_unlock;
@@ -346,13 +368,13 @@ sub do_file_unlock($)
 
 sub file_lock
 {   my ($self, $folder) = @_;
-    my $end   = $self->{MFL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MFL_timeout};
+    my $end   = $self->{MBL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MBL_timeout};
     my $file  = $folder->filehandle;
 
     my $timer = 0;
     while($timer != $end)
     {   if($self->try_file_lock($file))
-        {   $self->{MFL_haslock} = $folder;
+        {   $self->{MBL_haslock} = $folder;
             return 1;
         }
 
@@ -428,18 +450,18 @@ sub NFS_lock
     # Create a file to link to
     my $tmpfile  = $self->construct_tmpfile($folder) or return;
     my $lockfile = $folder->filename.'.lock';
-    my $end  = $self->{MFL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MFL_timeout};
+    my $end  = $self->{MBL_timeout} eq 'NOTIMEOUT' ? 0 : $self->{MBL_timeout};
 
     my $timer = 0;
     while($timer != $end)
     {   if(my $fh = $self->try_nfs_lock($tmpfile, $lockfile))
         {   $fh->close;
-            $self->{MFL_haslock} = $lockfile;
+            $self->{MBL_haslock} = $lockfile;
             return 1;
         }
 
         if(   -e $lockfile
-           && -A $lockfile > ($self->{MFL_timeout}/86400)
+           && -A $lockfile > ($self->{MBL_timeout}/86400)
            && unlink $lockfile
           )
         {   warn "Removed expired lockfile $lockfile.\n";
@@ -490,7 +512,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 0.1
+This code is alpha, version 0.3
 
 =cut
 
