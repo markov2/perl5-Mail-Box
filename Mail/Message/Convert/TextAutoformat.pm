@@ -35,7 +35,7 @@ using Damian Conways Text::Autoformat.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  options HASH-REF
 =default options { all => 1 }

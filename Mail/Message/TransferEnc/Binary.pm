@@ -32,7 +32,7 @@ totally no encoding.
 
 #------------------------------------------
 
-=item new OPTIONS
+=c_method new OPTIONS
 
 =cut
 

@@ -51,7 +51,7 @@ which represents one message in a Mail::Box::Maildir folder.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a messages in a directory organized folder.
 
@@ -91,7 +91,7 @@ sub print(;$)
     my $out      = shift || select;
 
     return $self->SUPER::print($out)
-        if $self->modified;
+        if $self->isModified;
 
     my $filename = $self->filename;
     if($filename && -r $filename)
@@ -107,6 +107,10 @@ sub print(;$)
 
     1;
 }
+
+#-------------------------------------------
+
+BEGIN { *write = \&print }  # simply alias
 
 #-------------------------------------------
 
@@ -136,7 +140,7 @@ sub filename(;$)
 sub size()
 {   my $self = shift;
 
-    unless($self->modified)
+    unless($self->isModified)
     {   my $filename = $self->filename;
         if(defined $filename)
         {   my $size = -s $filename;
@@ -163,6 +167,11 @@ sub diskDelete()
 =method parser
 
 Create and return a parser for this message (-file).
+
+=error Cannot create parser for $filename.
+
+For some reason (the previous message have told you already) it was not possible
+to create a message parser for the specified filename.
 
 =cut
 
@@ -218,6 +227,20 @@ sub loadHead()
 This method is called by the autoloader when the body of the message
 is needed.
 
+=error Unable to read delayed head.
+
+Mail::Box tries to be I<lazy> with respect to parsing messages.  When a
+directory organized folder is opened, only the filenames of messages are
+collected.  At first use, the messages are read from their file.  Apperently,
+a message is used for the first time here, but has disappeared or is
+unreadible for some other reason.
+
+=error Unable to read delayed body.
+
+For some reason, the header of the message could be read, but the body
+cannot.  Probably the file has disappeared or the permissions were
+changed during the progress of the program.
+
 =cut
 
 sub loadBody()
@@ -267,13 +290,25 @@ message is printed to the file.  If the FILENAME already exists for
 this message, nothing is done.  In any case, the new FILENAME is set
 as well.
 
+=error Cannot write message to $filename: $!
+
+When a modified or new message is written to disk, it is first written
+to a temporary file in the folder directory.  For some reason, it is
+impossible to create this file.
+
+=error Failed to move $new to $filename: $!
+
+When a modified or new message is written to disk, it is first written
+to a temporary file in the folder directory.  Then, the new file is
+moved to replace the existing file.  Apparently, the latter fails.
+
 =cut
 
 sub create($)
 {   my ($self, $filename) = @_;
 
     my $old = $self->filename || '';
-    return $self if $filename eq $old && !$self->modified;
+    return $self if $filename eq $old && !$self->isModified;
 
     # Write the new data to a new file.
 
@@ -282,7 +317,7 @@ sub create($)
     $self->log(ERROR => "Cannot write message to $new: $!"), return
         unless $newfile;
 
-    $self->print($newfile);
+    $self->write($newfile);
     $newfile->close;
 
     # Accept the new data

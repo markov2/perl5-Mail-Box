@@ -31,7 +31,7 @@ comments have no meaning for unstructured fields, but encoding does.
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 =default attributes C<not accepted>
 =default extra C<not accepted>

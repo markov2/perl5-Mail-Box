@@ -37,7 +37,7 @@ using HTML::FormatText.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  leftmargin INTEGER
 =default leftmargin 3

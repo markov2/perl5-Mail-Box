@@ -42,7 +42,7 @@ Implements the POP3 protocol.  See also Mail::Box::POP3.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 

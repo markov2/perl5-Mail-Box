@@ -20,8 +20,9 @@ my $mgr = Mail::Box::Manager->new;
 
 $ENV{USER} = 'Jan';
 
-sub same($$)
-{   my ($made, $expect) = @_;
+sub same(@$)
+{   my $expect = pop @_;
+    my $made   = { @_ };
 
     unless(defined $made)
     {   warn "Nothing produced.";

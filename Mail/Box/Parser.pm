@@ -48,9 +48,9 @@ on your system, it will be used automatically.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
-(Class method)  Create a parser object which can handle one file.  For
+Create a parser object which can handle one file.  For
 mbox-like mailboxes, this object can be used to read a whole folder.  In
 case of MH-like mailboxes, each message is contained in a single file,
 so each message has its own parser object.
@@ -72,6 +72,12 @@ case this option is specified, the C<filename> is informational only.
 File-open mode, which defaults to C<'r'>, which means `read-only'.
 See C<perldoc -f open> for possible modes.  Only applicable 
 when no C<file> is specified.
+
+=error Filename or handle required to create a parser.
+
+A message parser needs to know the source of the message at creation.  These
+sources can be a filename (string), file handle object or GLOB.
+See new(filename) and new(file).
 
 =cut
 
@@ -108,9 +114,9 @@ sub init(@)
 
 #------------------------------------------
 
-=method defaultParserType [CLASS]
+=ci_method defaultParserType [CLASS]
 
-(Class or instance method) Returns the parser to be used to parse all subsequent
+Returns the parser to be used to parse all subsequent
 messages, possibly first setting the parser using the optional argument.
 Usually, the parser is autodetected; the C<C>-based parser will be used
 when it can be, and the Perl-based parser will be used otherwise.
@@ -185,6 +191,17 @@ sub start(@)
 Stop the parser, which will include a close of the file.  The lock on the
 folder will not be removed (is not the responsibility of the parser).
 
+=warning File $filename changed during access.
+
+When a message parser starts working, it takes size and modification time
+of the file at hand.  If the folder is written, it checks wether there
+were changes in the file made by external programs.
+
+Calling C<update> on a folder before it being closed will read these new
+messages.  But the real source of this problem is locking: some external
+program (for instance the mail transfer agent, like sendmail) uses a
+different locking mechanism as you do and therefore violates your rights.
+
 =cut
 
 sub stop()
@@ -250,7 +267,7 @@ sub fileChanged()
     return 0 unless $size;
 
       $size != $self->{MBP_size} ? 0
-    : !defined $mtime            ? 1
+    : !defined $mtime            ? 0
     : $mtime != $self->{MBP_mtime};
 }
     

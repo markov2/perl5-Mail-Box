@@ -49,7 +49,7 @@ opened folders.  Both facilities are rare for mail-agents.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 A Mail::Box::Thread::Manager object is created by a Mail::Box::Manager.
 One manager can produce more than one of these objects.  One thread manager can

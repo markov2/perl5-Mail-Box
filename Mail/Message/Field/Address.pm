@@ -27,7 +27,7 @@ Mail::Message::Field::Address - One e-mail address
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 =option  name STRING
 =default name ''

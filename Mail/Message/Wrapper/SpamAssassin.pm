@@ -44,7 +44,7 @@ interface to the spam checking software of Mail::SpamAssassin.
 
 #------------------------------------------
 
-=method new MESSAGE, OPTIONS
+=c_method new MESSAGE, OPTIONS
 
 Creates a wrapper around the MESSAGE.  There are no OPTIONS defined
 yet.

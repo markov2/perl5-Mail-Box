@@ -38,7 +38,7 @@ is very important here.
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 The constructor of this object does not follow the usual practise within
 the Mail::Box suite: it does not use the constructor Mail::Reporter::new().

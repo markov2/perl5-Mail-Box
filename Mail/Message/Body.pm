@@ -137,7 +137,7 @@ but this call will be most efficient for the MM::Body::Lines type.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 BE WARNED that, what you specify here are encodings and such which are
 already in place.  The options will not trigger conversions.  When you
@@ -289,7 +289,7 @@ sub init($)
 
     $self->SUPER::init($args);
 
-    $self->{MM_modified} = $args->{modified} || 0;
+    $self->{MMB_modified} = $args->{modified} || 0;
 
     my $filename;
     if(defined(my $file = $args->{file}))
@@ -418,27 +418,57 @@ sub message(;$)
 
 #------------------------------------------
 
-=method modified [BOOL]
+=method modified [BOOLEAN]
 
-Returns whether the body is flagged as being modified, optionally
-after setting it to BOOL.
+Change the body modification flag.  This will force a re-write of the body
+to a folder file when it is closed.  It is quite dangerous to change the
+body: especially be warned that you have to change the message-id as well:
+no two messages should have the same id.
+
+Without value, the current setting is returned, although you can better
+use isModified().
 
 =cut
 
 sub modified(;$)
 {  my $self = shift;
-   @_? $self->{MM_modified} = shift : $self->{MM_modified};
+   return $self->isModified unless @_;  # compat 2.036
+   $self->{MMB_modified} = shift;
 }
 
 #------------------------------------------
 
-=method print [FILE]
+=method isModified
 
-Print the body to the specified file (defaults to the selected handle)
+Returns whether the body has changed.
+
+=cut
+
+sub isModified() {  shift->{MMB_modified} }
+
+#------------------------------------------
+
+=method print [FILEHANDLE]
+
+Print the body to the specified FILEHANDLE (defaults to the selected handle).
+The handle may be a GLOB, an IO::File object, or... any object with a
+C<print> method will do.  Nothing useful is returned.
 
 =cut
 
 sub print(;$) {shift->notImplemented}
+
+#------------------------------------------
+
+=method printEscapedFrom FILEHANDLE
+
+Print the body to the specified FILEHANDLE but all lines which start
+with 'From ' (optionally already preceded by E<gt>'s) will habe an E<gt>
+added in front.  Nothing useful is returned.
+
+=cut
+
+sub printEscapedFrom($) {shift->notImplemented}
 
 #------------------------------------------
 

@@ -38,7 +38,12 @@ slower.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
+
+=error Unable to read file $filename for message body scalar: $!
+
+A Mail::Message::Body::Scalar object is to be created from a named file, but
+it is impossible to read that file to retrieve the lines within.
 
 =cut
 
@@ -53,7 +58,8 @@ sub _data_from_filename(@)
 
     local *IN;
     unless(open IN, '<', $filename)
-    {   $self->log(ERROR => "Unable to read file $filename: $!");
+    {   $self->log(ERROR =>
+            "Unable to read file $filename for message body scalar: $!");
         return;
     }
 
@@ -154,6 +160,16 @@ sub print(;$)
 {   my $self = shift;
     my $fh   = shift || select;
     $fh->print($self->{MMBS_scalar});
+}
+
+#------------------------------------------
+
+sub printEscapedFrom($)
+{   my ($self, $fh) = @_;
+
+    my $text = $self->{MMBS_scalar};
+    $text    =~ s/^(?=\>*From )/>/;
+    $fh->print($text);
 }
 
 #------------------------------------------

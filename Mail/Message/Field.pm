@@ -128,7 +128,7 @@ As user of the object, there is not visible difference.
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 See Mail::Message::Field::Fast::new(), Mail::Message::Field::Flex::new(),
 and Mail::Message::Field::Full::new().
@@ -472,6 +472,12 @@ sub string(;$)
 Returns the value which is related to this field as integer.  A check is
 performed whether this is right.
 
+=warning Field content is not numerical: $content
+
+The numeric value of a field is requested (for instance the C<Lines> or
+C<Content-Length> fields should be numerical), however the data contains
+weird characters.
+
 =cut
 
 sub toInt()
@@ -485,9 +491,9 @@ sub toInt()
 
 #------------------------------------------
 
-=method toDate [TIME]
+=ci_method toDate [TIME]
 
-(Class method) Convert a timestamp into a MIME-acceptable date format.  This
+Convert a timestamp into a MIME-acceptable date format.  This
 differs from the default output of C<localtime> in scalar context.  Without
 argument, the C<localtime> is used to get the current time.  Be sure to have
 your timezone set right, especially when this script runs automatically.
@@ -512,9 +518,9 @@ sub toDate($)
 
 #------------------------------------------
 
-=method stripCFWS [STRING]
+=ci_method stripCFWS [STRING]
 
-(Class or Instance method) Remove the I<comments> and I<folding white
+Remove the I<comments> and I<folding white
 spaces> from the STRING.  Without string and only as instance method, the
 unfoldedBody() is being stripped and returned.
 
@@ -560,9 +566,8 @@ sub stripCFWS($)
       
 #------------------------------------------
 
-=method dateToTimestamp STRING
+=ci_method dateToTimestamp STRING
 
-(Class method)
 Convert a STRING which represents and RFC compliant time string into
 a timestamp like is produced by the C<time> function.
 
@@ -591,7 +596,7 @@ e-mail addresses found in this header line.
 
 =cut
 
-sub addresses() { Mail::Address->parse(shift->body) }
+sub addresses() { Mail::Address->parse(shift->unfoldedBody) }
 
 #------------------------------------------
 
@@ -642,7 +647,6 @@ sub toDisclose()
 
 =method consume LINE | (NAME,BODY|OBJECTS)
 
-(Class method)
 Accepts a whole field LINE, or a pair with the field's NAME and BODY. In
 the latter case, the BODY data may be specified as array of OBJECTS which
 are stringified.  Returned is a nicely formatted pair of two strings: the
@@ -651,13 +655,25 @@ field's name and a folded body.
 This method is called by new(), and usually not be an application
 program.
 
+=warning Illegal character in field name $name
+
+A new field is being created which does contain characters not permitted
+by the RFCs.  Using this field in messages may break other e-mail clients
+or transfer agents, and therefore mutulate or extinguish your message.
+
+=warning Empty field: $name
+
+Empty fields are not allowed, however sometimes found in messages constructed
+by broken applications.  You probably want to ignore this message unless you
+wrote this broken application yourself.
+
 =cut
 
 sub consume($;$)
 {   my $self = shift;
     my ($name, $body) = defined $_[1] ? @_ : split(/\s*\:\s*/, (shift), 2);
 
-    Mail::Reporter->log(WARNING => "Illegal character in field name: $name")
+    Mail::Reporter->log(WARNING => "Illegal character in field name $name")
        if $name =~ m/[^\041-\071\073-\176]/;
 
     #
@@ -686,7 +702,7 @@ sub consume($;$)
         $body =~ s/^\s*/ /;  # start with one blank, folding kept unchanged
 
         if($body eq "\n")
-        {   Mail::Reporter->log(WARNING => "Empty field: $name\n");
+        {   $self->log(WARNING => "Empty field: $name\n");
             return ();
         }
     }

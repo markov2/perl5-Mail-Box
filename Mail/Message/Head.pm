@@ -75,7 +75,7 @@ described.  Read about differences in the sub-class specific pages.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a new message header object.  The object will store all the
 fields of a header.  When you get information from the header, it
@@ -192,21 +192,37 @@ sub isMultipart()
 
 =method modified [BOOLEAN]
 
-Returns whether the header has been modified after being read, optionally
-after setting that status first.
-This will not trigger completion.
+Sets the modified flag to BOOLEAN.  Without value, the current setting is
+returned, but in that case you can better use isModified().
+Changing this flag will not trigger header completion.
 
 =examples
 
- if($head->modified) { ... }
  $head->modified(1);
+ if($head->modified) { ... }
+ if($head->isModified) { ... }
 
 =cut
 
 sub modified(;$)
 {   my $self = shift;
-    @_ ? $self->{MMH_modified} = shift : $self->{MMH_modified};
+    return $self->isModified unless @_;
+    $self->{MMH_modified} = shift;
 }
+
+#------------------------------------------
+
+=method isModified
+
+Returns whether the header has been modified after being read.
+
+=examples
+
+ if($head->isModified) { ... }
+
+=cut
+
+sub isModified() { shift->{MMH_modified} }
 
 #------------------------------------------
 
@@ -288,7 +304,7 @@ returned.
 
 sub get($;$)
 {   my $known = shift->{MMH_fields};
-    my $value = $known->{lc shift};
+    my $value = $known->{lc(shift)};
     my $index = shift;
 
     if(defined $index)

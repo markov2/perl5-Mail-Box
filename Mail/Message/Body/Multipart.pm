@@ -7,7 +7,6 @@ use base 'Mail::Message::Body';
 use Mail::Message::Body::Lines;
 use Mail::Message::Part;
 
-use Carp;
 use IO::Lines;
 
 =head1 NAME
@@ -44,7 +43,7 @@ when a message contains attachments (parts).
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default mime_type  'multipart/mixed'
 
@@ -90,6 +89,11 @@ agents are very capable in warning the user themselves.
    , parts    => [ $intro, $folder->message(3)->decoded, $pgp ]
    );
 
+=error Data not convertible to a message (type is $type)
+
+An object which is not coercable into a Mail::Message::Part object was
+passed to the initiation.  The data is ignored.
+
 =cut
 
 #------------------------------------------
@@ -106,8 +110,8 @@ sub init($)
         {   next unless defined $raw;
             my $cooked = Mail::Message::Part->coerce($raw, $self);
 
-            croak 'Data not convertible to a message (type is ', ref $raw,")\n"
-                unless defined $cooked;
+            $self->log(ERROR => 'Data not convertible to a message (type is '
+                      , ref $raw,")\n"), next unless defined $cooked;
 
             push @parts, $cooked;
         }
@@ -265,6 +269,26 @@ sub print(;$)
 
 #------------------------------------------
 
+sub printEscapedFrom($)
+{   my ($self, $out) = @_;
+
+    my $boundary = $self->boundary;
+    if(my $preamble = $self->preamble) { $preamble->printEscapedFrom($out) }
+
+    foreach my $part ($self->parts('ACTIVE'))
+    {   $out->print("--$boundary\n");
+        $part->printEscapedFrom($out);
+        $out->print("\n");
+    }
+
+    $out->print("--$boundary--\n");
+    if(my $epilogue = $self->epilogue) { $epilogue->printEscapedFrom($out) }
+
+    $self;
+}
+
+#------------------------------------------
+
 =method foreachComponent CODE
 
 Execute the CODE for each component of the message: the preamble, the
@@ -338,8 +362,9 @@ sub foreachComponent($)
 
 =method preamble
 
-Returns the preamble (the text before the first message part --attachment),
-The preamble is stored in a BODY object, and its encoding is derived
+Returns the preamble; the text before the first message part (before the
+first real attachment).
+The preamble is stored in a BODY object, and its encoding is taken
 from the multipart header.
 
 =cut
@@ -350,9 +375,10 @@ sub preamble() {shift->{MMBM_preamble}}
 
 =method epilogue
 
-Returns the epilogue (the text after the last message part --attachment),
-The preamble is stored in a BODY object, and its encoding is derived
-from the multipart header.
+Returns the epilogue; the text after the last message part (after the
+last real attachment).
+The epilogue is stored in a BODY object, and its encoding is taken
+from the general multipart header.
 
 =cut
 
@@ -370,7 +396,7 @@ You may also specify a code reference which is called for each nested
 part.  The first argument will be the message part.  When the code
 returns true, the part is incorporated in the return list.
 
-Examples:
+=examples
 
  print "Number of attachments: ",
      scalar $message->body->parts('ACTIVE');
@@ -378,6 +404,11 @@ Examples:
  foreach my $part ($message->body->parts) {
      print "Type: ", $part->get('Content-Type');
  }
+
+=error Unknown criterium $what to select parts.
+
+Valid choices fdr part selections are C<'ALL'>, C<'ACTIVE'>, C<'DELETED'>,
+C<'RECURSE'> or a code reference.  However, some other argument was passed.
 
 =cut
 
@@ -390,10 +421,10 @@ sub parts(;$)
 
       $what eq 'RECURSE' ? (map {$_->parts('RECURSE')} @parts)
     : $what eq 'ALL'     ? @parts
-    : $what eq 'DELETED' ? (grep {$_->deleted} @parts)
-    : $what eq 'ACTIVE'  ? (grep {not $_->deleted} @parts)
+    : $what eq 'DELETED' ? (grep {$_->isDeleted} @parts)
+    : $what eq 'ACTIVE'  ? (grep {not $_->isDeleted} @parts)
     : ref $what eq 'CODE'? (grep {$what->($_)} @parts)
-    : confess "Select with what?";
+    : ($self->log(ERROR => "Unknown criterium $what to select parts."), return ());
 }
 
 #-------------------------------------------

@@ -1,4 +1,3 @@
- 
 use strict;
 use warnings;
 
@@ -9,7 +8,7 @@ use Scalar::Util 'dualvar';
 
 =head1 NAME
 
-Mail::Reporter - manage errors and traces for various Mail::* modules
+Mail::Reporter - base-class and error reporter for Mail::Box
 
 =head1 SYNOPSIS
 
@@ -45,7 +44,7 @@ constructor new().
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 This error container is also the base constructor for all modules, (as long
 as there is no need for an other base object)  The constructor always accepts
@@ -103,9 +102,8 @@ sub init($)
 
 #------------------------------------------
 
-=method defaultTrace [LEVEL, [LEVEL]
+=ci_method defaultTrace [LEVEL, [LEVEL]
 
-(Class method)
 Reports the default trace and log LEVEL which is used for object as list
 of two elements.  When not explicitly set, both are set to C<WARNINGS>.
 Two values are returned: the first is the log level, the second represents
@@ -130,7 +128,7 @@ the second the default trace level.
 =cut
 
 sub defaultTrace(;$$)
-{   my $self = shift;
+{   my $thing = shift;
 
     if(@_)
     {   my ($log, $trace) = @_==1 ? ($_[0], $_[0]) : @_;
@@ -142,7 +140,7 @@ sub defaultTrace(;$$)
            or croak "Undefined trace level $trace";
     }
 
-    ( $self->logPriority($default_log), $self->logPriority($default_trace) );
+    ( $thing->logPriority($default_log), $thing->logPriority($default_trace) );
 }
 
 #------------------------------------------
@@ -171,9 +169,8 @@ sub trace(;$)
 
 #------------------------------------------
 
-=method log [LEVEL [,STRINGS]]
+=ci_method log [LEVEL [,STRINGS]]
 
-(Class or Instance method)
 As instance method this function has three different purposes.  Without
 any argument, it returns one scalar containing the number which is internally
 used to represent the current log level, and the textual representation of
@@ -363,8 +360,16 @@ sub warnings(@) {shift->report('WARNINGS')}
 
 =method notImplemented
 
-A special case of the above log(), which logs a C<INTERNAL>-error
+A special case of log(), which logs a C<INTERNAL>-error
 and then croaks.  This is used by extension writers.
+
+=error Package $package does not implement $method.
+
+Fatal error: the specific package (or one of its superclasses) does not
+implement this method where it should. This message means that some other
+related classes do implement this method however the class at hand does
+not.  Probably you should investigate this and probably inform the author
+of the package.
 
 =cut
 
@@ -373,15 +378,15 @@ sub notImplemented(@)
     my $package = ref $self || $self;
     my $sub     = (caller 1)[3];
 
-    $self->log(INTERNAL => "$package does not implement $sub.");
+    $self->log(ERROR => "Package $package does not implement $sub.");
     confess "Please warn the author, this shouldn't happen.";
 }
 
 #------------------------------------------
 
-=method logPriority LEVEL
+=ci_method logPriority LEVEL
 
-(Class and instance method)  One error level (log or trace) has more
+One error level (log or trace) has more
 than one representation: a numeric value and one or more strings.  For
 instance, 4, 'WARNING', and 'WARNINGS' are all the same.  You can specify
 any of these, and in return you get a dualvar (see Scalar::Util::dualvar())
@@ -428,7 +433,7 @@ sub logSettings()
 
 =method inGlobalDestruction
 
-Returns whether the program is breaking down.  This is used in DESTROY,
+Returns whether the program is breaking down.  This is used in DESTROY(),
 where during global destructions references cannot be used.
 
 =cut

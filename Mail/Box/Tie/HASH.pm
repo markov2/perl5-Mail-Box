@@ -43,7 +43,7 @@ to the message-id.
 
 #-------------------------------------------
 
-=method tie HASH, 'Mail::Box::Tie::HASH', FOLDER
+=no_method tie HASH, 'Mail::Box::Tie::HASH', FOLDER
 
 Connects the FOLDER object to a HASH.
 
@@ -148,7 +148,7 @@ the folder message order.
  foreach my $msg (values %inbox) ...
 
  while(my ($msgid, $msg) = each %inbox) {
-    $msg->print unless $msg->deleted;
+    $msg->print unless $msg->isDeleted;
  }
 
 =cut
@@ -164,7 +164,7 @@ sub NEXTKEY($)
         return undef if $index >= $nrmsgs;
 
         $msg      = $folder->message($index);
-        last unless $msg->deleted;
+        last unless $msg->isDeleted;
     }
 
     $msg->messageId;
@@ -186,7 +186,7 @@ sub EXISTS($)
 {   my $folder = shift->{MBT_folder};
     my $msgid  = shift;
     my $msg    = $folder->messageId($msgid);
-    defined $msg && ! $msg->deleted;
+    defined $msg && ! $msg->isDeleted;
 }
 
 #-------------------------------------------

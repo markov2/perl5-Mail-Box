@@ -31,7 +31,7 @@ Maintain one message in an file-based folder.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Messages in file-based folders use the following options for creation:
 
@@ -76,21 +76,27 @@ sub coerce($)
 
 #-------------------------------------------
 
-=method print [FILEHANDLE]
+=method write [FILEHANDLE]
 
-Write one message to a file handle.  Unmodified messages are taken
-from the folder-file where they were stored.  Modified messages
-are written from memory.  Specify a FILEHANDLE to write to
-(defaults to the selected handle).
+Write one message to a file handle.  It is the message including the
+leading 'From ' line and trailing blank.  The From-line may interfere
+with lines in the body: those lines are escaped with an extra '>'.
+
+=examples
+
+ $msg->write(\*FILE);    # print the message with encaps to FILE
+ $msg->write;            # message with encaps to selected filehandle
+ $msg->print(\*FILE);    # the message without encaps.
 
 =cut
 
-sub print(;$)
+sub write(;$)
 {   my $self  = shift;
     my $out   = shift || select;
 
     $out->print($self->fromLine);
-    $self->SUPER::print($out);
+    $self->head->print($out);
+    $self->body->printEscapedFrom($out);
     $out->print("\n");
     $self;
 }
@@ -191,6 +197,8 @@ sub loadHead() { shift->head }
 #-------------------------------------------
 
 =method loadBody
+
+=error Unable to read delayed body.
 
 =cut
 

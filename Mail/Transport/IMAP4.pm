@@ -41,7 +41,7 @@ by Mail::Box::IMAP4 for the real work.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create the IMAP connection to the server.  IMAP servers can handle
 multiple folders for a single user, which means that connections
@@ -113,12 +113,18 @@ sub ids(;@)
 Returns (in scalar context only) the number of messages that are known
 to exist in the mailbox.
 
+=error Cannot get the messages of imap4 via messages()
+
+It is not possible to retreive all messages on a remote IMAP4 folder
+at once: each shall be taken separately.  The IMAP4 folder will hide this
+for you.
+
 =cut
 
 sub messages()
 {   my $self = shift;
 
-    $self->log(INTERNAL => "Cannot get the messages via pop3 this way."), return ()
+    $self->log(ERROR =>"Cannot get the messages of imap4 via messages()."), return ()
        if wantarray;
 
     $self->{MTP_messages};
@@ -331,6 +337,11 @@ If the contact to the server was still present, or could be established,
 an IO::Socket::INET object is returned.  Else, C<undef> is returned and
 no further actions should be tried on the object.
 
+=error Cannot re-connect reliably to server which doesn't support UIDL.
+
+The connection to the remote IMAP4 was lost, and cannot be re-established
+because the server's protocol implementation lacks the necessary information.
+
 =cut
 
 sub socket(;$)
@@ -339,8 +350,13 @@ sub socket(;$)
     my $socket = $self->_connection;
     return $socket if $socket;
 
-    return unless $self->_reconnectok;
-    return unless $socket = $self->_login;
+    unless(exists $self->{MTP_nouidl})
+    {   $self->log(ERROR =>
+           "Can not re-connect reliably to server which doesn't support UIDL");
+        return;
+    }
+
+    return unless $socket = $self->login;
     return unless $self->_status( $socket );
 
 # Save socket in the object and return it
@@ -358,6 +374,16 @@ that socket.  Logs an error if either writing to or reading from socket failed.
 This method does B<not> attempt to reconnect or anything: if reading or
 writing the socket fails, something is very definitely wrong.
 
+=error Cannot read IMAP4 from socket: $!
+
+It is not possible to read the success status of the previously given IMAP4
+command.  Connection lost?
+
+=error Cannot write IMAP4 to socket: $@
+
+It is not possible to send a protocol command to the IMAP4 server.  Connection
+lost?
+
 =cut
 
 sub send($$)
@@ -367,11 +393,11 @@ sub send($$)
    
     if(eval {print $socket @_})
     {   $response = <$socket>;
-        $self->log(ERROR => "Could not read from socket: $!")
-	 unless defined $response;
+        $self->log(ERROR => "Cannot read IMAP4 from socket: $!")
+	   unless defined $response;
     }
     else
-    {   $self->log(ERROR => "Could not write to socket: $@");
+    {   $self->log(ERROR => "Cannot write IMAP4 to socket: $@");
     }
     $response;
 }
@@ -450,15 +476,21 @@ sub _reconnectok
 
 # See if we are allowed to reconnect
 
-    return 1 unless exists $self->{MTP_nouidl};
-    $self->log(ERROR =>
-     "Can not re-connect reliably to server which doesn't support UIDL");
     0;
 }
 
 #------------------------------------------
 
-sub _login(;$)
+=method login
+
+Establish a new connection to the IMAP4 server, using username and password.
+
+IMAP4 requires a username and password
+Cannot connect to $host:$port for IMAP4: $!
+
+=cut
+
+sub login(;$)
 {   my $self = shift;
 
 # Check if we can make a TCP/IP connection
@@ -467,13 +499,13 @@ sub _login(;$)
     my ($interval, $retries, $timeout) = $self->retry;
     my ($host, $port, $username, $password) = $self->remoteHost;
     unless($username and $password)
-    {   $self->log(ERROR => "Must have specified username and password");
+    {   $self->log(ERROR => "IMAP4 requires a username and password");
         return;
     }
 
     my $socket = eval {IO::Socket::INET->new("$host:$port")};
     unless($socket)
-    {   $self->log(ERROR => "Could not connect to $host:$port: $!");
+    {   $self->log(ERROR => "Cannot connect to $host:$port for IMAP4: $!");
         return;
     }
 

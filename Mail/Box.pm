@@ -121,9 +121,9 @@ help implementing more of them.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
-(Class method) Open a new folder. A list of labeled OPTIONS
+Open a new folder. A list of labeled OPTIONS
 for the mailbox can be supplied. Some options pertain to Mail::Box, and
 others are added by sub-classes. The list below describes all the options
 provided by any Mail::Box.
@@ -395,6 +395,11 @@ added to the body of the message.  With this flag set, the erroneous line
 is added to the previous header field and parsing is continued.
 See Mail::Box::Parser::Perl(fix_header_errors).
 
+=error No folder name specified.
+
+You did not specify the name of a folder to be opened.  Use the C<folder>
+option or set the C<MAIL> environment variable.
+
 =cut
 
 sub new(@)
@@ -427,7 +432,7 @@ sub init($)
     my $class      = ref $self;
     my $foldername = $args->{folder} || $ENV{MAIL};
     unless($foldername)
-    {   $self->log(ERROR => "No folder specified: specify the folder option or set the MAIL environment variable.");
+    {   $self->log(ERROR => "No folder name specified.");
         return;
     }
 
@@ -515,7 +520,7 @@ Create a new folder, with the same settings as this folder.  One of
 the specified options must be new folder to be opened.  Other options
 overrule those of the folder where this is a clone from.
 
-=examples
+=example
 
  my $folder2 = $folder->clone(folder => '=jan');
 
@@ -532,9 +537,9 @@ sub clone(@)
 
 #-------------------------------------------
 
-=method create FOLDERNAME, OPTIONS
+=c_method create FOLDERNAME, OPTIONS
 
-(Class method) Create a folder.  If the folder already exists, it will
+Create a folder.  If the folder already exists, it will
 be left unchanged.  As options, you may specify:
 
 =option  folderdir DIRECTORY
@@ -613,6 +618,7 @@ the actual type of mailbox used.
 =examples
 
  print $folder->name;
+ print "$folder";       # overloaded stringification
 
 =cut
 
@@ -696,6 +702,17 @@ Do also write messages which where flagged to be deleted to their folder.  The
 flag for deletion is conserved (when possible), which means that a re-open of
 the folder may remove the messages for real.  See close(save_deleted).
 
+=error Folder $name is opened read-only
+
+You can not write to this folder unless you have opened the folder to
+write or append (see new(access)), or the C<force> option is set true.
+
+=error Writing folder $name failed
+
+For some reason (you probably got more error messages about this problem)
+it is impossible to write the folder, although you should because there
+were changes made.
+
 =cut
 
 sub write(@)
@@ -710,7 +727,7 @@ sub write(@)
     if($args{save_deleted}) {@keep = $self->messages }
     else
     {   foreach ($self->messages)
-        {   if($_->deleted)
+        {   if($_->isDeleted)
             {   push @destroy, $_;
                 $_->diskDelete;
             }
@@ -718,7 +735,7 @@ sub write(@)
         }
     }
 
-    unless(@destroy || $self->modified)
+    unless(@destroy || $self->isModified)
     {   $self->log(PROGRESS => "Folder $self not changed, so not updated.");
         return $self;
     }
@@ -782,21 +799,39 @@ sub organization() { shift->notImplemented }
 
 =method modified [BOOLEAN]
 
-C<modified> checks if the folder is modified, optionally after setting the
-flag.   A folder is modified when any of the messages is to be deleted, any
-of the messages has changed, or messages are added after the folder was
-read from file.
+Sets whether the folder is modified or not.
 
 =cut
 
-sub modified($)
+sub modified(;$)
+{   my $self = shift;
+    return $self->isModified unless @_;   # compat 2.036
+
+    return
+      if $self->{MB_modified} = shift;    # force modified flag
+
+    # unmodify all messages
+    $_->modified(0) foreach $self->messages;
+    0;
+}
+
+#-------------------------------------------
+
+=method isModified
+
+Checks if the folder is modified.  A folder is modified when any of the
+messages is to be deleted, any of the messages has changed, or messages
+are added after the folder was read from file.
+
+=cut
+
+sub isModified()
 {   my $self     = shift;
-    return $self->{MB_modified} = shift if @_;
     return 1 if $self->{MB_modified};
 
     foreach (@{$self->{MB_messages}})
     {    return $self->{MB_modified} = 1
-            if $_->deleted || $_->modified;
+            if $_->isDeleted || $_->isModified;
     }
 
     0;
@@ -899,6 +934,23 @@ of true will select the default.
  $imap->copyTo($mh, delete_copied => 1);
  $mh->close; $imap->close;
 
+=error Destination folder $name is not writable.
+
+The folder where the messages are copied to is not opened with write
+access (see new(access)).  This has no relation with write permission
+to the folder which is controled by your operating system.
+
+=error Copying failed for one message.
+
+For some reason, for instance disc full, removed by external process, or
+read-protection, it is impossible to copy one of the messages.  Copying will
+proceed for the other messages.
+
+=error Unable to create subfolder $name of $folder.
+
+The copy includes the subfolders, but for some reason it was not possible
+to copy one of these.  Copying will proceed for all other sub-folders.
+
 =cut
 
 sub copyTo($@)
@@ -933,7 +985,7 @@ sub _copy_to($@)
     # Take messages from this folder.
     foreach my $msg ($self->messages($select))
     {   if($msg->copyTo($to)) { $msg->delete if $delete }
-        else { $self->log(ERROR => "Copy failed.") }
+        else { $self->log(ERROR => "Copying failed for one message.") }
     }
 
     return $self unless $flatten || $recurse;
@@ -1025,6 +1077,13 @@ the folder may remove the messages for real.  See write(save_deleted).
  $f->close
      or die "Couldn't write $f: $!\n";
 
+=warning Changes not written to read-only folder $self.
+
+You have opened the folder read-only (which is the default, see new(access)),
+made modifications, and now want to close it.  Set option C<force> if you
+want to overrule the access mode, or close the folder with option
+C<write> set to C<'NEVER'>.
+
 =cut
 
 sub close(@)
@@ -1042,7 +1101,7 @@ sub close(@)
 
     my $write;
     for($args{write} || 'MODIFIED')
-    {   $write = $_ eq 'MODIFIED' ? $self->modified
+    {   $write = $_ eq 'MODIFIED' ? $self->isModified
                : $_ eq 'ALWAYS'   ? 1
                : $_ eq 'NEVER'    ? 0
                : croak "Unknown value to folder->close(write => $_).";
@@ -1081,6 +1140,13 @@ data if the system crashes or if there are software problems.
 
  my $folder = Mail::Box::Mbox->new(folder => 'InBox');
  $folder->delete;
+
+=error Folder $name not deleted: not writable.
+
+The folder must be opened with write access (see new(access)), otherwise
+removing it will be refused.  So, you may have write-access according to
+the operating system, but that will not automatically mean that this
+C<delete> method permits you to.  The reverse remark is valid as well.
 
 =cut
 
@@ -1175,6 +1241,19 @@ method instead of C<messageId> if you really need a thorough search.
  my $msg = $folder->messageId('complex-message.id');
  my $msg = $folder->messageId('garbage <complex-message.id> trash');
 
+=warning Message-id '$msgid' does not contain a domain.
+
+According to the RFCs, message-ids need to contain a unique random part,
+then an C<@>, and then a domain name.  This is made to avoid the creation
+of two messages with the same id.  The warning emerges when the C<@> is
+missing from the string.
+
+=warning Different messages with id $msgid.
+
+The message id is discovered more than once within the same folder, but the
+content of the message seems to be different.  This should not be possible:
+each message must be unique.
+
 =cut
 
 sub messageId($;$)
@@ -1183,6 +1262,9 @@ sub messageId($;$)
     if($msgid =~ m/\<([^>]+)\>/s )
     {   $msgid = $1;
         $msgid =~ s/\s//gs;
+
+        $self->log(WARNING => "Message-id '$msgid' does not contain a domain.")
+            unless index($msgid, '@') >= 0;
     }
 
     return $self->{MB_msgid}{$msgid} unless @_;
@@ -1210,7 +1292,7 @@ sub messageId($;$)
         return $message->delete
             if $subj1 eq $subj2 && $to1 eq $to2;
 
-        $self->log(NOTICE => "Different message with id $msgid.");
+        $self->log(WARNING => "Different messages with id $msgid.");
         $msgid = $message->takeMessageId(undef);
     }
 
@@ -1277,7 +1359,7 @@ simply a code reference.  The message is passed as only argument.
 
  my $subset     = $folder->messages(10,-8);
 
- my @not_deleted= grep {not $_->deleted} $folder->messages;
+ my @not_deleted= grep {not $_->isDeleted} $folder->messages;
  my @not_deleted= $folder->messages('ACTIVE'); # same
 
  my $nr_of_msgs = $folder->messages;           # scalar context
@@ -1307,8 +1389,8 @@ sub messages($;$)
     my $what = shift;
     my $action
       = ref $what eq 'CODE'? $what
-      : $what eq 'DELETED' ? sub {$_[0]->deleted}
-      : $what eq 'ACTIVE'  ? sub {not $_[0]->deleted}
+      : $what eq 'DELETED' ? sub {$_[0]->isDeleted}
+      : $what eq 'ACTIVE'  ? sub {not $_[0]->isDeleted}
       : $what eq 'ALL'     ? sub {1}
       : $what =~ s/^\!//   ? sub {not $_[0]->label($what)}
       :                      sub {$_[0]->label($what)};
@@ -1326,7 +1408,7 @@ those of messages which are to be deleted.
 For some folder-types (like MH), this method may cause all message-files
 to be read.  See their respective manual pages.
 
-=examples
+=example
 
  foreach my $id ($folder->messageIds) {
     $folder->messageId($id)->print;
@@ -1438,9 +1520,8 @@ sub scanForMessages($$$$)
 
 #-------------------------------------------
 
-=method listSubFolders OPTIONS
+=ci_method listSubFolders OPTIONS
 
-(Class and Instance method)
 List the names of all sub-folders to this folder, not recursively
 decending.  Use these names as argument to openSubFolder(), to get
 access to that folder.
@@ -1745,9 +1826,9 @@ sub writeMessages(@) {shift->notImplemented}
 
 #-------------------------------------------
 
-=method appendMessages OPTIONS
+=c_method appendMessages OPTIONS
 
-(Class method) Append one or more messages to an unopened folder.
+Append one or more messages to an unopened folder.
 Usually, this method is called by the Mail::Box::Manager (its method
 appendMessage()), in which case the correctness of the
 folder type is checked.
@@ -1811,9 +1892,7 @@ sub locker() { shift->{MB_locker}}
 
 =method toBeThreaded MESSAGES
 
-=method toBeUnthreaded MESSAGES
-
-The specified message is ready to be included in (or remove from) a thread.
+The specified message is ready to be removed from a thread.
 This will be passed on to the mail-manager, which keeps an overview on
 which thread-detection objects are floating around.
 
@@ -1828,6 +1907,16 @@ sub toBeThreaded(@)
     $manager->toBeThreaded($self, @_);
     $self;
 }
+
+#-------------------------------------------
+
+=method toBeUnthreaded MESSAGES
+
+The specified message is ready to be included in a thread.
+This will be passed on to the mail-manager, which keeps an overview on
+which thread-detection objects are floating around.
+
+=cut
 
 sub toBeUnthreaded(@)
 {   my $self = shift;
@@ -1847,11 +1936,16 @@ sub toBeUnthreaded(@)
 
 #-------------------------------------------
 
-=method timespan2seconds TIME
+=ci_method timespan2seconds TIME
 
 TIME is a string, which starts with a float, and then one of the
 words 'hour', 'hours', 'day', 'days', 'week', or 'weeks'.  For instance:
 '1 hour' or '4 weeks'.
+
+=error Invalid timespan '$timespan' specified.
+
+The string does not follow the strict rules of the time span syntax which
+is permitted as parameter.
 
 =cut
 
@@ -1863,7 +1957,7 @@ sub timespan2seconds($)
         :                $1 * 604800;  # week
     }
     else
-    {   carp "Invalid timespan '$_' specified.\n";
+    {   $_[0]->log(ERROR => "Invalid timespan '$_' specified.\n");
         undef;
     }
 }

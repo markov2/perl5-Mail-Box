@@ -36,7 +36,7 @@ Mail::Box module, this object can be used separately.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a new pop3 server connection.  One object can only handle one
 connection: for a single user to one single server.  If the server
@@ -109,12 +109,18 @@ sub ids(;@)
 Returns (in scalar context only) the number of messages that are known
 to exist in the mailbox.
 
+=error Cannot get the messages of pop3 via messages()
+
+It is not possible to retreive all messages on a remote POP3 folder
+at once: each shall be taken separately.  The POP3 folder will hide this
+for you.
+
 =cut
 
 sub messages()
 {   my $self = shift;
 
-    $self->log(INTERNAL => "Cannot get the messages via pop3 this way."), return ()
+    $self->log(ERROR =>"Cannot get the messages of pop3 via messages()."), return ()
        if wantarray;
 
     $self->{MTP_messages};
@@ -352,6 +358,11 @@ If the contact to the server was still present, or could be established,
 an IO::Socket::INET object is returned.  Else, C<undef> is returned and
 no further actions should be tried on the object.
 
+=error Cannot re-connect reliably to server which doesn't support UIDL.
+
+The connection to the remote POP3 was lost, and cannot be re-established
+because the server's protocol implementation lacks the necessary information.
+
 =cut
 
 sub socket(;$)
@@ -360,9 +371,14 @@ sub socket(;$)
     my $socket = $self->_connection;
     return $socket if $socket;
 
-    return unless $self->_reconnectok;
-    return unless $socket = $self->_login;
-    return unless $self->_status( $socket );
+    if(exists $self->{MTP_nouidl})
+    {   $self->log(ERROR =>
+           "Can not re-connect reliably to server which doesn't support UIDL");
+        return;
+    }
+
+    return unless $socket = $self->login;
+    return unless $self->status( $socket );
 
 # Save socket in the object and return it
 
@@ -379,6 +395,16 @@ that socket.  Logs an error if either writing to or reading from socket failed.
 This method does B<not> attempt to reconnect or anything: if reading or
 writing the socket fails, something is very definitely wrong.
 
+=error Cannot read POP3 from socket: $!
+
+It is not possible to read the success status of the previously given POP3
+command.  Connection lost?
+
+=error Cannot write POP3 to socket: $@
+
+It is not possible to send a protocol command to the POP3 server.  Connection
+lost?
+
 =cut
 
 sub send($$)
@@ -388,11 +414,11 @@ sub send($$)
    
     if(eval {print $socket @_})
     {   $response = <$socket>;
-        $self->log(ERROR => "Could not read from socket: $!")
-	 unless defined $response;
+        $self->log(ERROR => "Cannot read POP3 from socket: $!")
+           unless defined $response;
     }
     else
-    {   $self->log(ERROR => "Could not write to socket: $@");
+    {   $self->log(ERROR => "Cannot write POP3 to socket: $@");
     }
     $response;
 }
@@ -466,20 +492,44 @@ sub _connection(;$)
 
 #------------------------------------------
 
-sub _reconnectok
-{   my $self = shift;
+=method login
 
-# See if we are allowed to reconnect
 
-    return 1 unless exists $self->{MTP_nouidl};
-    $self->log(ERROR =>
-     "Can not re-connect reliably to server which doesn't support UIDL");
-    0;
-}
+=method login
 
-#------------------------------------------
+Establish a new connection to the POP3 server, using username and password.
+ 
+=error POP3 requires a username and password.
 
-sub _login(;$)
+No username and/or no password specified for this POP3 folder, although
+these are obligatory parts in the protocol.
+
+=error Cannot connect to $host:$port for POP3: $!
+
+Unsuccesful in connecting to the remote POP3 server.
+
+=error Server at $host:$port does not seem to be talking POP3.
+
+The remote server did not respond to an initial exchange of messages as is
+expected by the POP3 protocol.  The server has probably a different
+service on the specified port.
+
+=error Could not authenticate using any login method.
+
+No authentication method was explicitly prescribed, so both AUTH and APOP were
+tried.  However, both failed.  There are other authentication methods, which
+are not defined by the main POP3 RFC rfc1939.  These protocols are not
+implemented yet.  Please contribute your implementation.
+
+=error Could not authenticate using '$some' method.
+
+The authenication method to get access to the POP3 server did not result in
+a connection.  Maybe you need a different authentication protocol, or your
+username with password are invalid.
+
+=cut
+
+sub login(;$)
 {   my $self = shift;
 
 # Check if we can make a TCP/IP connection
@@ -487,14 +537,14 @@ sub _login(;$)
     local $_; # make sure we don't spoil it for the outside world
     my ($interval, $retries, $timeout) = $self->retry;
     my ($host, $port, $username, $password) = $self->remoteHost;
-    unless($username and $password)
-    {   $self->log(ERROR => "Must have specified username and password");
+    unless($username && $password)
+    {   $self->log(ERROR => "POP3 requires a username and password.");
         return;
     }
 
     my $socket = eval {IO::Socket::INET->new("$host:$port")};
     unless($socket)
-    {   $self->log(ERROR => "Could not connect to $host:$port: $!");
+    {   $self->log(ERROR => "Cannot connect to $host:$port for POP3: $!");
         return;
     }
 
@@ -505,7 +555,7 @@ sub _login(;$)
     my $welcome = <$socket>;
     unless(OK($welcome))
     {   $self->log(ERROR =>
-           "Server at $host:$port does not seem to be talking POP3");
+           "Server at $host:$port does not seem to be talking POP3.");
         return;
     }
 
@@ -515,7 +565,7 @@ sub _login(;$)
     {   if($welcome =~ m#^\+OK (<\d+\.\d+\@[^>]+>)#)
         {   my $md5 = Digest::MD5::md5_hex($1.$password);
             my $response = $self->send($socket, "APOP $username $md5\n")
-	     or return;
+	        or return;
             $connected = OK($response);
         }
     }
@@ -545,7 +595,17 @@ sub _login(;$)
 
 #------------------------------------------
 
-sub _status($;$)
+=method status SOCKET
+
+Update the current status of folder on the remote POP3 server.
+
+=error POP3 Could not do a STAT
+
+For some weird reason, the server does not respond to the STAT call.
+
+=cut
+
+sub status($;$)
 {   my ($self,$socket) = @_;
 
 # Check if we can do a STAT
@@ -557,7 +617,7 @@ sub _status($;$)
     else
     {   delete $self->{MTP_messages};
         delete $self->{MTP_size};
-        $self->log(ERROR => "Could not do a STAT");
+        $self->log(ERROR => "POP3 Could not do a STAT");
         return;
     }
 

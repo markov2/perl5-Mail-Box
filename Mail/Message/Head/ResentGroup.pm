@@ -48,7 +48,7 @@ my @ordered_field_names = qw/return_path delivered_to received date from
 
 #------------------------------------------
 
-=method new [FIELDS], OPTIONS
+=c_method new [FIELDS], OPTIONS
 
 Create an object which maintains one set of resent headers.  The
 FIELDS are Mail::Message::Field objects from the same header.
@@ -105,6 +105,13 @@ must contain a message id.
 =option  Delivered-To STRING|FIELD
 =default Delivered-To undef
 
+=error Message header required for creation of ResentGroup.
+
+It is required to know to which header the resent-group is created.  Use the
+C<head> option.
+Maybe you should use Mail::Message::Head::Complete::addResentGroup() with
+DATA, which will organize the correct initiations for you.
+
 =cut
 
 sub new(@)
@@ -127,7 +134,7 @@ sub init($$)
         foreach grep m/^[A-Z]/, keys %$args;
 
     my $head = $self->{MMHR_head} = $args->{head};
-    $self->log(INTERNAL => "Message header required for ResentGroup")
+    $self->log(ERROR => "Message header required for creation of ResentGroup.")
        unless defined $head;
 
     weaken( $self->{MMHR_head} );

@@ -33,7 +33,7 @@ Maildir-folder. Each message is stored in a separate file.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 
@@ -150,6 +150,13 @@ Accept a message for the folder.  This will move it from the C<new> or
 C<tmp> sub-directories into the C<cur> sub-directory.  When you accept an
 already accepted message, nothing will happen.
 
+=error Message $filename is not in a Maildir folder.
+
+To accept a message into a folder (move it from a temporary location into
+this folder's view), it must be already created one maildir folder's
+sub-directory. When a I<foreign> message is coerce to become part of a
+maildir, the coercion will create a file which is acceptable.
+
 =cut
 
 sub accept($)
@@ -157,7 +164,7 @@ sub accept($)
     my $old    = $self->filename;
 
     unless($old =~ m!(.*)/(new|cur|tmp)/([^:]*)(\:[^:]*)?$! )
-    {   $self->log(ERROR => "filename $old is not in a Maildir folder.\n");
+    {   $self->log(ERROR => "Message $old is not in a Maildir folder.\n");
         return undef;
     }
 

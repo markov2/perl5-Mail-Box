@@ -46,7 +46,7 @@ the folder, as shown in the examples below.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a new lock. You may do this directly. However, in most cases the
 lock will not be separately instantiated but will be the second class in

@@ -53,7 +53,7 @@ this respect.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 

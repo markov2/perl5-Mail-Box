@@ -78,7 +78,7 @@ known to have exploitable security breaches.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default via 'sendmail'
 
@@ -142,6 +142,11 @@ sub send($@)
 Try to send the message. This will return true if successful, and
 false in case some problems where detected.  The C<$?> contains
 the exit status of the command which was started.
+
+=error Transporters of type $class cannot send.
+
+The Mail::Transporter object of the specified type can not send messages,
+but only receive message.
 
 =cut
 

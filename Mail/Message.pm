@@ -97,7 +97,7 @@ BEGIN { $crlf_platform = $^O =~ m/win32|cygwin/i }
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  body OBJECT
 =default body undef
@@ -193,9 +193,9 @@ sub init($)
 
 #------------------------------------------
 
-=method coerce MESSAGE
+=c_method coerce MESSAGE
 
-(Class method) Coerce a MESSAGE into a Mail::Message.  In some
+Coerce a MESSAGE into a Mail::Message.  In some
 occasions, for instance where you add a message to a folder, this
 coercion is automatically called to ensure that the correct message
 type is stored.
@@ -303,34 +303,47 @@ sub messageID() {shift->messageId}   # compatibility
 =method modified [BOOLEAN]
 
 Returns (optionally after setting) whether this message is flagged as
-being modified.  The modification flag is set C<true> when header lines
-are changed, the header or body replaced by a new one, or when labels
-are modified.
+being modified.  See isModified().
 
 =cut
 
 sub modified(;$)
 {   my $self = shift;
 
-    if(@_)
-    {   my $flag = shift;
-        $self->{MM_modified} = $flag;
-        my $head = $self->head;
-        $head->modified($flag) if $head;
-        my $body = $self->body;
-        $body->modified($flag) if $body;
-    }
+    return $self->isModified unless @_;  # compatibility 2.036
 
+    my $flag = shift;
+    $self->{MM_modified} = $flag;
+    my $head = $self->head;
+    $head->modified($flag) if $head;
+    my $body = $self->body;
+    $body->modified($flag) if $body;
+
+    $flag;
+}
+
+#------------------------------------------
+
+=method isModified
+
+Returns whether this message is flagged as being modified.  Modifications
+are changes in header lines, when a new body is set to the message
+(dangerous), or when labels change.
+
+=cut
+
+sub isModified()
+{   my $self = shift;
     return 1 if $self->{MM_modified};
 
     my $head = $self->head;
-    if($head && $head->modified)
+    if($head && $head->isModified)
     {   $self->{MM_modified}++;
         return 1;
     }
 
     my $body = $self->body;
-    if($body && $body->modified)
+    if($body && $body->isModified)
     {   $self->{MM_modified}++;
         return 1;
     }
@@ -407,19 +420,45 @@ sub isDummy() { 0 }
 =method print [FILEHANDLE]
 
 Print the message to the FILE-HANDLE, which defaults to the selected
-filehandle.
+filehandle, without the encapsulation sometimes required by a folder
+type, like write() does.
 
 =examples
 
- $message->print(\*STDERR);
- $message->print;
+ $message->print(\*STDERR);  # to the error output
+ $message->print;            # to the selected file
 
  my $out = IO::File->new('out', 'w');
- $message->print($out);
+ $message->print($out);      # no encapsulation: no folder
+ $message->write($out);      # with encapsulation: is folder.
 
 =cut
 
 sub print(;$)
+{   my $self = shift;
+    my $out  = shift || select;
+
+    $self->head->print($out);
+    $self->body->print($out);
+    $self;
+}
+
+#------------------------------------------
+
+=method write [FILEHANDLE]
+
+Write the message to the FILE-HANDLE, which defaults to the selected
+FILEHANDLE, with all surrounding information which is needed to put
+it correctly in a folder file.
+
+In most cases, the result of C<write> will be the same as with print().  The
+main exception is for Mbox folder messages, which will get printed with
+their leading 'From ' line and a trailing blank.  Each line of their body
+which starts with 'From ' will have an E<gt> added in front.
+
+=cut
+
+sub write(;$)
 {   my $self = shift;
     my $out  = shift || select;
 
@@ -452,6 +491,12 @@ is short (but little less flexibile) for
 
 See examples/send.pl in the distribution of Mail::Box.
 
+=error No default mailer found to send message.
+
+The message send() mechanism had not enough information to automatically
+find a mail transfer agent to sent this message.  Specify a mailer
+explicitly using the C<via> options.
+
 =cut
 
 my $default_mailer;
@@ -466,7 +511,7 @@ sub send(@)
        : !@options && defined $default_mailer             ? $default_mailer
        : ($default_mailer = Mail::Transport::Send->new(@options));
 
-    $self->log(ERROR => "No mailer found"), return
+    $self->log(ERROR => "No default mailer found to send message."), return
         unless defined $mailer;
 
     $mailer->send($self, @options);
@@ -549,7 +594,8 @@ LABELS hash.  They are added later.
 
 =example
 
- my $head = $msg->head(new Mail::Message::Head);
+ $msg->head(Mail::Message::Head->new);  # set
+ my $head = $msg->head;                 # get
 
 =cut
 
@@ -742,6 +788,8 @@ sub destinations()
 Returns the message's subject, or the empty string.
 
 =example
+
+ print $msg->subject;
 
 =cut
 
@@ -1010,13 +1058,14 @@ sub parts(;$)
      :                       $self;
 
       ref $what eq 'CODE' ? (grep {$what->($_)} @parts)
-    : $what eq 'ACTIVE'   ? (grep {not $_->deleted } @parts)
-    : $what eq 'DELETED'  ? (grep { $_->deleted } @parts)
+    : $what eq 'ACTIVE'   ? (grep {not $_->isDeleted } @parts)
+    : $what eq 'DELETED'  ? (grep { $_->isDeleted } @parts)
     : $what eq 'ALL'      ? @parts
     : $recurse            ? @parts
     : confess "Select parts via $what?";
 }
-sub deleted() {0} # needed for parts('ACTIVE'|'DELETED') on non-folder messages.
+
+sub isDeleted() {0} # needed for parts('ACTIVE'|'DELETED') on non-folder messages.
 
 #------------------------------------------
 
@@ -1074,6 +1123,69 @@ that they will not all evaluate to true, although most of them will.
 sub labels()
 {   my $self = shift;
     wantarray ? keys %{$self->{MM_labels}} : $self->{MM_labels};
+}
+
+#------------------------------------------
+
+=method labelsToStatus
+
+When the labels were changes, there may be an effect for the
+C<Status> and/or C<X-Status> header-lines.  Whether this update has
+to take place depends on the type of folder.
+
+=cut
+
+sub labelsToStatus()
+{   my $self    = shift;
+    my $head    = $self->head;
+    my $labels  = $self->labels;
+
+    my $status  = $head->get('status') || '';
+    my $newstatus
+      = $labels->{seen}    ? 'RO'
+      : $labels->{old}     ? 'O'
+      : '';
+
+    $head->set(Status => $newstatus)
+        if $newstatus ne $status;
+
+    my $xstatus = $head->get('x-status') || '';
+    my $newxstatus
+      = ($labels->{replied} ? 'A' : '')
+      . ($labels->{flagged} ? 'F' : '');
+
+    $head->set('X-Status' => $newxstatus)
+        if $newxstatus ne $xstatus;
+
+    $self;
+}
+
+#-------------------------------------------
+
+=method statusToLabels
+
+Update the labels according the status lines in the header.  Defined values
+for the 'Status' field are C<R> (Read, label 'seen') and C<O> (label 'old').
+Values for the 'X-Status' field are C<A> (Answered, label 'replied') and
+C<F> (label 'flagged').
+
+=cut
+
+sub statusToLabels()
+{   my $self    = shift;
+    my $head    = $self->head;
+
+    if(my $status  = $head->get('status'))
+    {   $self->{MM_labels}{seen} = ($status  =~ /R/ ? 1 : 0);
+        $self->{MM_labels}{old}  = ($status  =~ /O/ ? 1 : 0);
+    }
+
+    if(my $xstatus = $head->get('x-status'))
+    {   $self->{MM_labels}{replied} = ($xstatus  =~ /A/ ? 1 : 0);
+        $self->{MM_labels}{flagged} = ($xstatus  =~ /F/ ? 1 : 0);
+    }
+
+    $self;
 }
 
 #------------------------------------------
@@ -1280,66 +1392,6 @@ sub takeMessageId(;$)
         unless length $msgid;
 
     $self->{MM_message_id} = $msgid;
-}
-
-#------------------------------------------
-
-=method labelsToStatus
-
-When the labels were changes, there may be an effect for the
-C<Status> and/or C<X-Status> header-lines.  Whether this update has
-to take place depends on the type of folder.
-
-=cut
-
-sub labelsToStatus()
-{   my $self    = shift;
-    my $head    = $self->head;
-    my $labels  = $self->labels;
-
-    my $status  = $head->get('status') || '';
-    my $newstatus
-      = $labels->{seen}    ? 'RO'
-      : $labels->{old}     ? 'O'
-      : '';
-
-    $head->set(Status => $newstatus)
-        if $newstatus ne $status;
-
-    my $xstatus = $head->get('x-status') || '';
-    my $newxstatus
-      = ($labels->{replied} ? 'A' : '')
-      . ($labels->{flagged} ? 'F' : '');
-
-    $head->set('X-Status' => $newxstatus)
-        if $newxstatus ne $xstatus;
-
-    $self;
-}
-
-#-------------------------------------------
-
-=method statusToLabels
-
-Update the labels according the status lines in the header.
-
-=cut
-
-sub statusToLabels()
-{   my $self    = shift;
-    my $head    = $self->head;
-
-    if(my $status  = $head->get('status'))
-    {   $self->{MM_labels}{seen} = ($status  =~ /R/ ? 1 : 0);
-        $self->{MM_labels}{old}  = ($status  =~ /O/ ? 1 : 0);
-    }
-
-    if(my $xstatus = $head->get('x-status'))
-    {   $self->{MM_labels}{replied} = ($xstatus  =~ /A/ ? 1 : 0);
-        $self->{MM_labels}{flagged} = ($xstatus  =~ /F/ ? 1 : 0);
-    }
-
-    $self;
 }
 
 #------------------------------------------

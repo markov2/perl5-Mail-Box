@@ -36,7 +36,7 @@ specify the path, using Mail::Transport::new(proxy)
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default via 'exim'
 
@@ -57,6 +57,17 @@ sub init($)
     $self;
 }
 
+#------------------------------------------
+
+=method trySend MESSAGE, OPTIONS
+
+=error Errors when closing Exim mailer $program: $!
+
+The Exim mail transfer agent did start, but was not able to handle the message
+correctly.
+
+=cut
+
 sub trySend($@)
 {   my ($self, $message, %args) = @_;
 
@@ -74,7 +85,7 @@ sub trySend($@)
     $self->putContent($message, \*MAILER);
 
     unless(close MAILER)
-    {   $self->log(NOTICE => "Errors when closing $program: $!");
+    {   $self->log(ERROR => "Errors when closing Exim mailer $program: $!");
         $? ||= $!;
         return 0;
     }

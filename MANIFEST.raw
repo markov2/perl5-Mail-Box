@@ -1,6 +1,6 @@
 MANIFEST.raw
-bin/improve_html
-bin/make_pod
-bin/make_podindex
-mkdist
-count
+bin/mkdist
+bin/make_doc
+bin/count
+html/mailbox.css
+html/index.html

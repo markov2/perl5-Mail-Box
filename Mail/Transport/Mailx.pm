@@ -44,7 +44,7 @@ mechanism.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default via 'mailx'
 
@@ -91,6 +91,16 @@ sub init($)
 
 #------------------------------------------
 
+=method trySend MESSAGE, OPTIONS
+
+
+=error Sending via mailx mailer $program failed: $! ($?)
+
+Mailx (in some shape: there are many different implementations) did start
+accepting messages, but did not succeed sending it.
+
+=cut
+
 sub _try_send_bsdish($$)
 {   my ($self, $message, $args) = @_;
 
@@ -120,8 +130,7 @@ sub _try_send_bsdish($$)
 
     if(close MAILER) { $self->log(PROGRESS => "Message $msgid send.") }
     else
-    {   $self->log(NOTICE =>
-            "Sending message $msgid via $program failed: $! ($?)");
+    {   $self->log(ERROR => "Sending via mailx mailer $program failed: $! ($?)");
         return 0;
     }
 
@@ -143,7 +152,7 @@ sub trySend($@)
     $self->putContent($message, \*MAILER);
 
     unless(close MAILER)
-    {   $self->log(NOTICE => "Sending via $program failed: $! ($?)");
+    {   $self->log(ERROR => "Sending via mailx mailer $program failed: $! ($?)");
         return 0;
     }
 

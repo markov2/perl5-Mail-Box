@@ -61,7 +61,7 @@ my %encoder =
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 
@@ -77,6 +77,15 @@ my %encoder =
 
 Create a new coder/decoder based on the required type.
 
+=warning No decoder for transfer encoding $type.
+
+A decoder for the specified type of transfer encoding is not implemented.
+
+=error Decoder for transfer encoding $type does not work: $@
+
+Compiling the required transfer encoding resulted in errors, which means
+that the decoder can not be used.
+
 =cut
  
 sub create($@)
@@ -84,13 +93,14 @@ sub create($@)
 
     my $encoder = $encoder{lc $type};
     unless($encoder)
-    {   $class->new(@_)->log(WARNING => "No decoder for $type");
+    {   $class->new(@_)->log(WARNING => "No decoder for transfer encoding $type.");
         return;
     }
 
     eval "require $encoder";
     if($@)
-    {   $class->new(@_)->log(WARNING => "Decoder for $type does not work:\n$@");
+    {   $class->new(@_)->log(ERROR =>
+            "Decoder for transfer encoding $type does not work:\n$@");
         return;
     }
 
@@ -99,9 +109,8 @@ sub create($@)
 
 #------------------------------------------
 
-=method addTransferEncoder TYPE, CLASS
+=c_method addTransferEncoder TYPE, CLASS
 
-(Class method)
 Adds one new encoder to the list known by the Mail::Box suite.  The
 TYPE is found in the message's header in the C<Content-Transfer-Encoding>
 field.

@@ -59,7 +59,7 @@ Examples what you I<cannot> do:
 
 #-------------------------------------------
 
-=method tie ARRAY, 'Mail::Box::Tie::ARRAY', FOLDER
+=no_method tie ARRAY, 'Mail::Box::Tie::ARRAY', FOLDER
 
 Create the tie on an existing folder.
 
@@ -67,7 +67,7 @@ Create the tie on an existing folder.
 
  my $mgr   = Mail::Box::Manager->new;
  my $inbox = $mgr->new(folder => $ENV{MAIL});
- tie my(@inbox), ref $inbox, $inbox;
+ tie my(@inbox), 'Mail::Box::Tie::Array', ref $inbox, $inbox;
 
 =cut
 
@@ -102,7 +102,7 @@ as C<undef>
 sub FETCH($)
 {   my ($self, $index) = @_;
     my $msg = $self->{MBT_folder}->message($index);
-    $msg->deleted ? undef : $msg;
+    $msg->isDeleted ? undef : $msg;
 }
 
 #-------------------------------------------

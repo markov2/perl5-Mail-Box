@@ -37,7 +37,7 @@ safer, so that version is preferred.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  use ARRAY
 =default use <all possible>

@@ -45,7 +45,7 @@ of the folder).
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  filename FILENAME
 =default filename <obligatory>

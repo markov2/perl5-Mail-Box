@@ -41,7 +41,18 @@ access through a file is slower, it is saving a lot of memory.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
+
+=error Unable to read file $filename for message body file: $!
+
+A Mail::Message::Body::File object is to be created from a named file, but
+it is impossible to read that file to retrieve the lines within.  Therefore,
+no copy to a temporary file can be made.
+
+=error Cannot write to temporary body file $filename: $!
+
+The message body is to be stored in a temporary file (probably because it is a
+large body), but for the indicated reason, this file cannot be created.
 
 =cut
 
@@ -52,13 +63,14 @@ sub _data_from_filename(@)
     local (*IN, *OUT);
 
     unless(open IN, '<', $filename)
-    {   $self->log(ERROR => "Unable to read file $filename: $!");
+    {   $self->log(ERROR =>
+            "Unable to read file $filename for message body file: $!");
         return;
     }
 
     my $file   = $self->tempFilename;
     unless(open OUT, '>', $file)
-    {   $self->log(ERROR => "Cannot write to $file: $!\n");
+    {   $self->log(ERROR => "Cannot write to temporary body file $file: $!\n");
         return;
     }
 
@@ -80,7 +92,7 @@ sub _data_from_filehandle(@)
     local *OUT;
 
     unless(open OUT, '>', $file)
-    {   $self->log(ERROR => "Cannot write to $file: $!\n");
+    {   $self->log(ERROR => "Cannot write to temporary body file $file: $!\n");
         return;
     }
 
@@ -103,7 +115,7 @@ sub _data_from_glob(@)
     local *OUT;
 
     unless(open OUT, '>', $file)
-    {   $self->log(ERROR => "Cannot write to $file: $!\n");
+    {   $self->log(ERROR => "Cannot write to temporary body file $file: $!\n");
         return;
     }
 
@@ -123,8 +135,10 @@ sub _data_from_lines(@)
 
     local *OUT;
 
-    open OUT, '>', $file
-        or die "Cannot write to $file: $!\n";
+    unless(open OUT, '>', $file)
+    {   $self->log(ERROR => "Cannot write to $file: $!\n");
+        return;
+    }
 
     print OUT @$lines;
     close OUT;
@@ -260,6 +274,36 @@ sub print(;$)
 
     if(ref $fh eq 'GLOB') {print $fh $_ while <IN>}
     else {$fh->print($_) while <IN>}
+    close IN;
+
+    $self;
+}
+
+#------------------------------------------
+
+sub printEscapedFrom($)
+{   my ($self, $fh) = @_;
+    my $file = $self->tempFilename;
+
+    local $_;
+    local *IN;
+
+    open IN, '<', $file
+        or croak "Cannot read from $file: $!\n";
+
+    if(ref $fh eq 'GLOB')
+    {   while( <IN> )
+        {   s/^(?=\>*From )/>/;
+            print $fh $_;
+        }
+    }
+    else
+    {   while( <IN> )
+        {   s/^(?=\>*From )/>/;
+            $fh->print($_);
+        }
+    }
+
     close IN;
 
     $self;

@@ -21,7 +21,7 @@ Mail::Message::Head::Complete - the header of one message
 
 =head1 DESCRIPTION
 
- mail's message can be in various states: unread, partially read, and
+E-mail's message can be in various states: unread, partially read, and
 fully read.  The class stores a message of which all header lines are
 known for sure.
 
@@ -37,7 +37,7 @@ known for sure.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 
@@ -255,6 +255,12 @@ Remove the specified FIELD from the header.  This is useful when there
 are possible more than one fields with the same name, and you need to
 remove exactly one of them.  Also have a look at delete(), reset() and set().
 
+=warning Cannot remove field $name from header: not found.
+
+You ask to remove a field which is not known in the header.  Using delete(),
+reset() or set() to do the job will not result in warnings: those methods
+check the existence of the field first.
+
 =cut
 
 sub removeField($)
@@ -276,8 +282,7 @@ sub removeField($)
     {    return delete $known->{$name};
     }
 
-    $self->log(WARNING =>
-        "Could not remove field $name from header: not found.");
+    $self->log(WARNING => "Cannot remove field $name from header: not found.");
 
     return;
 }

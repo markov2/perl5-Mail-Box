@@ -50,12 +50,11 @@ is autoloaded to supply that functionality.
 
 #------------------------------------------
 
-=method read FILEHANDLE|SCALAR|REF-SCALAR|ARRAY-OF-LINES, OPTIONS
+=c_method read FILEHANDLE|SCALAR|REF-SCALAR|ARRAY-OF-LINES, OPTIONS
 
-(Class method)
 Read a message from a FILEHANDLE, SCALAR, a reference to a SCALAR, or
-an array of LINES.  The OPTIONS are passed to the C<new()> of the message
-which is created.
+a reference to an array of LINES.  The OPTIONS are passed to the C<new()>
+of the message which is created.
 
 Please have a look at build() and buildFromBody()
 before thinking about this C<read> method.
@@ -283,6 +282,11 @@ the C<replySubject> method (described below) is used.
    , group_reply     => 1
    );
 
+=error Cannot include reply source as $include.
+
+Unknown alternative for the C<include> option of reply().  Valid choices are
+C<NO>, C<INLINE>, and C<ATTACH>.
+
 =cut
 
 # tests in t/55reply1r.t, demo in the examples/ directory
@@ -333,7 +337,7 @@ sub reply(@)
         }
     }
     else
-    {   $self->log(ERROR => "Cannot include source as $include.");
+    {   $self->log(ERROR => "Cannot include reply source as $include.");
         return;
     }
 
@@ -447,9 +451,8 @@ sub reply(@)
 
 #------------------------------------------
 
-=method replySubject STRING
+=ci_method replySubject STRING
 
-(Class or Instance method)
 Create a subject for a message which is a reply for this one.  This routine
 tries to count the level of reply in subject field, and transform it into
 a standard form.  Please contribute improvements.
@@ -670,6 +673,15 @@ subroutine specified by CODE.  The subroutine will be called passing
 the subject of the original message as only argument.  By default,
 the forwardSubject() method is used.
 
+=error Cannot include forward source as $include.
+
+Unknown alternative for the C<include> option of forward().  Valid choices are
+C<NO>, C<INLINE>, and C<ATTACH>.
+
+=error No address to create forwarded to.
+
+If a forward message is created, a destination address must be specified.
+
 =cut
 
 # tests in t/57forw1f.t
@@ -682,7 +694,7 @@ sub forward(@)
     my $body     = defined $args{body} ? $args{body} : $self->body;
 
     unless($include eq 'INLINE' || $include eq 'ATTACH')
-    {   $self->log(ERROR => "Cannot include source as $include.");
+    {   $self->log(ERROR => "Cannot include forward source as $include.");
         return;
     }
 
@@ -728,7 +740,7 @@ sub forward(@)
 
     # To whom to send
     my $to = $args{To};
-    $self->log(ERROR => "No address to forwarded to"), return
+    $self->log(ERROR => "No address to create forwarded to."), return
        unless $to;
 
     # Create a subject
@@ -887,9 +899,9 @@ sub forwardPostlude()
 
 #------------------------------------------
 
-=method build [MESSAGE|BODY], CONTENT
+=c_method build [MESSAGE|BODY], CONTENT
 
-(Class method) Simplified message object builder.  In case a MESSAGE is
+Simplified message object builder.  In case a MESSAGE is
 specified, a new message is created with the same body to start with, but
 new headers.  A BODY may be specified as well.  However, there are more
 ways to add data simply.
@@ -1008,9 +1020,8 @@ sub build(@)
 
 #------------------------------------------
 
-=method buildFromBody BODY, [HEAD], HEADERS
+=c_method buildFromBody BODY, [HEAD], HEADERS
 
-(Class method)
 Shape a message around a BODY.  Bodies have information about their
 content in them, which is used to construct a header for the message.
 You may specify a HEAD object which is pre-initialized, or one is
@@ -1250,7 +1261,7 @@ sub printStructure(;$$)
 
     my $type    = $self->get('Content-Type') || '';
     my $size    = $self->size;
-    my $deleted = $self->can('deleted') && $self->deleted ? ', deleted' : '';
+    my $deleted = $self->can('isDeleted') && $self->isDeleted ? ', deleted' : '';
 
     $fh->print("$indent$type$subject ($size bytes$deleted)\n");
 

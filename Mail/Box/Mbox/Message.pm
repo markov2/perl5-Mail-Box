@@ -28,7 +28,7 @@ Maintain one message in an Mbox folder.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 

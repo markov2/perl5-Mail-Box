@@ -40,7 +40,7 @@ when a message contains a nested message, like message/rfc822.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default mime_type 'message/rfc822'
 
@@ -168,7 +168,13 @@ sub file()
 sub print(;$)
 {   my $self = shift;
     $self->nested->print(shift || select);
-    $self;
+}
+
+#------------------------------------------
+
+sub printEscapedFrom($)
+{   my $self = shift;
+    $self->nested->printEscapedFrom(shift);
 }
 
 #------------------------------------------

@@ -5,6 +5,8 @@ use warnings;
 package Mail::Message::TransferEnc::Base64;
 use base 'Mail::Message::TransferEnc';
 
+use MIME::Base64;
+
 =head1 NAME
 
 Mail::Message::TransferEnc::Base64 - encode/decode base64 message bodies
@@ -41,7 +43,7 @@ four bytes.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 
@@ -69,6 +71,16 @@ sub check($@)
 }
 
 #------------------------------------------
+
+=method decode BODY, OPTIONS
+
+=warning Base64 line length not padded on 4.
+
+While decoding base64 the data in a message body, a string was found which
+was not padded into a multiple of four bytes.  This is illegal, and therefore
+this data is ignored.
+
+=cut
 
 sub decode($@)
 {   my ($self, $body, %args) = @_;
@@ -100,50 +112,14 @@ sub _decode_from_file($)
     local $_;
 
     my $in = $body->file || return;
-
-    my @unpacked;
-    while($_ = $in->getline)
-    {   tr|A-Za-z0-9+=/||cd;   # remove non-base64 chars
-        next unless length;
-
-        if(length % 4)
-        {   $self->log(WARNING => "Base64 line length not padded on 4.");
-            return undef;
-        }
-
-        s/=+$//;               # remove padding
-        tr|A-Za-z0-9+/| -_|;   # convert to uuencoded format
-        return unless length;
-
-        push @unpacked, unpack 'u*', $_;
-    }
+    my $unpacked = decode_base64(join '', $in->getlines);
     $in->close;
-
-    join '', @unpacked;
+    $unpacked;
 }
 
 sub _decode_from_lines($)
 {   my ($self, $body) = @_;
-    my @lines = $body->lines;
-
-    my @unpacked;
-    foreach (@lines)
-    {   tr|A-Za-z0-9+=/||cd;   # remove non-base64 chars
-        next unless length;
-
-        unless(length % 4)
-        {   $self->log(WARNING => "Base64 line length not padded on 4.");
-            return undef;
-        }
-
-        s/=+$//;               # remove padding
-        tr|A-Za-z0-9+/| -_|;   # convert to uuencoded format
-        return unless length;
-
-        push @unpacked, unpack 'u', (chr 32+length($_)*3/4).$_;
-    }
-
-    join '', @unpacked;
+    join '', map { decode_base64($_) } $body->lines;
 }
 
 #------------------------------------------
@@ -151,33 +127,13 @@ sub _decode_from_lines($)
 sub encode($@)
 {   my ($self, $body, %args) = @_;
 
-    local $_;
-    my $in = $body->file || return $body;
-    binmode $in, ':raw' if ref $in eq 'GLOB' || $in->can('BINMODE');
-
-    my (@lines, $bytes);
-
-    while(my $read = $in->read($bytes, 57))
-    {   for(pack 'u57', $bytes)
-        {   s/^.//;
-            tr|` -_|AA-Za-z0-9+/|;
-
-            if(my $align = $read % 3)
-            {    if($align==1) { s/..$/==/ } else { s/.$/=/ }
-            }
-
-            push @lines, $_;
-        }
-    }
-
-    $in->close;
-
     my $bodytype = $args{result_type} || ref $body;
+
     $bodytype->new
      ( based_on          => $body
      , checked           => 1
      , transfer_encoding => 'base64'
-     , data              => \@lines
+     , data              => encode_base64($body->string)
      );
 }
 

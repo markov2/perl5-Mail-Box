@@ -32,7 +32,7 @@ part of the qmail mail-delivery system.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default proxy 'qmail-inject'
 =default via 'qmail'
@@ -58,9 +58,22 @@ sub init($)
 
 =head2 Sending Mail
 
+=error Errors when closing Qmail mailer $program: $!
+
+The qmail mailer could be started, but did not accept the message correctly.
+
 =cut
 
 #------------------------------------------
+
+=method trySend MESSAGE, OPTIONS
+
+=error Errors when closing Qmail mailer $program: $!
+
+The Qmail mail transfer agent did start, but was not able to handle the
+message for some specific reason.
+
+=cut
 
 sub trySend($@)
 {   my ($self, $message, %args) = @_;
@@ -75,7 +88,7 @@ sub trySend($@)
     $self->putContent($message, \*MAILER);
 
     unless(close MAILER)
-    {   $self->log(NOTICE => "Errors when closing $program: $!");
+    {   $self->log(ERROR => "Errors when closing Qmail mailer $program: $!");
         $? ||= $!;
         return 0;
     }

@@ -108,7 +108,6 @@ examples/reply.pl
 examples/send.pl
 examples/strip-attachments.pl
 examples/takelarge.pl
-pod.css
 scripts/lsmail
 scripts/mailbox2html
 scripts/takemail
@@ -153,11 +152,11 @@ tests/30encode/90body.t
 tests/30encode/Definition.pm
 tests/40mbox/10read.t
 tests/40mbox/20write.t
-tests/40mbox/30delete.t
+tests/40mbox/30delay.t
 tests/40mbox/40append.t
 tests/40mbox/50create.t
 tests/40mbox/60thread.t
-tests/40mbox/70inline.t
+tests/40mbox/70inplace.t
 tests/40mbox/Definition.pm
 tests/41mh/10read.t
 tests/41mh/20write.t

@@ -43,7 +43,7 @@ how a message body gets delay loaded.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  message MESSAGE
 =default message <required>
@@ -58,7 +58,7 @@ sub init($)
 
     $self->{MMB_seqnr}    = -1;  # for overloaded body comparison
     $self->{MMBD_message} = $args->{message}
-        or croak "A message must be specified to a delayed body.";
+        or $self->log(INTERNAL => "A message must be specified to a delayed body.");
 
     weaken($self->{MMBD_message});
     $self;
@@ -76,7 +76,7 @@ sub init($)
 
 =cut
 
-sub message() {shift->{MMBD_message}}
+sub message() { shift->{MMBD_message} }
 
 #------------------------------------------
 
@@ -84,6 +84,10 @@ sub modified(;$)
 {   return 0 if @_==1 || !$_[1];
     shift->forceRealize(shift);
 }
+
+#------------------------------------------
+
+sub isModified() { 0 }
 
 #------------------------------------------
 

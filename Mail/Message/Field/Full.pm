@@ -51,7 +51,7 @@ Mail::Message::Field::Full - one line of a message header
 =head1 DESCRIPTION
 
 This is the full implementation of a header field: it will be quite slow,
-because header fields can be very complex.  Of course, this class provides
+because header fields can be very complex.  Of course, this class delivers
 the optimal result, but for a quite large penalty in performance and
 memory consumption.
 
@@ -74,7 +74,7 @@ application.
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 Creating a new field object the correct way is a lot of work, because
 there is so much freedom in the RFCs, but at the same time so many
@@ -233,9 +233,8 @@ sub init($)
 
 #------------------------------------------
 
-=method from FIELD, OPTIONS
+=c_method from FIELD, OPTIONS
 
-(Class method)
 Convert any FIELD (a Mail::Message::Field object) into a new
 Mail::Message::Field::Full object.  This conversion is done the hard
 way: the string which is produced by the original object is parsed
@@ -298,6 +297,11 @@ construction fails (when the attribute is incorrect).
  my $attr = Mail::Message::Field::Attribute->new(...);
  $f->addAttribute($attr);
 
+=error Attributes cannot be added to unstructured fields
+
+Unstructured fields are free format, attributes are not.  So: it is not
+correct to try adding these well-defined strings to an unknown text.
+
 =cut
 
 sub addAttribute($;@)
@@ -307,9 +311,8 @@ sub addAttribute($;@)
     return undef unless $attr;
 
     unless($self->{MMFF_structured})
-    {   $self->log(ERROR
-            => "You can not add an attribute to an unstructured field:\n  "
-               . "Field: ".$self->Name. " Attribute: " .$attr->name);
+    {   $self->log(ERROR => "Attributes cannot be added to unstructured fields:\n"
+               . "  Field: ".$self->Name. " Attribute: " .$attr->name);
         return;
     }
 
@@ -347,9 +350,8 @@ sub attributes() { values %{shift->{MMFF_attrs}} }
 
 #------------------------------------------
 
-=method createComment STRING, OPTIONS
+=ci_method createComment STRING, OPTIONS
 
-(Class or Instance method)
 Create a comment to become part in a field.  Comments are automatically
 included within parenthesis.  Matching pairs of parenthesis are
 permitted within the STRING.  When a non-matching parenthesis are used,
@@ -389,15 +391,19 @@ Creates a comment (see createComment()) and adds it immediately to
 this field.  Empty or undefined COMMENTs are ignored.  The created comment
 is returned.
 
+=error Comments cannot be added to unstructured fields
+
+Unstructured fields are free format, comments are not.  So: it is not
+correct to try adding these well-defined strings to an unknown text.
+
 =cut
 
 sub addComment($@)
 {   my $self = shift;
 
     unless($self->{MMFF_structured})
-    {   $self->log(ERROR
-            => "You can not add comment to an unstructured field:\n  "
-               . "Field: ".$self->Name. " Comment: @_");
+    {   $self->log(ERROR => "Comments cannot be added to unstructured fields:\n"
+                  . "  Field: ".$self->Name. " Comment: @_");
         return;
     }
 
@@ -418,15 +424,22 @@ sub addComment($@)
 Adds a string to the line, which is not an attribute however does start with
 a semi-colon.  Empty or undefined STRINGs are ignored.
 
+=error Extras cannot be added to unstructured fields
+
+Unstructured fields are free format, extras are not.  Although an extra is
+a nearly free format piece of text preceded by a semi-colon, they do (by
+definition) not interfere with other structured data in fields.
+So: it is not correct to try adding these to an fully free formatted text
+because you are never sure the data can be regained correctly.
+
 =cut
 
 sub addExtra($)
 {   my ($self, $extra) = @_;
 
     unless($self->{MMFF_structured})
-    {   $self->log(ERROR
-            => "You can not add extras to an unstructured field:\n  "
-               . "Field: ".$self->Name. " Extra: ".$extra);
+    {   $self->log(ERROR => "Extras cannot be added to unstructured fields:\n"
+               . "  Field: ".$self->Name. " Extra: ".$extra);
         return;
     }
 
@@ -440,9 +453,8 @@ sub addExtra($)
 
 #------------------------------------------
 
-=method createPhrase STRING, OPTIONS
+=ci_method createPhrase STRING, OPTIONS
 
-(Class or instance method)
 A phrase is a text which plays a well defined role.  This is the main difference
 with comments, which have do specified meaning.  Some special characters
 in the phrase will cause it to be surrounded with double quotes: do not specify
@@ -620,6 +632,23 @@ Encode the string, even when it only contains us-ascii characters.  By
 default, this is off because it decreases readibility of the produced
 header fields.
 
+=warning Illegal character in charset '$charset'
+
+The field is created with an utf8 string which only contains data from the
+specified character set.  However, that character set can never be a valid
+name because it contains characters which are not permitted.
+
+=warning Illegal character in language '$lang'
+
+The field is created with data which is specified to be in a certain language,
+however, the name of the language cannot be valid: it contains characters
+which are not permitted by the RFCs.
+
+=warning Illegal encoding '$encoding', used 'q'
+
+The RFCs only permit base64 (C<b> or C<B>) or quoted-printable (C<q> or C<Q>)
+encoding.  Other than these four options are illegal.
+
 =cut
 
 sub encode($@)
@@ -689,9 +718,8 @@ sub encode($@)
 
 #------------------------------------------
 
-=method decode STRING, OPTIONS
+=ci_method decode STRING, OPTIONS
 
-(Class or Instance method)
 Decode field encoded STRING to an utf8 string.  The input STRING is part of
 a header field, and as such, may contain encoded words in C<=?...?.?...?=>
 format defined by RFC2047.  The STRING may contain multiple encoded parts,
@@ -757,9 +785,8 @@ sub decode($@)
 
 #------------------------------------------
 
-=method consumePhrase STRING
+=ci_method consumePhrase STRING
 
-(Class or Instance method)
 Take the STRING, and try to strip-off a valid phrase.  In the obsolete
 phrase syntax, any sequence of words is accepted as phrase (as long as
 certain special characters are not used).  RFC2882 is stricter: only
@@ -795,9 +822,8 @@ sub consumePhrase($)
 
 #------------------------------------------
 
-=method consumeComment STRING
+=ci_method consumeComment STRING
 
-(Class or Instance method)
 Try to read a comment from the STRING.  When successful, the comment
 without encapsulation parenthesis is returned, together with the rest
 of the string.

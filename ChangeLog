@@ -8,6 +8,55 @@ NOTE: The number of changes and fixes for each release seem large, but
       is a huge module, so there is always a lot of activity.
 
 wat als appendMessage faalt?
+filehandle als bron folder?
+
+version 2.037: Sun Feb 23 14:53:50 CET 2003
+
+	Fixes:
+
+	- MBOX write policy INPLACE contained serious bugs.  Upgrade
+	  adviced if you use it (not the default) reported by [Michael Reece],
+	  but by [Greg Matheson] before.
+
+	- Mail::Box::Manager::decodeFolderURL() return ref hash instead of
+	  hash values.  Patched by [Benjamin Pineau]
+
+	- MB::Mbox::Message::print() did not encapsulate 'From ' lines.
+	  Behavior has changed: print() will only simply print head and
+	  body, and write() will encapsulate a message as required for the
+	  folder.  Problem detected by [Nik Clayton]
+
+	- For retreival of addresses, the whole field contents of an
+	  address field is used, not only till the first semi-colon.
+
+	- [Melvyn Sopacua] reported an accidental call to 'confess', which
+	  was a left-over of the debugging process.  It triggered for an
+	  MH index, when a field was requested which was not defined.
+
+	Improvements:
+
+	- Many warning and error message have changed a little to be
+	  more consistent or (in most cases) much clearer about the
+	  meaning.
+
+	- added isModified() methods as alternative to modified(), which is
+	  more consistent with other method names.
+
+	- added isDeleted() methods as alternative to deleted(), which is
+	  more consistent with other method names.
+
+	- [Benjamin Pineau] found the cause of an enormous slow-down while
+	  parsing large messages: tell() and seek() in IO::ScalarArray
+	  objects.   With a small patch, everything goes smooth and fast:
+	  use getpos() and setpos()....
+
+	- Translated Mail::Message:TransferEnc::Base64 to use MIME::Base64,
+	  now MIME::Base64 is a core module for 5.8.0.  The old algorithm
+	  was not able to handle too long encoded lines, as [Chris
+	  Kungfoohampster] discovered.
+
+	- Testfile 40mbox/30delete.t should renamed to 40mbox/30delay.t
+	  Testfile 40mbox/70inline.t should renamed to 40mbox/70inplace.t
 
 version 2.036: Thu Feb 13 18:18:29 CET 2003
 

@@ -37,7 +37,7 @@ this module supports postfix as well.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default via 'sendmail'
 
@@ -66,6 +66,15 @@ sub init($)
 
 #------------------------------------------
 
+=method trySend MESSAGE, OPTION
+
+=error Errors when closing sendmail mailer $program: $!
+
+The was no problem starting the sendmail mail transfer agent, but for
+some specific reason the message could not be handled correctly.
+
+=cut
+
 sub trySend($@)
 {   my ($self, $message, %args) = @_;
 
@@ -79,7 +88,7 @@ sub trySend($@)
     $self->putContent($message, \*MAILER);
 
     unless(close MAILER)
-    {   $self->log(NOTICE => "Errors when closing $program: $!");
+    {   $self->log(NOTICE => "Errors when closing sendmail mailer $program: $!");
         $? ||= $!;
         return 0;
     }

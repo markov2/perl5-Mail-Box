@@ -35,7 +35,7 @@ C<sendmail>, C<mail>, or other programs on the local host.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default hostname <from Net::Config>
 =default proxy    <from Net::Config>

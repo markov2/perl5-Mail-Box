@@ -3,7 +3,9 @@
 
 Mail::Box-Overview - objects used by Mail::Box
 
-=head1 Introduction
+=head1 DESCRIPTION
+
+=head2 Introduction
 
 The MailBox package is a suite of classes for accessing and managing
 email folders in a folder-independent manner. This package is an
@@ -26,11 +28,11 @@ slower) if you need the full folder sequentially.
 
 This code is beta, which means that there are no serious applications
 written with it yet.  Please inform the author when you have, so this
-module can be marked as stable.  Read the STATUS file enclosed in the
-package for more details.  You may also want to have a look at the sample
+module can be marked as stable.  Read the STATUS file enclosed in the package
+for more details.  You may also want to have a look at the sample
 scripts in the C<scripts> directory.
 
-=head1 THE CLASS RELATIONS
+=head2 The class relations
 
 Mail::Box::Manager objects play a central role in any program which
 is built with MailBox.  Each program will create one manager, and
@@ -88,9 +90,6 @@ for the mail boxes
                           |
                           |
                      Mail::Message
-
-
-=head1 THE CLASSES
 
 
 =head2 The Manager:  Mail::Box::Manager
@@ -151,8 +150,8 @@ The Mail::Message::Body::Nested body type is comparible, but contains only
 one message: they are used for C<message/rfc822> message encodings.
 
 When needed, the functionality of the body objects is extended with
-Mail::Message::Body::Construct and Mail::Message::Body::Encode.  The former
-package implements things like concatenation, the later controls message
+Mail::Message::Body::Construct and Mail::Message::Body::Encode.  The
+former package implements things like concatenation, the later controls message
 encoding and decoding.  In the current implementation this is limited to
 transfer encodings (implemented in the Mail::Message::TransferEnc packages).
 Automatic character and mime recodings are on the wish-list.
@@ -302,18 +301,3 @@ Mail::Box report about problems, or do it all yourself.
 =back
 
 All classes are written to be extensible.  
-
-=head1 SEE ALSO
-
-Mail::Box-Cookbook, and the web-site L<http://perl.overmeer.net/mailbox>.
-
-=head1 AUTHOR
-
-Mark Overmeer (F<mailbox@overmeer.net>).
-All rights reserved.  This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
-
-Copyright (c) 2001 Mark Overmeer. All rights reserved.
-This program is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-

@@ -44,7 +44,7 @@ into mail-folder-specific variants.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a message part.
 
@@ -76,9 +76,8 @@ sub init($)
 
 #------------------------------------------
 
-=method buildFromBody BODY, CONTAINER, HEADERS
+=c_method buildFromBody BODY, CONTAINER, HEADERS
 
-(Class method) 
 Shape a message part around a BODY.  Bodies have information about their
 content in them, which is used to construct a header for the message.
 Next to that, more HEADERS can be specified.  No headers are obligatory.
@@ -148,28 +147,55 @@ sub coerce($@)
 
 =method delete
 
-Do not print or send this part of the message anymore.
+Do not print or send this part of the message anymore.  See deleted().
+The time stamp of the moment of deletion is stored as value.  When the same
+message is deleted more than once, the first time stamp will stay.
+
+=examples
+
+ $message->part(2)->delete;
+ $part->deleted(1);
+ delete $part;
 
 =cut
 
-sub delete() {shift->deleted(1)}
+sub delete() { shift->{MMP_deleted} ||= time }
 
 #------------------------------------------
 
 =method deleted [BOOLEAN]
 
-Returns whether this part is still in the body or not, optionally
-after setting it to the BOOLEAN.
+Set the delete flag for this part of the multipart message body.  Without
+argument, the method returns the same is the isDeleted() method, which is
+prefered.  When a true value is given, delete() is called.
 
 =cut
 
 sub deleted(;$)
 {   my $self = shift;
-    return $self->{MMP_deleted} unless @_;
-
-    $self->toplevel->modified(1);
-    $self->{MMP_deleted} = shift;
+      ! @_      ? $self->isDeleted   # compat 2.036
+    : ! (shift) ? ($self->{MMP_deleted} = undef)
+    :             $self->delete;
 }
+
+#------------------------------------------
+
+=method isDeleted
+
+Returns the moment (as the time function returns) when the message part was
+flagged for deletion, or C<undef> when the part is not deleted.
+
+=examples
+
+ next if $part->isDeleted;
+
+ if(my $when = $part->isDeleted) {
+    print scalar localtime $when;
+ }
+
+=cut
+
+sub isDeleted() { shift->{MMP_deleted} }
 
 #------------------------------------------
 
@@ -189,6 +215,21 @@ sub toplevel()
 #------------------------------------------
 
 sub isPart() { 1 }
+
+#------------------------------------------
+
+=method printEscapedFrom FILEHANDLE
+
+Prints the message part, but all lines which start with 'From ' will get
+a leading C<gt>.  See Mail::Message::Body::printEscapedFrom().
+
+=cut
+
+sub printEscapedFrom($)
+{   my ($self, $out) = @_;
+    $self->head->print($out);
+    $self->body->printEscapedFrom($out);
+}
 
 #------------------------------------------
 

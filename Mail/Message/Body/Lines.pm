@@ -39,7 +39,12 @@ for inspecting message bodies).
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
+
+=error Unable to read file $filename for message body lines: $!
+
+A Mail::Message::Body::Lines object is to be created from a named file, but
+it is impossible to read that file to retrieve the lines within.
 
 =cut
 
@@ -49,7 +54,8 @@ sub _data_from_filename(@)
     local *IN;
 
     unless(open IN, '<', $filename)
-    {   $self->log(ERROR => "Unable to read file $filename: $!");
+    {   $self->log(ERROR =>
+             "Unable to read file $filename for message body lines: $!");
         return;
     }
 
@@ -139,6 +145,17 @@ sub print(;$)
 {   my $self = shift;
     my $fh   = shift || select;
     $fh->print(@{$self->{MMBL_array}});
+}
+
+#------------------------------------------
+
+sub printEscapedFrom($)
+{   my ($self, $fh) = @_;
+
+    foreach ( @{$self->{MMBL_array}} )
+    {   s/^(?=\>*From )/>/;
+        $fh->print($_);
+    }
 }
 
 #------------------------------------------

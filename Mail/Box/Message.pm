@@ -43,7 +43,7 @@ from stage, the message's body and head objects may change.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  folder FOLDER
 =default folder <required>
@@ -237,41 +237,67 @@ sub head(;$)
 =method delete
 
 Flag the message to be deleted.  The real deletion only takes place on
-a synchronization of the folder.
+a synchronization of the folder.  See deleted().
+
+The time stamp of the moment of deletion is stored as value.  When the same
+message is deleted more than once, the first time stamp will stay.
 
 =examples
 
  $message->delete;
+ $message->deleted(1);  # exactly the same
  delete $message;
 
 =cut
 
-sub delete() { shift->deleted(1) }
+sub delete() { shift->{MBM_deleted} ||= time }
 
 #-------------------------------------------
 
 =method deleted [BOOLEAN]
 
-Check or set the deleted flag for this message.  This method returns
-undef (not deleted, false) or the time of deletion (true).  With a
-BOOL argument, the status is changed first.
+Set the delete flag for this message.  Without argument, the method returns
+the same is the isDeleted() method, which is prefered.  When a true value
+is given, delete() is called.
 
 =examples
 
- if($message->deleted) {...}
- $message->deleted(0);        # undelete
+ $message->deleted(1);          # delete
+ $message->delete;              # delete (prefered)
+
+ $message->deleted(0);          # undelete
+
+ if($message->deleted) {...}    # check
+ if($message->isDeleted) {...}  # check (prefered)
 
 =cut
 
 sub deleted(;$)
 {   my $self = shift;
-    return $self->{MBM_deleted} unless @_;
 
-    my $delete = shift;
-    return $delete if $delete==$self->{MBM_deleted};
-
-    $self->{MBM_deleted} = ($delete ? time : 0);
+      ! @_      ? $self->isDeleted   # compat 2.036
+    : ! (shift) ? ($self->{MBM_deleted} = undef)
+    :             $self->delete;
 }
+
+#-------------------------------------------
+
+=method isDeleted
+
+Returns the moment (as the time function returns) when the message was
+flagged for deletion, or C<undef> when the message is not deleted.
+
+=examples
+
+ next if $message->isDeleted;
+
+ if(my $when = $message->isDeleted) {
+    print scalar localtime $when;
+ }
+
+=cut
+
+sub isDeleted() { shift->{MBM_deleted} }
 
 #-------------------------------------------
 

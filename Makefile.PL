@@ -21,6 +21,7 @@ WriteMakefile
     , MIME::Types    => 1.004
     , Sys::Hostname  => 0.0
     , Test::More     => 0.47
+    , MIME::Base64   => 0.0
 
 # Optional
 #   Text::Autoformat

@@ -29,16 +29,14 @@ Mail::Box::Dir - handle folders with a file per message.
 
 =head1 DESCRIPTION
 
-This documentation describes how directory organized mailboxes work.
-Please read C<Mail::Box-Overview> first.
-
+This documentation describes the way directory organized mailboxes work.
 At the moment, this object is extended by
 
 =over 4
 
-=item * MH
+=item * Mail::Box::MH
 
-=item * Maildir
+=item * Mail::Box::Maildir
 
 =back
 
@@ -54,10 +52,16 @@ At the moment, this object is extended by
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default body_type 'Mail::Message::Body::Lines'
 =default lock_file <folder>/.lock
+
+=warning Folder directory $directory is write-protected.
+
+The folder directory does already exist and is write protected, which may
+interfere with the requested write access.  Change new(access) or the
+permissions on the directory.
 
 =cut
 

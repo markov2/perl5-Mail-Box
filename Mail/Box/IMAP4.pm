@@ -44,7 +44,7 @@ handling of messages within a IMAP4 folder.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 For authentications, you
 have three choices: specify a foldername which resembles an URL, or
@@ -196,6 +196,11 @@ sub nameOfSubfolder($)
 Returns the imap client object: a Mail::Transport::IMAP4 object.
 This does not establish the connection.
 
+=error Cannot create IMAP4 client $url.
+
+Connecting to the specified IMAP4 server failed.  A message about the reason
+is produced as well.
+
 =cut
 
 sub imapClient()
@@ -215,7 +220,7 @@ sub imapClient()
       , authenticate => $self->{MBI_auth}
       );
 
-    $self->log(ERROR => "Cannot create IMAP4 client ".$self->url)
+    $self->log(ERROR => "Cannot create IMAP4 client ".$self->url.'.')
        unless defined $client;
 
     $self->{MBI_client} = $client;
@@ -253,6 +258,12 @@ sub readMessages(@)
 =method getHead MESSAGE
 
 Read the header for the specified message from the remote server.
+C<undef> is returned in case the message disappeared.
+
+=warning Message $uidl disappeared from $folder.
+
+Trying to get the specific message from the server, but it appears to be
+gone.
 
 =cut
 
@@ -264,8 +275,8 @@ sub getHead($)
     my $lines = $imap->header($uidl);
 
     unless(defined $lines)
-    {   $lines = [];
-        $self->log(WARNING  => "Message $uidl disappeared.");
+    {   $self->log(WARNING => "Message $uidl disappeared from $self.");
+        return;
      }
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
@@ -289,6 +300,23 @@ sub getHead($)
 =method getHeadAndBody MESSAGE
 
 Read all data for the specified message from the remote server.
+Return head and body of the mesasge as list, or an empty list
+if the MESSAGE disappeared from the server.
+
+=warning Message $uidl disappeared from $folder.
+
+Trying to get the specific message from the server, but it appears to be
+gone.
+
+=warning Cannot find head back for $uidl in $folder.
+
+The header was read before, but now seems empty: the IMAP4 server does
+not produce the header lines anymore.
+
+=warning Cannot read body for $uidl in $folder.
+
+The header of the message was retreived from the IMAP4 server, but the
+body is not read, for an unknown reason.
 
 =cut
 
@@ -300,8 +328,8 @@ sub getHeadAndBody($)
     my $lines = $imap->message($uidl);
 
     unless(defined $lines)
-    {   $lines = [];
-        $self->log(WARNING  => "Message $uidl disappeared.");
+    {   $self->log(WARNING  => "Message $uidl disappeared from $self.");
+        return ();
      }
 
     my $parser = Mail::Box::Parser::Perl->new   # not parseable by C parser
@@ -311,16 +339,16 @@ sub getHeadAndBody($)
 
     my $head = $message->readHead($parser);
     unless(defined $head)
-    {   $self->log(WARNING => "Cannot find head back for $uidl");
+    {   $self->log(WARNING => "Cannot find head back for $uidl in $self.");
         $parser->stop;
-        return undef;
+        return ();
     }
 
     my $body = $message->readBody($parser, $head);
     unless(defined $body)
-    {   $self->log(ERROR => "Cannot read body for $uidl");
+    {   $self->log(WARNING => "Cannot read body for $uidl in $self.");
         $parser->stop;
-        return undef;
+        return ();
     }
 
     $parser->stop;
@@ -334,7 +362,7 @@ sub getHeadAndBody($)
 sub writeMessages($@)
 {   my ($self, $args) = @_;
 
-    if(my $modifications = grep {$_->modified} @{$args->{messages}})
+    if(my $modifications = grep {$_->isModified} @{$args->{messages}})
     {
     }
 

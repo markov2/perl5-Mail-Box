@@ -57,7 +57,7 @@ more portable and safer code if you do use it.
 
 #-------------------------------------------
 
-=method new ARGS
+=c_method new ARGS
 
 =option  folder_types NEW-TYPE | ARRAY-OF-NEW-TYPES
 =default folder_types <all standard types>
@@ -227,10 +227,10 @@ sub decodeFolderURL($)
     $hostname ||= 'localhost';
     $path     ||= '=';
 
-    { type        => $type,     folder      => $path
+    ( type        => $type,     folder      => $path
     , username    => $username, password    => $password
     , server_name => $hostname, server_port => $port
-    };
+    );
 }
 
 #-------------------------------------------
@@ -297,6 +297,39 @@ used.)
    , username    => 'myself', password => 'secret'
    , server_name => 'pop3.server.com', server_port => '120');
 
+=error Illegal folder URL '$url'.
+
+The folder name was specified as URL, but not according to the syntax.
+See decodeFolderURL() for an description of the syntax.
+
+=error No foldername specified to open.
+
+The open() needs a folder name as first argument (before the list of options),
+or with the C<folder> option within the list.  If no name was found, the
+MAIL environment variable is checked.  When even that does not result in
+a usable folder, then this error is produced.  The error may be caused by
+an accidental odd-length option list.
+
+=error Will never create a folder $name without having write access.
+
+You have set the C<create> flag, but only want to read the folder.  Create is
+only useful for folders which have write or append access modes (see access()).
+
+=warning Folder type $type is unknown, using autodetect.
+
+The specified folder type (see type(), possibly derived from the folder name
+when specified as url) is not known to the manager.  This may mean that
+you forgot to require the Mail::Box extension which implements this folder
+type, but probably it is a typo.  Usually, the manager is able to figure-out
+which type to use by itself.
+
+=warning No folder $name of type $type does exist.
+
+The folder is not found, and creating is not permitted or did not
+succeed (see the C<create> flag).  The manager tried to open a folder
+as the specified type.  It may help to explicitly state the type of
+your folder with the C<type> option.
+
 =cut
 
 sub open(@)
@@ -362,7 +395,7 @@ sub open(@)
             }
         }
 
-        $self->log(ERROR=>"Folder type $type is unknown, using autodetect")
+        $self->log(ERROR => "Folder type $type is unknown, using autodetect.")
             unless $folder_type;
     }
 
@@ -410,7 +443,7 @@ sub open(@)
     my $folder = $class->new(@defaults, %args);
 
     unless(defined $folder)
-    {   $self->log(WARNING => "$folder_type: Folder $name does not exist.");
+    {   $self->log(WARNING => "No folder $name of type $folder_type does exist.");
         return;
     }
 
@@ -535,11 +568,23 @@ the default options for the detected folder type.
 =examples
 
  $mgr->appendMessages('=send', $message, folderdir => '/');
- $mgr->appendMessages('=received', $inbox->messages);
+ $mgr->appendMessages($received, $inbox->messages);
 
  my @appended = $mgr->appendMessages($inbox->messages,
     folder => 'Drafts');
  $_->label(seen => 1) foreach @appended;
+
+=error Folder $name is not a Mail::Box; cannot add a message.
+
+The folder where the message should be appended to is an object which is
+not a folder type which extends Mail::Box.  Probably, it is not a folder
+at all.
+
+=warning Use moveMessage() or copyMessage() to move between open folders.
+
+The message is already part of a folder, and now it should be appended
+to a different folder.  You need to decide between copy or move, which
+both will clone the message (not the body, because they are immutable).
 
 =cut
 
@@ -575,7 +620,7 @@ sub appendMessages(@)
         foreach (@messages)
         {   next unless $_->isa('Mail::Box::Message') && $_->folder;
             $self->log(WARNING =>
-          "Use moveMessage() or copyMessage() to move between opened folders.");
+               "Use moveMessage() or copyMessage() to move between open folders.");
         }
 
         return $folder->addMessages(@messages);
@@ -648,6 +693,11 @@ which can be specified when opening a folder.
  $mgr->copyMessage($drafts->message(1), folder => '=Drafts'
     folderdir => '/tmp', create => 1);
 
+=error Use appendMessage() to add messages which are not in a folder.
+
+You do not need to copy this message into the folder, because you do not share
+the message between folders.
+
 =cut
 
 sub copyMessage(@)
@@ -658,8 +708,9 @@ sub copyMessage(@)
     my @messages;
     while(@_ && ref $_[0])
     {   my $message = shift;
-        croak "Use appendMessage to add messages which are not in a folder."
-           unless $message->isa('Mail::Box::Message');
+        $self->log(ERROR =>
+            "Use appendMessage() to add messages which are not in a folder.")
+                unless $message->isa('Mail::Box::Message');
         push @messages, $message;
     }
 
@@ -764,12 +815,13 @@ sub threads(@)
        :                           $folders
        );
 
-    croak "No folders specified.\n" unless @folders;
+    $self->log(INTERNAL => "No folders specified.\n")
+       unless @folders;
 
     my $threads;
     if(ref $type)
     {   # Already prepared object.
-        confess "You need to pass a $base derived"
+        $self->log(INTERNAL => "You need to pass a $base derived")
             unless $type->isa($base);
         $threads = $type;
     }
@@ -777,8 +829,8 @@ sub threads(@)
     {   # Create an object.  The code is compiled, which safes us the
         # need to compile Mail::Box::Thread::Manager when no threads are needed.
         eval "require $type";
-        croak "Unusable threader $type: $@" if $@;
-        croak "You need to pass a $base derived"
+        $self->log(INTERNAL => "Unusable threader $type: $@") if $@;
+        $self->log(INTERNAL => "You need to pass a $base derived")
             unless $type->isa($base);
 
         $threads = $type->new(manager => $self, %args);
@@ -793,11 +845,9 @@ sub threads(@)
 
 =method toBeThreaded FOLDER, MESSAGES
 
-=method toBeUnthreaded FOLDER, MESSAGES
-
 Signal to the manager that all thread managers which are using the
 specified folder must be informed that new messages are
-coming in (or going out).
+coming in.
 
 =cut
 
@@ -805,6 +855,16 @@ sub toBeThreaded($@)
 {   my $self = shift;
     $_->toBeThreaded(@_) foreach @{$self->{MBM_threads}};
 }
+
+#-------------------------------------------
+
+=method toBeUnthreaded FOLDER, MESSAGES
+
+Signal to the manager that all thread managers which are using the
+specified folder must be informed that new messages are
+or going out.
+
+=cut
 
 sub toBeUnthreaded($@)
 {   my $self = shift;

@@ -35,7 +35,7 @@ server, and maybe temporarily in your program as well.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default body_type 'Mail::Message::Body::Lines';
 

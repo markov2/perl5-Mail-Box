@@ -35,7 +35,7 @@ a POP3 client is available.  IMAP, DBI, and NNTP are other candidates.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  unique STRING
 =default unique <unique string>
@@ -98,6 +98,14 @@ sub loadHead()
 }
 
 #-------------------------------------------
+
+=method loadBody
+
+=error Unable to read delayed head.
+
+=error Unable to read delayed body.
+
+=cut
 
 sub loadBody()
 {   my $self     = shift;

@@ -32,7 +32,7 @@ Mail::Message::Field::AddrGroup - A group of Mail::Message::Field::Address objec
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 =examples
 

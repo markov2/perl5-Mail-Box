@@ -38,7 +38,7 @@ operating systems do not support C<flock>.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 
@@ -74,6 +74,21 @@ sub _unlock($)
 
 #-------------------------------------------
 
+=method lock
+
+=error Unable to open flock file $filename for $folder: $!
+
+For flock-ing a folder it must be opened, which does not succeed for the
+specified reason.
+
+=error Will never get a flock at $filename for $folder: $!
+
+Tried to flock the folder, but it did not succeed.  The error code received
+from the OS indicates that it will not succeed ever, so we do not need to
+try again.
+
+=cut
+
 # 'r+' is require under Solaris and AIX, other OSes are satisfied with 'r'.
 my $lockfile_access_mode = ($^O eq 'solaris' || $^O eq 'aix') ? 'r+' : 'r';
 
@@ -85,7 +100,8 @@ sub lock()
 
     my $file   = IO::File->new($filename, $lockfile_access_mode);
     unless($file)
-    {   $self->log(ERROR => "Unable to open lockfile $filename: $!");
+    {   $self->log(ERROR =>
+           "Unable to open flock file $filename for $self->{MBL_folder}: $!");
         return 0;
     }
 
@@ -100,7 +116,7 @@ sub lock()
 
         if($! != EAGAIN)
         {   $self->log(ERROR =>
-                  "Will never get a lock at ".$self->{MBL_folder}->name.": $!");
+               "Will never get a flock on $filename for $self->{MBL_folder}: $!");
             last;
         }
 
@@ -113,13 +129,24 @@ sub lock()
 
 #-------------------------------------------
 
+=method isLocked
+
+=error Unable to check lock file $filename for $folder: $!
+
+To check whether the filename is used to flock a folder, the file must be
+opened.  Apparently this fails, which does not mean that the folder is
+locked neither that it is unlocked.
+
+=cut
+
 sub isLocked()
 {   my $self     = shift;
     my $filename = $self->filename;
 
     my $file     = IO::File->new($filename, $lockfile_access_mode);
     unless($file)
-    {   $self->log(ERROR => "Unable to open lockfile $filename: $!");
+    {   $self->log(ERROR =>
+            "Unable to check lock file $filename for $self->{MBL_folder}: $!");
         return 0;
     }
 

@@ -6,7 +6,6 @@ use base 'Mail::Message::Head';
 
 use Object::Realize::Later
     becomes          => 'Mail::Message::Head::Complete',
-    warn_realization => 0,
     realize          => 'load',
     believe_caller   => 1;
 
@@ -42,12 +41,7 @@ by a Mail::Message::Head when someone accesses the header of a message.
 
 #------------------------------------------
 
-=method new OPTIONS
-
-=option  message MESSAGE
-=default message undef
-
-The message where this header belongs to.
+=c_method new OPTIONS
 
 =cut
 
@@ -56,6 +50,11 @@ The message where this header belongs to.
 =method build FIELDS
 
 You cannot create a delayed header with fields.
+
+=error Cannot build() a delayed header.
+
+A delayed message header cannot contain any information, so cannot be
+build.  You can construct complete or subset headers.
 
 =cut
 
@@ -83,18 +82,6 @@ sub init($$)
 
 #------------------------------------------
 
-sub message(;$)
-{   my $self = shift;
-    if(@_)
-    {   $self->{MMHD_message} = shift;
-        weaken($self->{MMHD_message});
-    }
-
-    $self->{MMHD_message};
-}
-
-#------------------------------------------
-
 sub isDelayed() {1}
 
 #------------------------------------------
@@ -103,6 +90,10 @@ sub modified(;$)
 {   return 0 if @_==1 || !$_[1];
     shift->forceRealize->modified(1);
 }
+
+#------------------------------------------
+
+sub isModified() { 0 }
 
 #------------------------------------------
 

@@ -42,7 +42,7 @@ at the bottom of this manual-page.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default folderdir $ENV{HOME}/.mh
 =default lock_file <index_file>
@@ -142,6 +142,16 @@ sub init($)
 
 #-------------------------------------------
 
+=c_method create FOLDERNAME, OPTIONS
+
+=error Cannot create MH folder $name: $!
+
+For some reason, it is impossible to create the folder.  Check the permissions
+and the name of the folder.  Does the path to the directory to be created
+exist?
+
+=cut
+
 sub create($@)
 {   my ($class, $name, %args) = @_;
     my $folderdir = $args{folderdir} || $default_folder_dir;
@@ -154,7 +164,7 @@ sub create($@)
         return $class;
     }
     else
-    {   $class->log(WARNING => "Cannot create folder $name: $!\n");
+    {   $class->log(ERROR => "Cannot create MH folder $name: $!\n");
         return;
     }
 }
@@ -433,6 +443,12 @@ sub readMessages(@)
 Permit renumbering of message.  By default this is true, but for some
 unknown reason, you may be thinking that messages should not be renumbered.
 
+=error Cannot write folder $name without lock.
+
+It is impossible to get a lock on the folder, which means that the changes
+can not be made.  You may need to tune the lock related options which
+are available at folder creation.
+
 =cut
 
 sub writeMessages($)
@@ -445,7 +461,7 @@ sub writeMessages($)
     #       is on disk.
 
     my $locker    = $self->locker;
-    $self->log(ERROR => "Cannot write without lock."), return
+    $self->log(ERROR => "Cannot write folder $self without lock."), return
         unless $locker->lock;
 
     my $renumber  = exists $args->{renumber} ? $args->{renumber} : 1;
@@ -493,6 +509,22 @@ sub writeMessages($)
 
 #-------------------------------------------
 
+=method appendMessage OPTIONS
+
+=error Cannot append message without lock on $folder.
+
+It is impossible to append one or more messages to the folder which is
+not opened, because locking it failes.  The folder may be in use by
+an other application, or you may need to specify some lock related
+options (see new()).
+
+=error Unable to write message for $folder to $filename: $!
+
+The new message could not be written to its new file, for the specific
+reason.
+
+=cut
+
 sub appendMessages(@)
 {   my $class  = shift;
     my %args   = @_;
@@ -509,7 +541,7 @@ sub appendMessages(@)
 
     my $locker   = $self->locker;
     unless($locker->lock)
-    {   $self->log(ERROR => "Cannot append message after $self without lock.");
+    {   $self->log(ERROR => "Cannot append message without lock on $self.");
         return;
     }
 
@@ -518,7 +550,7 @@ sub appendMessages(@)
     foreach my $message (@messages)
     {   my $filename = File::Spec->catfile($directory,$msgnr);
         $message->create($filename)
-          or $self->log(ERROR => "Unable to write message to $filename: $!\n");
+          or $self->log(ERROR => "Unable to write message for $self to $filename: $!\n");
 
         $msgnr++;
     }

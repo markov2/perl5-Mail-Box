@@ -32,7 +32,7 @@ what you can do with the Mbox folder object Mail::Box::Mbox.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =default message_type 'Mail::Box::Mbox::Message'
 
@@ -269,9 +269,9 @@ sub dirToSubfolder($$)
 
 #-------------------------------------------
 
-=method folderToFilename FOLDERNAME, FOLDERDIR, [EXTENSION]
+=ci_method folderToFilename FOLDERNAME, FOLDERDIR, [EXTENSION]
 
-(Class or instance method)  Translate a folder name into a filename, using the
+Translate a folder name into a filename, using the
 FOLDERDIR value to replace a leading C<=>.  If no EXTENSION is specified and
 this method is called as instance method, new(subfolder_extension) is used.
 Otherwise, the extension default to C<'.d'>.

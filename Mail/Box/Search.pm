@@ -61,7 +61,7 @@ UNDER CONSTRUCTION till Mail::Transport::IMAP4 is complete.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a filter.
 
@@ -146,6 +146,25 @@ problems handling details received from the search.  When this flag
 is turned off, the body of multiparts will be ignored.  The parts
 search will include the preamble and epilogue.
 
+=error Search in BODY, HEAD or MESSAGE not $in.
+
+The C<in> option defines only three names.
+
+=error Cannot search in header.
+
+Th search object does not implement inHead(), and can therefore not search
+a message header.
+
+=error Cannot search in body.
+
+Th search object does not implement inBody(), and can therefore not search
+a message body.
+
+=error Don't know how to deliver via results in $way.
+
+The search results cannot be delivered in the specific way, because that is
+not a defined alternative.
+
 =cut
 
 sub init($)
@@ -158,12 +177,12 @@ sub init($)
       = $in eq 'BODY'    ? (0,1)
       : $in eq 'HEAD'    ? (1,0)
       : $in eq 'MESSAGE' ? (1,1)
-      : croak "Search in BODY, HEAD or MESSAGE not $in.";
+      : ($self->log(ERROR => "Search in BODY, HEAD or MESSAGE not $in."), return);
 
-    croak "Cannot search in header."
+    $self->log(ERROR => "Cannot search in header."), return
         if $self->{MBS_check_head} && !$self->can('inHead');
 
-    croak "Cannot search in body."
+    $self->log(ERROR => "Cannot search in body."), return
         if $self->{MBS_check_body} && !$self->can('inBody');
 
     my $deliver             = $args->{deliver};
@@ -171,7 +190,7 @@ sub init($)
       = ref $deliver eq 'CODE' ? sub { $deliver->($self, $_[0]) }
       : !defined $deliver      ? undef
       : $deliver eq 'DELETE'   ? sub {$_[0]->{part}->toplevel->delete(1)}
-      : $self->log(ERROR => "Don't know how to deliver via $deliver");
+      : $self->log(ERROR => "Don't know how to deliver results in $deliver.");
 
     my $logic               = $args->{logical}  || 'REPLACE';
     $self->{MBS_negative}   = $logic =~ s/\s*NOT\s*$//;
@@ -248,7 +267,7 @@ sub search(@)
     my $count = 0;
 
     foreach my $message (@messages)
-    {   next if $self->{MBS_no_deleted} && $message->deleted;
+    {   next if $self->{MBS_no_deleted} && $message->isDeleted;
         next unless $self->{MBS_delayed} || !$message->isDelayed;
 
         my $set = defined $label ? $message->label($label) : 0;

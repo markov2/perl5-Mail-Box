@@ -43,7 +43,7 @@ at all.
 
 #------------------------------------------
 
-=item new OPTIONS
+=c_method new OPTIONS
 
 =cut
 

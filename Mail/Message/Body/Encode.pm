@@ -134,6 +134,16 @@ needed) will use this type. CLASS must extend Mail::Message::Body.
 =option  transfer_encoding STRING|FIELD
 =default transfer_encoding undef
 
+=warning No decoder defined for transfer encoding $name.
+
+The data (message body) is encoded in a way which is not currently understood,
+therefore no decoding (or recoding) can take place.
+
+=warning No encoder defined for transfer encoding $name.
+
+The data (message body) has been decoded, but the required encoding is
+unknown.  The decoded data is returned.
+
 =cut
 
 sub encode(@)
@@ -182,7 +192,8 @@ sub encode(@)
     elsif(my $decoder = $self->getTransferEncHandler($trans_was))
     {   $decoded = $decoder->decode($self, result_type => $bodytype) }
     else
-    {   $self->log(WARNING => 'No decoder for $trans_was.');
+    {   $self->log(WARNING =>
+           'No decoder defined for transfer enconding $trans_was.');
         return $self;
     }
 
@@ -191,7 +202,8 @@ sub encode(@)
     elsif(my $encoder = $self->getTransferEncHandler($trans_to))
     {   $encoded = $encoder->encode($decoded, result_type => $bodytype) }
     else
-    {   $self->log(WARNING => 'No encoder for $trans_to.');
+    {   $self->log(WARNING =>
+           'No encoder defined for transfer encoding $trans_to.');
         return $decoded;
     }
 
@@ -337,9 +349,8 @@ sub getTransferEncHandler($)
 
 #------------------------------------------
 
-=method addTransferEncHandler NAME, CLASS|OBJECT
+=ci_method addTransferEncHandler NAME, CLASS|OBJECT
 
-(Class or instance method)
 Relate the NAMEd transfer encoding to an OBJECTs or object of the specified
 CLASS.  In the latter case, an object of that CLASS will be created on the
 moment that one is needed to do encoding or decoding.

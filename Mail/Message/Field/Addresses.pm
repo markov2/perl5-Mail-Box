@@ -63,7 +63,7 @@ my %accepted     =
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 =default attributes    C<not accepted>
 =default extra         C<not accepted>
@@ -106,6 +106,11 @@ sub init($)
 
 Parse the supplied address string, and store the found data in this
 object.
+
+=warning Illegal part in address field $name: $string
+
+The parsed address field contains pieces which are not understood.  Therefore,
+the address is invalid.
 
 =cut
 
@@ -275,6 +280,11 @@ sub addresses() { map {$_->addresses} shift->groups }
 
 Attributes are not supported for address fields.
 
+=error No attributes for address fields.
+
+Is is not possible to add attributes to address fields: it is not permitted
+by the RFCs.
+
 =cut
 
 sub addAttribute($;@)
@@ -288,6 +298,10 @@ sub addAttribute($;@)
 =method addExtra ...
 
 Extras are not permitted in address fields.
+
+=error No extras in address fields.
+
+It is not permitted to have free-format text parts in address fields.
 
 =cut
 

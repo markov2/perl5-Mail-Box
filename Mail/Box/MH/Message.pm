@@ -34,7 +34,7 @@ message is stored in a separate file.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 

@@ -37,9 +37,9 @@ dummy message.
 
 #-------------------------------------------
 
-=method new MESSAGE-ID, OPTIONS
+=c_method new MESSAGE-ID, OPTIONS
 
-(Class method) Create a new dummy message to occupy the space for
+Create a new dummy message to occupy the space for
 a real message with the specified MESSAGE-ID.
 
 =default body <not used>
@@ -57,6 +57,11 @@ a real message with the specified MESSAGE-ID.
  my $message = Mail::Message::Dummy->new($msgid);
  if($message->isDummy) {...}
 
+=error Message-Id is required for a dummy.
+
+A dummy message occupies the place for a real message.  When a dummy is created,
+the id of the message which place it is holding must be known.
+
 =cut
 
 sub init($)
@@ -65,7 +70,7 @@ sub init($)
     @$args{ qw/modified trusted/ } = (0, 1);
     $self->SUPER::init($args);
 
-    $self->log(ERROR => "MessageId is required for a dummy.")
+    $self->log(ERROR => "Message-Id is required for a dummy.")
        unless exists $args->{messageId};
 
     $self;

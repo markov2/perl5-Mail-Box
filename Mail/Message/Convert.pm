@@ -71,7 +71,7 @@ Converts a text message into text using Text::Autoformat.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  fields NAMES|ARRAY-OF-NAMES|REGEXS
 =default fields <see description>

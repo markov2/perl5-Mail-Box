@@ -35,7 +35,7 @@ complicated (so slower), but will work for NFS -and for local disks too.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =cut
 
@@ -113,6 +113,22 @@ sub _unlock($$)
 
 #-------------------------------------------
 
+=method lock
+
+=warning Removed expired lockfile $filename.
+
+A lock file was found which was older than the expiration period as
+specified with the C<timeout> option.  The lock file was succesfully
+removed.
+
+=error Unable to remove expired lockfile $lockfile: $!
+
+A lock file was found which was older than the expiration period as
+specified with the C<timeout> option.  It is impossible to remove that
+lock file, so we need to wait until it vanishes by some external cause.
+
+=cut
+
 sub lock()
 {   my $self     = shift;
     return 1 if $self->hasLock;
@@ -127,7 +143,7 @@ sub lock()
     if(-e $lockfile && -A $lockfile > $expires)
     {   if(unlink $lockfile)
              { $self->log(WARNING => "Removed expired lockfile $lockfile.\n") }
-        else { $self->log(WARNING =>
+        else { $self->log(ERROR =>
                         "Unable to remove expired lockfile $lockfile: $!") }
     }
 

@@ -37,7 +37,7 @@ using HTML::FormatPS.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 OPTIONS which start with capitals are blindly passed to HTML::FormatPS.
 As of this writing, that package

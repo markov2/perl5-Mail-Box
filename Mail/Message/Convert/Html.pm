@@ -38,7 +38,7 @@ which do require extra packages to be installed.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  head_mailto BOOLEAN
 =default head_mailto <true>

@@ -77,7 +77,7 @@ So: label C<unseen> is translated into C<seen> for internal use.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  filename FILENAME
 =default filename <required>

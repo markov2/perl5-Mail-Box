@@ -32,7 +32,7 @@ work on platforms where no C compiler is available.
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  trusted BOOLEAN
 =default trusted <false>
@@ -120,6 +120,23 @@ sub filePosition(;$)
 my $empty = qr/^[\015\012]*$/;
 
 #------------------------------------------
+
+=method readHeader
+
+=warning Unexpected end of header in $source: $line
+
+While parsing a message from the specified source (usually a file name),
+the parser found a syntax error.  According to the MIME specification in the
+RFCs, each header line must either contain a colon, or start with a blank
+to indicate a folded field.  Apparently, this header contains a line which
+starts on the first position, but not with a field name.
+
+By default, parsing of the header will be stopped.  If there are more header
+lines after the erroneous line, they will be added to the body of the message.
+In case of new(fix_headers) set, the parsing of the header will be continued.
+The erroneous line will be added to the preceding field.
+
+=cut
 
 sub readHeader()
 {   my $self  = shift;
@@ -250,7 +267,7 @@ sub _read_stripped_lines(;$$)
     {   
 
   LINE: while(1)
-        {   my $where = $file->tell;
+        {   my $where = $file->getpos;
             my $line  = $file->getline or last;
 
             foreach my $sep (@seps)
@@ -258,7 +275,7 @@ sub _read_stripped_lines(;$$)
                 next if substr($sep, 0, 5) eq 'From '
                        && $line !~ m/ (19[789]\d|20[01]\d)/;
 
-                $file->seek($where, 0);
+                $file->setpos($where);
                 last LINE;
             }
 

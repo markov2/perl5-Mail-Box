@@ -62,7 +62,7 @@ my %mailers =
 
 #------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  hostname HOSTNAME|ARRAY-OF-HOSTNAMES
 =default hostname 'localhost'
@@ -128,6 +128,17 @@ decreases the flexible usage of your program: moving your program
 to other systems may involve changing the path to the executable,
 which otherwise would work auto-detect and unmodified.
 
+=warning Avoid program abuse with an absolute path for $exec.
+
+Specifying explicit locations for executables of email transfer agents
+should only be done with absolute file names, to avoid various pontential
+security problems.
+
+=warning Executable $exec does not exist.
+
+The explicitly indicated mail transfer agent does not exists. The normal
+settings are used to find the correct location.
+
 =cut
 
 sub new(@)
@@ -172,8 +183,7 @@ sub init($)
     if(my $exec = $args->{executable})
     {   $self->{MT_exec} = $exec;
 
-        $self->log(WARNING
-                    => "Avoid program abuse with an absolute path for $exec.")
+        $self->log(WARNING =>"Avoid program abuse with an absolute path for $exec.")
            unless File::Spec->file_name_is_absolute($exec);
 
         unless(-x $exec)

@@ -56,7 +56,7 @@ result.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 Create a UNIX-grep like search filter.
 

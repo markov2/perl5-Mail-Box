@@ -49,7 +49,7 @@ Mail::Message::Field::Full header field.
 
 #------------------------------------------
 
-=method new (NAME, [VALUE] | STRING), OPTIONS
+=c_method new (NAME, [VALUE] | STRING), OPTIONS
 
 Create a new attribute NAME with the optional VALUE.  If no VALUE is specified,
 the first argument of this method is inspected for an equals sign C<'='>.
@@ -98,6 +98,12 @@ by some Mail User Agents.
      );
  print $fn;   # print  filename*=iso-8859-15'nl-BE'Re%C7u
 
+=warning Illegal character in parameter name '$name'
+
+The specified parameter name contains characters which are not permitted by
+the RFCs.  You can better change the name into something which is accepted,
+or risk applications to corrupt or ignore the message.
+
 =cut
 
 sub new($$@)
@@ -106,7 +112,7 @@ sub new($$@)
     my %args  = @_;
 
     my $name  = $attr =~ m/^(.*?)(?:\*\d+)?\*?\=/ ? $1 : $attr;
-    Mail::Reporter->log(WARNING => "Illegal character in parameter name '$name'\n")
+    $class->log(WARNING => "Illegal character in parameter name '$name'.\n")
         if $name !~ m/^[!#-'*+\-.0-9A-Z^-~]+$/;
 
     my $self  = bless

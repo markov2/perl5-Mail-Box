@@ -33,7 +33,7 @@ same name as the folder, extended by C<.lock>.
 
 #-------------------------------------------
 
-=method new OPTIONS
+=c_method new OPTIONS
 
 =option  file FILENAME
 =default file <folderfile>.lock
@@ -58,12 +58,6 @@ sub init($)
 
     $self->SUPER::init($args);
 }
-
-#-------------------------------------------
-
-=method new OPTIONS
-
-=cut
 
 #-------------------------------------------
 

@@ -32,7 +32,7 @@ Mail::Message::Field::Fast is faster (as the name predicts).
 
 #------------------------------------------
 
-=method new DATA
+=c_method new DATA
 
 If you stick to this flexible class of header fields, you have a bit
 more facilities than with Mail::Message::Field::Fast.  Amongst it, you

@@ -39,7 +39,7 @@ same node.
 
 #-------------------------------------------
 
-=mthod new OPTIONS
+=c_method new OPTIONS
 
 You will not call this method yourself. The Mail::Box::Thread::Manager
 object will use it to construct Mail::Box::Thread::Node objects.
@@ -62,8 +62,6 @@ specify it when you don't have the message yet.
 
 Indicates the class name of dummy messages. Dummy messages are
 placeholders in a Mail::Box::Thread::Manager data structure.
-
-=back
 
 =cut
 
@@ -145,7 +143,7 @@ sub message()
     return $messages[0] if @messages==1;
 
     foreach (@messages)
-    {   return $_ unless $_->deleted;
+    {   return $_ unless $_->isDeleted;
     }
 
     $messages[0];
