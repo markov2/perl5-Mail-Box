@@ -170,8 +170,8 @@ sub labels()
 
     unless(exists $labels->{seen})
     {   my $imap = $self->folder->transporter or return;
-        my %flags = $imap->getFlags($self->unique);
-        @{$labels}{keys %flags} = values %flags;
+        my $flags = $imap->getFlags($self->unique);
+        @{$labels}{keys %$flags} = values %$flags;
     }
 
     $labels;

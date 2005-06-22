@@ -9,6 +9,8 @@ use lib qw(/home/markov/shared/perl/MimeTypes/lib);
 use base 'Exporter';
 use File::Copy 'copy';
 use List::Util 'first';
+use IO::File;            # to overrule open()
+use FileHandle;          # used in MIME::Body for mime-entity support
 
 our @EXPORT =
   qw/clean_dir copy_dir
@@ -54,6 +56,23 @@ BEGIN {
    $cpy     = File::Spec->catfile('folders', $cpyfn);
 
    ($src, $fn) = $crlf_platform ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
+
+   # IO::File::open() is wrapped, because starting with 1.11 (Perl 5.8.7)
+   # it cannot open files with relative pathnames when tainting checks are
+   # enabled.  I want to test relative folder names!!
+   #
+   # workaround: turn the relative path to an absolute
+   # one here, then untaint it
+   # Idea based on a contribution by Niko Tyni
+
+   my $old_open = \&IO::File::open;
+   no warnings 'redefine';
+   *IO::File::open = sub {
+      my $self = shift;
+      my $file = File::Spec->rel2abs(shift);
+      $file =~ /^(.*)$/;   # untaint
+      $old_open->($self, $1, @_);
+   }
 }
 
 #

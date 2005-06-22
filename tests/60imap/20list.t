@@ -7,9 +7,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use Tools;
 
 use lib qw(. .. tests);
+use Tools;
 use Mail::Server::IMAP4::List;
 use Mail::Box::MH;
 use Mail::Box::Identity;

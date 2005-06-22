@@ -59,10 +59,12 @@ sub init($)
 
 =section Sending mail
 
-=method trySend MESSAGE, OPTION
+=method trySend MESSAGE, OPTIONS
+
+=option  sendmail_options ARRAY
+=default sendmail_options undef
 
 =error Errors when closing sendmail mailer $program: $!
-
 The was no problem starting the sendmail mail transfer agent, but for
 some specific reason the message could not be handled correctly.
 
@@ -74,7 +76,10 @@ sub trySend($@)
     my $program = $self->{MTS_program};
     if(open(MAILER, '|-')==0)
     {   my $options = $args{sendmail_options} || [];
-        { exec $program, '-ti', @{$self->{MTS_opts}}; }  # {} to avoid warning
+
+        # {} to avoid warning
+        { exec $program, '-ti', @{$self->{MTS_opts}}, @$options; }
+
         $self->log(NOTICE => "Errors when opening pipe to $program: $!");
         exit 1;
     }

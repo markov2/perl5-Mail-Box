@@ -160,7 +160,6 @@ our $ntml_installed;
 
 sub authentication(@)
 {   my ($self, @types) = @_;
-    return @{$self->{MTI_auth}} unless @types;
 
     unless(defined $ntml_installed)
     {   eval "require Authen::NTML";
@@ -170,9 +169,15 @@ sub authentication(@)
 
     # What the client wants to use to login
 
+    unless(@types)
+    {   @types = exists $self->{MTI_auth} ? @{$self->{MTI_auth}} : 'AUTO';
+    }
+
     if(@types == 1 && $types[0] eq 'AUTO')
     {   @types = ('CRAM-MD5', ($ntml_installed ? 'NTLM' : ()), 'PLAIN');
     }
+
+    $self->{MTI_auth} = \@types;
 
     my @clientside;
     foreach my $auth (@types)
@@ -182,7 +187,7 @@ sub authentication(@)
            :                        [$auth => undef];
     }
 
-    my %clientside = map { ($_->[0] => $_) } @clientside;;
+    my %clientside = map { ($_->[0] => $_) } @clientside;
 
     # What does the server support? in its order of preference.
 
@@ -197,7 +202,6 @@ sub authentication(@)
     }
     @auth = @clientside unless @auth;  # fallback to client's preference
 
-    $self->{MTI_auth} = \@auth;
     @auth;
 }
 
@@ -443,8 +447,9 @@ sub getFlags($$)
     my $labels = $self->flagsToLabels(SET => $imap->flags($id));
 
     # Add default values for missing flags
-    foreach  my $s (values %flags2labels)
-    {   $labels->{$_->[0]} = not $_->[1] unless exists $labels->{$_->[0]};
+    foreach my $s (values %flags2labels)
+    {   $labels->{$s->[0]} = not $s->[1]
+             unless exists $labels->{$s->[0]};
     }
 
     $labels;

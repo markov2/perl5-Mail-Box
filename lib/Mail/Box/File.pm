@@ -40,7 +40,7 @@ the next one.
 =c_method new OPTIONS
 
 =default folderdir C<$ENV{HOME}.'/Mail'>
-=default lock_file <foldername>.<lock-extension>
+=default lock_file <foldername><lock-extension>
 
 =default message_type M<Mail::Box::File::Message>
 
@@ -265,6 +265,12 @@ Appending messages to a file based folder which is not opened is a little
 risky.  In practice, this is often done without locking the folder.  So,
 an other application may write to the folder at the same time... :(  Hopefully,
 all goes fast enough that the chance on collition is small.
+
+All OPTIONS of M<Mail::Box::Mbox::new()> can be supplied.
+
+=option  lock_type ...
+=default lock_type C<NONE>
+See M<Mail::Box::open(lock_type)> for possible values.
 
 =error Cannot append messages to folder file $filename: $!
 Appending messages to a not-opened file-organized folder may fail when the

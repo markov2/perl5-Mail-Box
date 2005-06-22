@@ -161,7 +161,7 @@ sub new($;$$@)
     my $body   = @_ % 2 ? shift : undef;
     my %args   = @_;
 
-    $body    ||= delete $args{body};
+    $body      = delete $args{body} if defined $args{body};
     unless(defined $body)
     {   (my $n, $body) = split /\s*\:\s*/s, $name, 2;
         $name = $n if defined $body;

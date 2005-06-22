@@ -16,10 +16,10 @@ Mail::Message::Field::Address - One e-mail address
 
  my $addr = Mail::Message::Field::Address->new(...);
 
- my $ui   = User::Idenity->new(...);
+ my $ui   = User::Identity->new(...);
  my $addr = Mail::Message::Field::Address->coerce($ui);
 
- my $mi   = Mail::Idenity->new(...);
+ my $mi   = Mail::Identity->new(...);
  my $addr = Mail::Message::Field::Address->coerce($mi);
 
  print $addr->address;

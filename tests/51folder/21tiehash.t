@@ -53,7 +53,10 @@ ok($folder->message(4)->deleted);
 cmp_ok(keys %folder , "==",  44);
 
 # Double messages will not be added.
-$folder{ (undef) } = $folder{$msgid}->clone;
+{  no warnings 'uninitialized';
+   $folder{ (undef) } = $folder{$msgid}->clone;
+}
+
 cmp_ok(keys %folder , "==",  44);
 
 # Different message, however, will be added.

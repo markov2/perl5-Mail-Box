@@ -7,6 +7,44 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.061: Wed Jun 22 19:39:09 CEST 2005
+
+	Fixes:
+
+	- Finally, after many hours hunting, I was able to figure-out that
+	  a bug in Perl's "require" caused the "foundIn() not implemented
+	  in Mail::Box::IMAP4" problem (for instance when running the
+	  tests).  Reported by [many people, nice work-around by Niko Tyni]
+
+	- Mail::Message::Construct::Read added missing Message-ID without
+	  angle brackets.  Patch by [gjmyers]
+
+	- Mail::Transport::Sendmail options to trySend() were ignored.
+          [Andriy Gapon]
+
+	- Mail::Message::timestamp() didn't trigger load of lazy message.
+	  [found by Eric Dorland]
+
+	- Many IMAP4 fixes and bug-reports by [Raul Dias]
+
+	- Mail::Message::Field::Full translated '0' content into 'undef'
+	  [found by Eugene L Schulman]
+
+	- test.pl didn't return <false> on a critical failure.  Patched
+	  by [Tiko Tyni]  Now installation attempt should stop on a
+	  sincere problem.
+
+	- test fixes, where newer Test::Harness passes around 'lib'
+	  differently. Patched by [Tiko Tyni]
+
+	- On request of [rt.cpan.org@plan9.de], Mail::Box::File::appendMessage
+	  explicitly states that it by default doesn't lock the folder. The
+	  writing is unsafe!
+
+	- [Tiko Tyni] provided different solutions to fix the taint warnings
+	  with the tests, which appeasr with perl 5.8.7.  IO::File changed
+	  its behavior, which is now circumvented in the tests..
+
 version 2.060: Tue Mar 15 22:02:34 CET 2005
 
 	Fixes:
@@ -15,6 +53,9 @@ version 2.060: Tue Mar 15 22:02:34 CET 2005
 
 	- Mail::Transport::IMAP4 authenticate now uses server's
 	  reported capabilities.  On the path paved by [Tom Allison]
+
+	- Fixes installation issue with IMAP4 (I hope)  Reported by
+	  various people.
 
 	- Mail::Message::Field::toDate() now works around %z interpretation
 	  as textual time-zones when there are blanks in the name.
@@ -31,10 +72,6 @@ version 2.060: Tue Mar 15 22:02:34 CET 2005
 
 	- Mail::Transport::POP3 did only try APOP in AUTO mode. Found
 	  by [Markus Spann].
-
-	- Mail::Box::Manager::decodeFolderURL leaves the foldername
-	  starting with a slash.  That slash should be removed when
-	  the URL starts with a protocol ne 'file'. [Tom Allison]
 
 	- scripts/mailbox2html used setLabel(), which got replaced by
 	  label() a long time ago. Reported by [Alain Veylit]

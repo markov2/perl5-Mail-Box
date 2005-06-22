@@ -164,11 +164,7 @@ sub init($)
 
     my $transport = $args->{transporter} || 'Mail::Transport::IMAP4';
     unless(ref $transport)
-    {   eval "require $transport";
-        $self->log(ERROR => "Cannot install transporter $transport:\n$@"),
-           return () if $@;
-
-        $transport = $self->createTransporter($transport, %$args)
+    {   $transport = $self->createTransporter($transport, %$args)
 	    or return undef;
     }
 

@@ -737,7 +737,7 @@ no stamp can be found.
 =cut
 
 sub timestamp()
-{   my $head = shift->head or return;
+{   my $head = shift->head;
     $head->recvstamp || $head->timestamp;
 }
 

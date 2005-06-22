@@ -6,9 +6,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use Tools;
 
 use lib qw(. .. tests);
+use Tools;
 use Mail::Box::Manage::User;
 
 BEGIN

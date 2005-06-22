@@ -27,7 +27,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 69;
+   {   plan tests => 73;
        Encode->import('encode', 'decode');
    }
 }
@@ -41,6 +41,14 @@ my $mmfs = 'Mail::Message::Field::Structured';
 
 my $a = $mmfs->new('a', '');
 isa_ok($a, $mmfs);
+
+is($a->unfoldedBody, '');
+
+my $a2 = $mmfs->new('a2', 0);
+isa_ok($a2, $mmfs);
+is($a2->string, "a2: 0\n");
+
+is($a2->unfoldedBody, '0');
 
 #
 # Test adding comments
