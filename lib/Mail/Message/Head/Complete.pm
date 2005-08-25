@@ -53,6 +53,7 @@ sub clone(;@)
 #------------------------------------------
 
 =method build [PAIR|FIELD]-LIST
+Undefined values are interpreted as empty field values, and therefore skipped.
 =warning Field objects have an implied name ($name)
 =cut
 
@@ -61,6 +62,7 @@ sub build(@)
     my $head = $self->new;
     while(@_)
     {   my $name = shift;
+        defined $name or next;
 
         if($name->isa('Mail::Message::Field'))
         {   $head->add($name);
@@ -68,6 +70,8 @@ sub build(@)
         }
 
         my $content = shift;
+        defined $content or next;
+
         if(ref $content && $content->isa('Mail::Message::Field'))
         {   $self->log(WARNING => "Field objects have an implied name ($name)");
             $head->add($content);

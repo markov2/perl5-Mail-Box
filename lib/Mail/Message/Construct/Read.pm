@@ -79,7 +79,7 @@ nested, this will be overruled.
  my $fromline = <STDIN>;
  my $msg      = Mail::Message->read(\*STDIN);
  my $coerced  = $mboxfolder->addMessage($msg);
- $coerced->fromLines($fromline);
+ $coerced->fromLine($fromline);
  
 =cut
 

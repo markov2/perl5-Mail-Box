@@ -1201,7 +1201,7 @@ then an C<@>, and then a domain name.  This is made to avoid the creation
 of two messages with the same id.  The warning emerges when the C<@> is
 missing from the string.
 
-=warning Different messages with id $msgid.
+=warning Different messages with id $msgid
 
 The message id is discovered more than once within the same folder, but the
 content of the message seems to be different.  This should not be possible:
@@ -1245,7 +1245,7 @@ sub messageId($;$)
         return $message->label(deleted => 1)
             if $subj1 eq $subj2 && $to1 eq $to2;
 
-        $self->log(WARNING => "Different messages with id $msgid.");
+        $self->log(WARNING => "Different messages with id $msgid");
         $msgid = $message->takeMessageId(undef);
     }
 

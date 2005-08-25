@@ -17,7 +17,7 @@ use Test::Harness qw($verbose);
 
 # we use Test::More without a plan here, but we don't want
 # Test::Builder to mess with the exit code
-Test::Builder->no_ending(1);
+Test::More->builder->no_ending(1);
 
 chdir 'tests'    ##### CHANGE DIR TO tests
    or die "Cannot go to test scripts directory: $!\n";

@@ -150,7 +150,7 @@ returned.
 
 =examples
 
- my $pgpkey = M<Mail::Message::Body::File>->new(file => '.pgp');
+ my $pgpkey = M<Mail::Message::Body::File>->new(file => 'a.pgp');
  my $msg    = M<Mail::Message>->buildFromBody(
     $message->decoded->attach($pgpkey));
 

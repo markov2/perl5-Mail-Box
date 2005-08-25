@@ -135,7 +135,9 @@ sub searchPart($)
 
     my @details = (message => $message);
    
-    my $sa      = Mail::Message::Wrapper::SpamAssassin->new($message);
+    my $sa      = Mail::Message::Wrapper::SpamAssassin->new($message)
+        or return;
+
     my $status  = $self->assassinator->check($sa);
 
     my $is_spam = $status->is_spam;

@@ -270,7 +270,7 @@ All OPTIONS of M<Mail::Box::Mbox::new()> can be supplied.
 
 =option  lock_type ...
 =default lock_type C<NONE>
-See M<Mail::Box::open(lock_type)> for possible values.
+See M<Mail::Box::new(lock_type)> for possible values.
 
 =error Cannot append messages to folder file $filename: $!
 Appending messages to a not-opened file-organized folder may fail when the

@@ -67,7 +67,7 @@ The ARRAY is a list of rules, which each describe an action which will
 be called on each part which is found in the message.  Most rules
 probably won't match, but some will bring changes to the content.
 Rules can be specified as method name, or as code reference.  See the
-DETAILS chapter in this manual page, and M<recursiveRebuildPart()>.
+L</DETAILS> chapter in this manual page, and M<recursiveRebuildPart()>.
 
 By default, only the relatively safe transformations are performed:
 C<replaceDeletedParts>, C<descendMultiparts>, C<descendNested>,

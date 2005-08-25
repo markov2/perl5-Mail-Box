@@ -47,7 +47,7 @@ sub new(@)    # fix missing infra-structure of base element
 
     $_->delete for $message->head->spamGroups('SpamAssassin');
 
-    $class->SUPER::new($message)->init(\%args);
+    $class->SUPER::new( {message => $message} )->init(\%args);
 }
 
 sub init($) { shift }
