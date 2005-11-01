@@ -151,7 +151,7 @@ sub build(@)
       :               ();
 
     my ($head, @headerlines);
-    my ($type, $transfenc, $dispose);
+    my ($type, $transfenc, $dispose, $descr);
     while(@_)
     {   my $key = shift;
         if(ref $key && $key->isa('Mail::Message::Field'))
@@ -159,6 +159,7 @@ sub build(@)
                if($name eq 'content-type')              { $type      = $key }
             elsif($name eq 'content-transfer-encoding') { $transfenc = $key }
             elsif($name eq 'content-disposition')       { $dispose   = $key }
+            elsif($name eq 'content-description')       { $descr     = $key }
             else { push @headerlines, $key }
             next;
         }
@@ -183,11 +184,13 @@ sub build(@)
 			  : $c;
             }
 	}
-        elsif($key =~ m/^content\-(type|transfer\-encoding|disposition)$/i )
+        elsif($key =~
+           m/^content\-(type|transfer\-encoding|disposition|description)$/i )
         {   my $k     = lc $1;
             my $field = Mail::Message::Field->new($key, $value);
-               if($k eq 'type') { $type = $field }
+               if($k eq 'type')         { $type = $field }
             elsif($k eq 'disposition' ) { $dispose = $field }
+            elsif($k eq 'description' ) { $descr    = $field }
             else { $transfenc = $field }
         }
         elsif($key =~ m/^[A-Z]/)
@@ -207,6 +210,7 @@ sub build(@)
     # Setting the type explicitly, only after the body object is finalized
     $body->type($type) if defined $type;
     $body->disposition($dispose) if defined $dispose;
+    $body->description($descr) if defined $descr;
     $body->transferEncoding($transfenc) if defined $transfenc;
 
     $class->buildFromBody($body, $head, @headerlines);

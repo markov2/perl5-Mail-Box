@@ -74,8 +74,8 @@ C<replaceDeletedParts>, C<descendMultiparts>, C<descendNested>,
 C<flattenMultiparts>, C<flattenEmptyMultiparts>.  In the future, more
 safe transformations may be added to this list.
 
-=option  extraRules ARRAY
-=default extraRules []
+=option  extra_rules ARRAY
+=default extra_rules []
 
 The standard set of rules, which is the default for the C<rules> option,
 is a moderest setting.  In stead of copying that list into a full set
@@ -96,7 +96,7 @@ means that it cancels the effect of the default rule C<replaceDeletedParts>.
  # Replace deleted parts by a place-holder
  my $cleaned = $msg->rebuild
    ( keep_message_id => 1
-   , extraRules => [ 'removeEmpty', 'flattenMultiparts' ]
+   , extra_rules => [ 'removeEmpty', 'flattenMultiparts' ]
    );
 
 =error no rebuild rule $name defined.
@@ -113,7 +113,8 @@ sub rebuild(@)
     # Collect the rules to be run
 
     my @rules   = $args{rules} ? @{$args{rules}} : @default_rules;
-    unshift @rules, @{$args{extraRules}} if $args{extraRules};
+    unshift @rules, @{$args{extra_rules}} if $args{extra_rules};
+    unshift @rules, @{$args{extraRules}}  if $args{extraRules}; #old name
 
     foreach my $rule (@rules)
     {   next if ref $rule;
@@ -473,7 +474,7 @@ by a message which says that the part is deleted.
 =back
 
 You can specify a selection of these rules with M<rebuild(rules)> and
-M<rebuild(extraRules)>.
+M<rebuild(extra_rules)>.
 
 =subsection Conversion rules
 
@@ -521,7 +522,7 @@ comparible routine.
 When you have your own routine, you simply call:
 
  my $rebuild_message = $message->rebuild
-  ( extraRules => [ \&my_own_rule, 'other_rule' ] );
+  ( extra_rules => [ \&my_own_rule, 'other_rule' ] );
 
 =cut
 

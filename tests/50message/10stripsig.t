@@ -22,12 +22,15 @@ my @lines = map { "$_\n" } qw/1 2 3 4 5/;
 my $body  = Mail::Message::Body::Lines->new(data => \@lines);
 
 my ($stripped, $sig) = $body->stripSignature;
-cmp_ok($stripped, "==", $body);
+my $equal = $stripped==$body;
+ok($equal, 'stripped 1');
+
 ok(!defined $sig);
 cmp_ok($stripped->nrLines, "==", @lines);
 
 my $stripped2 = $body->stripSignature;
-cmp_ok($stripped2, "==", $body);
+$equal = $stripped2==$body;
+ok($equal, 'stripped 2');
 
 #
 # Simple strip

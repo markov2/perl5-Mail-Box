@@ -76,14 +76,14 @@ distrs which are based on this kind of messages.
 REASON
 
 , [ HTML::TreeBuilder => '3.13', reason => <<'REASON' ]
-     The tree builder is used by the HTML::Format* packages.
-     Version 3.12 is wrong, so you should install a newer version
-     if you want smart html conversions.
+The tree builder is used by the HTML::Format* packages.
+Version 3.12 is wrong, so you should install a newer version
+if you want smart html conversions.
 REASON
 
 , [ Time::HiRes => '1.51', reason => <<'REASON' ]
-     When installed, unique message-ids will be created using gettimeofday.
-     Otherwise, generated message-ids will not be thread/fork safe.
+When installed, unique message-ids will be created using gettimeofday.
+Otherwise, generated message-ids will not be thread/fork safe.
 REASON
 
 , [ HTML::FormatText => '2.01', distr => 'HTML::Format', reason => <<'REASON' ]
@@ -117,8 +117,9 @@ BEGIN
     $has_readkey = not length $@;
 }
 
-my $default_install_answer = $ENV{INSTALL_MAILBOX_OPTIONALS}
-    || (-t STDIN ? 'y' : 'n');
+my $default_install_answer
+     = $ENV{MAILBOX_INSTALL_OPTIONALS}
+    || $ENV{INSTALL_MAILBOX_OPTIONALS};      # deprecated
 
 print <<'INTRO';
 *
@@ -206,16 +207,12 @@ foreach my $optional (@optional)
         print $warn;
     }
     
-    my $install  = $default_install_answer;
-    my $key = prompt "Do you want to install $module? yes/no/all", $install;
+    my $install = $default_install_answer
+               || prompt( "Do you want to install $module? yes/no/all"
+                        , -t STDIN ? 'y' : 'n');
 
-    if($key eq 'a')
-    {   $default_install_answer = 'a';
-        $install = 'y';
-    }
-    else
-    {   $install = $key eq 'y' ? 'y' : 'n';
-    }
+    $install = $default_install_answer = 'y'
+        if $install eq 'a';
 
     next unless $install eq 'y';
 
@@ -225,7 +222,9 @@ foreach my $optional (@optional)
     print "     Added $distr version $version to the requirements\n";
 }
 
-my $tests = prompt "Do you want to run the (large set of) tests? yes/no", "yes";
+my $tests = $ENV{MAILBOX_RUN_TESTS}
+         || prompt "Do you want to run the (large set of) tests? yes/no", "yes";
+
 if($tests =~ m/n/i)
 {   open F, ">", "skiptests";
     close F;
@@ -241,7 +240,7 @@ print <<'MAKEFILE';
 MAKEFILE
 
 WriteMakefile
- ( NAME	 => 'Mail::Box'
+ ( NAME         => 'Mail::Box'
  , VERSION_FROM => 'lib/Mail/Box.pm'
  , AUTHOR       => 'Mark Overmeer'
  , ABSTRACT     => 'E-mail handling'

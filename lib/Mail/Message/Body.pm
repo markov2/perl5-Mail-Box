@@ -151,6 +151,13 @@ Specify a reference to an ARRAY of lines, each terminated by a newline.
 Or one STRING which may contain multiple lines, separated and terminated
 by a newline.
 
+=option  description STRING|FIELD
+=default description undef
+
+Informal information about the body content.  The data relates to the
+C<Content-Description> field.  Specify a STRING which will become the
+field content, or a real FIELD.
+
 =option  disposition STRING|FIELD
 =default disposition undef
 
@@ -296,8 +303,8 @@ sub init($)
 
     # Set the content info
 
-    my ($mime, $transfer, $disp, $charset)
-      = @$args{ qw/mime_type transfer_encoding disposition charset/ };
+    my ($mime, $transfer, $disp, $charset, $descr) = @$args{
+       qw/mime_type transfer_encoding disposition charset description/ }; 
 
     if(defined $filename)
     {   $disp = Mail::Message::Field->new
@@ -321,6 +328,7 @@ sub init($)
         $transfer = $based->transferEncoding unless defined $transfer;
         $disp     = $based->disposition      unless defined $disp;
         $charset  = $based->charset          unless defined $charset;
+        $descr    = $based->description      unless defined $descr;
 
         $self->{MMB_checked}
                = defined $args->{checked} ? $args->{checked} : $based->checked;
@@ -338,6 +346,7 @@ sub init($)
 
     $self->transferEncoding($transfer) if defined $transfer;
     $self->disposition($disp)          if defined $disp;
+    $self->description($descr)         if defined $descr;
 
     $self->{MMB_eol}   = $args->{eol} || 'NATIVE';
 
@@ -605,6 +614,31 @@ sub transferEncoding(;$)
        : Mail::Message::Field->new('Content-Transfer-Encoding' => $set);
 }
 
+
+#------------------------------------------
+
+=method description [STRING|FIELD]
+
+Returns (optionally after setting) the informal description of the body
+content.  The related header field is C<Content-Description>.
+A M<Mail::Message::Field> object is returned (which stringifies into
+the field content).  The field content will be C<none> if no disposition
+was specified.
+
+The argument can be a STRING (which is converted into a field), or a
+fully prepared header field.
+
+=cut
+
+sub description(;$)
+{   my $self = shift;
+    return $self->{MMB_description} if !@_ && $self->{MMB_description};
+
+    my $disp = defined $_[0] ? shift : 'none';
+    $self->{MMB_description} = ref $disp ? $disp->clone
+       : Mail::Message::Field->new('Content-Description' => $disp);
+}
+
 #------------------------------------------
 
 =method disposition [STRING|FIELD]
@@ -849,6 +883,7 @@ sub contentInfoTo($)
 
     $head->set($self->transferEncoding);
     $head->set($self->disposition);
+    $head->set($self->description);
     $self;
 }
 
@@ -865,6 +900,7 @@ sub contentInfoFrom($)
     $self->type($head->get('Content-Type'));
     $self->transferEncoding($head->get('Content-Transfer-Encoding'));
     $self->disposition($head->get('Content-Disposition'));
+    $self->description($head->get('Content-Description'));
 
     delete $self->{MMB_mime};
     $self;

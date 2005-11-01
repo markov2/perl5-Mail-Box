@@ -35,13 +35,16 @@ my $b1 = Mail::Message::Body::Lines->new
  , transfer_encoding => '8bit'
  );
 
-ok($b1);
+ok($b1, 'body 1');
 is($b1->mimeType, 'text/html');
 is($b1->transferEncoding, '8bit');
 is($b1->disposition, 'none');
 
 my $p1 = Mail::Message->new(head => $h1);
-cmp_ok($p1->body($b1) , "==",  $b1);
+
+my $equals = $p1->body($b1)==$b1;
+ok($equals);
+
 is($p1->get('Content-Type'), 'text/html');
 is($p1->get('Content-Transfer-Encoding'), '8bit');
 ok(! defined $p1->get('Content-Disposition'));
@@ -55,10 +58,11 @@ my $b2 = Mail::Message::Body::Lines->new
  , transfer_encoding => '8bit'
  );
 
-ok($b2);
+ok($b2, 'body 2');
 
 my $p2 = Mail::Message->new(head => $h2);
-cmp_ok($p2->body($b2) , "==",  $b2);
+$equals = $p2->body($b2)==$b2;
+ok($equals);
 
 # Empty multipart
 

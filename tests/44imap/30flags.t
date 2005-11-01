@@ -105,11 +105,15 @@ sub expect_labels($$$)
     cmp_ok(scalar keys %$got, '==', 7, "$text; nr fields");
 
     foreach my $k (keys %$got)
-    {   cmp_ok($got->{$k}, '==', $expect->{$k}, "got $k");
+    {   my $g = $got->{$k}    || 0;
+        my $e = $expect->{$k} || 0;
+        cmp_ok($g, '==', $e, "got $k");
     }
 
     foreach my $k (keys %$expect)
-    {   cmp_ok($got->{$k}, '==', $expect->{$k}, "expect $k");
+    {   my $g = $got->{$k}    || 0;
+        my $e = $expect->{$k} || 0;
+        cmp_ok($g, '==', $e, "expect $k");
     }
 }
 

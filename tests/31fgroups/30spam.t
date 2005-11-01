@@ -79,14 +79,17 @@ for(my $nr=5; $nr<10; $nr++)
     ok(defined $sg);
     is($sg->type, "Habeas-SWE");
 
-    my $is_correct = ($nr==5 || $nr==6) ? 1 : undef;
-    cmp_ok($sg->habeasSweFieldsCorrect, '==', $is_correct, "spam in $nr");
+    my $is_correct    = ($nr==5 || $nr==6) ? 1 : 0;
+    my $found_correct = $sg->habeasSweFieldsCorrect || 0;
+    cmp_ok($found_correct, '==', $is_correct, "spam in $nr");
 
-    cmp_ok( Mail::Message::Head::SpamGroup->habeasSweFieldsCorrect($msg)
-          , '==', $is_correct,          "spam in message $nr");
+    $found_correct
+      = Mail::Message::Head::SpamGroup->habeasSweFieldsCorrect($msg)  || 0;
+    cmp_ok($found_correct, '==', $is_correct, "spam in message $nr");
 
-    cmp_ok(Mail::Message::Head::SpamGroup->habeasSweFieldsCorrect($head)
-          , '==', $is_correct,          "spam in head of message $nr");
+    $found_correct
+      = Mail::Message::Head::SpamGroup->habeasSweFieldsCorrect($head) || 0;
+    cmp_ok($found_correct, '==', $is_correct,  "spam in head of message $nr");
 
     $sg->delete;
 

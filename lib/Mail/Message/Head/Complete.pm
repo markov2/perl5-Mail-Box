@@ -274,7 +274,9 @@ options. However, existing values for fields will be removed before a new
 value is added.  READ THE IMPORTANT WARNING IN M<removeField()>
 =cut
 
-my @skip_none = qw/content-transfer-encoding content-disposition/;
+my @skip_none = qw/content-transfer-encoding content-disposition
+                   content-description/;
+
 my %skip_none = map { ($_ => 1) } @skip_none;
 
 sub set(@)

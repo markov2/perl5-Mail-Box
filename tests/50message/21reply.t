@@ -70,7 +70,9 @@ my $reply = $msg->reply
 
 ok(defined $reply);
 isa_ok($reply, 'Mail::Message');
-cmp_ok($reply->body, "==", $msg->body);
+
+my $equal = $reply->body==$msg->body;
+ok($equal);
 
 is(  $reply->head->get('to'), $msg->head->get('from'));
 is($reply->head->get('from'), $msg->head->get('to'));

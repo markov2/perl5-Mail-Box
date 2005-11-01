@@ -7,6 +7,26 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.063: Tue Nov 1 09:13:14 CET 2005
+
+	Fixes:
+
+	- Some problems with new releases of Test::Builder
+
+	- installation option 'a' (all) did not work since 2.058
+
+	- installation option 'skiptests' did not work
+
+	Improvements:
+
+	- Mail::Message->rebuild option extraRules renamed to extra_rules
+	  for consistency.
+
+	- $body->description field.
+
+	- installation option control via environment variables
+	  MAILBOX_INSTALL_OPTIONALS and MAILBOX_RUN_TESTS
+
 version 2.062: Thu Aug 25 14:07:13 CEST 2005
 
 	Fixes:

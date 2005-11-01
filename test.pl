@@ -43,7 +43,9 @@ my @show_versions = defined $select_tests ? ()
       Test::Harness Encode
      /;
 
-my $skip_tests = -f 'skiptests';
+my $skip_tests = ($ENV{MAILBOX_RUN_TESTS} || 'yes') eq 'no'
+              || -f 'skiptests' || -f '../skiptests';
+
 sub package_of($);
 sub testnames($);
 sub run_in_harness(@);
@@ -59,7 +61,8 @@ WARN
 if($skip_tests)
 {   warn <<'WARN';
 * Tests are disabled, because you said so when the Makefile was created.
-* remove the file "skiptests" if you want to run them.
+* remove the file "skiptests" if you want to run them and/or clear
+* environment variable MAILBOX_RUN_TESTS
 *
 WARN
     exit 0;
