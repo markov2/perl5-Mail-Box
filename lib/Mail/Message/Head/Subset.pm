@@ -137,7 +137,7 @@ sub guessTimestamp()
 
 =cut
 
-sub load() {$_[0] = $_[0]->message->loadHead}
+sub load() { $_[0] = $_[0]->message->loadHead }
 
 #------------------------------------------
 

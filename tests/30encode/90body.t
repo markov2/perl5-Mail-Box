@@ -61,8 +61,6 @@ To: you
 Date: now
 Message-Id: <simple>
 Content-Type: text/html
-Content-Length: 83
-Lines: 2
 Content-Transfer-Encoding: 7bit
 MIME-Version: 1.0
 

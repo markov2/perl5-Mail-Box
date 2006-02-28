@@ -1,7 +1,9 @@
 
-use strict;
 package Mail::Box::File;
 use base 'Mail::Box';
+
+use strict;
+use filetest 'access';
 
 use Mail::Box::File::Message;
 

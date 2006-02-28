@@ -7,6 +7,34 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.064: Tue Feb 28 12:39:57 CET 2006
+
+	Fixes:
+
+	- redesigned everything what has to do with Content-Length and
+	  Lines.
+	  - now only added for Mbox folders
+	  - only for the whole message, not for each part in multipart
+
+	- corrected behavior of boundaries in multiparts to be
+	  compliant with the RFCs.  Parts without trailing newline
+	  are now correctly supported.  Thanks to [John Gardiner Myers]
+	  for the initial patch.
+
+	- $msg->moveTo called wrong copyTo.  Fixed by [Ken Guyton]
+
+	- use pragma "filetest 'access'", to support ACL environments.
+	  Reported via Debian by Rainer Schöpf.
+
+	- MH index files didn't work.  Multiple fixes, including some
+	  around append() to MH folders.  Reported by [Simon von Janowsky]
+
+	- Fixed infinit loop encoding lines in Mail::Message::Field::Full
+	  [Tuomas Salo]
+
+	- Mail::Message::Field::Full::encode lines could become 2 chars
+	  too long: RFC says 76 max.
+
 version 2.063: Tue Nov 1 09:13:14 CET 2005
 
 	Fixes:
@@ -97,6 +125,12 @@ version 2.060: Tue Mar 15 22:02:34 CET 2005
 	- open('|-') does a fork, so a failure should result in an exit,
 	  not a return.  Found a few times in Mail::Transport::*, and
 	  discovered by [Slaven Rezic]
+
+	- $msg->send didn't pass the options correctly to the sending
+	  object. Reported by [Franck Richard].
+
+	- Mail::Transport::POP3 did only try APOP in AUTO mode. Found
+	  by [Markus Spann].
 
 	- $msg->send didn't pass the options correctly to the sending
 	  object. Reported by [Franck Richard].
@@ -2724,9 +2758,3 @@ version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
         * Many more test, a few example files, Mail::Box-Overview and
           Mail::Box-Cookbook.
 
-Before this, we had Mail::Box-1.xyz which also has a Changelog.  Most of
-that information is not really useful because version >=2.0 is a really,
-really major change, although there is strike for compibility.
-
-However, some of the bugfixes contributed for Mail::Box v1 are
-still present in Mail::Box v2.

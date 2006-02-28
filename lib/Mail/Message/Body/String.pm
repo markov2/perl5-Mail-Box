@@ -99,19 +99,14 @@ sub clone()
 }
 
 #------------------------------------------
-# Only compute it once, if needed.  The scalar contains lines, so will
-# have a \n even at the end.
 
 sub nrLines()
 {   my $self = shift;
     return $self->{MMBS_nrlines} if defined $self->{MMBS_nrlines};
 
-    my $nrlines = 0;
-    for($self->{MMBS_scalar})
-    {   $nrlines++ while /\n/g;
-    }
-
-    $self->{MMBS_nrlines} = $nrlines;
+    my $lines = $self->{MMBS_scalar} =~ tr/\n/\n/;
+    $lines++ if $self->{MMBS_scalar} !~ m/\n\z/;
+    $self->{MMBS_nrlines} = $lines;
 }
 
 #------------------------------------------
@@ -145,18 +140,6 @@ sub print(;$)
 
 #------------------------------------------
 
-sub printEscapedFrom($)
-{   my ($self, $fh) = @_;
-
-    my $text = $self->{MMBS_scalar};    # copy required
-    $text    =~ s/^(?=\>*From )/>/;
-    if(ref $fh eq 'GLOB') { print $fh $text   }
-    else                  { $fh->print($text) }
-    $self;
-}
-
-#------------------------------------------
-
 sub read($$;$@)
 {   my ($self, $parser, $head, $bodytype) = splice @_, 0, 4;
     delete $self->{MMBS_nrlines};
@@ -166,6 +149,10 @@ sub read($$;$@)
 
     $self;
 }
+
+#------------------------------------------
+
+sub endsOnNewline() { shift->{MMBS_scalar} =~ m/\A\z|\n\z/ }
 
 #------------------------------------------
 

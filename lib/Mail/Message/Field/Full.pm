@@ -482,12 +482,12 @@ sub encode($@)
         $qp      =~ s#([_\?])#sprintf "=%02X", ord $1#ge;
         $qp      =~ s/ /_/g;
 
-        my $take = 72 - CORE::length($pre);
-        while(CORE::length($qp) > $take)
+        my $take = 70 - CORE::length($pre);
+        while(CORE::length($qp) > $take+1)
         {   $qp =~ s#^(.{$take}.?.?[^=][^=])## or warn $qp;
             $ready .= "$pre$1?= ";
         }
-        $ready .= "$pre$qp?=" if CORE::length $qp;
+        $ready .= "$pre$qp?=" if CORE::length($qp);
     }
 
     else

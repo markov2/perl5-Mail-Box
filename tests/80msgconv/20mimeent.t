@@ -118,7 +118,7 @@ isa_ok($parts[1], 'Mail::Message::Part');
 $body = $msg->body;
 cmp_ok($body->preamble->nrLines, "==", 2);
 cmp_ok($body->epilogue->nrLines, "==", 2);
-#$msg->print;
+#$msg->print(\*STDERR);
 
 $me->purge;
 

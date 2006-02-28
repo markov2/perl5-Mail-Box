@@ -282,7 +282,7 @@ sub init($)
         elsif($file->isa('IO::Handle'))
         {    $self->_data_from_filehandle($file) or return }
         else
-        {    croak "Illegal datatype for file option." }
+        {    croak "message body: illegal datatype for file option" }
     }
     elsif(defined(my $data = $args->{data}))
     {
@@ -294,7 +294,7 @@ sub init($)
         {   $self->_data_from_lines($data) or return;
         }
         else
-        {   croak "Illegal datatype for data option." }
+        {   croak "message body: illegal datatype for data option" }
     }
     elsif(! $self->isMultipart && ! $self->isNested)
     {   # Neither 'file' nor 'data', so empty body.
@@ -838,6 +838,25 @@ sub write(@)
 
 #------------------------------------------
 
+=method endsOnNewline
+Returns whether the last line of the body is terminated by a new-line
+(in transport it will become a CRLF).  An empty body will return true
+as well: the newline comes from the line before it.
+=cut
+
+sub endsOnNewline() {shift->notImplemented}
+
+#------------------------------------------
+
+=method stripTrailingNewline
+Remove the newline from the last line, or the last line if it does not
+contain anything else than a newline.
+=cut
+
+sub stripTrailingNewline() {shift->notImplemented}
+
+#------------------------------------------
+
 =section Internals
 
 =method read PARSER, HEAD, BODYTYPE [,CHARS [,LINES]]
@@ -878,9 +897,6 @@ sub contentInfoTo($)
     $size     += $lines if $Mail::Message::crlf_platform;
 
     $head->set($self->type);
-    $head->set('Content-Length' => $size);
-    $head->set(Lines            => $lines);
-
     $head->set($self->transferEncoding);
     $head->set($self->disposition);
     $head->set($self->description);

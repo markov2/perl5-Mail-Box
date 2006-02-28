@@ -617,20 +617,17 @@ sub smtpsend(@)
 
 =method as_mbox_string
 Returns the whole message as one string, which can be included in an
-MBOX folder (while not using M<Mail::Box::Mbox>).  The C<Content-Length>
-header field is removed and lines in the body which start with C<From >
-are escaped with an E<gt>.
+MBOX folder (while not using M<Mail::Box::Mbox>).  Lines in the body
+which start with C<From > are escaped with an E<gt>.
 =cut
 
 sub as_mbox_string()
-{   my $self   = shift;
-    my $head   = $self->head->clone;
-    $head->delete('Content-Length');
+{   my $self    = shift;
+    my $mboxmsg = Mail::Box::Mbox->coerce($self);
 
-    my $buffer = '';
-    my $file   = Mail::Box::FastScalar->new(\$buffer);
-    $head->print($file);
-    $self->body->printEscapedFrom($file);
+    my $buffer  = '';
+    my $file    = Mail::Box::FastScalar->new(\$buffer);
+    $mboxmsg->print($file);
     $buffer;
 }
 

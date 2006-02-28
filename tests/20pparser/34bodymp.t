@@ -66,11 +66,11 @@ while(1)
     my $lines = $body->nrLines;
     my $su    = $head->get('Subject');
 
-    cmp_ok($li , "==",  $lines,                "1 lines $count")
+    cmp_ok($lines, "==",  $li,                "1 lines $count")
         if defined $li;
 
     $cl -= $li if $crlf_platform;
-    cmp_ok($cl , "==",  $size,                 "1 size $count")
+    cmp_ok($size , "==",  $cl,                 "1 size $count")
         if defined $cl;
 
     my $msg = 

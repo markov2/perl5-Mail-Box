@@ -3,8 +3,7 @@ use strict;
 package Mail::Box::File::Message;
 use base 'Mail::Box::Message';
 
-use POSIX 'SEEK_SET';
-use Carp;
+use List::Util   qw/sum/;
 
 =chapter NAME
 
@@ -72,9 +71,17 @@ sub write(;$)
 {   my $self  = shift;
     my $out   = shift || select;
 
+    my $escaped = $self->escapedBody;
     $out->print($self->fromLine);
-    $self->head->print($out);
-    $self->body->printEscapedFrom($out);
+
+    my $size  = sum map {length($_)} @$escaped;
+
+    my $head  = $self->head;
+    $head->set('Content-Length' => $size); 
+    $head->set('Lines' => scalar @$escaped);
+    $head->print($out);
+
+    $out->print($_) for @$escaped;
     $out->print("\n");
     $self;
 }
@@ -109,6 +116,23 @@ sub fromLine(;$)
 
     $self->{MBMM_from_line} = shift if @_;
     $self->{MBMM_from_line} ||= $self->head->createFromLine;
+}
+
+#------------------------------------------
+
+=method escapedBody
+Mbox folders contain multiple messages in one file, using a separator
+line to keep them apart.  Typically, these lines start with "From ".
+Lines within the message could interfere with this separator, and should
+therefore be translated.
+
+This method will return the escaped text of the body as reference.
+=cut
+
+sub escapedBody()
+{   my @lines = shift->body->lines;
+    s/^(\>*From )/>$1/ for @lines;
+    \@lines;
 }
 
 #------------------------------------------

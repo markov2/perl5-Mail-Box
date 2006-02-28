@@ -1,7 +1,9 @@
 
-use strict;
 package Mail::Box::MH;
 use base 'Mail::Box::Dir';
+
+use strict;
+use filetest 'access';
 
 use Mail::Box::MH::Index;
 use Mail::Box::MH::Message;
@@ -296,7 +298,7 @@ sub appendMessages(@)
                  : exists $args{messages} ? @{$args{messages}}
                  : return ();
 
-    my $self     = $class->new(@_, access => 'a')
+    my $self     = $class->new(@_, access => 'r')
         or return ();
 
     my $directory= $self->directory;
@@ -319,10 +321,11 @@ sub appendMessages(@)
         $msgnr++;
     }
  
-    my $labels   = $self->labels->append(@messages);
+    $self->labels->append(@messages);
+    $self->index->append(@messages);
 
     $locker->unlock;
-    $self->close;
+    $self->close(write => 'NEVER');
 
     @messages;
 }
@@ -390,7 +393,7 @@ sub labels()
     $self->{MBM_labels} = $self->{MBM_labels_type}->new
       ( filename => $self->{MBM_labels_filename}
       , $self->logSettings
-      )
+      );
 }
 
 #-------------------------------------------

@@ -84,12 +84,11 @@ $newbody->print($g);
 compare_message_prints($fakeout, <<'EXPECTED', 'print with attachment');
 --part-separator
 Content-Type: text/html
-Content-Length: 12
-Lines: 2
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
+
 --part-separator--
 EXPECTED
 
@@ -104,22 +103,20 @@ $newerbody->print($g);
 compare_message_prints($fakeout, <<'EXPECTED', 'print with two attachments');
 --part-separator
 Content-Type: text/html
-Content-Length: 12
-Lines: 2
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
+
 --part-separator
 Content-Type: text/plain
-Content-Length: 24
-Lines: 4
 Content-Transfer-Encoding: 8bit
 
 p2 l1
 p2 l2
 p2 l3
 p2 l4
+
 --part-separator--
 EXPECTED
 
@@ -144,24 +141,23 @@ $newestbody->print($g);
 compare_message_prints($fakeout, <<'EXPECTED', 'with preamble and epilogue');
 preamb1
 preamb2
+
 --part-separator
 Content-Type: text/html
-Content-Length: 12
-Lines: 2
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
+
 --part-separator
 Content-Type: text/plain
-Content-Length: 24
-Lines: 4
 Content-Transfer-Encoding: 8bit
 
 p2 l1
 p2 l2
 p2 l3
 p2 l4
+
 --part-separator--
 epilogue
 EXPECTED
@@ -181,31 +177,28 @@ To: you
 Date: now
 Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
-Content-Length: 287
-Lines: 24
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
 
 preamb1
 preamb2
+
 --part-separator
 Content-Type: text/html
-Content-Length: 12
-Lines: 2
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
+
 --part-separator
 Content-Type: text/plain
-Content-Length: 24
-Lines: 4
 Content-Transfer-Encoding: 8bit
 
 p2 l1
 p2 l2
 p2 l3
 p2 l4
+
 --part-separator--
 epilogue
 EXPECTED
@@ -221,8 +214,6 @@ To: you
 Date: now
 Message-Id: <simple>
 Content-Type: multipart/mixed; boundary="part-separator"
-Content-Length: 19
-Lines: 1
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
 
@@ -240,8 +231,6 @@ To: you
 Date: now
 Message-Id: <simple>
 Content-Type: text/html
-Content-Length: 12
-Lines: 2
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
 

@@ -152,26 +152,22 @@ To: us
 Subject: Forwarded
 References: <removed>
 Content-Type: multipart/mixed; boundary="boundary-<removed>"
-Content-Length: <removed>
-Lines: 17
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: 8bit
 
 just checking
+
 --boundary-<removed>
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: 8bit
 
 greetings!
+
 --boundary-<removed>--
 ATTACH
 
@@ -187,23 +183,18 @@ To: us
 Subject: Forwarded
 References: <removed>
 Content-Type: multipart/mixed; boundary="boundary-<removed>"
-Content-Length: <removed>
-Lines: 26
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: 8bit
 
 just checking
+
 --boundary-<removed>
 Content-Type: message/rfc822
-Content-Length: <removed>
-Lines: 11
 
 To: you
 X-Loop: yes
@@ -211,11 +202,10 @@ Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: 8bit
 
 greetings!
+
 --boundary-<removed>--
 ENCAPS
 
@@ -237,26 +227,22 @@ To: us
 Subject: Forwarded
 References: <removed>
 Content-Type: multipart/mixed; boundary="boundary-<removed>"
-Content-Length: <removed>
-Lines: 17
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: 8bit
 
 just checking
+
 --boundary-<removed>
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: 8bit
 
 this is the first
+
 --boundary-<removed>--
 ATTACH
 
@@ -287,26 +273,22 @@ To: everyone
 Subject: Forwarded
 References: <removed>
 Content-Type: multipart/mixed; boundary="boundary-<removed>"
-Content-Length: <removed>
-Lines: 18
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
 Content-Type: text/plain
-Content-Length: <removed>
-Lines: 3
 
 Prelude
 [The forwarded message is attached]
 Postlude
+
 --boundary-<removed>
 Content-Type: application/octet-stream
-Content-Length: <removed>
-Lines: 1
 Content-Transfer-Encoding: base64
 
 bGluZSAxCmxpbmUyCg==
+
 --boundary-<removed>--
 EXPECTED

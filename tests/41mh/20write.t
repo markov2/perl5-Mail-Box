@@ -40,14 +40,14 @@ $folder->modified(1);
 $folder->write(renumber => 0);
 
 ok(compare_lists [sort {$a cmp $b} listdir $mhsrc],
-            [sort {$a cmp $b} '.mh_sequences', 1..12, 14..46]
+            [sort {$a cmp $b} '.index', '.mh_sequences', 1..12, 14..46]
   );
 
 $folder->modified(1);
 $folder->write(renumber => 1);
 
 ok(compare_lists [sort {$a cmp $b} listdir $mhsrc],
-            [sort {$a cmp $b} '.mh_sequences', 1..45]
+            [sort {$a cmp $b} '.index', '.mh_sequences', 1..45]
   );
 
 $folder->message(2)->delete;

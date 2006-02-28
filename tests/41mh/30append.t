@@ -73,9 +73,10 @@ $mgr->close($folder);      # changes are not saved.
 cmp_ok($mgr->openFolders, "==", 0);
 
 $mgr->appendMessage($mhsrc, $msg
-  , lock_type => 'NONE'
-  , extract   => 'LAZY'
-  , access    => 'rw'
+  , lock_type  => 'NONE'
+  , extract    => 'LAZY'
+  , access     => 'rw'
+  , keep_index => 1
   );
 
 ok(-f File::Spec->catfile($mhsrc, "47"));  # skipped 13, so new is 46+1

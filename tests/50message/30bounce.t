@@ -66,8 +66,6 @@ Subject: Test of Bounce
 Date: Wed, 9 Feb 2000 15:44:05 -0500
 Content-Something: something
 Content-Type: text/plain
-Content-Length: 53
-Lines: 2
 Content-Transfer-Encoding: 8bit
 Received: by me
 Resent-Date: Fri, 7 Dec 2001 15:44:05 -0100

@@ -2,13 +2,10 @@
 TODO:
 
 This program was originally written in December 2000.  Then a total
-redesign was made, which was released in December 2001.  Hence this module
-is quite recent, so please check for a new version: new programs often
-get many changes in their first months.
+redesign was made, which was released in December 2001.
 
-The file TODO.v2 lists lacks of the current implementation, which must
-be resolved to declare the implementation as beta.  In this file, more
-long-term plans are listed.
+The file TODO.v2 lists holes in the current implementation. In this file,
+more long-term plans are listed.
 
 Plans for the (near?) future:
 * Thread lint
@@ -33,8 +30,6 @@ Plans for the (near?) future:
   I have a long wishlist of older-types.  However, my knowledge on how
   they work is limited.  Furthermore, I do not have test-data on them.
 
-  - Exmh      (should be relatively simple, extends MH)
-  - IMAP      (using Mail::IMAPClient, looks not that hard)
   - Emaul     (? for compatibly with Mail::Folder)
   - News      NNTP
   - Outlook   writting... (reading is already available in ::Dbx)
@@ -47,16 +42,6 @@ Plans for the (near?) future:
   Any more?
   One of the main reasons that these are not implemented, is that my
   knowledge on how they work is insufficient.
-
-* Make more autoloading (of perl-code, this time).
-  Mail::Box::MH, ::Mbox, could be made autoloading....
-  however, I didn't make work it yet.  All modules are designed to
-  minimize their dependency, so I should work well.
-
-  For the message-folders, only foundIn() should be kept outside the
-  loading mechanism.
-
-* Kill a message which is used to free-up memory in large folders.
 
 * Maildir quota
 

@@ -76,7 +76,7 @@ sub filePosition(;$)
     @_ ? $self->{MBPP_file}->seek(shift, 0) : $self->{MBPP_file}->tell;
 }
 
-my $empty = qr/^[\015\012]*$/;
+my $empty = qr/^[\015\012]*\z/;
 
 #------------------------------------------
 
@@ -115,7 +115,7 @@ LINE:
                 "Unexpected end of header in ".$self->filename.":\n $line");
 
             if(@ret && $self->fixHeaderErrors)
-            {   $ret[-1][1] .= ' '.$line;  # glue erroneous line to previous field
+            {   $ret[-1][1] .= ' '.$line;  # glue err line to previous field
                 $line = $file->getline;
                 next LINE;
             }
@@ -202,64 +202,45 @@ sub _read_stripped_lines(;$$)
     my $file    = $self->{MBPP_file};
     my $lines   = [];
 
-    if(@seps && $self->{MBPP_trusted})
-    {   my $sep  = $seps[0];
-        my $l    = length $sep;
-
-        while(1)
-        {   my $where = $file->tell;
-            my $line  = $file->getline or last;
-
-            if(   substr($line, 0, $l) eq $sep
-               && ($sep ne 'From ' || $line =~ m/ (?:19[789]\d|20[01]\d)/)
-               )
-            {   $file->seek($where, 0);
-                last;
-            }
-
-            push @$lines, $line;
-        }
-    }
-    elsif(@seps)
+    if(@seps)
     {   
-
-  LINE: while(1)
+       LINE:
+        while(1)
         {   my $where = $file->getpos;
-            my $line  = $file->getline or last;
+            my $line  = $file->getline
+                or last LINE;
 
             foreach my $sep (@seps)
             {   next if substr($line, 0, length $sep) ne $sep;
-                next if $sep eq 'From ' && $line !~ m/ (?:19[789]\d|20[01]\d)/;
+                next if $sep eq 'From ' && $line !~ m/ 19[789]\d| 20[012]\d/;
 
                 $file->setpos($where);
+
+                if($sep =~ m/^--/)  # consume \n before boundary
+                {   if(@$lines && $lines->[-1] =~ s/(\r?\n)\z//)
+                    {   $file->seek(-length($1), 1);
+                        pop @$lines if length($lines->[-1])==0;
+                    }
+                }
                 last LINE;
             }
 
-            $line =~ s/\015$//;
             push @$lines, $line;
         }
     }
     else # File without separators.
-    {   $lines = ref $file eq 'Mail::Box::FastScalar' ? $file->getlines : [ $file->getlines ];
+    {   $lines = ref $file eq 'Mail::Box::FastScalar'
+               ? $file->getlines : [ $file->getlines ];
     }
 
     my $end = $file->tell;
-    if($exp_lines > 0 )
-    {    while(@$lines > $exp_lines && $lines->[-1] =~ $empty)
-         {   $end -= length $lines->[-1];
-             pop @$lines;
-         }
-    }
-    elsif(@seps && @$lines && $lines->[-1] =~ $empty)
-    {   # blank line should be in place before a separator.  Only that
-        # line is removed.
-        $end -= length $lines->[-1];
-        pop @$lines;
-    }
 
-    map { s/^\>(\>*From\s)/$1/ } @$lines
-        if $self->{MBPP_strip_gt};
-
+    if($self->{MBPP_strip_gt})
+    {   map { s/^\>(\>*From\s)/$1/ } @$lines;
+        pop @$lines if @$lines && $lines->[-1] eq "\n";
+    }
+  
+    unless($self->{MBPP_trusted}) { s/\015$// for @$lines }
     $end, $lines;
 }
 

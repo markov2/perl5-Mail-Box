@@ -176,11 +176,19 @@ sub clone()
 #------------------------------------------
 
 sub nrLines()
-{   my $self   = shift;
-    my $nr     = 1;     # trailing boundary
+{   my $self = shift;
+    my $nr   = 1;     # trailing boundary
 
-    if(my $preamble = $self->preamble) { $nr += $preamble->nrLines }
-    $nr += 2 + $_->nrLines foreach $self->parts('ACTIVE');
+    if(my $preamble = $self->preamble)
+    {   $nr += $preamble->nrLines;
+        $nr++ if $preamble->endsOnNewline;
+    }
+
+    foreach my $part ($self->parts('ACTIVE'))
+    {   $nr += 1 + $part->nrLines;
+        $nr++ if $part->body->endsOnNewline;
+    }
+
     if(my $epilogue = $self->epilogue) { $nr += $epilogue->nrLines }
     $nr;
 }
@@ -189,12 +197,14 @@ sub nrLines()
 
 sub size()
 {   my $self   = shift;
-    my $bbytes = length($self->boundary) +3;
+    my $bbytes = length($self->boundary) +4;  # \n--$b\n
 
-    my $bytes  = 0;
-    if(my $preamble = $self->preamble) { $bytes += $preamble->size }
-    $bytes     += $bbytes + 2;  # last boundary
-    $bytes += $bbytes + 1 + $_->size foreach $self->parts('ACTIVE');
+    my $bytes  = $bbytes +2;   # last boundary, \n--$b--\n
+    if(my $preamble = $self->preamble)
+         { $bytes += $preamble->size }
+    else { $bytes -= 1 }      # no leading \n
+
+    $bytes += $bbytes + $_->size foreach $self->parts('ACTIVE');
     if(my $epilogue = $self->epilogue) { $bytes += $epilogue->size }
 
     $bytes;
@@ -215,9 +225,17 @@ sub lines()
     my $preamble = $self->preamble;
     push @lines, $preamble->lines if $preamble;
 
-    push @lines, "--$boundary\n", $_->lines
-        foreach $self->parts('ACTIVE');
+    foreach my $part ($self->parts('ACTIVE'))
+    {   # boundaries start with \n
+        if(!@lines) { ; }
+        elsif($lines[-1] =~ m/\n$/) { push @lines, "\n" }
+        else { $lines[-1] .= "\n" }
+        push @lines, "--$boundary\n", $part->lines;
+    }
 
+    if(!@lines) { ; }
+    elsif($lines[-1] =~ m/\n$/) { push @lines, "\n" }
+    else { $lines[-1] .= "\n" }
     push @lines, "--$boundary--\n";
 
     my $epilogue = $self->epilogue;
@@ -244,54 +262,32 @@ sub print(;$)
     my $out  = shift || select;
 
     my $boundary = $self->boundary;
-    if(my $preamble = $self->preamble) { $preamble->print($out) }
+    my $count    = 0;
+    if(my $preamble = $self->preamble)
+    {   $preamble->print($out);
+        $count++;
+    }
 
     if(ref $out eq 'GLOB')
     {   foreach my $part ($self->parts('ACTIVE'))
-        {   print $out "--$boundary\n";
+        {   print $out "\n" if $count++;
+            print $out "--$boundary\n";
             $part->print($out);
         }
+        print $out "\n" if $count++;
         print $out "--$boundary--\n";
     }
     else
     {   foreach my $part ($self->parts('ACTIVE'))
-        {   $out->print("--$boundary\n");
+        {   $out->print("\n") if $count++;
+            $out->print("--$boundary\n");
             $part->print($out);
         }
+        $out->print("\n") if $count++;
         $out->print("--$boundary--\n");
     }
 
     if(my $epilogue = $self->epilogue) { $epilogue->print($out) }
-
-    $self;
-}
-
-#------------------------------------------
-
-sub printEscapedFrom($)
-{   my ($self, $out) = @_;
-
-    my $boundary = $self->boundary;
-    if(my $preamble = $self->preamble) { $preamble->printEscapedFrom($out) }
-
-    if(ref $out eq 'GLOB')
-    {   foreach my $part ($self->parts('ACTIVE'))
-        {   print $out "--$boundary\n";
-            $part->printEscapedFrom($out);
-            print $out "\n";
-        }
-        print $out "--$boundary--\n";
-    }
-    else
-    {   foreach my $part ($self->parts('ACTIVE'))
-        {   $out->print("--$boundary\n");
-            $part->printEscapedFrom($out);
-            $out->print("\n");
-        }
-        $out->print("--$boundary--\n");
-    }
-
-    if(my $epilogue = $self->epilogue) { $epilogue->printEscapedFrom($out) }
 
     $self;
 }
@@ -339,7 +335,8 @@ sub read($$$$)
     my $preamble = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
        ->read($parser, $head);
 
-    $self->{MMBM_preamble} = $preamble if defined $preamble;
+    $self->{MMBM_preamble} = $preamble
+        if defined $preamble && $preamble->nrLines > 0;
 
     # Get the parts.
 
@@ -363,7 +360,9 @@ sub read($$$$)
     my $epilogue = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
         ->read($parser, $head);
 
-    $self->{MMBM_epilogue} = $epilogue if defined $epilogue;
+    $self->{MMBM_epilogue} = $epilogue
+        if defined $epilogue && $epilogue->nrLines > 0;
+
     my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
             : @parts            ? ($parts[-1]->fileLocation)[1]
             : defined $preamble ? ($preamble->fileLocation)[1]
@@ -601,6 +600,10 @@ sub boundary(;$)
     my $boundary = @_ && defined $_[0] ? (shift) : "boundary-".$unique_boundary++;
     $self->type->attribute(boundary => $boundary);
 }
+
+#-------------------------------------------
+
+sub endsOnNewline() { 1 }
 
 #-------------------------------------------
 

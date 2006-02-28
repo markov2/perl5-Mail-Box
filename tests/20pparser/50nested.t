@@ -18,7 +18,7 @@ use Mail::Message;
 # Reading a very complicate message from scalar
 #
 
-my $msg = Mail::Message->read(<<'END-OF-MESSAGE');
+my $msg = Mail::Message->read(<<'END-OF-MESSAGE', strip_status_fields => 0);
 From: "you" <You@your.place>
 MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary="3/Cnt5Mj2+"
@@ -88,10 +88,10 @@ $msg->printStructure($catch);
 # if 1550 bytes is reported for the whole message, then the Status
 # field hasn't been removed after reading.
 is($dump, <<'DUMP');
-multipart/mixed: forwarded message from Pietje Puk (1539 bytes)
+multipart/mixed: forwarded message from Pietje Puk (1551 bytes)
    text/plain (164 bytes)
-   message/rfc822 (1043 bytes)
-      multipart/alternative: A multipart alternative (942 bytes)
+   message/rfc822 (1044 bytes)
+      multipart/alternative: A multipart alternative (943 bytes)
          text/plain (148 bytes)
          text/html (358 bytes)
 DUMP

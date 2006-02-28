@@ -1435,12 +1435,12 @@ sub readBody($$;$$)
         $body->contentInfoFrom($head);
     }
 
-    my $lines   = $head->get('Lines');
+    my $lines   = $head->get('Lines');  # usually off-by-one
     my $size    = $head->guessBodySize;
 
     $body->read
       ( $parser, $head, $getbodytype,
-      , $size, (defined $lines ? int $lines->body : undef)
+      , $size, (defined $lines ? $lines : undef)
       );
 }
 

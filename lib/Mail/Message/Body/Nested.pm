@@ -133,11 +133,6 @@ sub print(;$)
 
 #------------------------------------------
 
-sub printEscapedFrom($)
-{   my $self = shift;
-    $self->nested->printEscapedFrom(shift);
-}
-
 sub check() { shift->forNested( sub {$_[1]->check} ) }
 
 #------------------------------------------
@@ -174,6 +169,10 @@ sub fileLocation()
     , ($nested->body->fileLocation)[1]
     );
 }
+
+#-------------------------------------------
+
+sub endsOnNewline() { shift->nested->body->endsOnNewline }
 
 #------------------------------------------
 

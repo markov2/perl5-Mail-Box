@@ -186,11 +186,11 @@ isa_ok($f, $msif);
 #$b->print(\*STDERR);
 
 is($f->fetchBody(0)."\n", <<__BODY, "...body");
-("MESSAGE" "RFC822" () "<newid>" NIL "8BIT" 223 ("now" "Life of Brian" ("I myself and me" NIL "me" "localhost") NIL NIL (NIL NIL "you" "example.com") NIL NIL NIL "<unique>") ("TEXT" "PLAIN" () "<unique>" NIL "8BIT" 10 2) 13)
+("MESSAGE" "RFC822" () "<newid>" NIL "8BIT" 195 ("now" "Life of Brian" ("I myself and me" NIL "me" "localhost") NIL NIL (NIL NIL "you" "example.com") NIL NIL NIL "<unique>") ("TEXT" "PLAIN" () "<unique>" NIL "8BIT" 10 2) 11)
 __BODY
 
 is($f->fetchBody(1)."\n", <<__BODYSTRUCT, "...bodystruct");
-("MESSAGE" "RFC822" () "<newid>" NIL "8BIT" 223 ("now" "Life of Brian" ("I myself and me" NIL "me" "localhost") NIL NIL (NIL NIL "you" "example.com") NIL NIL NIL "<unique>") ("TEXT" "PLAIN" () "<unique>" NIL "8BIT" 10 2 NIL ("inline") NIL) 13 NIL ("inline") NIL)
+("MESSAGE" "RFC822" () "<newid>" NIL "8BIT" 195 ("now" "Life of Brian" ("I myself and me" NIL "me" "localhost") NIL NIL (NIL NIL "you" "example.com") NIL NIL NIL "<unique>") ("TEXT" "PLAIN" () "<unique>" NIL "8BIT" 10 2 NIL ("inline") NIL) 11 NIL ("inline") NIL)
 __BODYSTRUCT
 
 is($f->fetchEnvelope."\n", <<__ENVELOPE, "...envelope");

@@ -23,8 +23,8 @@ my $verbose      = $ARGV[0] || 0;
 my $workdir      = '/tmp/MailBox';
 
 -d $workdir
-|| mkdir $workdir
-|| die "Cannot create $workdir: $!\n";
+or mkdir $workdir
+or die "Cannot create $workdir: $!\n";
 
 ##### Other constants
 my $distribution = 'Mail::Box';

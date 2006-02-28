@@ -95,7 +95,7 @@ an message-type which is foreign to the Mail::Box set of modules.
 =cut
 
 my @pref_order = qw/From To Cc Subject Date In-Reply-To References
-    Content-Type Lines Content-Length/;
+    Content-Type/;
 
 sub from($@)
 {   my ($thing, $mi) = (shift, shift);

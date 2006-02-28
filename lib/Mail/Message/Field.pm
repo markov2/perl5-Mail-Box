@@ -167,9 +167,8 @@ BEGIN {
      Resent-Date Resent-From Resent-Sender Resent-To Return-Path
      List-Help List-Post List-Unsubscribe Mailing-List
      Received References Message-ID In-Reply-To
-     Content-Length Content-Type Content-Disposition
+     Content-Type Content-Disposition
      Delivered-To
-     Lines
      MIME-Version
      Precedence
      Status/;
