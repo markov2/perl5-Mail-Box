@@ -141,9 +141,7 @@ sub isLocked()
 =section The Locker
 
 =method lockers
-
 Returns a list with all locker objects used by this object.
-
 =cut
 
 sub lockers() { @{shift->{MBLM_lockers}} }

@@ -7,6 +7,30 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.065: Mon Mar 27 15:03:21 CEST 2006
+
+	Fixes:
+
+	- CPANTs found missing 'use strict' in Mail/Message/Field/URIs.pm
+	  [domm]
+
+	- produce warnings when the folder gets locked twice.
+
+	- A few error messages didn't start with a capital.
+
+	- translated some carp/confess uses in ::Construct:: to use
+	  $self->log() i.s.o. carp/croak.
+
+	- Added Mail::Box::Locker::Mutt. and t/55lockers/50mutt.t
+
+	- Depends on HTML::FormatText, not HTML::Format.
+
+	- Problem with mbox test, since the empty line definition
+	  changed.  Reported by at least 3 linux distribution maintainers.
+
+	- Fixed tests/Tools.pm unpacking mbox into maildir and mh, both
+	  to leave-out the trailing blank line.
+
 version 2.064: Tue Feb 28 12:39:57 CET 2006
 
 	Fixes:

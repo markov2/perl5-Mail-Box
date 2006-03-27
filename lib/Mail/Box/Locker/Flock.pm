@@ -56,13 +56,16 @@ sub _unlock($)
 
 =method lock
 
-=error Unable to open flock file $filename for $folder: $!
+=warning Folder $folder already flocked
+The folder is already locked, but you attempt to lock it again.  The
+behavior of double flock's is platform dependend, and therefore should
+not be attempted.  The second lock is ignored (but the unlock isn't)
 
+=error Unable to open flock file $filename for $folder: $!
 For flock-ing a folder it must be opened, which does not succeed for the
 specified reason.
 
 =error Will never get a flock at $filename for $folder: $!
-
 Tried to flock the folder, but it did not succeed.  The error code received
 from the OS indicates that it will not succeed ever, so we do not need to
 try again.
@@ -73,15 +76,20 @@ try again.
 my $lockfile_access_mode = ($^O eq 'solaris' || $^O eq 'aix') ? 'r+' : 'r';
 
 sub lock()
-{   my $self  = shift;
-    return 1 if $self->hasLock;
+{   my $self   = shift;
+    my $folder = $self->folder;
+
+    if($self->hasLock)
+    {   $self->log(WARNING => "Folder $folder already flocked.");
+        return 1;
+    }
 
     my $filename = $self->filename;
 
     my $file   = IO::File->new($filename, $lockfile_access_mode);
     unless($file)
     {   $self->log(ERROR =>
-           "Unable to open flock file $filename for $self->{MBL_folder}: $!");
+           "Unable to open flock file $filename for $folder: $!");
         return 0;
     }
 
@@ -96,7 +104,7 @@ sub lock()
 
         if($! != EAGAIN)
         {   $self->log(ERROR =>
-               "Will never get a flock on $filename for $self->{MBL_folder}: $!");
+               "Will never get a flock on $filename for $folder: $!");
             last;
         }
 
@@ -143,7 +151,7 @@ sub unlock()
 {   my $self = shift;
 
     $self->_unlock(delete $self->{MBLF_filehandle})
-       if $self->hasLock;
+        if $self->hasLock;
 
     $self;
 }

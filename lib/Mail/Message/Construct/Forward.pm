@@ -121,12 +121,10 @@ in INLINE mode, the body will be taken, a line containing C<'-- '> added
 before it, and added behind the epilogue.
 
 =error Cannot include forward source as $include.
-
 Unknown alternative for the M<forward(include)>.  Valid choices are
 C<NO>, C<INLINE>, C<ATTACH>, and C<ENCAPSULATE>.
 
 =error No address to create forwarded to.
-
 If a forward message is created, a destination address must be specified.
 
 =cut
@@ -359,7 +357,7 @@ which is provided as body object is required, and any specified C<body>
 is ignored.
 
 =requires preamble BODY|PART
-=error forwardAttach requires a preamble object
+=error Method forwardAttach requires a preamble
 
 =cut
 
@@ -375,7 +373,7 @@ sub forwardAttach(@)
     }
 
     my $preamble = $args{preamble};
-    $self->log(ERROR => 'forwardAttach requires a preamble object'), return
+    $self->log(ERROR => 'Method forwardAttach requires a preamble'), return
        unless ref $preamble;
 
     my @parts = ($preamble, $body);
@@ -397,7 +395,7 @@ which is provided as body object is required, and any specified C<body>
 is ignored.  Signatures are not stripped.  Signatures are not stripped.
 
 =requires preamble BODY|PART
-=error forwardEncapsulate requires a preamble object
+=error Method forwardEncapsulate requires a preamble
 
 =cut
 
@@ -405,7 +403,7 @@ sub forwardEncapsulate(@)
 {   my ($self, %args) = @_;
 
     my $preamble = $args{preamble};
-    $self->log(ERROR => 'forwardEncapsulate requires a preamble object'), return
+    $self->log(ERROR => 'Method forwardEncapsulate requires a preamble'), return
        unless ref $preamble;
 
     my $nested= Mail::Message::Body::Nested->new(nested => $self->clone);

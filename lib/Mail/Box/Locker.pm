@@ -67,31 +67,29 @@ each folder, which describes the locking strategy as well as special
 options to change the default behavior.
 
 =item 'FLOCK' | 'flock'
-
 For some folder handlers, locking is based on a file locking mechanism
 provided by the operating system.  However, this does not work on all
 systems, such as network filesystems, and such. This also doesn't work on
 folders based on directories (M<Mail::Box::Dir> and derived).
 
 =item 'POSIX' | 'posix'
-
 Use the POSIX standard fcntl locking.
 
 =item 'MULTI' | 'multi'
-
 Use ALL available locking methods at the same time, to have a bigger
 chance that the folder will not be modified by some other application
 which uses an unspecified locking method.  When one of the locking
 methods disallows access, the locking fails.
 
-=item 'NFS' | 'nfs'
+=item 'MUTT'| 'mutt'
+Use the external program 'mutt_dotlock' to lock and unlock.
 
+=item 'NFS' | 'nfs'
 A kind of C<dotlock> file-locking mechanism, but adapted to work over
 NFS.  Extra precaution is needed because an C<open O_EXCL> on NFS is
 not an atomic action.
 
 =item 'NONE' | 'none'
-
 Do not use locking.
 
 =back
@@ -136,6 +134,7 @@ my %lockers =
   ( DOTLOCK => __PACKAGE__ .'::DotLock'
   , FLOCK   => __PACKAGE__ .'::Flock'
   , MULTI   => __PACKAGE__ .'::Multi'
+  , MUTT    => __PACKAGE__ .'::Mutt'
   , NFS     => __PACKAGE__ .'::NFS'
   , NONE    => __PACKAGE__
   , POSIX   => __PACKAGE__ .'::POSIX'
@@ -285,7 +284,7 @@ Check whether the folder has the lock.
 
 =cut
 
-sub hasLock() {shift->{MBL_has_lock} }
+sub hasLock() {shift->{MBL_has_lock}}
 
 #-------------------------------------------
 

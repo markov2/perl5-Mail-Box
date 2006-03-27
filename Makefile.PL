@@ -86,7 +86,8 @@ When installed, unique message-ids will be created using gettimeofday.
 Otherwise, generated message-ids will not be thread/fork safe.
 REASON
 
-, [ HTML::FormatText => '2.01', distr => 'HTML::Format', reason => <<'REASON' ]
+, [ HTML::FormatText => '2.01', distr => 'HTML::FormatText'
+  , reason => <<'REASON' ]
 Plug-in which converts HTML to Postscript or plain text.
 REASON
 );

@@ -54,13 +54,13 @@ sub _unlock($)
 
 =method lock
 
-=error Unable to open POSIX lock file $filename for $folder: $!
+=warning Folder $folder already lockf'd
 
+=error Unable to open POSIX lock file $filename for $folder: $!
 For POSIX style locking, a folder it must be opened, which does not
 succeed for the specified reason.
 
 =error Will never get a POSIX lock at $filename for $folder: $!
-
 Tried to lock the folder, but it did not succeed.  The error code received
 from the OS indicates that it will not succeed ever, so we do not need to
 try again.
@@ -68,15 +68,21 @@ try again.
 =cut
 
 sub lock()
-{   my $self  = shift;
-    return 1 if $self->hasLock;
+{   my $self   = shift;
+
+    if($self->hasLock)
+    {   my $folder = $self->folder;
+        $self->log(WARNING => "Folder $folder already lockf'd");
+        return 1;
+    }
 
     my $filename = $self->filename;
 
     my $file   = IO::File->new($filename, 'r+');
     unless(defined $file)
-    {   $self->log(ERROR =>
-           "Unable to open POSIX lock file $filename for $self->{MBL_folder}: $!");
+    {   my $folder = $self->folder;
+        $self->log(ERROR =>
+           "Unable to open POSIX lock file $filename for $folder: $!");
         return 0;
     }
 

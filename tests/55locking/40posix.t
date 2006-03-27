@@ -46,8 +46,12 @@ ok(-f $lockfile);
 ok($locker->hasLock);
 
 # Already got lock, so should return immediately.
-ok($locker->lock);
-
+my $warn = '';
+{  $SIG{__WARN__} = sub {$warn = "@_"};
+   $locker->lock;
+}
+ok($warn =~ m/already lockf/,                   'relock no problem');
+                                                                                
 $locker->unlock;
 ok(not $locker->hasLock);
 

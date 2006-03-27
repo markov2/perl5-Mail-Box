@@ -142,7 +142,7 @@ sub escapedBody()
 =method readFromParser PARSER
 
 Read one message from a M<Mail::Box::File> based folder, including the
-message separator.
+leading message separator.
 
 =cut
 

@@ -8,9 +8,8 @@ use Mail::Message::Body::Lines;
 use Mail::Message::Body::Multipart;
 
 use Mail::Address;
-use Carp;
-use Scalar::Util 'blessed';
-use List::Util   'first';
+use Scalar::Util    'blessed';
+use List::Util      'first';
 use Mail::Box::FastScalar;
 
 =chapter NAME
@@ -99,7 +98,7 @@ means that it cancels the effect of the default rule C<replaceDeletedParts>.
    , extra_rules => [ 'removeEmpty', 'flattenMultiparts' ]
    );
 
-=error no rebuild rule $name defined.
+=error No rebuild rule $name defined.
 
 =cut
 
@@ -118,8 +117,10 @@ sub rebuild(@)
 
     foreach my $rule (@rules)
     {   next if ref $rule;
-        croak "ERROR: no rebuild rule '$rule' defined.\n"
-           unless $self->can($rule);
+        unless($self->can($rule))
+        {   $self->log(ERROR => "No rebuild rule '$rule' defined.\n");
+            return 1;
+        }
     }
 
     # Start off with the message

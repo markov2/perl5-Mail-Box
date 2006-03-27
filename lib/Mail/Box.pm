@@ -361,9 +361,8 @@ is needed, but not before.
 
 The type of the locker object.  This may be the full name of a CLASS
 which extends Mail::Box::Locker, or one of the known locker types
-C<DotLock>, C<Flock>, C<Multi>, C<NFS>, C<POSIX>, or C<NONE>.  If an
-ARRAY is specified, then a Multi locker is built which uses the specified
-list.
+C<DotLock>, C<Flock>, C<Mutt>, C<NFS>, C<POSIX>, or C<NONE>.  If an ARRAY
+is specified, then a Multi locker is built which uses the specified list.
 
 =option  locker OBJECT
 =default locker undef

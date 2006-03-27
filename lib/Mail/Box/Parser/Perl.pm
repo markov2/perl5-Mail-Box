@@ -201,6 +201,7 @@ sub _read_stripped_lines(;$$)
 
     my $file    = $self->{MBPP_file};
     my $lines   = [];
+    my $msgend;
 
     if(@seps)
     {   
@@ -215,17 +216,18 @@ sub _read_stripped_lines(;$$)
                 next if $sep eq 'From ' && $line !~ m/ 19[789]\d| 20[012]\d/;
 
                 $file->setpos($where);
+                $msgend = $file->tell;
+                last LINE;
 
-                if($sep =~ m/^--/)  # consume \n before boundary
-                {   if(@$lines && $lines->[-1] =~ s/(\r?\n)\z//)
-                    {   $file->seek(-length($1), 1);
-                        pop @$lines if length($lines->[-1])==0;
-                    }
-                }
                 last LINE;
             }
 
             push @$lines, $line;
+        }
+
+        if(@$lines && $lines->[-1] =~ s/(\r?\n)\z//)
+        {   $file->seek(-length($1), 1);
+            pop @$lines if length($lines->[-1])==0;
         }
     }
     else # File without separators.
@@ -233,15 +235,16 @@ sub _read_stripped_lines(;$$)
                ? $file->getlines : [ $file->getlines ];
     }
 
-    my $end = $file->tell;
+    my $bodyend = $file->tell;
 
     if($self->{MBPP_strip_gt})
     {   map { s/^\>(\>*From\s)/$1/ } @$lines;
-        pop @$lines if @$lines && $lines->[-1] eq "\n";
     }
   
     unless($self->{MBPP_trusted}) { s/\015$// for @$lines }
-    $end, $lines;
+#warn "($bodyend, $msgend, ".@$lines, ")\n";
+
+    ($bodyend, $lines, $msgend);
 }
 
 #------------------------------------------

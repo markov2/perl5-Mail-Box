@@ -127,6 +127,7 @@ sub copy_dir($$)
 # UNPACK_MBOX2MH
 # Unpack an mbox-file into an MH-directory.
 # This skips message-nr 13 for testing purposes.
+# Blanks before "From" are removed.
 
 sub unpack_mbox2mh($$)
 {   my ($file, $dir) = @_;
@@ -134,6 +135,7 @@ sub unpack_mbox2mh($$)
 
     mkdir $dir, 0700;
     my $count = 1;
+    my $blank;
 
     open FILE, $file or die;
     open OUT, '>', File::Spec->devnull;
@@ -141,10 +143,21 @@ sub unpack_mbox2mh($$)
     while(<FILE>)
     {   if( /^From / )
         {   close OUT;
+            undef $blank;
             open OUT, ">$dir/".$count++ or die;
             $count++ if $count==13;  # skip 13 for test
             next;                    # from line not included in file.
         }
+
+        print OUT $blank
+            if defined $blank;
+
+        if( m/^\015?\012$/ )
+        {   $blank = $_;
+            next;
+        }
+
+        undef $blank;
         print OUT;
     }
 
@@ -219,10 +232,12 @@ sub unpack_mbox2maildir($$)
     open OUT, '>', File::Spec->devnull;
 
     my $last_empty = 0;
+    my $blank;
 
     while(<FILE>)
     {   if( m/^From / )
         {   close OUT;
+            undef $blank;
             my $now      = time;
             my $hostname = hostname;
 
@@ -235,6 +250,15 @@ sub unpack_mbox2maildir($$)
             next;                    # from line not included in file.
         }
 
+        print OUT $blank
+            if defined $blank;
+
+        if( m/^\015?\012$/ )
+        {   $blank = $_;
+            next;
+        }
+
+        undef $blank;
         print OUT;
     }
 

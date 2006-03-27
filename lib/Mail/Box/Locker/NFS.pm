@@ -96,14 +96,16 @@ sub _unlock($$)
 
 =method lock
 
-=warning Removed expired lockfile $filename.
+=warning Folder $folder already locked over nfs
+Do not try to lock the folder when the application already has the
+lock: it will give you dead-locks.
 
+=warning Removed expired lockfile $filename.
 A lock file was found which was older than the expiration period as
 specified with M<new(timeout)>.  The lock file was succesfully
 removed.
 
 =error Unable to remove expired lockfile $lockfile: $!
-
 A lock file was found which was older than the expiration period as
 specified with the M<new(timeout)> option.  It is impossible to remove that
 lock file, so we need to wait until it vanishes by some external cause.
@@ -112,9 +114,13 @@ lock file, so we need to wait until it vanishes by some external cause.
 
 sub lock()
 {   my $self     = shift;
-    return 1 if $self->hasLock;
-
     my $folder   = $self->{MBL_folder};
+
+    if($self->hasLock)
+    {   $self->log(WARNING => "Folder $folder already locked over nfs");
+        return 1;
+    }
+
     my $lockfile = $self->filename;
     my $tmpfile  = $self->_construct_tmpfile or return;
     my $end      = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1

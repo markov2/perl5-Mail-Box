@@ -57,7 +57,7 @@ still insist, use M<Mail::Message::body()>.
     Received => 'from ... by ...');
  $msg->bounce($rg)->send;
 
-=error bounce requires To, Cc, or Bcc
+=error Method bounce requires To, Cc, or Bcc
 The message M<bounce()> method forwards a received message off to someone
 else without modification; you must specified it's new destination.
 If you have the urge not to specify any destination, you probably
@@ -90,7 +90,8 @@ sub bounce(@)
     {   $rg = Mail::Message::Head::ResentGroup->new(@_);
     }
     else
-    {   croak "ERROR: bounce requires To, Cc, or Bcc";
+    {   $self->log(ERROR => "Method bounce requires To, Cc, or Bcc");
+        return undef;
     }
  
     #

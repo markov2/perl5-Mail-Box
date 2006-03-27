@@ -16,7 +16,11 @@ use Mail::Box::Locker::DotLock;
 
 my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 
-my $lockfile  = File::Spec->catfile('folders', 'lockfiletest');
+my $base      = -d 'folders' ? 'folders'
+              : File::Spec->catfile('tests', 'folders');
+
+my $lockfile  = File::Spec->catfile($base, 'lockfiletest');
+
 unlink $lockfile;
 
 my $locker = Mail::Box::Locker->new
@@ -28,14 +32,18 @@ my $locker = Mail::Box::Locker->new
  );
 
 ok($locker);
-is($locker->name, 'DOTLOCK');
+is($locker->name, 'DOTLOCK', 'locker name');
 
-ok($locker->lock);
-ok(-f $lockfile);
-ok($locker->hasLock);
+ok($locker->lock,    'can lock');
+ok(-f $lockfile,     'lockfile found');
+ok($locker->hasLock, 'locked status');
 
 # Already got lock, so should return immediately.
-ok($locker->lock);
+my $warn = '';
+{  $SIG{__WARN__} = sub {$warn = "@_"};
+   $locker->lock;
+}
+ok($warn =~ m/already locked/, 'second attempt');
 
 $locker->unlock;
-ok(not $locker->hasLock);
+ok(! $locker->hasLock, 'released lock');

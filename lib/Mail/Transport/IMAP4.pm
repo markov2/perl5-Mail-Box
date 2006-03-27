@@ -69,11 +69,6 @@ When a CLASS is given, an object of that type is created for you.  The created
 object can be retreived via M<imapClient()>, and than configured as
 defined by L<Mail::IMAPClient|Mail::IMAPClient>.
 
-=error module Authen::NTLM is not installed
-You try to establish an IMAP4 connection which explicitly uses NTLM
-authentication, but the optional M<Authen::NTLM>, which implements this is
-not installed on your system.
-
 =cut
 
 sub init($)
@@ -182,9 +177,9 @@ sub authentication(@)
     my @clientside;
     foreach my $auth (@types)
     {   push @clientside
-           , ref $auth eq 'ARRAY' ? $auth
-           : $auth eq 'NTLM'      ? [NTLM  => \&Authen::NTLM::ntlm ]
-           :                        [$auth => undef];
+         , ref $auth eq 'ARRAY' ? $auth
+         : $auth eq 'NTLM'      ? [NTLM  => \&Authen::NTLM::ntlm ]
+         :                        [$auth => undef];
     }
 
     my %clientside = map { ($_->[0] => $_) } @clientside;

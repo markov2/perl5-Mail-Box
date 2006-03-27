@@ -1,4 +1,5 @@
 use warnings;
+use strict;
 
 package Mail::Message::Field::URIs;
 use base 'Mail::Message::Field::Structured';
