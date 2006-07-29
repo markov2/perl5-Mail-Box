@@ -173,6 +173,8 @@ sub add(@)
       = @_==1 && ref $_[0] ? shift     # A fully qualified field is added.
       : ($self->{MMH_field_type} || 'Mail::Message::Field::Fast')->new(@_);
 
+    return if !defined $field;
+
     $field->setWrapLength;
 
     # Put it in place.

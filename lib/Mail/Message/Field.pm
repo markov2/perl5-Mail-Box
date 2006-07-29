@@ -508,31 +508,31 @@ sub attribute($;$)
     my $body  = $self->unfoldedBody;
 
     unless(@_)
-    {   return
-           $body =~ m/\b$attr\s*\=\s*
-                       ( "( (?: [^"]|\\" )* )"
-                       | '( (?: [^']|\\' )* )'
-                       | ([^;\s]*)
-                       )
-                  /xi ? $+ : undef;
+    {   if($body =~ m/\b$attr\s*\=\s*
+                      ( "( (?> [^\\"]*|\\. )* )"
+                      | ([^";\s]*)
+                      )/xi)
+        {   (my $val = $+) =~ s/(["\\])/\\$1/g;
+            return $val;
+        }
+        return undef;
     }
 
     my $value = shift;
     unless(defined $value)  # remove attribute
     {   for($body)
-        {      s/\b$attr\s*=\s*'([^']|\\')*'//i
-            or s/\b$attr\s*=\s*"([^"]|\\")*"//i
+        {      s/\b$attr\s*=\s*"(?>[^\\"]|\\.)*"//i
             or s/\b$attr\s*=\s*[;\s]*//i;
         }
         $self->unfoldedBody($body);
         return undef;
     }
 
-    (my $quoted = $value) =~ s/"/\\"/g;
+    (my $quoted = $value) =~ s/(["\\])/\\$1/g;
+
     for($body)
-    {       s/\b$attr\s*=\s*'([^']|\\')*'/$attr="$quoted"/i
-         or s/\b$attr\s*=\s*"([^"]|\\")*"/$attr="$quoted"/i
-         or s/\b$attr\s*=\s*[^;\s]+/$attr="$quoted"/i
+    {       s/\b$attr\s*=\s*"(?>[^\\"]|\\.)*"/$attr="$quoted"/i
+         or s/\b$attr\s*=\s*[^;\s]*/$attr="$quoted"/i
          or do { $_ .= qq(; $attr="$quoted") }
     }
 

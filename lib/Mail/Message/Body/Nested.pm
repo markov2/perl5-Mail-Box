@@ -133,6 +133,26 @@ sub print(;$)
 
 #------------------------------------------
 
+=method foreachLine(CODE)
+It is NOT possible to call some code for each line of a nested
+because that would damage the header of the encapsulated message
+
+=error You cannot use foreachLine on a nested
+M<foreachLine()> should be used on decoded message bodies only, because
+it would modify the header of the encapsulated message. which is
+clearly not acceptible.
+
+=cut
+
+sub foreachLine($)
+{   my ($self, $code) = @_;
+    $self->log(ERROR => "You cannot use foreachLine on a nested");
+    confess;
+}
+
+
+#------------------------------------------
+
 sub check() { shift->forNested( sub {$_[1]->check} ) }
 
 #------------------------------------------

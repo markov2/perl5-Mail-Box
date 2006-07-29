@@ -7,6 +7,54 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.066: Sat Jul 29 13:28:09 CEST 2006
+
+	Fixes:
+
+	- Mail::Transport::IMAP4 unpack of remote capabilities wrong
+	  Reported by [Scott Bronson]
+
+	- Empty header field crashed Mail::Message::Field::Fast.
+
+	- block usage of foreachLine on multiparts and nested with
+	  useful explanation.  Problem reported by [Claus Jeppesen]
+
+	- Test::Harness published private function which we need to
+	  group tests into new public name. [Marek Rouchal]
+
+	- SpamAssassin versions >= 3.0 are not supported by the wrapper.
+	  Discovered by [David Saulnier]
+
+	- Mail::Box::Thread::Manager thumbled over empty message-ids.
+	  Now, message-ids are only accepted if they resemble valid
+	  ids... [Yuval Kogman]
+
+	- Mail::Message::Field::attribute should use non-backtracking
+	  match to avoid crashes of Perl at extremely long fields.
+	  [John Gardiner Myers]
+
+	- Mail::Message::Field::attribute fix \\ escaping mistakes
+	  [John Gardiner Myers]
+
+	IMAP4 Fixes and improvements by [Scott Bronson].
+        Patches reworked by MarkOv
+
+	- IMAP4 top folder name '=' should be '/'.
+
+	- IMAP4 create folder
+
+	- Reworked IMAP4 folder selection
+
+	- Do not list folder as one of its subfolders
+
+	- IMAP4 message head not read correctly
+
+	- avoid query unselectable folders for the number of messages.
+
+	Improvements:
+
+	- Improved OODoc improves quality of POD output w.r.t. option lists
+
 version 2.065: Mon Mar 27 15:03:21 CEST 2006
 
 	Fixes:
@@ -26,7 +74,8 @@ version 2.065: Mon Mar 27 15:03:21 CEST 2006
 	- Depends on HTML::FormatText, not HTML::Format.
 
 	- Problem with mbox test, since the empty line definition
-	  changed.  Reported by at least 3 linux distribution maintainers.
+	  changed.  Reported by the maintainers of 2 linux distributions
+	  and FreeBSD.
 
 	- Fixed tests/Tools.pm unpacking mbox into maildir and mh, both
 	  to leave-out the trailing blank line.

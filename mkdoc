@@ -62,6 +62,11 @@ print "*** Producing $distribution version $version\n" if $verbose;
 
 print "* Processing Mail::Box files\n" if $verbose;
 
+# Module Mail::Box::SpamAssassin::Wrapper will die on versions of SA >= 3
+# but we do not want OODoc to die here.  Bad trick played!
+use Mail::SpamAssassin;
+$Mail::SpamAssassin::VERSION = '0';
+
 $doc->processFiles
  ( workdir => $workdir
  , select  => qr[^ lib/ .*? \.(pod|pm) $ ]x

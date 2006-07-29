@@ -7,6 +7,12 @@ use base 'Mail::SpamAssassin::Message';
 use Carp;
 use Mail::Message::Body;
 
+BEGIN
+{   my $v = $Mail::SpamAssassin::VERSION;
+    die "ERROR: spam-assassin version $v is not supported (only versions 2.x)\n"
+       if $v >= 3.0;
+}
+
 #------------------------------------------
 
 =chapter NAME
@@ -15,6 +21,7 @@ Mail::Message::Wrapper::SpamAssassin - Connect a Mail::Message with Mail::SpamAs
 
 =chapter SYNOPSIS
 
+ # WARNING: requires OLD SpamAssassion 2.x, not the new 3.x
  # See Mail::Box::Search::SpamAssassin for the prefered interface
  # However, it is possible to do:
 
@@ -28,10 +35,13 @@ Mail::Message::Wrapper::SpamAssassin - Connect a Mail::Message with Mail::SpamAs
 
 =chapter DESCRIPTION
 
-The C<Mail::Message::Wrapper::SpamAssassin>
-class --sorry for the long package
-name-- is a wrapper around M<Mail::SpamAssassin::Message>, which is an
-interface to the spam checking software of M<Mail::SpamAssassin>.
+WARNING: This module only works with the old version of SpamAssassin:
+version 2.x.  The newer 3.x releases have changed the way that messages
+are kept. Please contribute improved code.
+
+The C<Mail::Message::Wrapper::SpamAssassin> class --sorry for the
+long package name-- is a wrapper around M<Mail::SpamAssassin::Message>, which
+is an interface to the spam checking software of M<Mail::SpamAssassin>.
 
 =chapter METHODS
 

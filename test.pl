@@ -13,7 +13,7 @@ use Tools;             # test tools
 use Mail::Reporter;    # to avoid 'too late for INIT'
 
 use IO::Dir;
-use Test::Harness qw($verbose);
+use Test::Harness qw($verbose execute_tests);
 
 # we use Test::More without a plan here, but we don't want
 # Test::Builder to mess with the exit code
@@ -186,7 +186,7 @@ sub run_in_harness(@)
 {   my @files = @_;
     return 1 unless @files;
 
-    my ($tot, $failed) = Test::Harness::_run_all_tests(@files);
+    my ($tot,$failed) = execute_tests(tests => \@files);
     Test::Harness::_all_ok($tot);
 }
 

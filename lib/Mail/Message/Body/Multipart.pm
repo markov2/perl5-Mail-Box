@@ -8,6 +8,7 @@ use Mail::Message::Body::Lines;
 use Mail::Message::Part;
 
 use Mail::Box::FastScalar;
+use Carp;
 
 =chapter NAME
 
@@ -290,6 +291,26 @@ sub print(;$)
     if(my $epilogue = $self->epilogue) { $epilogue->print($out) }
 
     $self;
+}
+
+#------------------------------------------
+
+=method foreachLine(CODE)
+It is NOT possible to call some code for each line of a multipart,
+because that would not only inflict damage to the body of each
+message part, but also to the headers and the part separators.
+
+=error You cannot use foreachLine on a multipart
+M<foreachLine()> should be used on decoded message bodies only, because
+it would attempt to modify part-headers and separators as well, which is
+clearly not acceptible.
+
+=cut
+
+sub foreachLine($)
+{   my ($self, $code) = @_;
+    $self->log(ERROR => "You cannot use foreachLine on a multipart");
+    confess;
 }
 
 #------------------------------------------
