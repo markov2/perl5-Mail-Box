@@ -7,12 +7,21 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-version 2.066: Sat Jul 29 13:28:09 CEST 2006
+version 2.067:
 
 	Fixes:
 
-	- Mail::Transport::IMAP4 unpack of remote capabilities wrong
-	  Reported by [Scott Bronson]
+	- Mail::Message::TransfEnc::QuotedPrint must pass the whole
+	  message body at once, not line by line, because "=\r\n" is
+	  otherwise not detected.
+
+	- Produce manuals with new OODoc version, which fixes the layout
+	  of option-tables by exploiting a fix in the just released
+	   podlators 2.0.5.
+
+version 2.066: Sat Jul 29 13:28:09 CEST 2006
+
+	Fixes:
 
 	- Empty header field crashed Mail::Message::Field::Fast.
 
@@ -38,6 +47,9 @@ version 2.066: Sat Jul 29 13:28:09 CEST 2006
 
 	IMAP4 Fixes and improvements by [Scott Bronson].
         Patches reworked by MarkOv
+
+	- Mail::Transport::IMAP4 unpack of remote capabilities wrong
+	  Reported by [Scott Bronson]
 
 	- IMAP4 top folder name '=' should be '/'.
 

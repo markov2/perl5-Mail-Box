@@ -55,13 +55,12 @@ end of line are removed.
 sub decode($@)
 {   my ($self, $body, %args) = @_;
 
-    my @lines    = map decode_qp($_), $body->lines;
     my $bodytype = $args{result_type} || ref $body;
 
     $bodytype->new
      ( based_on          => $body
      , transfer_encoding => 'none'
-     , data              => \@lines
+     , data              => decode_qp($body->string)
      );
 }
 
@@ -83,13 +82,12 @@ broken on encoded characters.
 sub encode($@)
 {   my ($self, $body, %args) = @_;
 
-    my @lines    = map encode_qp($_), $body->lines;
     my $bodytype = $args{result_type} || ref $body;
 
     $bodytype->new
      ( based_on          => $body
      , transfer_encoding => 'quoted-printable'
-     , data              => \@lines
+     , data              => encode_qp($body->string)
      );
 }
 
