@@ -184,6 +184,8 @@ sub init($)
     $transport = $self->createTransporter($transport, %$args)
        unless ref $transport;
 
+    $self->transporter($transport);
+
     defined $transport
        or return;
 
@@ -520,7 +522,7 @@ sub createTransporter($@)
         weaken($transporters{$linkid});
     }
 
-    $self->transporter($transporter);
+    $transporter;
 }
 
 #-------------------------------------------

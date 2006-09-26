@@ -81,8 +81,6 @@ sub new(@)
 sub init(@)
 {   my ($self, $args) = @_;
 
-    $args->{trace}  ||= 'WARNING';
-
     $self->SUPER::init($args);
 
     $self->{MBP_mode} = $args->{mode} || 'r';

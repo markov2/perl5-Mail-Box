@@ -7,7 +7,21 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-version 2.067:
+version 2.068: Tue Sep 26 13:21:54 CEST 2006
+
+	Fixes:
+
+	- Mail::Box::Parser overruled global trace-level default
+	  [Uwe Menges]
+
+	- own transporter provided for Mail::Box::IMAP4 was not stored.
+	  [Bill Martin]
+
+	Improvements:
+
+	- Docs produced with newest version of OODoc.
+
+version 2.067: Mon Sep 18 10:36:23 CEST 2006
 
 	Fixes:
 
@@ -17,7 +31,9 @@ version 2.067:
 
 	- Produce manuals with new OODoc version, which fixes the layout
 	  of option-tables by exploiting a fix in the just released
-	   podlators 2.0.5.
+	  podlators 2.0.5.
+
+	- Update copyright date in POD.
 
 version 2.066: Sat Jul 29 13:28:09 CEST 2006
 
