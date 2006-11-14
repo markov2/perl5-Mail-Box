@@ -29,14 +29,13 @@ known for sure.
 
 =section Constructors
 
-=method clone [FIELDS]
+=method clone [NAMES|ARRAY-OF-NAMES|REGEXS]
 
 Make a copy of the header, optionally limited only to the header lines
-specified by FIELDS.  The lines which are taken must start with one of the
-list.  If no list is specified, all will be taken.
+specified by NAMES.  See M<grepNames()> on the way these fields can be
+used.
 
 =example
-
  my $newhead = $head->clone('Subject', 'Received');
 
 =cut
@@ -45,7 +44,7 @@ sub clone(;@)
 {   my $self   = shift;
     my $copy   = ref($self)->new($self->logSettings);
 
-    $copy->addNoRealize($_->clone) foreach $self->orderedFields;
+    $copy->addNoRealize($_->clone) for $self->grepNames(@_);
     $copy->modified(1);
     $copy;
 }
@@ -232,7 +231,7 @@ sub names() {shift->knownNames}
 =method grepNames [NAMES|ARRAY-OF-NAMES|REGEXS]
 
 Filter from all header fields the names which start will any of the
-specified list.  When no names are specified, all names will be returned.
+specified list.  When no names are specified, all fields will be returned.
 The list is ordered as they where read from file, or added later.
 
 The NAMES are regular expressions, and will all be matched case insensitive
@@ -252,7 +251,7 @@ sub grepNames(@)
     my @take;
     push @take, (ref $_ eq 'ARRAY' ? @$_ : $_) foreach @_;
 
-    return $self->names unless @take;
+    return $self->orderedFields unless @take;
 
     my $take;
     if(@take==1 && ref $take[0] eq 'Regexp')
@@ -264,7 +263,7 @@ sub grepNames(@)
         $take    = qr/^(?:(?:@take))/i;
     }
 
-    grep {$_->Name =~ $take} $self->orderedFields;
+    grep {$_->name =~ $take} $self->orderedFields;
 }
 
 #------------------------------------------

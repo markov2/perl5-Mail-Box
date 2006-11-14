@@ -7,15 +7,27 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.069:
+
+	Fixes:
+
+	- Message rebuild with nested message failed.  Fixed by
+	  [Mat Johns]
+
+	Improvements:
+
+	- Example strip-attachtment did not use dispositionFilename()
+	  available since 2.049 [Richard Eichhor]
+
 version 2.068: Tue Sep 26 13:21:54 CEST 2006
 
 	Fixes:
 
 	- Mail::Box::Parser overruled global trace-level default
-	  [Uwe Menges]
+	  Problem discovered by [Uwe Menges]
 
 	- own transporter provided for Mail::Box::IMAP4 was not stored.
-	  [Bill Martin]
+	  Problem discovered by [Bill Martin]
 
 	Improvements:
 

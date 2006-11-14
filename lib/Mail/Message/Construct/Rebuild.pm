@@ -240,7 +240,11 @@ sub descendNested($@)
       , nested   => $newnested
       );
 
-   my $rebuild    = ref($part)->new(head => $part->head->clone);
+   my $rebuild    = ref($part)->new
+    ( head       => $part->head->clone
+    , container => undef
+    );
+
    $rebuild->body($newbody);
    $rebuild;
 }

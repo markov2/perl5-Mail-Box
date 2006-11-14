@@ -82,13 +82,10 @@ my $outbox = $mgr->open
 die "Cannot open $outfilename to write: $!\n"
     unless defined $outbox;
 
-my @messages = $folder->messages;
-print "Mail folder $filename contains ", scalar @messages, " messages:\n";
+print "Mail folder $folder contains ", $folder->nrMessages, " messages:\n";
 
-my $counter  = 1;
-foreach my $message (@messages)
-{   printf "%3d. ", $counter++;
-    print $message->get('Subject') || '<no subject>', "\n";
+foreach my $message ($folder->messages)
+{   printf "%3d. %s\n", $message->seqnr, $message->subject;
 
     $message->printStructure;
     my $m = $message->clone;
@@ -101,24 +98,22 @@ foreach my $message (@messages)
     foreach my $part ($m->parts)
     {
          # Strip attachments larger than 16K. Another example would be:
-         #   if ($part->body->mimeType ne 'text/plain')
+         #   next if $part->body->mimeType ne 'text/plain';
          next unless $part->body->size > 16384;
 
          print "\n**** Stripping Attachment "; # ,$part->head,"\n";
-         my $disp     = $part->body->disposition;
-         my $name     = $disp->attribute('filename')
-                     || $disp->attribute('name');
 
-         # a major security hole if you accept any path!
-         $filename    = basename $name;
-
-         my $attachment = File::Spec->catfile($attachments, $filename);
+         # Warning: double names possible!  Put each message in seperate dir
+         my $attachment = $part->body->dispositionFilename($attachments);
          print $attachment,"\n";
 
          unless(-f $attachment)     #  Write attachment to file
-         {   open(FH, ">$attachment");
+         {   open(FH, '>', $attachment)
+                 or die "ERROR: cannot write attachment to $attachment: $!\n";
+
              $part->decoded->print(\*FH);
-             close(FH);
+             close(FH)
+                 or die "ERROR: writing to $attachment: $!\n";
          }
 
          $part->delete;
