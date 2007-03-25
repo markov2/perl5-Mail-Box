@@ -188,12 +188,12 @@ sub authentication(@)
     # What does the server support? in its order of preference.
 
     my $imap = $self->imapClient or return ();
-    my @serverside = map { m/^AUTH=(\w+)/ ? uc($1) : () }
+    my @serverside = map { m/^AUTH=(\S+)/ ? uc($1) : () }
                         $imap->capability;
 
     my @auth;
     if(@serverside)  # server list auth capabilities
-    {   @auth = map { $clientside{$_->[0]} ? delete $clientside{$_->[0]} : () }
+    {   @auth = map { $clientside{$_} ? delete $clientside{$_} : () }
              @serverside;
     }
     @auth = @clientside unless @auth;  # fallback to client's preference

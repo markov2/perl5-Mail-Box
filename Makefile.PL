@@ -112,12 +112,6 @@ my %prereq =
  , Time::Zone     => 0.0
  );
 
-my $has_readkey;
-BEGIN
-{   eval "require Term::ReadKey";
-    $has_readkey = not length $@;
-}
-
 my $default_install_answer
      = $ENV{MAILBOX_INSTALL_OPTIONALS}
     || $ENV{INSTALL_MAILBOX_OPTIONALS};      # deprecated
@@ -209,8 +203,8 @@ foreach my $optional (@optional)
     }
     
     my $install = $default_install_answer
-               || prompt( "Do you want to install $module? yes/no/all"
-                        , -t STDIN ? 'y' : 'n');
+     || prompt "Do you want to install $module? yes/no/all"
+             , (-t STDIN ? 'y' : 'n');
 
     $install = $default_install_answer = 'y'
         if $install eq 'a';
@@ -224,7 +218,7 @@ foreach my $optional (@optional)
 }
 
 my $tests = $ENV{MAILBOX_RUN_TESTS}
-         || prompt "Do you want to run the (large set of) tests? yes/no", "yes";
+ || prompt "Do you want to run the (large set of) tests? yes/no", "yes";
 
 if($tests =~ m/n/i)
 {   open F, ">", "skiptests";
@@ -241,12 +235,34 @@ print <<'MAKEFILE';
 MAKEFILE
 
 WriteMakefile
- ( NAME         => 'Mail::Box'
- , VERSION_FROM => 'lib/Mail/Box.pm'
- , AUTHOR       => 'Mark Overmeer'
- , ABSTRACT     => 'E-mail handling'
- , PREREQ_PM    => \%prereq
+ ( NAME       => 'Mail::Box'
+ , VERSION    => '2.070'
+ , AUTHOR     => 'Mark Overmeer'
+ , ABSTRACT   => 'E-mail handling'
+ , PREREQ_PM  => \%prereq
  );
+
+### used by oodist during production of distribution
+sub MY::postamble { <<'__POSTAMBLE' }
+
+# for DIST
+RAWDIR          = ../public_html/mailbox/raw
+DISTDIR         = ../public_html/mailbox/source
+
+LICENSE         = artistic
+EXTENDS		= ../UserIdentity:../MimeTypes:../ORL
+
+# for POD
+FIRST_YEAR      = 2001
+EMAIL           = mailbox@overmeer.net
+WEBSITE         = http://perl.overmeer.net/mailbox/
+
+# for HTML
+HTML_OUTPUT     = ../public_html/mailbox/html
+HTML_DOCROOT    = /mailbox/html
+HTML_PACKAGE	= ../public_html/mailbox/htmlpkg
+
+__POSTAMBLE
 
 print <<'DONE';
 

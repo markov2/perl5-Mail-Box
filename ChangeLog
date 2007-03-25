@@ -7,17 +7,39 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-version 2.069:
+version 2.070: Sun Mar 25 17:11:29 CEST 2007
+
+	Improvements:
+
+	- test rebuild() not to add text alternative for html if it
+	  already exists.
+
+	- converted pod/html generation to use OODoc 0.99
+          Reordered the published packages on the website.
+
+	- added missing "markers" file to html-package [Michael Bolien]
+
+	- removed mkdist, mkdoc, README.oodoc
+
+version 2.069: Wed Dec 13 14:43:55 CET 2006
 
 	Fixes:
 
 	- Message rebuild with nested message failed.  Fixed by
 	  [Mat Johns]
 
+	- $head->clone with specific fields was broken, once
+	  solved showed bug in $head->grepNames without names.
+	  Both fixed thanks to [jih].
+
+	- 2 fixes in IMAP4 authentication, by [Max Campos].
+
 	Improvements:
 
 	- Example strip-attachtment did not use dispositionFilename()
 	  available since 2.049 [Richard Eichhor]
+
+	- Installation procedure does not need to check for Term::ReadKey
 
 version 2.068: Tue Sep 26 13:21:54 CEST 2006
 

@@ -230,19 +230,19 @@ sub names() {shift->knownNames}
 
 =method grepNames [NAMES|ARRAY-OF-NAMES|REGEXS]
 
-Filter from all header fields the names which start will any of the
+Filter from all header fields those with names which start will any of the
 specified list.  When no names are specified, all fields will be returned.
 The list is ordered as they where read from file, or added later.
 
-The NAMES are regular expressions, and will all be matched case insensitive
-and attached to the front of the string only.  You may also specify
-one or more prepared regexes.
+The NAMES are considered regular expressions, and will all be matched
+case insensitive and attached to the front of the string only.  You may
+also specify one or more prepared regexes.
 
 =examples
 
- print $head->grepNames();         # same as $head->names
- print $head->grepNames('X-', 'Subject', ');
- print $head->grepNames('To\b');   # will only select To
+ my @f  = $head->grepNames();       # same as $head->orderedFields
+ my @f  = $head->grepNames('X-', 'Subject', ');
+ my @to = $head->grepNames('To\b'); # will only select To
 
 =cut
 

@@ -19,7 +19,7 @@ my $has_htmlFormatText;
 BEGIN {
    eval "require Mail::Message::Convert::HtmlFormatText";
    $has_htmlFormatText = not $@;
-   plan tests => 52 + ($has_htmlFormatText ? 6 : 1);
+   plan tests => 53 + ($has_htmlFormatText ? 6 : 1);
 }
 
 #
@@ -178,6 +178,10 @@ ok(defined $alt,                 "Succesfully created an alternative");
 
 $rebuild = $alt->rebuild;
 ok($rebuild==$alt,               "No rule matches by default");
+
+$rebuild = $alt->rebuild(rules => [ 'textAlternativeForHtml']);
+ok($rebuild==$alt,               "Already has alternative");
+
 $rebuild = $alt->rebuild
  ( rules => [ qw/removeHtmlAlternativeToText descendMultiparts/ ] );
 ok($rebuild!=$alt,               "alt must change");
