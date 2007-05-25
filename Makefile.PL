@@ -177,14 +177,14 @@ foreach my $optional (@optional)
              { print "**** Optional $module is not installed\n"        }
         else { print "**** Optional $module compilation failed:\n$@\n" }
     }
-    elsif($module->VERSION < $version )
+    elsif(eval '$module->VERSION($version)' && $@)
     {   print "**** Optional $module too old: requires $version but is ",
-            $module->VERSION,"\n";
+            $module->VERSION,";$@\n";
     }
     else
     {   my $v = $module->VERSION;
         my $r = $v eq $version ? ''
-              : $version == 0  ? " (any version will do)"
+              : $version eq 0  ? " (any version will do)"
               :                  " (at least $version required)";
 
         print "**** Found optional $module version $v$r\n";
@@ -236,7 +236,7 @@ MAKEFILE
 
 WriteMakefile
  ( NAME       => 'Mail::Box'
- , VERSION    => '2.070'
+ , VERSION    => '2.071'
  , AUTHOR     => 'Mark Overmeer'
  , ABSTRACT   => 'E-mail handling'
  , PREREQ_PM  => \%prereq

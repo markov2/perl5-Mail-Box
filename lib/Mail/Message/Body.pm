@@ -9,7 +9,7 @@ use Mail::Message::Body::Lines;
 use Mail::Message::Body::File;
 
 use Carp;
-use Scalar::Util     'weaken';
+use Scalar::Util     qw/weaken refaddr/;
 use File::Basename   'basename';
 
 use MIME::Types;
@@ -100,8 +100,8 @@ are message references B<within the same folder>.
 use overload bool  => sub {1}   # $body->print if $body
            , '""'  => 'string_unless_carp'
            , '@{}' => 'lines'
-           , '=='  => sub {$_[0]->{MMB_seqnr}==$_[1]->{MMB_seqnr}}
-           , '!='  => sub {$_[0]->{MMB_seqnr}!=$_[1]->{MMB_seqnr}};
+           , '=='  => sub {ref $_[1] && refaddr $_[0] == refaddr $_[1]}
+           , '!='  => sub {ref $_[1] && refaddr $_[0] != refaddr $_[1]};
 
 #------------------------------------------
 

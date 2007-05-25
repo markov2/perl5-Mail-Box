@@ -390,7 +390,6 @@ sub read($$$$)
             :                      $begin;
 
     $self->fileLocation($begin, $end);
-
     $self;
 }
 

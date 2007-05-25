@@ -7,6 +7,19 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+nog meer problemen: CSS moet relatief, en nog mailbox.css resten
+
+version 2.071: Fri May 25 16:00:06 CEST 2007
+
+	Fixes:
+
+	- CSS should be named 'oodoc.css' [Michael Bolien]
+
+	- Makefile.PL did not user UNIVERSAL::VERSION to compare
+	  version numbers of installed packages. [Andreas Koenig]
+
+	- Mail::Message::Body overloaded == and != should use refaddr.
+
 version 2.070: Sun Mar 25 17:11:29 CEST 2007
 
 	Improvements:

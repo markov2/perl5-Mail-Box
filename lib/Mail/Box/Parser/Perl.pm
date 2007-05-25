@@ -105,7 +105,7 @@ sub readHeader()
     my @ret   = ($start, undef);
     my $line  = $file->getline;
 
-LINE:
+  LINE:
     while(defined $line)
     {   last LINE if $line =~ $empty;
         my ($name, $body) = split /\s*\:\s*/, $line, 2;
