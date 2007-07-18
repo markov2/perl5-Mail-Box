@@ -26,11 +26,8 @@ The Mail::Box package has special features to help MUA's access folder
 data quickly in random order.  You will not really benefit (neither
 slower) if you need the full folder sequentially.
 
-This code is beta, which means that there are no serious applications
-written with it yet.  Please inform the author when you have, so this
-module can be marked as stable.  Read the STATUS file enclosed in the package
-for more details.  You may also want to have a look at the sample
-scripts in the C<scripts> directory.
+You may want to have a look at the sample scripts in the C<scripts>
+directory.
 
 =section The class relations
 

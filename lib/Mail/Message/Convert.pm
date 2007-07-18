@@ -16,45 +16,42 @@ Available methods are very converter-specific.
 =chapter DESCRIPTION
 
 This class is the base for various message (and message parts) converters.
-When the conversion does not change the contents of the body, most of
-the converters will return the source object.  In any case, an
-M<Mail::Message::Body> is returned with the conversion applied but as
-much of the other meta data stored in the source body unchanged.
 
-In most cases, converters are created by Mail::Message when they are
-needed; have a look at the C<encode> and C<decoded> methods on message
-objects.
-
-The following converters are currently available:
+=section Converters between message objects
+Internally, the M<Mail::Message::coerce()> is called when foreign objects
+are used where message objects are expected.  That method will automatically
+create the converting objects, and re-use them.
 
 =over 4
-
-=item * M<Mail::Message::Convert::Html>
-
-Plays tricks with HTML/XMHTML without help of external modules.
-
-=item * M<Mail::Message::Convert::HtmlFormatText>
-
-Converts HTML body objects to plain text objects using the
-HTML::FormatText module.
-
-=item * M<Mail::Message::Convert::HtmlFormatPS>
-
-Converts HTML body objects to Postscript objects using the
-M<HTML::FormatPS> module.
-
 =item * M<Mail::Message::Convert::MailInternet>
-
 Converts the simple M<Mail::Internet> messages into M<Mail::Message>
 objects.
 
 =item * M<Mail::Message::Convert::MimeEntity>
-
 Converts the more complicated M<MIME::Entity> messages into
 M<Mail::Message> objects.
 
-=item * M<Mail::Message::Convert::TextAutoformat>
+=item * M<Mail::Message::Convert::EmailSimple>
+Converts M<Email::Simple> messages into M<Mail::Message> objects.
 
+=back
+
+=section Other converters
+
+=over 4
+
+=item * M<Mail::Message::Convert::Html>
+Plays tricks with HTML/XMHTML without help of external modules.
+
+=item * M<Mail::Message::Convert::HtmlFormatText>
+Converts HTML body objects to plain text objects using the
+HTML::FormatText module.
+
+=item * M<Mail::Message::Convert::HtmlFormatPS>
+Converts HTML body objects to Postscript objects using the
+M<HTML::FormatPS> module.
+
+=item * M<Mail::Message::Convert::TextAutoformat>
 Converts a text message into text using M<Text::Autoformat>.
 
 =back

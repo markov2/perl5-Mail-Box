@@ -1228,16 +1228,15 @@ sub statusToLabels()
 
 =c_method coerce MESSAGE, OPTIONS
 
-Coerce a MESSAGE into a Mail::Message.  In some
-occasions, for instance where you add a message to a folder, this
-coercion is automatically called to ensure that the correct message
-type is stored.
+Coerce a MESSAGE into a Mail::Message.  In some occasions, for instance
+where you add a message to a folder, this coercion is automatically
+called to ensure that the correct message type is stored.
 
 The coerced message is returned on success, otherwise C<undef>.  The
 coerced message may be a reblessed version of the original message
 or a new object.  In case the message has to be specialized, for
-instance from a general Mail::Message into a Mail::Box::Mbox::Message,
-no copy is needed.  However, to coerce a Mail::Internet object into
+instance from a general Mail::Message into a M<Mail::Box::Mbox::Message>,
+no copy is needed.  However, to coerce a M<Mail::Internet> object into
 a Mail::Message, a lot of copying and converting will take place.
 
 Valid MESSAGEs which can be coerced into Mail::Message objects
@@ -1247,9 +1246,13 @@ are of type
 
 =item * Any type of M<Mail::Box::Message>
 
-=item * M<MIME::Entity>'s, using M<Mail::Message::Convert::MimeEntity>
+=item * M<MIME::Entity> objects, using M<Mail::Message::Convert::MimeEntity>
 
-=item * M<Mail::Internet>'s, using M<Mail::Message::Convert::MailInternet>
+=item * M<Mail::Internet> objects, using M<Mail::Message::Convert::MailInternet>
+
+=item * M<Email::Simple> objects, using M<Mail::Message::Convert::EmailSimple>
+
+=item * M<Email::Abstract> objects
 
 =back
 
@@ -1268,13 +1271,19 @@ Simpler replacement for the previous two lines:
 
  my $coerced = $folder->addMessage($message);
 
+=error coercion starts with some object
+=error Cannot coerce a $class object into a $class object
 =cut
 
 my $mail_internet_converter;
 my $mime_entity_converter;
+my $email_simple_converter;
 
 sub coerce($@)
 {   my ($class, $message) = @_;
+
+    ref $message
+        or confess "coercion starts with some object";
 
     return bless $message, $class
         if $message->isa(__PACKAGE__);
@@ -1283,7 +1292,6 @@ sub coerce($@)
     {   unless($mime_entity_converter)
         {   eval {require Mail::Message::Convert::MimeEntity};
                 confess "Install MIME::Entity" if $@;
-
             $mime_entity_converter = Mail::Message::Convert::MimeEntity->new;
         }
 
@@ -1295,17 +1303,30 @@ sub coerce($@)
     {   unless($mail_internet_converter)
         {   eval {require Mail::Message::Convert::MailInternet};
             confess "Install Mail::Internet" if $@;
-
-           $mail_internet_converter = Mail::Message::Convert::MailInternet->new;
+            $mail_internet_converter = Mail::Message::Convert::MailInternet->new;
         }
 
         $message = $mail_internet_converter->from($message)
             or return;
     }
+    elsif($message->isa('Email::Simple'))
+    {   unless($email_simple_converter)
+        {   eval {require Mail::Message::Convert::EmailSimple};
+            confess "Install Email::Simple" if $@;
+            $email_simple_converter = Mail::Message::Convert::EmailSimple->new;
+        }
+
+        $message = $email_simple_converter->from($message)
+            or return;
+    }
+
+    elsif($message->isa('Email::Abstract'))
+    {   return $class->coerce($message->object);
+    }
 
     else
-    {   my $what = ref $message ? 'a'.ref($message).' object' : 'text';
-        confess "Cannot coerce $what into a ". __PACKAGE__." object.\n";
+    {   confess "Cannot coerce a ".ref($message)
+              . " object into a ". __PACKAGE__." object.\n";
     }
 
     $message->{MM_modified}  ||= 0;

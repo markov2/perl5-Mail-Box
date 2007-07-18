@@ -13,8 +13,6 @@ use Scalar::Util 'weaken';
 # so we need to keep track.
 my %require_failed;
 
-#-------------------------------------------
-
 =chapter NAME
 
 Mail::Box::Manager - manage a set of folders

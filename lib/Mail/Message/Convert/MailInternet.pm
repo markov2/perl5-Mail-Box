@@ -35,7 +35,7 @@ Mail::Message::Convert::MailInternet - translate Mail::Message to Mail::Internet
 
 =chapter DESCRIPTION
 
-The M<Mail::Internet> class of message is very popular for all
+The M<Mail::Internet> class of messages is very popular for all
 kinds of message applications written in Perl.  However, the
 format was developed when e-mail messages where still small and
 attachments where rare; Mail::Message is much more flexible in
@@ -83,11 +83,10 @@ sub export($@)
 
 =method from OBJECT, OPTIONS
 
-Returns a new Mail::Message object based on the information from
-an message-type which is foreign to the Mail::Box set of modules.
+Returns a new M<Mail::Message> object based on the information
+from a M<Mail::Internet> object. 
 
 =examples
-
  my $convert = Mail::Message::Convert::MailInternet->new;
  my Mail::Internet $msg  = M<Mail::Internet>->new;
  my M<Mail::Message>  $copy = $convert->from($msg);

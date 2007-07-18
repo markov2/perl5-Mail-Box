@@ -38,12 +38,10 @@ into mail folder specific variants.
 =chapter METHODS
 
 =c_method new OPTIONS
-
 Create a message part.
 
 =default  head     <empty header>
 =requires container BODY
-
 Reference to the parental M<Mail::Message::Body> object where this part
 is a member of.  That object may be a M<Mail::Message::Body::Multipart>
 or a M<Mail::Message::Body::Nested>.
@@ -65,10 +63,7 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 =c_method coerce BODY|MESSAGE, MULTIPART, HEADERS
-
 Transforms a BODY or MESSAGE to a real message part.  The MULTIPART
 refers to the parental body.
 
@@ -76,7 +71,6 @@ When ta BODY is specified, extra HEADERS can be supplied as well.
 Bodies are coerced into message parts by calling M<buildFromBody()>.
 If you specify a MESSAGE residing in a folder, this message will
 automatically be cloned.
-
 =cut
 
 sub coerce($@)
@@ -94,20 +88,14 @@ sub coerce($@)
     $part;
 }
 
-#------------------------------------------
-
 =c_method buildFromBody BODY, CONTAINER, HEADERS
-
 Shape a message part around a BODY.  Bodies have information about their
 content in them, which is used to construct a header for the message.
 Next to that, more HEADERS can be specified.  No headers are obligatory.
 No extra headers are fabricated automatically.
-
 =example
-
  my $multi = Mail::Message::Body::Multipart->new;
  my $part  = Mail::Message::Part->buildFromBody($body, $multi);
-
 =cut
 
 sub buildFromBody($$;@)
@@ -130,8 +118,6 @@ sub buildFromBody($$;@)
     $part;
 }
 
-#------------------------------------------
-
 sub container(;$)
 {   my $self = shift;
     return $self->{MMP_container} unless @_;
@@ -140,25 +126,17 @@ sub container(;$)
     weaken($self->{MMP_container});
 }
 
-#------------------------------------------
-
 sub toplevel()
 {   my $body = shift->container or return;
     my $msg  = $body->message   or return;
     $msg->toplevel;
 }
 
-#------------------------------------------
-
 sub isPart() { 1 }
 
-#------------------------------------------
-
 =method printEscapedFrom FILEHANDLE
-
 Prints the message part, but all lines which start with 'From ' will get
 a leading C<gt>.  See M<Mail::Message::Body::printEscapedFrom()>.
-
 =cut
 
 sub printEscapedFrom($)
@@ -166,8 +144,6 @@ sub printEscapedFrom($)
     $self->head->print($out);
     $self->body->printEscapedFrom($out);
 }
-
-#------------------------------------------
 
 sub readFromParser($;$)
 {   my ($self, $parser, $bodytype) = @_;
@@ -187,12 +163,9 @@ sub readFromParser($;$)
     $self;
 }
 
-#------------------------------------------
-
 =section Cleanup
 
 =method destruct
-
 Message parts can not be destructed per part: only whole messages can
 be forcefully freed from memory.  Of course, you can M<delete()> separate
 parts, which only sets a flag not to write a part again.  Furthermore,
@@ -201,7 +174,6 @@ you may cosider M<rebuild()> to get rit of deleted parts.
 =error You cannot destruct message parts, only whole messages
 Message parts can not be destructed per part: only whole messages can
 be forcefully freed from memory. Consider M<delete()> or M<rebuild()>.
-
 =cut
 
 sub destruct()

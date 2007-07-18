@@ -110,6 +110,7 @@ my %prereq =
  , Digest::HMAC_MD5 => 0.0
  , User::Identity => 0.90
  , Time::Zone     => 0.0
+ , Test::Pod      => 1.00
  );
 
 my $default_install_answer
@@ -132,7 +133,8 @@ REQUIRED
 
 my @errors;
 while(my ($module, $version) = each %prereq)
-{   eval "require $module";
+{
+    eval "require $module";
     if($@ && $@ =~ m/^Can't locate /)
     {   print "    $module is not yet installed\n" }
     elsif($@)
@@ -169,6 +171,18 @@ foreach my $optional (@optional)
 {   my ($module, $version, %args) = @$optional;
     my $requirements = $args{requires} || sub {1};
     next unless $requirements->();
+
+    if($module eq 'MIME::Entity')
+    {   # work-around for awkward development situation at home,
+        # where the VERSION string is not in the development pre-release.
+        no warnings;
+        eval "require Mail::Internet";
+        unless($@)
+        {   $Mail::Internet::VERSION ||= '2.00';
+            $Mail::Field::VERSION    ||= '2.00';
+            $Mail::Header::VERSION   ||= '2.00';
+        }
+    }
 
     print "\n";
     eval "require $module";
@@ -236,7 +250,7 @@ MAKEFILE
 
 WriteMakefile
  ( NAME       => 'Mail::Box'
- , VERSION    => '2.071'
+ , VERSION    => '2.072'
  , AUTHOR     => 'Mark Overmeer'
  , ABSTRACT   => 'E-mail handling'
  , PREREQ_PM  => \%prereq
@@ -250,7 +264,7 @@ RAWDIR          = ../public_html/mailbox/raw
 DISTDIR         = ../public_html/mailbox/source
 
 LICENSE         = artistic
-EXTENDS		= ../UserIdentity:../MimeTypes:../ORL
+EXTENDS		= ../UserIdentity:../MimeTypes:../ORL:../MailTools
 
 # for POD
 FIRST_YEAR      = 2001

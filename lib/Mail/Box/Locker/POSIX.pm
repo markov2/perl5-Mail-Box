@@ -31,11 +31,7 @@ handle which is reading.  Not all platforms support POSIX locking.
 
 =cut
 
-#-------------------------------------------
-
 sub name() {'POSIX'}
-
-#-------------------------------------------
 
 sub _try_lock($)
 {   my ($self, $file) = @_;
@@ -49,8 +45,6 @@ sub _unlock($)
     delete $self->{MBL_has_lock};
     $self;
 }
-
-#-------------------------------------------
 
 =method lock
 
@@ -108,8 +102,6 @@ sub lock()
     return 0;
 }
 
-#-------------------------------------------
-
 =method isLocked
 
 =error Unable to check lock file $filename for $folder: $!
@@ -138,8 +130,6 @@ sub isLocked()
     1;
 }
 
-#-------------------------------------------
-
 sub unlock()
 {   my $self = shift;
 
@@ -148,7 +138,5 @@ sub unlock()
 
     $self;
 }
-
-#-------------------------------------------
 
 1;

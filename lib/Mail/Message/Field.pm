@@ -509,10 +509,10 @@ sub attribute($;$)
 
     unless(@_)
     {   if($body =~ m/\b$attr\s*\=\s*
-                      ( "( (?> [^\\"]*|\\. )* )"
+                      ( "( (?> [^\\"]+|\\. )* )"
                       | ([^";\s]*)
                       )/xi)
-        {   (my $val = $+) =~ s/(["\\])/\\$1/g;
+        {   (my $val = $+) =~ s/\\(.)/$1/g;
             return $val;
         }
         return undef;

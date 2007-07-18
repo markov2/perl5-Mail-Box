@@ -9,6 +9,45 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.073:
+
+	Fixes:
+
+	- field attributes which contained a '\' where considered
+	  empty.  Reported by [Ricardo Signes]
+
+	- remove escape from field attributes, instead of adding it.
+
+	Improvements:
+
+	- remove old notes about "being beta code" from Mail::Box-Overview
+	  [Ricardo Signes]
+
+	- Conversions between Mail::Message objects and Email::Simple/
+	  Email::Abstract implemented by [Richardo Signes]
+	  tests/80msgconv/30emsimp.t
+	  tests/80msgconv/40emabs.t
+
+version 2.072: Thu Jun 14 11:53:31 CEST 2007
+
+	Fixes:
+
+	- since release 2.070, the pure pod manual pages like
+	  Mail::Box-Cookbook where empty because of a flaw in oodist.
+
+	Improvements:
+
+	- add tests/02dist/10pod.t to test PODs
+
+	- added MailTools man-pages to HTML
+
+	- MailTools is now under control of OODoc, which means that
+	  the VERSION is not in the "raw" coding files. Which on its
+	  turn means that MIME::Entity is complaining about missing
+	  version numbers in those files.  Only applicable to the
+	  development situation on the authors disk.  Work-around
+	  in Makefile.PL
+
 version 2.071: Fri May 25 16:00:06 CEST 2007
 
 	Fixes:
