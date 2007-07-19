@@ -377,11 +377,18 @@ sub open(@)
     }
 
     my $type = $args{type};
-    if(defined $type && $type eq 'pop3')
+    if(!defined $type) { ; }
+    elsif($type eq 'pop3')
     {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 110;
         $args{folder} = $name = "pop3://$un\@$srv:$port";
+    }
+    elsif($type eq 'imap4')
+    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+        my $srv  = $args{server_name} ||= 'localhost';
+        my $port = $args{server_port} ||= 143;
+        $args{folder} = $name = "imap4://$un\@$srv:$port";
     }
 
     unless(defined $name && length $name)

@@ -6,6 +6,8 @@ require 5.006_001;
 
 use IO::Handle;
 
+my $VERSION = 2.073;
+
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
 # plain module.  In that case, Scalar::Util must be reinstalled.
@@ -250,7 +252,7 @@ MAKEFILE
 
 WriteMakefile
  ( NAME       => 'Mail::Box'
- , VERSION    => '2.072'
+ , VERSION    => $VERSION
  , AUTHOR     => 'Mark Overmeer'
  , ABSTRACT   => 'E-mail handling'
  , PREREQ_PM  => \%prereq

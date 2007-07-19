@@ -638,7 +638,7 @@ sub as_mbox_string()
 BEGIN {
  no warnings;
  *Mail::Internet::new =
-    sub { my $class = shift;
+    sub (@) { my $class = shift;
           Mail::Message::Replace::MailInternet->new(@_);
         }
 }

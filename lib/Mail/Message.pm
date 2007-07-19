@@ -1039,6 +1039,7 @@ however folder types like MH define a separate label file.
  $message->label(seen => 1);
 
  $message->label(deleted => 1);  # same as $message->delete
+
 =cut
 
 sub label($;$@)
@@ -1283,7 +1284,7 @@ sub coerce($@)
 {   my ($class, $message) = @_;
 
     ref $message
-        or confess "coercion starts with some object";
+        or $class->log(INTERNAL => "coercion starts with some object");
 
     return bless $message, $class
         if $message->isa(__PACKAGE__);
@@ -1325,8 +1326,8 @@ sub coerce($@)
     }
 
     else
-    {   confess "Cannot coerce a ".ref($message)
-              . " object into a ". __PACKAGE__." object.\n";
+    {   $class->log(INTERNAL =>  "Cannot coerce a ".ref($message)
+              . " object into a ". __PACKAGE__." object");
     }
 
     $message->{MM_modified}  ||= 0;

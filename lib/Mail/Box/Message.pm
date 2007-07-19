@@ -35,10 +35,6 @@ from stage, the message's body and head objects may change.
 
 =section Constructors
 
-=cut
-
-#-------------------------------------------
-
 =c_method new OPTIONS
 
 =requires folder FOLDER

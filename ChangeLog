@@ -9,7 +9,7 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
-version 2.073:
+version 2.073: Thu Jul 19 09:43:57 CEST 2007
 
 	Fixes:
 
@@ -17,6 +17,10 @@ version 2.073:
 	  empty.  Reported by [Ricardo Signes]
 
 	- remove escape from field attributes, instead of adding it.
+
+	- Mail::Box::Manager should put protocol information in the
+	  generated unique folder-name in case of IMAP4.  Was already
+	  done for POP3.  Reported by [Jonathan Kamens ]
 
 	Improvements:
 

@@ -21,19 +21,23 @@ Mail::Transport::IMAP4 - proxy to Mail::IMAPClient
 
 =chapter DESCRIPTION
 
-****** UNDER DEVELOPMENT *****, please help testing
-
 The IMAP4 protocol is quite complicated: it is feature rich and allows
 verious asynchronous actions.  The main document describing IMAP is
 rfc3501 (which obsoleted the original specification of protocol 4r1
 in rfc2060 in March 2003).
 
 This package, as part of MailBox, does not implement the actual
-protocol itself but uses M<Mail::IMAPClient> to do the work.  The task
+protocol itself but uses M<Mail::IMAPClient> to do the work. The task
 for this package is to hide as many differences between that module's
-interface and the common M<Mail::Box> folder types.  Multiple
+interface and the common MailBox folder types.  Multiple
 M<Mail::Box::IMAP4> folders can share one M<Mail::Transport::IMAP4>
 connection.
+
+The M<Mail::IMAPClient> module is the best IMAP4 implementation for
+Perl5, but is not maintained.  There are many known problems with the
+module, and solving those is outside the scope of MailBox.  See
+F<http://rt.cpan.org/Public/Dist/Display.html?Name=Mail-IMAPClient>
+for all the reported bugs.
 
 =chapter METHODS
 
