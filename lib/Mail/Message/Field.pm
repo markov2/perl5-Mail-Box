@@ -854,6 +854,7 @@ sub fold($$;$)
     my $name  = shift;
     my $line  = shift;
     my $wrap  = shift || $default_wrap_length;
+    defined $line or $line = '';
 
     $line    =~ s/\n\s/ /gms;            # Remove accidental folding
     return " \n" unless CORE::length($line);  # empty field

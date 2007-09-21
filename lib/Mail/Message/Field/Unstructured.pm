@@ -64,12 +64,7 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
-
-
 =section Access to the content
-
 =cut
 
 1;

@@ -9,6 +9,24 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.074: Fri Sep 21 10:21:12 CEST 2007
+
+	Fixes:
+
+	- two errors in Mail::Message::Field::Full when the fields
+	  are empty.  Reported by [bas@debian.org]
+
+	- manuals produced with new OODoc.
+
+	- Mail::Message::Construct::Rebuild::recursiveRebuildPart()
+	  contained superfluous for(1) loop.
+
+	- a rebuilt message will still be a message, not returned
+	  as undef.
+
+	- Message with two Content-Type conflicting definitions
+	  could confuse the parser [Tim Chan]
+
 version 2.073: Thu Jul 19 09:43:57 CEST 2007
 
 	Fixes:
@@ -28,7 +46,7 @@ version 2.073: Thu Jul 19 09:43:57 CEST 2007
 	  [Ricardo Signes]
 
 	- Conversions between Mail::Message objects and Email::Simple/
-	  Email::Abstract implemented by [Richardo Signes]
+	  Email::Abstract implemented by [Ricardo Signes]
 	  tests/80msgconv/30emsimp.t
 	  tests/80msgconv/40emabs.t
 

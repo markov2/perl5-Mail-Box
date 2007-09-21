@@ -76,10 +76,7 @@ sub file()
     $file;
 }
 
-#------------------------------------------
-
 =method printStructure [FILEHANDLE|undef],[INDENT]
-
 Print the structure of a message to the specified FILEHANDLE or the
 selected filehandle.  When explicitly C<undef> is specified as handle,
 then the output will be returned as string.
@@ -133,8 +130,8 @@ sub printStructure(;$$)
 
     my $body    = $self->body;
     my @parts
-      = $body->isMultipart ? $body->parts
-      : $body->isNested    ? ($body->nested)
+      = $body->isNested    ? ($body->nested)
+      : $body->isMultipart ? $body->parts
       :                      ();
 
     $_->printStructure($fh, $indent.'   ') foreach @parts;

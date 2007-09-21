@@ -65,7 +65,8 @@ sub foreachLine($)
         else {$changes++}
      }
       
-     return $self unless $changes;
+     $changes
+        or return $self;
 
      ref($self)->new
       ( based_on => $self

@@ -118,27 +118,23 @@ got, and then call M<encode()> for what you need.
 
 =option  based_on BODY
 =default based_on undef
-
 The information about encodings must be taken from the specified BODY,
 unless specified differently.
 
 =option  charset STRING
 =default charset C<'us-ascii'>
-
 Defines the character-set which is used in the data.  Only useful in
 combination with a C<mime_type> which refers to C<text> in any shape.
 This field is case-insensitive.
 
 =option  checked BOOLEAN
 =default checked <false>
-
 Whether the added information has been check not to contain illegal
 octets with respect to the transfer encoding and mime type.  If not
 checked, and then set as body for a message, it will be.
 
 =option  data ARRAY-OF-LINES | STRING
 =default data undef
-
 The content of the body.  The only way to set the content of a body
 is during the creation of the body.  So if you want to modify the content
 of a message, you need to create a new body with the new content and
@@ -153,14 +149,12 @@ by a newline.
 
 =option  description STRING|FIELD
 =default description undef
-
 Informal information about the body content.  The data relates to the
 C<Content-Description> field.  Specify a STRING which will become the
 field content, or a real FIELD.
 
 =option  disposition STRING|FIELD
 =default disposition undef
-
 How this message can be decomposed.  The data relates to the
 C<Content-Disposition> field.  Specify a STRING which will become the
 field content, or a real FIELD.
@@ -177,7 +171,6 @@ reader of the message when it is extracted.
 
 =option  eol 'CR'|'LF'|'CRLF'|'NATIVE'
 =default eol C<'NATIVE'>
-
 Convert the message into having the specified string as line terminator
 for all lines in the body.  C<NATIVE> is used to represent the C<\n>
 on the current platform and will be translated in the applicable one.
@@ -188,18 +181,15 @@ The eol encoding has effect on the size of the body!
 
 =option  file FILENAME|FILEHANDLE|IOHANDLE
 =default file undef
-
 Read the data from the specified file, file handle, or object of
 type C<IO::Handle>.
 
 =option  message MESSAGE
 =default message undef
-
 The message where this body belongs to.
 
 =option  mime_type STRING|FIELD|MIME
 =default mime_type C<'text/plain'>
-
 The type of data which is added.  You may specify a content of a header
 line as STRING, or a FIELD object.  You may also specify a M<MIME::Type>
 object.  In any case, it will be kept internally as
@@ -214,7 +204,6 @@ is C<text/plain>,
 
 =option  transfer_encoding STRING|FIELD
 =default transfer_encoding C<'none'>
-
 The encoding that the data has.  If the data is to be encoded, than you
 will have to call M<encode()> after the body is created.  That will
 return a new encoded body.  This field is case-insensitive and relates
@@ -222,7 +211,6 @@ to the C<Content-Transfer-Encoding> field in the header.
 
 =option  modified BOOLEAN
 =default modified <false>
-
 Whether the body is flagged modified, directly from its creation.
 
 =examples

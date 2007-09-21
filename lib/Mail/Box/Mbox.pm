@@ -49,8 +49,6 @@ sub init($)
     $self->SUPER::init($args);
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDERNAME, OPTIONS
 
 =option  subfolder_extension STRING
@@ -72,10 +70,7 @@ sub create($@)
     $class->SUPER::create($name, %args);
 }
 
-#-------------------------------------------
-
 =c_method foundIn [FOLDERNAME], [OPTIONS]
-
 If no FOLDERNAME is specified, then the value of the C<folder> option
 is taken.  A mbox folder is a file which starts with a separator
 line: a line with C<'From '> as first characters.  Blank lines which
@@ -86,7 +81,6 @@ start the file are ignored, which is not for all MUA's acceptable.
 
 =option  subfolder_extension STRING
 =default subfolder_extension <from object>
-
 =cut
 
 sub foundIn($@)
@@ -118,8 +112,6 @@ sub foundIn($@)
     return 1;
 }
 
-#-------------------------------------------
-
 sub delete(@)
 {   my $self = shift;
     $self->SUPER::delete(@_);
@@ -127,8 +119,6 @@ sub delete(@)
     my $subfdir = $self->filename . $default_sub_extension;
     rmdir $subfdir;   # may fail, when there are still subfolders (no recurse)
 }
-
-#-------------------------------------------
 
 sub writeMessages($)
 {   my ($self, $args) = @_;
@@ -145,20 +135,13 @@ sub writeMessages($)
     $self;
 }
 
-#-------------------------------------------
-
 sub type() {'mbox'}
 
-#-------------------------------------------
-
 =ci_method listSubFolders OPTIONS
-
 =option  subfolder_extension STRING
 =default subfolder_extension <from object>
-
 When the method is called on an open folder, the extension defined by it is
 used to detect sub-folders by default.  Otherwise, C<'.d'> is taken.
-
 =cut
 
 sub listSubFolders(@)
@@ -230,12 +213,10 @@ sub listSubFolders(@)
 =section Internals
 
 =ci_method folderToFilename FOLDERNAME, FOLDERDIR, [EXTENSION]
-
 Translate a folder name into a filename, using the
 FOLDERDIR value to replace a leading C<=>.  If no EXTENSION is specified and
 this method is called as instance method, new(subfolder_extension) is used.
 Otherwise, the extension default to C<'.d'>.
-
 =cut
 
 sub folderToFilename($$;$)

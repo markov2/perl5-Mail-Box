@@ -186,6 +186,9 @@ sub run_in_harness(@)
 {   my @files = @_;
     return 1 unless @files;
 
+    # lib::cached experiments, work around bug in Test::Harness::Straps.
+    shift @INC if ref $INC[0] eq 'CODE';
+
     my ($tot,$failed) = execute_tests(tests => \@files);
     Test::Harness::_all_ok($tot);
 }

@@ -117,13 +117,9 @@ sub folder(;$)
     $self->{MBM_folder};
 }
 
-#-------------------------------------------
-
 =method seqnr [INTEGER]
-
 Get the number of this message is the current folder.  It starts counting
 from zero.  Do not change the number.
-
 =cut
 
 sub seqnr(;$)
@@ -131,10 +127,7 @@ sub seqnr(;$)
     @_ ? $self->{MBM_seqnr} = shift : $self->{MBM_seqnr};
 }
 
-#-------------------------------------------
-
 =method copyTo FOLDER, OPTIONS
-
 Copy the message to the indicated opened FOLDER, without deleting the
 original.  The coerced message (the clone in the destination folder)
 is returned.
@@ -170,10 +163,7 @@ sub copyTo($@)
     $folder->addMessage($clone);
 }
 
-#-------------------------------------------
-
 =method moveTo FOLDER, OPTIONS
-
 Move the message from this folder to the FOLDER specified.  This will
 create a copy using M<clone()> first.  Then, this original message is
 flagged to get deleted.  So until the source folder is closed, two copies
@@ -220,7 +210,6 @@ sub moveTo($@)
 =section Internals
 
 =method readBody PARSER, HEAD [, BODYTYPE]
-
 Read the body of one message.  The PARSER gives access to the folder file.
 The HEAD has been read with M<readHead()>.  The optional BODYTYPE supplies
 the class name of the body to be created, or a code reference to a
@@ -229,7 +218,6 @@ first argument).
 
 By default, the BODYTYPE will call M<Mail::Box::determineBodyType()>
 where the message will be added to.
-
 =cut
 
 sub readBody($$;$)
@@ -243,19 +231,13 @@ sub readBody($$;$)
     $self->SUPER::readBody($parser, $head, $getbodytype);
 }
 
-#-------------------------------------------
-
 =method diskDelete
-
 Remove a message from disk.  This is not from the folder, but everything
 else, like parts of the message which are stored outside from the
 folder.
-
 =cut
 
 sub diskDelete() { shift }
-
-#-------------------------------------------
 
 sub forceLoad() {   # compatibility
    my $self = shift;
@@ -268,12 +250,10 @@ sub forceLoad() {   # compatibility
 =section Cleanup
 
 =method destruct
-
 Removes most of the memory occupied by the message by detaching the header
 and body.  Then, the object changes into a M<Mail::Box::Message::Destructed>
 which will catch all attempts to access the header and body.  Be careful
 with the usage of this method.
-
 =cut
 
 sub destruct()

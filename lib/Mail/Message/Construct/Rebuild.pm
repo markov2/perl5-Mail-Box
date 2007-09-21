@@ -52,7 +52,6 @@ handing these messages for you.
 
 =option  keep_message_id BOOLEAN
 =default keep_message_id <false>
-
 The message-id is an unique identification of the message: no two messages
 with different content shall exist anywhere.  However in practice, when
 a message is changed during transmission, the id is often incorrectly
@@ -61,7 +60,6 @@ both messages with the same id.
 
 =option  rules ARRAY
 =default rules <see text>
-
 The ARRAY is a list of rules, which each describe an action which will
 be called on each part which is found in the message.  Most rules
 probably won't match, but some will bring changes to the content.
@@ -75,7 +73,6 @@ safe transformations may be added to this list.
 
 =option  extra_rules ARRAY
 =default extra_rules []
-
 The standard set of rules, which is the default for the C<rules> option,
 is a moderest setting.  In stead of copying that list into a full set
 of rules of your own, you can also specify only some additional rules
@@ -99,7 +96,6 @@ means that it cancels the effect of the default rule C<replaceDeletedParts>.
    );
 
 =error No rebuild rule $name defined.
-
 =cut
 
 my @default_rules =
@@ -171,7 +167,7 @@ sub flattenEmptyMultiparts($@)
                  || Mail::Message::Body::Lines->new(data => '');
     my $epilogue = $body->epilogue;
     my $newbody  = $preamble->concatenate($preamble, <<NO_PARTS, $epilogue);
-
+  * PLEASE NOTE:
   * This multipart did not contain any parts (anymore)
   * and was therefore flattened.
 
@@ -200,13 +196,13 @@ sub descendMultiparts($@)
 
     foreach my $part ($body->parts)
     {   my $new = $self->recursiveRebuildPart($part, %args);
-
         if(!defined $new)  { $changed++ }
 	elsif($new==$part) { push @newparts, $part }
 	else               { push @newparts, $new; $changed++ }
     }
 
-    return $part unless $changed;
+    $changed
+       or return $part;
 
     my $newbody = ref($body)->new
      ( based_on  => $body
@@ -370,24 +366,21 @@ sub recursiveRebuildPart($@)
 {   my ($self, $part, %args) = @_;
 
   RULES:
-    for(1)
-    {
-        foreach my $rule ( @{$args{rules}} )
-        {
-            my $rebuild
-               = ref $rule ? $rule->($self, $part, %args)
-               :             $self->$rule($part, %args);
+    foreach my $rule ( @{$args{rules}} )
+    {   my $rebuild
+           = ref $rule ? $rule->($self, $part, %args)
+           :             $self->$rule($part, %args);
 
-            return undef unless defined $rebuild;
+        defined $rebuild
+            or return undef;
 
-            if($part != $rebuild)
-            {   $part = $rebuild;
-                redo RULES;
-            }
-	}
+        if($part != $rebuild)
+        {   $part = $rebuild;
+            redo RULES;
+        }
     }
 
-   $part;
+    $part;
 }
 
 #------------------------------------------

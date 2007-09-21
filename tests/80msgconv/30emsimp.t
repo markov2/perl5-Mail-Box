@@ -7,7 +7,7 @@
 use strict;
 use warnings;
 
-use lib qw(. .. tests);
+use lib qw(. .. tests lib);
 use Tools;
 
 use Test::More;

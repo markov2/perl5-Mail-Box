@@ -6,7 +6,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = 2.073;
+my $VERSION = 2.074;
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -256,6 +256,7 @@ WriteMakefile
  , AUTHOR     => 'Mark Overmeer'
  , ABSTRACT   => 'E-mail handling'
  , PREREQ_PM  => \%prereq
+ , LICENSE    => 'perl'
  );
 
 ### used by oodist during production of distribution

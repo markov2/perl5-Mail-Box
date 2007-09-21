@@ -19,7 +19,7 @@ my $has_htmlFormatText;
 BEGIN {
    eval "require Mail::Message::Convert::HtmlFormatText";
    $has_htmlFormatText = not $@;
-   plan tests => 53 + ($has_htmlFormatText ? 6 : 1);
+   plan tests => 55 + ($has_htmlFormatText ? 6 : 1);
 }
 
 #
@@ -84,7 +84,8 @@ ok($part->isDeleted,             "delete second part as well");
 $rebuild = $message->rebuild
  ( extraRules => [ qw/removeDeletedParts removeEmptyMultiparts/ ]
  );
-ok(! defined $rebuild,           "rebuild nothing left");
+ok(!$rebuild->isMultipart,       "rebuild nothing left");
+like($rebuild->decoded, qr/did not contain any parts/, 'added warning');
 
 #
 # Now, we play around with a nested message
@@ -154,7 +155,8 @@ $rebuild = $message2->rebuild
  ( extraRules => [ qw/removeDeletedParts removeEmptyMultiparts
                       flattenMultiparts/ ]
  );
-ok(!defined $rebuild,          "whole structure collapsed");
+ok(!$rebuild->isMultipart, "whole structure collapsed");
+like($rebuild->decoded, qr/did not contain any parts/, 'added warning');
 
 #
 # More complex rules

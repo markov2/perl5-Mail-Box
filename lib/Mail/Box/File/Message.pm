@@ -43,28 +43,21 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 sub coerce($)
 {   my ($self, $message) = @_;
     return $message if $message->isa(__PACKAGE__);
     $self->SUPER::coerce($message)->labelsToStatus;
 }
 
-#-------------------------------------------
-
 =method write [FILEHANDLE]
-
 Write one message to a file handle.  It is the message including the
 leading 'From ' line and trailing blank.  The From-line may interfere
 with lines in the body: those lines are escaped with an extra '>'.
 
 =examples
-
  $msg->write(\*FILE);    # print the message with encaps to FILE
  $msg->write;            # message with encaps to selected filehandle
  $msg->print(\*FILE);    # the message without encaps.
-
 =cut
 
 sub write(;$)
@@ -86,8 +79,6 @@ sub write(;$)
     $self;
 }
 
-#-------------------------------------------
-
 sub clone()
 {   my $self  = shift;
     my $clone = $self->SUPER::clone;
@@ -100,7 +91,6 @@ sub clone()
 =section The message
 
 =method fromLine [LINE]
-
 Many people detest file-style folders because they store messages all in
 one file, where a line starting with C<From > leads the header.  If we
 receive a message from a file-based folder, we store that line.  If we write
@@ -108,7 +98,6 @@ to such a file, but there is no such line stored, then we try to generate
 one.
 
 If LINE is provided, then the starting line is set to this value.
-
 =cut
 
 sub fromLine(;$)
@@ -117,8 +106,6 @@ sub fromLine(;$)
     $self->{MBMM_from_line} = shift if @_;
     $self->{MBMM_from_line} ||= $self->head->createFromLine;
 }
-
-#------------------------------------------
 
 =method escapedBody
 Mbox folders contain multiple messages in one file, using a separator
@@ -140,10 +127,8 @@ sub escapedBody()
 =section Internals
 
 =method readFromParser PARSER
-
 Read one message from a M<Mail::Box::File> based folder, including the
 leading message separator.
-
 =cut
 
 sub readFromParser($)
@@ -158,16 +143,10 @@ sub readFromParser($)
     $self;
 }
 
-#-------------------------------------------
-
 sub loadHead() { shift->head }
 
-#-------------------------------------------
-
 =method loadBody
-
 =error Unable to read delayed body.
-
 =cut
 
 sub loadBody()
@@ -193,14 +172,10 @@ sub loadBody()
     $newbody;
 }
 
-#-------------------------------------------
-
 =method fileLocation
-
 Returns the location of the whole message including the from-line.  In
 LIST context, both begin and end are returned.  In SCALAR context, only
 the begin is passed back.
-
 =cut
 
 sub fileLocation()
@@ -211,14 +186,10 @@ sub fileLocation()
      : $self->{MBMM_begin};
 }
 
-#------------------------------------------
-
 =method moveLocation DISTANCE
-
 The message is relocated in the file, being moved over DISTANCE bytes.
 Setting a new location will update the according information in the header
 and body.
-
 =cut
 
 sub moveLocation($)

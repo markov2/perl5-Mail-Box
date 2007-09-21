@@ -313,28 +313,20 @@ sub foreachLine($)
     confess;
 }
 
-#------------------------------------------
-
 sub check()
 {   my $self = shift;
     $self->foreachComponent( sub {$_[1]->check} );
 }
-
-#------------------------------------------
 
 sub encode(@)
 {   my ($self, %args) = @_;
     $self->foreachComponent( sub {$_[1]->encode(%args)} );
 }
 
-#------------------------------------------
-
 sub encoded()
 {   my $self = shift;
     $self->foreachComponent( sub {$_[1]->encoded} );
 }
-
-#------------------------------------------
 
 sub read($$$$)
 {   my ($self, $parser, $head, $bodytype) = @_;
@@ -398,7 +390,6 @@ sub read($$$$)
 =section Constructing a body
 
 =method foreachComponent CODE
-
 Execute the CODE for each component of the message: the preamble, the
 epilogue, and each of the parts.
 
@@ -410,7 +401,6 @@ Reference to the not-changed bodies and the changed bodies will be
 included in that new multi-part.
 
 =examples
-
  my $checked = $multi->foreachComponent(sub {$_[1]->check});
 
 =cut
@@ -466,16 +456,12 @@ sub foreachComponent($)
     $constructed;
 }
 
-#------------------------------------------
-
 =method attach MESSAGES|BODIES
-
 Attach a list of MESSAGES to this multipart.  A new body is returned.
 When you specify BODIES, they will first be translated into
 real messages.  M<MIME::Entity> and M<Mail::Internet> objects may be
 specified too.  In any case, the parts will be coerced into
 M<Mail::Message::Part>'s.
-
 =cut
 
 sub attach(@)
@@ -486,16 +472,12 @@ sub attach(@)
       );
 }
 
-#-------------------------------------------
-
 =method stripSignature OPTIONS
-
 Removes all parts which contains data usually defined as being signature.
 The M<MIME::Type> module provides this knowledge.  A new multipart is
 returned, containing the remaining parts.  No OPTIONS are defined yet,
 although some may be specified, because this method overrules the
 C<stripSignature> method for normal bodies.
-
 =cut
 
 sub stripSignature(@)
@@ -513,33 +495,24 @@ sub stripSignature(@)
 =section Access to the payload
 
 =method preamble
-
 Returns the preamble; the text before the first message part (before the
 first real attachment).
 The preamble is stored in a BODY object, and its encoding is taken
 from the multipart header.
-
 =cut
 
 sub preamble() {shift->{MMBM_preamble}}
 
-#------------------------------------------
-
 =method epilogue
-
 Returns the epilogue; the text after the last message part (after the
 last real attachment).
 The epilogue is stored in a BODY object, and its encoding is taken
 from the general multipart header.
-
 =cut
 
 sub epilogue() {shift->{MMBM_epilogue}}
 
-#------------------------------------------
-
 =method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
-
 Return all parts by default, or when ALL is specified.  C<ACTIVE> returns
 the parts which are not flagged for deletion, as opposite to C<DELETED>.
 C<RECURSE> descents into all nested multiparts to collect all parts.
@@ -549,7 +522,6 @@ part.  The first argument will be the message part.  When the code
 returns true, the part is incorporated in the return list.
 
 =examples
-
  print "Number of attachments: ",
      scalar $message->body->parts('ACTIVE');
 
@@ -558,7 +530,6 @@ returns true, the part is incorporated in the return list.
  }
 
 =error Unknown criterium $what to select parts.
-
 Valid choices fdr part selections are C<ALL>, C<ACTIVE>, C<DELETED>,
 C<RECURSE> or a code reference.  However, some other argument was passed.
 
@@ -579,16 +550,12 @@ sub parts(;$)
     : ($self->log(ERROR => "Unknown criterium $what to select parts."), return ());
 }
 
-#-------------------------------------------
-
 =method part INDEX
-
 Returns only the part with the specified INDEX.  You may use a negative
 value here, which counts from the back in the list.  Parts which are
 flagged to be deleted are included in the count.
 
 =examples
-
  $message->body->part(2)->print;
  $body->part(1)->delete;
 
@@ -596,14 +563,10 @@ flagged to be deleted are included in the count.
 
 sub part($) { shift->{MMBM_parts}[shift] }
 
-#-------------------------------------------
-
 =method boundary [STRING]
-
 Returns the boundary which is used to separate the parts in this
 body.  If none was read from file, then one will be assigned.  With
 STRING you explicitly set the boundary to be used.
-
 =cut
 
 my $unique_boundary = time;
@@ -620,8 +583,6 @@ sub boundary(;$)
     my $boundary = @_ && defined $_[0] ? (shift) : "boundary-".$unique_boundary++;
     $self->type->attribute(boundary => $boundary);
 }
-
-#-------------------------------------------
 
 sub endsOnNewline() { 1 }
 

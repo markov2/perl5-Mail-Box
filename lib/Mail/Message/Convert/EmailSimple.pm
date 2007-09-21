@@ -1,4 +1,3 @@
-
 use strict;
 use warnings;
 
@@ -51,13 +50,11 @@ and memory usage.  It could easily be optimized.
 =section Converting
 
 =method export MESSAGE, OPTIONS
-
 Returns a new M<Email::Simple> object based on the information from
 a M<Mail::Message> object.  The MESSAGE specified is an
 instance of a Mail::Message.
 
 =examples
-
  my $convert = Mail::Message::Convert::EmailSimple->new;
  my Mail::Message  $msg   = M<Mail::Message>->new;
  my M<Mail::Internet> $copy  = $convert->export($msg);
@@ -72,8 +69,6 @@ sub export($@)
 
     Email::Simple->new($message->string);
 }
-
-#------------------------------------------
 
 =method from OBJECT, OPTIONS
 Returns a new M<Mail::Message> object based on the information from

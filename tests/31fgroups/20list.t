@@ -23,7 +23,7 @@ BEGIN {
        exit 0;
    }
 
-   eval 'require Mail::Message::Head::ListGroup';
+   eval { require Mail::Message::Head::ListGroup };
    if($@)
    {   plan skip_all => 'Extended attributes not available (install Encode?)';
        exit 0;

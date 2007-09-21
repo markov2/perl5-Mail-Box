@@ -172,7 +172,7 @@ sub new($;$$@)
 
     # Look for best class to suit this field
     my $myclass = 'Mail::Message::Field::'
-                . ($implementation{lc $name} || 'Unstructured');
+      . ($implementation{lc $name} || 'Unstructured');
 
     $myclass->SUPER::new(%args, name => $name, body => $body);
 }
@@ -193,19 +193,9 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 sub clone() { dclone(shift) }
-
-#------------------------------------------
-
-sub name() { lc shift->{MMFF_name}}
-
-#------------------------------------------
-
-sub Name() { shift->{MMFF_name}}
-
-#------------------------------------------
+sub name()  { lc shift->{MMFF_name}}
+sub Name()  { shift->{MMFF_name}}
 
 sub folded()
 {   my $self = shift;
@@ -216,8 +206,6 @@ sub folded()
     my $first = $self->{MMFF_name}. ':'. shift @lines;
     ($first, @lines);
 }
-
-#------------------------------------------
 
 sub unfoldedBody($;$)
 {   my ($self, $body) = (shift, shift);
@@ -232,8 +220,6 @@ sub unfoldedBody($;$)
     $body =~ s/\n//g;
     $body;
 }
-
-#------------------------------------------
 
 sub foldedBody($)
 {   my ($self, $body) = @_;
@@ -258,7 +244,6 @@ sub foldedBody($)
 =section Constructors
 
 =c_method from FIELD, OPTIONS
-
 Convert any FIELD (a M<Mail::Message::Field> object) into a new
 M<Mail::Message::Field::Full> object.  This conversion is done the hard
 way: the string which is produced by the original object is parsed
@@ -271,7 +256,6 @@ extensions of this Full field class is returned.  It depends on which
 field is created what kind of class we get.
 
 =examples
-
  my $fast = $msg->head->get('subject');
  my $full = Mail::Message::Field::Full->from($fast);
 
@@ -345,8 +329,6 @@ sub createComment($@)
     "($comment)";
 }
 
-#------------------------------------------
-
 =ci_method createPhrase STRING, OPTIONS
 
 A phrase is a text which plays a well defined role.  This is the main
@@ -373,15 +355,11 @@ sub createPhrase($)
     $_;
 }
 
-#------------------------------------------
-
 =method beautify
-
 For structured header fields, this removes the original encoding of the
 field's body (the format as it was offered to M<parse()>), therefore the
 next request for the field will have to re-produce the read data clean
 and nice.  For unstructured bodies, this method doesn't do a thing.
-
 =cut
 
 sub beautify() { shift }
@@ -505,8 +483,6 @@ sub encode($@)
     $ready;
 }
 
-#------------------------------------------
-
 =ci_method decode STRING, OPTIONS
 
 Decode field encoded STRING to an utf8 string.  The input STRING is part of
@@ -576,19 +552,14 @@ sub decode($@)
 =section Parsing
 
 =method parse STRING
-
 Get the detailed information from the STRING, and store the data found
 in the field object.  The accepted input is very field type dependent.
 Unstructured fields do no parsing whatsoever.
-
 =cut
 
 sub parse($) { shift }
 
-#------------------------------------------
-
 =ci_method consumePhrase STRING
-
 Take the STRING, and try to strip-off a valid phrase.  In the obsolete
 phrase syntax, any sequence of words is accepted as phrase (as long as
 certain special characters are not used).  RFC2882 is stricter: only
@@ -621,14 +592,10 @@ sub consumePhrase($)
     (undef, $string);
 }
 
-#------------------------------------------
-
 =ci_method consumeComment STRING
-
 Try to read a comment from the STRING.  When successful, the comment
 without encapsulation parenthesis is returned, together with the rest
 of the string.
-
 =cut
 
 sub consumeComment($)
@@ -653,13 +620,9 @@ sub consumeComment($)
     ($comment, $string);
 }
 
-#------------------------------------------
-
 =method consumeDotAtom STRING
-
 Returns three elemens: the atom-text, the rest string, and the
 concatenated comments.  Both atom and comments can be undef.
-
 =cut
 
 sub consumeDotAtom($)
@@ -678,8 +641,6 @@ sub consumeDotAtom($)
     ($atom, $string, $comment);
 }
 
-#------------------------------------------
-
 =method produceBody
 Produce the text for the field, based on the information stored within the
 field object.
@@ -688,15 +649,13 @@ Usually, you wish the exact same line as was found in the input source
 of a message.  But when you have created a field yourself, it should get
 formatted.  You may call M<beautify()> on a preformatted field to enforce
 a call to this method when the field is needed later.
-
 =cut
-                                                                                
-sub produceBody() { die }
+
+sub produceBody() { $_[0]->{MMFF_body} }
 
 #------------------------------------------
 
 =section Error handling
-
 =cut
 
 

@@ -288,8 +288,8 @@ sub parse($)
 sub produceBody()
 {  my @groups = sort {$a->name cmp $b->name} shift->groups;
 
-   return undef unless @groups;
-   return $groups[0]->string if @groups==1;
+   @groups     or return '';
+   @groups > 1 or return $groups[0]->string;
 
    my $plain
     = $groups[0]->name eq '' && $groups[0]->addresses

@@ -51,16 +51,12 @@ sub init(@)
     $self;
 }
 
-#------------------------------------------
-
 sub pushSeparator($)
 {   my ($self, $sep) = @_;
     unshift @{$self->{MBPP_separators}}, $sep;
     $self->{MBPP_strip_gt}++ if $sep eq 'From ';
     $self;
 }
-
-#------------------------------------------
 
 sub popSeparator()
 {   my $self = shift;
@@ -69,16 +65,12 @@ sub popSeparator()
     $sep;
 }
     
-#------------------------------------------
-
 sub filePosition(;$)
 {   my $self = shift;
     @_ ? $self->{MBPP_file}->seek(shift, 0) : $self->{MBPP_file}->tell;
 }
 
 my $empty = qr/^\015?\012?$/;
-
-#------------------------------------------
 
 =method readHeader
 
@@ -140,8 +132,6 @@ sub readHeader()
     @ret;
 }
 
-#------------------------------------------
-
 sub _is_good_end($)
 {   my ($self, $where) = @_;
 
@@ -164,8 +154,6 @@ sub _is_good_end($)
         substr($line, 0, length $sep) eq $sep
     && ($sep ne 'From ' || $line =~ m/ (19[789]|20[01])\d\b/ );
 }
-
-#------------------------------------------
 
 sub readSeparator()
 {   my $self = shift;
@@ -191,8 +179,6 @@ sub readSeparator()
     $file->seek($start, 0);
     ();
 }
-
-#------------------------------------------
 
 sub _read_stripped_lines(;$$)
 {   my ($self, $exp_chars, $exp_lines) = @_;
@@ -247,8 +233,6 @@ sub _read_stripped_lines(;$$)
     ($bodyend, $lines, $msgend);
 }
 
-#------------------------------------------
-
 sub _take_scalar($$)
 {   my ($self, $begin, $end) = @_;
     my $file = $self->{MBPP_file};
@@ -259,8 +243,6 @@ sub _take_scalar($$)
     $return =~ s/\015//g;
     $return;
 }
-
-#------------------------------------------
 
 sub bodyAsString(;$$)
 {   my ($self, $exp_chars, $exp_lines) = @_;
@@ -282,8 +264,6 @@ sub bodyAsString(;$$)
     return ($begin, $end, join('', @$lines));
 }
 
-#------------------------------------------
-
 sub bodyAsList(;$$)
 {   my ($self, $exp_chars, $exp_lines) = @_;
     my $file  = $self->{MBPP_file};
@@ -292,8 +272,6 @@ sub bodyAsList(;$$)
     my ($end, $lines) = $self->_read_stripped_lines($exp_chars, $exp_lines);
     ($begin, $end, $lines);
 }
-
-#------------------------------------------
 
 sub bodyAsFile($;$$)
 {   my ($self, $out, $exp_chars, $exp_lines) = @_;
@@ -305,8 +283,6 @@ sub bodyAsFile($;$$)
     $out->print($_) foreach @$lines;
     ($begin, $end, scalar @$lines);
 }
-
-#------------------------------------------
 
 sub bodyDelayed(;$$)
 {   my ($self, $exp_chars, $exp_lines) = @_;
@@ -326,8 +302,6 @@ sub bodyDelayed(;$$)
     my $chars = sum(map {length} @$lines);
     ($begin, $end, $chars, scalar @$lines);
 }
-
-#------------------------------------------
 
 sub openFile($)
 {   my ($self, $args) = @_;
@@ -354,8 +328,6 @@ sub openFile($)
     $self;
 }
 
-#------------------------------------------
-
 sub closeFile()
 {   my $self = shift;
 
@@ -366,21 +338,19 @@ sub closeFile()
     $file->close;
     $self;
 }
+
 #------------------------------------------
 
 =section The parser
 
 =method fixHeaderErrors [BOOLEAN]
-
 If set to C<true>, parsing of a header will not stop on an error, but
 attempt to add the erroneous this line to previous field.  Without BOOLEAN,
 the current setting is returned.
 
 =example
-
  $folder->parser->fixHeaderErrors(1);
  my $folder = $mgr->open('folder', fix_header_errors => 1);
-
 =cut
 
 sub fixHeaderErrors(;$)
