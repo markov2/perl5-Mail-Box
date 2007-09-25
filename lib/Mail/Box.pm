@@ -14,11 +14,9 @@ use Scalar::Util 'weaken';
 use List::Util   qw/sum first/;
 
 #-------------------------------------------
-# Clean exist required to remove lockfiles and to save changes.
+# Clean exits required to remove lockfiles and to save changes.
 
 $SIG{INT} = $SIG{QUIT} = $SIG{PIPE} = $SIG{TERM} = sub {exit 0};
-
-#-------------------------------------------
 
 =chapter NAME
 
@@ -130,11 +128,9 @@ use overload '@{}' => sub { shift->{MB_messages} }
 =section Constructors
 
 =c_method new OPTIONS
-
-Open a new folder. A list of labeled OPTIONS
-for the mailbox can be supplied. Some options pertain to Mail::Box, and
-others are added by sub-classes. The list below describes all the options
-provided by any Mail::Box.
+Open a new folder. A list of labeled OPTIONS for the mailbox can be
+supplied. Some options pertain to Mail::Box, and others are added by
+sub-classes.
 
 To control delay-loading of messages, as well the headers as the bodies,
 a set of C<*_type> options are available. C<extract> determines whether
@@ -142,7 +138,6 @@ we want delay-loading.
 
 =option  access MODE
 =default access C<'r'>
-
 Access-rights to the folder.  Folders are opened for read-only (which
 means write-protected) by default! MODE can be
 =over 4
@@ -161,7 +156,6 @@ folder.  The permissions and owner of the file may get changed by this.
 
 =option  create BOOLEAN
 =default create <false>
-
 Automatically create the folder when it does not exist yet.  This will only
 work when access is granted for writing or appending to the folder.
 
@@ -170,7 +164,6 @@ explicitly specify M<Mail::Box::Manager::open(type)>.
 
 =option  folder FOLDERNAME
 =default folder C<$ENV{MAIL}>
-
 Which folder to open (for reading or writing). When used for reading (the
 C<access> option set to C<"r"> or C<"a">) the mailbox should already exist
 and must be readable. The file or directory of the mailbox need not exist if it
@@ -183,7 +176,6 @@ taken as relative or absolute path.
 
 =option  folderdir DIRECTORY
 =default folderdir undef
-
 Where are folders to be found by default?  A folder-name may be preceded by
 a equals-sign (C<=>, a C<mutt> convension) to explicitly state that the folder
 is located below the default directory.  For example: in case
@@ -192,7 +184,6 @@ folder-file is C<'/tmp/abc'>.  Each folder type has already some default set.
 
 =option  keep_dups BOOLEAN
 =default keep_dups <false>
-
 Indicates whether or not duplicate messages within the folder should          
 be retained.  A message is considered to be a duplicate if its message-id      
 is the same as a previously parsed message within the same folder. If this         
@@ -201,21 +192,18 @@ because it is considered useless to store the same message twice.
 
 =option  save_on_exit BOOLEAN
 =default save_on_exit <true>
-
 Sets the policy for saving the folder when it is closed.
 A folder can be closed manually (see M<close()>) or in a number of
 implicit ways, including on the moment the program is terminated.
 
 =option  remove_when_empty BOOLEAN
 =default remove_when_empty <true>
-
 Determines whether to remove the folder file or directory
 automatically when the write would result in a folder without
 messages nor sub-folders.
 
 =option  trusted BOOLEAN
 =default trusted <depends on folder location>
-
 Flags whether to trust the data in the folder or not.  Folders which
 reside in your C<folderdir> will be trusted by default (even when the
 names if not specified staring with C<=>).  Folders which are outside
@@ -287,7 +275,6 @@ sure you always need all the messages in the folder.
 
 =option  body_type CLASS|CODE
 =default body_type <folder specific>
-
 When messages are read from a folder-file, the headers will be stored in
 a C<head_type> object.  For the body, however, there is a range of
 choices about type, which are all described in M<Mail::Message::Body>.
@@ -319,19 +306,16 @@ manual pages.
 
 =option  multipart_type CLASS
 =default multipart_type M<Mail::Message::Body::Multipart>
-
 The default type of objects which are to be created for multipart message
 bodies.
 
 =option  body_delayed_type CLASS
 =default body_delayed_type M<Mail::Message::Body::Delayed>
-
 The bodies which are delayed: which will be read from file when it
 is needed, but not before.
 
 =option  coerce_options ARRAY
 =default coerce_options C<[]>
-
 Keep configuration information for messages which are coerced into the
 specified folder type, starting with a different folder type (or even
 no folder at all).
@@ -340,25 +324,21 @@ does not need to be kept here.
 
 =option  field_type CLASS
 =default field_type undef
-
 The type of the fields to be used in a header. Must extend
 M<Mail::Message::Field>.
 
 =option  head_type CLASS
 =default head_type M<Mail::Message::Head::Complete>
-
 The type of header which contains all header information.  Must extend
 M<Mail::Message::Head::Complete>.
 
 =option  head_delayed_type CLASS
 =default head_delayed_type M<Mail::Message::Head::Delayed>
-
 The headers which are delayed: which will be read from file when it
 is needed, but not before.
 
 =option  lock_type CLASS|STRING|ARRAY
 =default lock_type M<Mail::Box::Locker::DotLock>
-
 The type of the locker object.  This may be the full name of a CLASS
 which extends Mail::Box::Locker, or one of the known locker types
 C<DotLock>, C<Flock>, C<Mutt>, C<NFS>, C<POSIX>, or C<NONE>.  If an ARRAY
@@ -366,51 +346,43 @@ is specified, then a Multi locker is built which uses the specified list.
 
 =option  locker OBJECT
 =default locker undef
-
 An OBJECT which extends M<Mail::Box::Locker>, and will handle folder locking
 replacing the default lock behavior.
 
 =option  lock_file FILENAME
 =default lock_file undef
-
 The name of the file which is used to lock.  This must be specified when
 locking is to be used.
 
 =option  lock_timeout SECONDS
 =default lock_timeout 1 hour
-
 When the lock file is older than the specified number of SECONDS, it is
 considered a mistake.  The original lock is released, and accepted for
 this folder.
 
 =option  lock_wait SECONDS
 =default lock_wait 10 seconds
-
 SECONDS to wait before failing on opening this folder.
 
 =option  manager MANAGER
 =default manager undef
-
 A reference to the object which manages this folder -- typically an
 M<Mail::Box::Manager> instance.
 
 =option  message_type CLASS
 =default message_type M<Mail::Box::Message>
-
 What kind of message objects are stored in this type of folder.  The
 default is M<Mail::Box::Message> (which is a sub-class of M<Mail::Message>).
 The class you offer must be an extension of M<Mail::Box::Message>.
 
 =option  fix_headers BOOLEAN
 =default fix_headers <false>
-
 Broken MIME headers usually stop the parser: all lines not parsed are
 added to the body of the message.  With this flag set, the erroneous line
 is added to the previous header field and parsing is continued.
 See M<Mail::Box::Parser::Perl::new(fix_header_errors)>.
 
 =error No folder name specified.
-
 You did not specify the name of a folder to be opened.  Use the
 M<new(folder)> option or set the C<MAIL> environment variable.
 
@@ -1610,15 +1582,11 @@ to save to.
 
 sub listSubFolders(@) { () }   # by default no sub-folders
 
-#-------------------------------------------
-
 =method openRelatedFolder OPTIONS
-
 Open a folder (usually a sub-folder) with the same options as this one.
 If there is a folder manager in use, it will be informed about this new
 folder.  OPTIONS overrule the options which where used for the folder
 this method is called upon.
-
 =cut
 
 sub openRelatedFolder(@)
@@ -1626,31 +1594,25 @@ sub openRelatedFolder(@)
     my @options = (%{$self->{MB_init_options}}, @_);
 
     $self->{MB_manager}
-    ? $self->{MB_manager}->open(@options)
+    ? $self->{MB_manager}->open(type => ref($self), @options)
     : (ref $self)->new(@options);
 }
 
-#-------------------------------------------
-
 =method openSubFolder SUBNAME, OPTIONS
-
 Open (or create, if it does not exist yet) a new subfolder in an
 existing folder.
 
 =examples
-
  my $folder = Mail::Box::Mbox->new(folder => '=Inbox');
  my $sub    = $folder->openSubFolder('read');
 
 =cut
 
 sub openSubFolder($@)
-{   my $self    = shift;
-    my $name    = $self->nameOfSubFolder(shift);
+{   my $self = shift;
+    my $name = $self->nameOfSubFolder(shift);
     $self->openRelatedFolder(@_, folder => $name);
 }
-
-#-------------------------------------------
 
 =ci_method nameOfSubFolder SUBNAME, [PARENTNAME]
 Returns the constructed name of the folder with NAME, which is a
@@ -1675,8 +1637,6 @@ sub nameOfSubFolder($;$)
     defined $parent ? "$parent/$name" : $name;
 }
 
-#-------------------------------------------
-
 =ci_method topFolderWithMessages
 Some folder types can have messages in the top-level folder, some other
 can't.
@@ -1689,7 +1649,6 @@ sub topFolderWithMessages() { 1 }
 =section Internals
 
 =method read OPTIONS
-
 Read messages from the folder into memory.  The OPTIONS are folder
 specific.  Do not call C<read()> yourself: it will be called for you
 when you open the folder via the manager or instantiate a folder
@@ -1699,7 +1658,6 @@ NOTE: if you are copying messages from one folder to another, use
 M<addMessages()> instead of C<read()>.
 
 =examples
-
  my $mgr = Mail::Box::Manager->new;
  my $folder = $mgr->open('InBox');             # implies read
  my $folder = Mail::Box::Mbox->new(folder => 'Inbox'); # same
@@ -1810,13 +1768,9 @@ sub write(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method determineBodyType MESSAGE, HEAD
-
 Determine which kind of body will be created for this message when
 reading the folder initially.
-
 =cut
 
 sub determineBodyType($$)
@@ -1842,13 +1796,9 @@ sub lazyPermitted($)
     $self->{MB_lazy_permitted} = shift;
 }
 
-#-------------------------------------------
-
 =method storeMessage MESSAGE
-
 Store the message in the folder without the checks as performed by
 M<addMessage()>.
-
 =cut
 
 sub storeMessage($)
@@ -1859,10 +1809,7 @@ sub storeMessage($)
     $message;
 }
 
-#-------------------------------------------
-
 =method lineSeparator [STRING|'CR'|'LF'|'CRLF']
-
 Returns the character or characters used to separate lines in the folder
 file, optionally after setting it to STRING, or one of the constants.
 The first line of the folder sets the default.
@@ -1874,7 +1821,6 @@ the C<Size> field in the header.
 
 When the separator is changed, the whole folder me be rewritten.  Although,
 that may not be required.
-
 =cut
 
 my %seps = (CR => "\015", LF => "\012", CRLF => "\015\012");
@@ -1891,10 +1837,7 @@ sub lineSeparator(;$)
    $sep;
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDERNAME, OPTIONS
-
 Create a folder.  If the folder already exists, it will be left unchanged.
 The folder is created, but not opened!  If you want to open a file which
 may need to be created, then use M<Mail::Box::Manager::open()> with the
@@ -1902,18 +1845,13 @@ create flag, or M<Mail::Box::new(create)>.
 
 =option  folderdir DIRECTORY
 =default folderdir undef
-
 When the foldername is preceded by a C<=>, the C<folderdir> directory
 will be searched for the named folder.
-
 =cut
 
 sub create($@) {shift->notImplemented}
 
-#-------------------------------------------
-
 =c_method foundIn [FOLDERNAME], OPTIONS
-
 Determine if the specified folder is of the type handled by the
 folder class. This method is extended by each folder sub-type.
 
@@ -1927,26 +1865,20 @@ each folder class will at least support the C<folderdir> option:
 
 =option  folderdir DIRECTORY
 =default folderdir undef
-
 The location where the folders of this class are stored by default.  If the
 user specifies a name starting with a C<=>, that indicates that the folder is
 to be found in this default DIRECTORY.
 
 =examples
-
  Mail::Box::Mbox->foundIn('=markov',
      folderdir => "$ENV{HOME}/Mail");
  Mail::Box::MH->foundIn(folder => '=markov');
-
 =cut
-
-#-------------------------------------------
 
 =method coerce MESSAGE, OPTIONS
 Coerce the MESSAGE to be of the correct type to be placed in the
 folder.  You can specify M<Mail::Internet> and M<MIME::Entity> objects
 here: they will be translated into Mail::Message messages first.
-
 =cut
 
 sub coerce($@)
@@ -1955,10 +1887,7 @@ sub coerce($@)
     $message->isa($mmtype) ? $message : $mmtype->coerce($message, @_);
 }
 
-#-------------------------------------------
-
 =method readMessages OPTIONS
-
 Called by M<read()> to actually read the messages from one specific
 folder type.  The M<read()> organizes the general activities.
 
@@ -1966,15 +1895,11 @@ The OPTIONS are C<trusted>, C<head_type>, C<field_type>,
 C<message_type>, C<body_delayed_type>, and C<head_delayed_type> as
 defined by the folder at hand.  The defaults are the constructor
 defaults (see M<new()>).
-
 =cut
 
 sub readMessages(@) {shift->notImplemented}
 
-#-------------------------------------------
-
 =method updateMessages OPTIONS
-
 Called by M<update()> to read messages which arrived in the folder
 after it was opened.  Sometimes, external applications dump messages
 in a folder without locking (or using a different lock than your
@@ -1985,47 +1910,33 @@ updated (reordered or message removed) at exactly the same time as
 new messages arrive.  These collisions are sparse.
 
 The options are the same as for M<readMessages()>.
-
 =cut
 
 sub updateMessages(@) { shift }
 
-#-------------------------------------------
-
 =method writeMessages OPTIONS
-
 Called by M<write()> to actually write the messages from one specific
 folder type.  The C<write> organizes the general activities.  All options
 to M<write()> are passed to C<writeMessages> as well.  Besides, a few extra
 are added by C<write> itself.
 
 =requires messages ARRAY
-
 The messages to be written, which is a sub-set of all messages in the
 current folder.
-
 =cut
 
 sub writeMessages(@) {shift->notImplemented}
 
-#-------------------------------------------
-
 =method locker
-
 Returns the locking object.
-
 =cut
 
 sub locker() { shift->{MB_locker} }
 
-#-------------------------------------------
-
 =method toBeThreaded MESSAGES
-
 The specified message is ready to be removed from a thread.
 This will be passed on to the mail-manager, which keeps an overview on
 which thread-detection objects are floating around.
-
 =cut
 
 sub toBeThreaded(@)
@@ -2038,14 +1949,10 @@ sub toBeThreaded(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method toBeUnthreaded MESSAGES
-
 The specified message is ready to be included in a thread.
 This will be passed on to the mail-manager, which keeps an overview on
 which thread-detection objects are floating around.
-
 =cut
 
 sub toBeUnthreaded(@)
@@ -2063,16 +1970,13 @@ sub toBeUnthreaded(@)
 =section Other methods
 
 =ci_method timespan2seconds TIME
-
 TIME is a string, which starts with a float, and then one of the
 words 'hour', 'hours', 'day', 'days', 'week', or 'weeks'.  For instance:
 '1 hour' or '4 weeks'.
 
 =error Invalid timespan '$timespan' specified.
-
 The string does not follow the strict rules of the time span syntax which
 is permitted as parameter.
-
 =cut
 
 sub timespan2seconds($)
@@ -2095,10 +1999,8 @@ sub timespan2seconds($)
 =section Cleanup
 
 =method DESTROY
-
 This method is called by Perl when an folder-object is no longer accessible
 by the rest of the program.
-
 =cut
 
 sub DESTROY

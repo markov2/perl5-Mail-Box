@@ -4,9 +4,9 @@ use strict;
 package Mail::Box::Locker::POSIX;
 use base 'Mail::Box::Locker';
 
-use POSIX;
 use Fcntl;
 use IO::File;
+use Errno   qw/EAGAIN/;
 
 =chapter NAME
 

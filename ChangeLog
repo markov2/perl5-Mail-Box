@@ -9,6 +9,23 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.075: Tue Sep 25 11:31:40 CEST 2007
+
+	Changes:
+
+	- Replace Test::Harness by TAP::Harness to run tests, which
+	  is cleaner and faster.
+
+	Fixes:
+
+	- recursively opening folders with manager involved, retriggers
+	  autodetect each time, sometimes coming up with an unexpected
+	  folder type. [Celejar]
+	  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=442912
+
+	- Mail::Box::Locker::POSIX should not include POSIX.pm, but
+	  requires Errno.pm [cpan-testers, perl 5.10]
+
 version 2.074: Fri Sep 21 10:21:12 CEST 2007
 
 	Fixes:

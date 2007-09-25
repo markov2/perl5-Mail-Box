@@ -13,7 +13,7 @@ use Tools;             # test tools
 use Mail::Reporter;    # to avoid 'too late for INIT'
 
 use IO::Dir;
-use Test::Harness qw($verbose execute_tests);
+use TAP::Harness  ();
 
 # we use Test::More without a plan here, but we don't want
 # Test::Builder to mess with the exit code
@@ -22,7 +22,7 @@ Test::More->builder->no_ending(1);
 chdir 'tests'    ##### CHANGE DIR TO tests
    or die "Cannot go to test scripts directory: $!\n";
 
-$verbose = 0;
+my $verbose = 0;
 if(@ARGV && $ARGV[0] eq '-v')
 {   $verbose = 1;
     shift @ARGV;
@@ -40,7 +40,7 @@ if(@ARGV)
 my @show_versions = defined $select_tests ? ()
  : qw/Mail::Box Mail::Box::Parser::C
       User::Identity Object::Realize::Later MIME::Types
-      Test::Harness Encode
+      TAP::Harness Encode
      /;
 
 my $skip_tests = ($ENV{MAILBOX_RUN_TESTS} || 'yes') eq 'no'
@@ -179,18 +179,18 @@ sub testnames($)
 #
 # RUN_IN_HARNESS @files
 # Run the specified test files in a harness, but then the MailBox
-# way doin things.
+# way doing things.
 #
 
 sub run_in_harness(@)
 {   my @files = @_;
     return 1 unless @files;
 
-    # lib::cached experiments, work around bug in Test::Harness::Straps.
-    shift @INC if ref $INC[0] eq 'CODE';
-
-    my ($tot,$failed) = execute_tests(tests => \@files);
-    Test::Harness::_all_ok($tot);
+    # cannot use $harness->runtests() because it always shows summary
+    my $harness   = TAP::Harness->new( {verbose => $verbose} );
+    my $aggregate = TAP::Parser::Aggregator->new;
+    $harness->aggregate_tests($aggregate, @files);
+    not $aggregate->has_problems;
 }
 
 #

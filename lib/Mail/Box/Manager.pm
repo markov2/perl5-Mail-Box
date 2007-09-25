@@ -268,7 +268,6 @@ The directory where the folders are usually stored.
 
 =option  type FOLDERTYPENAME|FOLDERTYPE
 =default type <first, usually C<mbox>>
-
 Specify the type of the folder.  If you do not specify this option while
 opening a folder for reading, the manager checks all registered folder
 types in order for the ability to open the folder. If you open a new
@@ -302,12 +301,10 @@ folder types, especially by POP and IMAP.
    server_name => 'pop3.server.com', server_port => '120');
 
 =error Illegal folder URL '$url'.
-
 The folder name was specified as URL, but not according to the syntax.
 See M<decodeFolderURL()> for an description of the syntax.
 
 =error No foldername specified to open.
-
 C<open()> needs a folder name as first argument (before the list of options),
 or with the C<folder> option within the list.  If no name was found, the
 MAIL environment variable is checked.  When even that does not result in
@@ -315,13 +312,11 @@ a usable folder, then this error is produced.  The error may be caused by
 an accidental odd-length option list.
 
 =warning Will never create a folder $name without having write access.
-
 You have set M<open(create)>, but only want to read the folder.  Create is
 only useful for folders which have write or append access modes
 (see M<Mail::Box::new(access)>).
 
 =warning Folder type $type is unknown, using autodetect.
-
 The specified folder type (see M<open(type)>, possibly derived from
 the folder name when specified as url) is not known to the manager.
 This may mean that you forgot to require the M<Mail::Box> extension
@@ -329,7 +324,6 @@ which implements this folder type, but probably it is a typo.  Usually,
 the manager is able to figure-out which type to use by itself.
 
 =warning Folder does not exist, failed opening $type folder $name.
-
 The folder does not exist and creating is not permitted (see
 M<open(create)>) or did not succeed.  When you do not have sufficient
 access rights to the folder (for instance wrong password for POP3),
@@ -497,24 +491,17 @@ sub open(@)
     $folder;
 }
 
-#-------------------------------------------
-
 =method openFolders
 Returns a list of all open folders.
-
 =cut
 
 sub openFolders() { @{shift->{MBM_folders}} }
-
-#-------------------------------------------
 
 =method isOpenFolder FOLDER
 Returns true if the FOLDER is currently open.
 
 =example
-
  print "Yes\n" if $mgr->isOpenFolder('Inbox');
-
 =cut
 
 sub isOpenFolder($)
