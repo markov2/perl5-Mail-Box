@@ -15,9 +15,10 @@ use File::Copy;
 use File::Spec;
 
 use Mail::Box::Mbox;
-use Mail::Message::Construct;
 
+use Mail::Message::Construct;
 my $top  = File::Spec->catdir('folders', 'Mail');
+
 clean_dir $top;
 
 #

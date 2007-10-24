@@ -9,6 +9,21 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.076: Wed Oct 24 16:55:10 CEST 2007
+
+	Fixes:
+
+	- stop when message coersion is called but not possible.
+
+	- fix test, to work with MIME::Entity changes.
+
+	Improvements:
+
+	- new Mail::Message::contentType()
+
+	- avoid use of '-r $filename; -f _' in Mail::Box::Mbox, where
+	  "filetest 'access'" is active: it has a bug, not setting '_'
+
 version 2.075: Tue Sep 25 11:31:40 CEST 2007
 
 	Changes:

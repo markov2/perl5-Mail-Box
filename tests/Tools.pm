@@ -1,4 +1,3 @@
-
 use strict;
 package Tools;
 
@@ -7,7 +6,6 @@ use base 'Exporter';
 use File::Copy 'copy';
 use List::Util 'first';
 use IO::File;            # to overrule open()
-use FileHandle;          # used in MIME::Body for mime-entity support
 
 our @EXPORT =
   qw/clean_dir copy_dir
@@ -65,10 +63,13 @@ BEGIN {
    my $old_open = \&IO::File::open;
    no warnings 'redefine';
    *IO::File::open = sub {
-      my $self = shift;
+      my $fh = shift;
+      if(ref $_[0] eq 'SCALAR') { print ${$_[0]} }
+      return $old_open->($fh, @_) if ref $_[0];
+
       my $file = File::Spec->rel2abs(shift);
       $file =~ /^(.*)$/;   # untaint
-      $old_open->($self, $1, @_);
+      $old_open->($fh, $1, @_);
    }
 }
 

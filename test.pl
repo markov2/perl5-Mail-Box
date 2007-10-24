@@ -40,7 +40,7 @@ if(@ARGV)
 my @show_versions = defined $select_tests ? ()
  : qw/Mail::Box Mail::Box::Parser::C
       User::Identity Object::Realize::Later MIME::Types
-      TAP::Harness Encode
+      TAP::Harness Encode MIME::Entity Mail::Internet HTML::FormatText
      /;
 
 my $skip_tests = ($ENV{MAILBOX_RUN_TESTS} || 'yes') eq 'no'

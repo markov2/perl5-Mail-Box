@@ -134,7 +134,9 @@ sub printStructure(;$$)
       : $body->isMultipart ? $body->parts
       :                      ();
 
-    $_->printStructure($fh, $indent.'   ') foreach @parts;
+    $_->printStructure($fh, $indent.'   ')
+        for @parts;
+
     $buffer;
 }
     

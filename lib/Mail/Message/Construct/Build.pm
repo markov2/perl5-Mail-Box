@@ -179,7 +179,8 @@ sub build(@)
         {   @data = map {Mail::Message::Body->new(file => $_) } @$value }
         elsif($key eq 'attach')
         {   foreach my $c (ref $value eq 'ARRAY' ? @$value : $value)
-	    {   push @data, $c->isa('Mail::Message')
+	    {   defined $c or next;
+                push @data, ref $c && $c->isa('Mail::Message')
 		          ? Mail::Message::Body::Nested->new(nested => $c)
 			  : $c;
             }

@@ -157,6 +157,7 @@ sub listSubFolders(@)
                    : $default_folder_dir;
 
     my $extension  = $args{subfolder_extension};
+
     my $dir;
     if(ref $thingy)   # Mail::Box::Mbox
     {    $extension ||= $thingy->{MBM_sub_ext};
@@ -167,8 +168,10 @@ sub listSubFolders(@)
          $dir = $class->folderToFilename($folder, $folderdir, $extension);
     }
 
-    my $real       = -d $dir ? $dir : "$dir$extension";
-    return () unless opendir DIR, $real;
+    my $real  = -d $dir ? $dir : "$dir$extension";
+
+    opendir DIR, $real
+        or return ();
 
     # Some files have to be removed because they are created by all
     # kinds of programs, but are no folders.
@@ -185,8 +188,7 @@ sub listSubFolders(@)
 
     foreach (@entries)
     {   my $entry = File::Spec->catfile($real, $_);
-        next unless -r $entry;
-        if( -f _ )
+        if( -f $entry )
         {   next if $args{skip_empty} && ! -s _;
             next if $args{check} && !$class->foundIn($entry);
             $folders{$_}++;
@@ -235,7 +237,7 @@ sub folderToFilename($$;$)
     {   my $file  = pop @parts;
 
         $real = File::Spec->catdir($real.(-d $real ? '' : $extension), $_) 
-           foreach @parts;
+            foreach @parts;
 
         $real = File::Spec->catfile($real.(-d $real ? '' : $extension), $file);
     }

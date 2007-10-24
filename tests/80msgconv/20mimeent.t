@@ -10,7 +10,6 @@ use lib qw(. .. tests);
 use Tools;
 
 use Test::More;
-
 use Mail::Message;
 
 BEGIN
@@ -57,7 +56,7 @@ my @from  = $head->get('From');
 cmp_ok(@from, "==", 1);
 
 my @again = $head->get('X-again');
-#  cmp_ok(@again, "==", 3);   # Should be 3, but bug in MIME::Entity
+# cmp_ok(@again, "==", 3);   # Should be 3, but bug in MIME::Entity
 cmp_ok(@again, "==", 1);      # Wrong, but to check improvements in ME
 
 my $body  = $msg->body;

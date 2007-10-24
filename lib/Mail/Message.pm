@@ -799,6 +799,18 @@ Returns C<true> for C<message/rfc822> messages and message parts.
 
 sub isNested() {shift->body->isNested}
 
+=method contentType
+Returns the content type header line, or C<text/plain> if it is not
+defined.  The parameters will be stripped off.
+=cut
+
+sub contentType()
+{   my $head = shift->head;
+    my $ct   = defined $head ? $head->get('Content-Type') : '';
+    $ct      =~ s/\s*\;.*//;
+    $ct || 'text/plain';
+}
+
 =method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
 Returns the I<parts> of this message. Usually, the term I<part> is used
 with I<multipart> messages: messages which are encapsulated in the body
@@ -1123,7 +1135,7 @@ sub coerce($@)
 {   my ($class, $message) = @_;
 
     ref $message
-        or $class->log(INTERNAL => "coercion starts with some object");
+        or die "coercion starts with some object";
 
     return bless $message, $class
         if $message->isa(__PACKAGE__);
@@ -1166,7 +1178,7 @@ sub coerce($@)
     }
 
     else
-    {   $class->log(INTERNAL =>  "Cannot coerce a ".ref($message)
+    {   $class->log(INTERNAL =>  "Cannot coerce a ". ref($message)
               . " object into a ". __PACKAGE__." object");
     }
 

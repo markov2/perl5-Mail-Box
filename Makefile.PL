@@ -1,12 +1,10 @@
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
 
 require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = 2.075;
+my $VERSION = 2.076;
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as

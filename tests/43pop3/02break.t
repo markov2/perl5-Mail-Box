@@ -31,7 +31,7 @@ ok($receiver->disconnect, 'Failed to properly disconnect from server');
 
 my @message = <$popbox/????>;
 cmp_ok(scalar(@message) ,'==', 0, 'Did not remove messages at QUIT');
-ok(rmdir($popbox), "Failed to remove $popbox directory: $!\n");
+ok(rmdir($popbox), "Failed to remove $popbox directory: $!");
 
 is(join('', <$server>), <<EOD, 'Statistics contain unexpected information');
 2

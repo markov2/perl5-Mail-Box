@@ -5,9 +5,6 @@ use warnings;
 package Mail::Box::POP3::Message;
 use base 'Mail::Box::Net::Message';
 
-use File::Copy;
-use Carp;
-
 =chapter NAME
 
 Mail::Box::POP3::Message - one message on a POP3 server
@@ -41,15 +38,11 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =method size
-
 Returns the size of this message.  If the message is still on the remote
 server, POP is used to ask for the size.  When the message is already loaded
 onto the local system, the size of the parsed message is taken.  These
 sizes can differ because the difference in line-ending representation.
-
 =cut
 
 sub size($)
@@ -60,8 +53,6 @@ sub size($)
 
     $self->folder->popClient->messageSize($self->unique);
 }
-
-#-------------------------------------------
 
 sub label(@)
 {   my $self = shift;
@@ -79,8 +70,6 @@ sub label(@)
     $ret;
 }
 
-#-------------------------------------------
-
 sub labels(@)
 {   my $self = shift;
     $self->loadHead;              # be sure the labels are read
@@ -90,7 +79,6 @@ sub labels(@)
 #-------------------------------------------
 
 =section Internals
-
 =cut
 
 sub loadHead()
@@ -105,8 +93,6 @@ sub loadHead()
     $head;
 }
 
-#-------------------------------------------
-
 sub loadBody()
 {   my $self     = shift;
 
@@ -117,7 +103,5 @@ sub loadBody()
     $self->head($head) if $head->isDelayed;
     $self->storeBody($body);
 }
-
-#-------------------------------------------
 
 1;

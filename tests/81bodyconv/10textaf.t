@@ -16,7 +16,7 @@ use Mail::Message;
 BEGIN {
     eval 'require Text::Autoformat';
     if($@)
-    {   plan skip_all => "requires Text::Autoformat.\n";
+    {   plan skip_all => "requires Text::Autoformat.";
         exit 0;
     }
 

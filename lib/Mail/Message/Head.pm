@@ -136,10 +136,7 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 =method build [PAIR|FIELD]-LIST
-
 A fast way to construct a header with many lines.
 The PAIRs are C<(name, content)> pairs of the header, but it is also possible
 to pass M<Mail::Message::Field> objects.   A
@@ -148,7 +145,6 @@ M<Mail::Message::Head::Complete::build()>, and then each field
 is added.  Double field names are permitted.
 
 =examples
-
  my $subject = Mail::Message::Full->new(Subject => 'xyz');
 
  my $head = Mail::Message::Head->build
@@ -161,7 +157,6 @@ is added.  Double field names are permitted.
 
  print ref $head;
   # -->  Mail::Message::Head::Complete
-
 =cut
 
 sub build(@)
@@ -174,30 +169,23 @@ sub build(@)
 =section The header
 
 =method isDelayed
-
 Headers may only be partially read, in which case they are called delayed.
 This method returns true if some header information still needs to be
 read. Returns false if all header data has been read.
 Will never trigger completion.
-
 =cut
 
 sub isDelayed { 1 }
 
-#------------------------------------------
-
 =method modified [BOOLEAN]
-
 Sets the modified flag to BOOLEAN.  Without value, the current setting is
 returned, but in that case you can better use M<isModified()>.
 Changing this flag will not trigger header completion.
 
 =examples
-
  $head->modified(1);
  if($head->modified) { ... }
  if($head->isModified) { ... }
-
 =cut
 
 sub modified(;$)
@@ -206,37 +194,26 @@ sub modified(;$)
     $self->{MMH_modified} = shift;
 }
 
-#------------------------------------------
-
 =method isModified
 Returns whether the header has been modified after being read.
 
 =examples
  if($head->isModified) { ... }
-
 =cut
 
 sub isModified() { shift->{MMH_modified} }
 
-#------------------------------------------
-
 =method isEmpty
-
 Are there any fields defined in the current header?  Be warned that
 the header will not be loaded for this: delayed headers will return
 true in any case.
-
 =cut
 
 sub isEmpty { scalar keys %{shift->{MMH_fields}} }
 
-#------------------------------------------
-
 =method message [MESSAGE]
-
 Get (after setting) the message where this header belongs to.
 This does not trigger completion.
-
 =cut
 
 sub message(;$)
@@ -249,24 +226,16 @@ sub message(;$)
     $self->{MMH_message};
 }
 
-#------------------------------------------
-
 =method orderedFields
-
 Retuns the fields ordered the way they were read or added.
-
 =cut
 
 sub orderedFields() { grep {defined $_} @{shift->{MMH_order}} }
 
-#------------------------------------------
-
 =method knownNames
-
 Like M<Mail::Message::Head::Complete::names()>, but only returns the known
 header fields, which may be less than C<names> for header types which are
 partial.  C<names()> will trigger completion, where C<knownNames()> does not.
-
 =cut
 
 sub knownNames() { keys %{shift->{MMH_fields}} }
@@ -301,7 +270,6 @@ returned.
  my @sub_list   = $head->get('Subject');
  my $sub_scalar = $head->get('Subject');
  print ",@sub_list,$sub_scalar,"     # ,greetings, greetings,
-
 =cut
 
 sub get($;$)
@@ -330,16 +298,12 @@ sub get($;$)
 sub get_all(@) { my @all = shift->get(@_) }   # compatibility, force list
 sub setField($$) {shift->add(@_)} # compatibility
 
-#------------------------------------------
-
 =method study NAME [,INDEX]
-
 Like M<get()>, but puts more effort in understanding the contents of the
 field.  M<Mail::Message::Field::study()> will be called for the field
 with the specified FIELDNAME, which returns M<Mail::Message::Field::Full>
 objects. In scalar context only the last field with that name is returned.
 When an INDEX is specified, that element is returned.
-
 =cut
 
 sub study($;$)
@@ -356,21 +320,15 @@ sub study($;$)
 =section About the body
 
 =method guessBodySize
-
 Try to estimate the size of the body of this message, but without parsing
 the header or body.  The result might be C<undef> or a few percent of
 the real size.  It may even be very far of the real value, that's why
 this is a guess.
-
 =cut
 
-#------------------------------------------
-
 =method isMultipart
-
 Returns whether the body of the related message is a multipart body.
 May trigger completion, when the C<Content-Type> field is not defined.
-
 =cut
 
 sub isMultipart()
@@ -378,16 +336,12 @@ sub isMultipart()
     $type && scalar $type->body =~ m[^multipart/]i;
 }
 
-#------------------------------------------
-
 =section Internals
 
 =method read PARSER
-
 Read the header information of one message into this header structure.  This
 method is called by the folder object (some M<Mail::Box> sub-class), which
 passes the PARSER as an argument.
-
 =cut
 
 sub read($)
@@ -404,10 +358,7 @@ sub read($)
     $self;
 }
 
-#------------------------------------------
-
 =method addOrderedFields FIELDS
-
 =cut
 
 #  Warning: fields are added in addResentGroup() as well!
@@ -420,25 +371,17 @@ sub addOrderedFields(@)
     @_;
 }
 
-#------------------------------------------
-
 =method load
-
 Be sure that the header is loaded.  This returns the loaded header
 object.
-
 =cut
 
 sub load($) {shift}
 
-#------------------------------------------
-
 =method fileLocation
-
 Returns the location of the header in the file, as a pair begin and end.  The
 begin is the first byte of the header.  The end is the first byte after
 the header.
-
 =cut
 
 sub fileLocation()
@@ -446,12 +389,8 @@ sub fileLocation()
     @$self{ qw/MMH_begin MMH_end/ };
 }
 
-#------------------------------------------
-
 =method moveLocation DISTANCE
-
 Move the registration of the header in the file.
-
 =cut
 
 sub moveLocation($)
@@ -461,14 +400,10 @@ sub moveLocation($)
     $self;
 }
 
-#------------------------------------------
-
 =method setNoRealize FIELD
-
 Set a field, but avoid the loading of a possibly partial header as set()
 does.  This method does not test the validity of the argument, nor flag the
 header as changed.  This does not trigger completion.
-
 =cut
 
 sub setNoRealize($)
@@ -482,15 +417,11 @@ sub setNoRealize($)
     $field;
 }
 
-#------------------------------------------
-
 =method addNoRealize FIELD
-
 Add a field, like M<Mail::Message::Head::Complete::add()> does, but
 avoid the loading of a possibly partial header.  This method does not
 test the validity of the argument, nor flag the header as changed.
 This does not trigger completion.
-
 =cut
 
 sub addNoRealize($)

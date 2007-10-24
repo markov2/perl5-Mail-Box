@@ -46,7 +46,6 @@ for user, password, pop-server and server-port.
 
 =option  authenticate 'LOGIN'|'APOP'|'AUTO'
 =default authenticate C<'AUTO'>
-
 POP3 can use two methods of authentication: the old LOGIN protocol, which
 transmits a username and password in plain text, and the newer APOP
 protocol which uses MD5 encryption.  APOP is therefore much better, however
@@ -55,7 +54,6 @@ if that fails LOGIN.
 
 =option  pop_client OBJECT
 =default pop_client undef
-
 You may want to specify your own pop-client object.  The object
 which is passed must extend M<Mail::Transport::POP3>.
 
@@ -84,18 +82,12 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDER, OPTIONS
-
 It is not possible to create a new folder on a POP3 server.  This method
 will always return C<false>.
-
 =cut
 
 sub create($@) { undef }         # fails
-
-#-------------------------------------------
 
 sub foundIn(@)
 {   my $self = shift;
@@ -106,10 +98,7 @@ sub foundIn(@)
     || (exists $options{folder} && $options{folder} =~ m/^pop/);
 }
 
-#-------------------------------------------
-
 =method addMessage MESSAGE
-
 It is impossible to write messages to the average POP3 server.  There are
 extensions to the protocol which do permit it, however these are not
 implemented (yet, patches welcome).
@@ -118,7 +107,6 @@ C<undef> is returned, and an error displayed.  However, no complaint is
 given when the MESSAGE is C<undef> itself.
 
 =error You cannot write a message to a pop server (yet)
-
 Some extensions to the POP3 protocol do permit writing messages to the server,
 but the standard protocol only implements retreival.  Feel invited to extend our
 implementation with writing.
@@ -134,13 +122,9 @@ sub addMessage($)
     undef;
 }
 
-#-------------------------------------------
-
 =method addMessages MESSAGES
-
 As useless as M<addMessage()>.  The only acceptable call to this method
 is without any message.
-
 =cut
 
 sub addMessages(@)
@@ -153,11 +137,7 @@ sub addMessages(@)
     ();
 }
 
-#-------------------------------------------
-
 sub type() {'pop3'}
-
-#-------------------------------------------
 
 sub close(@)
 {   my $self = shift;
@@ -170,10 +150,7 @@ sub close(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method delete OPTIONS
-
 It is not possible to delete a POP3 folder remotely: the best we can do
 is remove all the messages in it... which is the action implemented here.
 A notice is logged about this.
@@ -192,39 +169,25 @@ sub delete(@)
     undef;
 }
 
-#-------------------------------------------
-
 =ci_method listSubFolders OPTIONS
-
 The standard POP3 protocol does not support sub-folders, so an
 empty list will be returned in any case.
-
 =cut
 
 sub listSubFolders(@) { () }     # no
 
-#-------------------------------------------
-
 =method openSubFolder OPTIONS
-
 It is not possible to open a sub-folder for a POP3 folder, because that
 is not supported by the official POP3 protocol. In any case, C<undef>
 is returned to indicate a failure.
-
 =cut
 
 sub openSubFolder($@) { undef }  # fails
 
-#-------------------------------------------
-
 sub topFolderWithMessages() { 1 }  # Yes: only top folder
 
-#-------------------------------------------
-
 =method update
-
 NOT IMPLEMENTED YET
-
 =cut
 
 sub update() {shift->notImplemented}
@@ -234,14 +197,11 @@ sub update() {shift->notImplemented}
 =section Internals
 
 =method popClient
-
 Returns the pop client object.  This does not establish the connection.
 
 =error Cannot create POP3 client for $name.
-
 The connection to the POP3 server cannot be established.  You may see
 more, related, error messages about the failure.
-
 =cut
 
 sub popClient()
@@ -267,8 +227,6 @@ sub popClient()
     $self->{MBP_client} = $client;
 }
 
-#-------------------------------------------
-
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
@@ -293,12 +251,8 @@ sub readMessages(@)
     $self;
 }
  
-#-------------------------------------------
-
 =method getHead MESSAGE
-
 Read the header for the specified message from the remote server.
-
 =cut
 
 sub getHead($)
@@ -331,24 +285,18 @@ sub getHead($)
     $head;
 }
 
-#-------------------------------------------
-
 =method getHeadAndBody MESSAGE
-
 Read all data for the specified message from the remote server.
 
 =warning Message $uidl on POP3 server $name disappeared.
-
 The server indicated the existence of this message before, however it
 has no information about the message anymore.
 
 =error Cannot find head back for $uidl on POP3 server $name.
-
 The server told to have this message, but when asked for its headers, no
 single line was returned.  Did the message get destroyed?
 
 =error Cannot read body for $uidl on POP3 server $name.
-
 The message's headers are retreived from the server, but the body seems
 to be lost.  Did the message get destroyed between reading the header
 and reading the body?
@@ -392,12 +340,9 @@ sub getHeadAndBody($)
     ($head, $body);
 }
 
-#-------------------------------------------
-
 =method writeMessages OPTIONS
 
 =error Update of $nr messages ignored for POP3 folder $name.
-
 The standard POP3 implementation does not support writing from client back
 to the server.  Therefore, modifications may be lost.
 
