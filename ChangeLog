@@ -9,6 +9,17 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.078:
+
+version 2.077: Fri Nov  9 15:13:06 CET 2007
+
+	Fixes:
+
+	- mis-spelled NTLM a few times as NTML [Zsolt Kecskemeti]
+
+	- TAP::Harness 3.00 changed interface a little.  Patch
+	  by [Andy Armstrong]
+
 version 2.076: Wed Oct 24 16:55:10 CEST 2007
 
 	Fixes:

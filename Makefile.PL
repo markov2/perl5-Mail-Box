@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = 2.076;
+my $VERSION = 2.078;
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -95,7 +95,7 @@ REASON
 my %prereq =
  ( Date::Parse    => 0.0
  , File::Spec     => 0.7
- , File::Remove   => 0.20
+ , File::Remove   => '0.20'
  , Errno          => 0.0
  , Scalar::Util   => 1.13
  , Object::Realize::Later => 0.14
@@ -103,14 +103,14 @@ my %prereq =
  , MIME::Types    => 1.004
  , Sys::Hostname  => 0.0
  , Test::More     => 0.47
- , TAP::Harness   => 0.54
+ , TAP::Harness   => '3.00'
  , MIME::Base64   => 0.0
  , URI            => 1.23
  , IO::Scalar     => 0.0
  , Digest::HMAC_MD5 => 0.0
- , User::Identity => 0.90
- , Time::Zone     => 0.0
- , Test::Pod      => 1.00
+ , User::Identity => '0.90'
+ , Time::Zone     => 0
+ , Test::Pod      => '1.00'
  );
 
 my $default_install_answer

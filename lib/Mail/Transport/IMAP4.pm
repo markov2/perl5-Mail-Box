@@ -156,15 +156,15 @@ L<Mail::IMAPClient/authenticate> for the gory details.
 
 =cut
 
-our $ntml_installed;
+our $ntlm_installed;
 
 sub authentication(@)
 {   my ($self, @types) = @_;
 
-    unless(defined $ntml_installed)
-    {   eval "require Authen::NTML";
-        die "NTML errors:\n$@" if $@ && $@ !~ /Can't locate/;
-        $ntml_installed = ! $@;
+    unless(defined $ntlm_installed)
+    {   eval "require Authen::NTLM";
+        die "NTLM errors:\n$@" if $@ && $@ !~ /Can't locate/;
+        $ntlm_installed = ! $@;
     }
 
     # What the client wants to use to login
@@ -174,7 +174,7 @@ sub authentication(@)
     }
 
     if(@types == 1 && $types[0] eq 'AUTO')
-    {   @types = ('CRAM-MD5', ($ntml_installed ? 'NTLM' : ()), 'PLAIN');
+    {   @types = ('CRAM-MD5', ($ntlm_installed ? 'NTLM' : ()), 'PLAIN');
     }
 
     $self->{MTI_auth} = \@types;

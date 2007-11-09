@@ -187,7 +187,7 @@ sub run_in_harness(@)
     return 1 unless @files;
 
     # cannot use $harness->runtests() because it always shows summary
-    my $harness   = TAP::Harness->new( {verbose => $verbose} );
+    my $harness   = TAP::Harness->new( {verbosity => ($verbose ? 1 : 0)} );
     my $aggregate = TAP::Parser::Aggregator->new;
     $harness->aggregate_tests($aggregate, @files);
     not $aggregate->has_problems;
