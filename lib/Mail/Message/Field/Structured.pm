@@ -95,8 +95,6 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 sub clone() { dclone(shift) }
 
 #------------------------------------------
@@ -155,8 +153,6 @@ sub attribute($;$)
     }
 }
 
-#------------------------------------------
-
 =method attributes
 
 Returns a list with all attributes, which are all
@@ -168,11 +164,7 @@ continuations are folded into one.
 
 sub attributes() { values %{shift->{MMFS_attrs}} }
 
-#------------------------------------------
-
 sub beautify() { delete shift->{MMFF_body} }
-
-#------------------------------------------
 
 =section Parsing
 
@@ -209,8 +201,6 @@ sub parse($)
     1;
 }
 
-#------------------------------------------
-
 sub produceBody()
 {   my $self  = shift;
     my $attrs = $self->{MMFS_attrs};
@@ -220,8 +210,6 @@ sub produceBody()
        , (defined $datum ? $datum : '')
        , map {$_->string} @{$attrs}{sort keys %$attrs};
 }
-
-#------------------------------------------
 
 =method datum [VALUE]
 Equivalent to M<body()>, but maybe less confusing.

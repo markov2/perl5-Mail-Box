@@ -579,7 +579,7 @@ quotes.  Be warned that C<""> will return an empty, valid phrase.
 sub consumePhrase($)
 {   my ($thing, $string) = @_;
 
-    if($string =~ s/^\s*\"((?:[^"\\]*|\\.)*)\"// )
+    if($string =~ s/^\s*\" ((?:[^"\r\n\\]*|\\.)*) (?:\"|\s*$)//x )
     {   (my $phrase = $1) =~ s/\\\"/"/g;
         return ($phrase, $string);
     }

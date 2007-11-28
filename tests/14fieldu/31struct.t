@@ -26,7 +26,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 52;
+   {   plan tests => 58;
    }
 }
 
@@ -141,3 +141,16 @@ is($e->unfoldedBody, "body; attr1=aaa; attr2=b; attr3='c'",
 is($e->foldedBody, " body; attr1=aaa; attr2=b; attr3='c'\n",
                                         "folded beautyfied");
 
+#
+## errors
+#
+
+my $f = $mmfs->new('f: c; a="missing quote');
+ok(defined $f, 'missing quote');
+is($f->unfoldedBody, 'c; a="missing quote');
+is($f->foldedBody, " c; a=\"missing quote\n");
+
+my $fa = $f->attribute('a');
+ok(defined $fa, 'f attribute a');
+is($fa->string, '; a=missing quote');
+is($fa->value, 'missing quote');

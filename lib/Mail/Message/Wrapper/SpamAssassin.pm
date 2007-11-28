@@ -62,11 +62,7 @@ sub new(@)    # fix missing infra-structure of base element
 
 sub init($) { shift }
 
-#------------------------------------------
-
 sub create_new() {croak "Should not be used"}
-
-#------------------------------------------
 
 sub get($) { $_[0]->get_header($_[1]) }
 
@@ -83,15 +79,11 @@ sub get_header($)
     defined $field ? $field->unfoldedBody : undef;
 }
 
-#------------------------------------------
-
 sub get_pristine_header($)
 {   my ($self, $name) = @_;
     my $field = $self->get_mail_object->head->get($name);
     defined $field ? $field->foldedBody : undef;
 }
-
-#------------------------------------------
 
 sub put_header($$)
 {   my ($self, $name, $value) = @_;
@@ -103,14 +95,10 @@ sub put_header($$)
     $head->add($name => $value);
 }
 
-#------------------------------------------
-
 sub get_all_headers($)
 {   my $head = shift->get_mail_object->head;
     "$head";
 }
-    
-#------------------------------------------
 
 sub replace_header($$)
 {   my $head = shift->get_mail_object->head;
@@ -118,31 +106,21 @@ sub replace_header($$)
     $head->set($name, $value);
 }
 
-#------------------------------------------
-
 sub delete_header($)
 {   my $head = shift->get_mail_object->head;
     my $name = shift;
     $head->delete($name);
 }
 
-#------------------------------------------
-
 sub get_body() {shift->get_mail_object->body->lines }
 
-#------------------------------------------
-
 sub get_pristine() { shift->get_mail_object->head->string }
-
-#------------------------------------------
 
 sub replace_body($)
 {   my ($self, $data) = @_;
     my $body = Mail::Message::Body->new(data => $data);
     $self->get_mail_object->storeBody($body);
 }
-
-#------------------------------------------
 
 sub replace_original_message($)
 {   my ($self, $lines) = @_;

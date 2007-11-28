@@ -60,7 +60,7 @@ cmp_ok($mgr->openFolders , "==",  0, 'all folders closed');
 #
 
 $A = $mgr->open('a', access => 'rw', lock_type => 'NONE');
-ok($A);
+ok($A, 'Open MH folder a');
 
 my @sub = sort $A->listSubFolders;
 cmp_ok(@sub, "==", 2,                      "a has two subfolders");

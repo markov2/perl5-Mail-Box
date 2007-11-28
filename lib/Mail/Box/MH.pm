@@ -126,16 +126,12 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDERNAME, OPTIONS
 
 =error Cannot create MH folder $name: $!
-
 For some reason, it is impossible to create the folder.  Check the permissions
 and the name of the folder.  Does the path to the directory to be created
 exist?
-
 =cut
 
 sub create($@)
@@ -155,8 +151,6 @@ sub create($@)
         return;
     }
 }
-
-#-------------------------------------------
 
 sub foundIn($@)
 {   my $class = shift;

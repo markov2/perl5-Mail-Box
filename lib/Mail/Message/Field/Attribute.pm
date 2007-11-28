@@ -93,7 +93,6 @@ but not supported by some Mail User Agents.
    # -->  filename*=iso-8859-15'nl-BE'Re%C7u
 
 =warning Illegal character in parameter name '$name'
-
 The specified parameter name contains characters which are not permitted by
 the RFCs.  You can better change the name into something which is accepted,
 or risk applications to corrupt or ignore the message.
@@ -139,12 +138,8 @@ Returns the name of this attribute.
 
 sub name() { shift->{MMFF_name} }
 
-#------------------------------------------
-
 =method value [STRING]
-
 Returns the value of this parameter, optionally after setting it first.
-
 =cut
 
 sub value(;$)
@@ -157,10 +152,7 @@ sub value(;$)
     exists $self->{MMFF_value} ? $self->{MMFF_value} : $self->decode;
 }
 
-#------------------------------------------
-
 =method addComponent STRING
-
 A component is a parameter as defined by RFC2045, optionally using
 encoding or continuations as defined by RFC2231.  Components of an
 attribute are found when a field is being parsed.  The RFCs are
@@ -168,10 +160,8 @@ very strict on valid characters, but we cannot be: you have to accept
 what is coming in if you can.
 
 =example
-
  my $param = Mail::Message::Field::Attribute->new;
  $param->addComponent("filename*=iso10646'nl-BE'%Re\47u");
-
 =cut
 
 sub addComponent($)
@@ -191,37 +181,25 @@ sub addComponent($)
     $component;
 }
 
-#------------------------------------------
-
 =method charset
-
 Returns the character set which is used for this parameter.  If any component
 is added which contains character set information, this is directly
 available.  Be warned that a character-set is case insensitive.
-
 =cut
 
 sub charset() { shift->{MMFF_charset} }
 
-#------------------------------------------
-
 =method language
-
 Returns the language which is defined in the argument.  If no language is
 defined C<undef> is returned, which should be interpreted as "ANY"
-
 =cut
 
 sub language() { shift->{MMFF_language} }
 
-#------------------------------------------
-
 =method string
-
 Returns the parameter as reference to an array of lines.  When only one line
-is returned, it may be short enough to fit on the same line with other components
-of the header field.
-
+is returned, it may be short enough to fit on the same line with other
+components of the header field.
 =cut
 
 sub string()
@@ -239,7 +217,6 @@ sub string()
 =section Attribute encoding
 
 =method encode
-
 =cut
 
 sub encode()
@@ -288,7 +265,7 @@ sub encode()
     elsif($cont)
     {   # Simple string, but with continuations
         while(1)
-        {   push @lines, $pre . '"' . substr($value, 0, 75-length($pre), '') . '"';
+        {   push @lines, $pre.'"'. substr($value, 0, 75-length($pre), '') .'"';
             last unless length $value;
             $pre = $name . '*' . @lines . '=';
         }
@@ -303,13 +280,9 @@ sub encode()
     $self->{MMFF_cont} = \@lines;
 }
 
-#------------------------------------------
-
 =method decode
-
 Translate all known continuations into a value.  The produced value is
 returned and may be utf-8 encoded or a plain string.
-
 =cut
 
 sub decode()
@@ -345,13 +318,11 @@ sub decode()
 =section Internals
 
 =method mergeComponent ATTRIBUTE
-
 Merge the components from the specified attribute in this attribute.  This is
 needed when components of the same attribute are created separately.  Merging
 is required by the field parsing.
 
 =error Too late to merge: value already changed.
-
 =cut
 
 sub mergeComponent($)
@@ -364,14 +335,5 @@ sub mergeComponent($)
 
     $self;
 }
-
-#------------------------------------------
-
-=section Error handling
-
-This class does not extend M<Mail::Reporter> for obvious performance
-reasons: there is no logging or tracing available.
-
-=cut
 
 1;

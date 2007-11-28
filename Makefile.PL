@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = 2.078;
+my $VERSION = 2.079;
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -60,11 +60,11 @@ can install it later.  When your CPAN cache is small, this may
 break your Mail::Box installing process.
 WARN
 
-, [ Mail::IMAPClient => '2.2.8', reason => <<'REASON' ]
+, [ Mail::IMAPClient => '3.00', reason => <<'REASON' ]
 Required for IMAP4 support.
 REASON
 
-, [ Mail::Internet => '1.0', distr => 'MailTools', reason  => <<'REASON' ]
+, [ Mail::Internet => '2.01', distr => 'MailTools', reason  => <<'REASON' ]
 Many existing e-mail applications use Mail::Internet objects.  If
 you want automatic conversions for compatibility, you need this.
 REASON
@@ -265,7 +265,7 @@ RAWDIR          = ../public_html/mailbox/raw
 DISTDIR         = ../public_html/mailbox/source
 
 LICENSE         = artistic
-EXTENDS		= ../UserIdentity:../MimeTypes:../ORL:../MailTools
+EXTENDS		= ../UserIdentity:../MimeTypes:../ORL:../MailTools2
 
 # for POD
 FIRST_YEAR      = 2001

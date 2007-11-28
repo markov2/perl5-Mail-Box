@@ -93,9 +93,20 @@ sub foundIn($@)
     my $extension = $args{subfolder_extension} || $default_sub_extension;
     my $filename  = $class->folderToFilename($name, $folderdir, $extension);
 
-    if(-d $filename)      # fake empty folder, with sub-folders
-    {   return 1 unless -f File::Spec->catfile($filename, '1')   # MH
-                     || -d File::Spec->catdir($filename, 'cur'); # Maildir
+    if(-d $filename)
+    {   # Maildir and MH Sylpheed have a 'new' sub-directory
+        return 0 if -d File::Spec->catdir($filename, 'new');
+        local *DIR;
+        if(opendir DIR, $filename)
+        {    my @f = grep !/^\./, readdir DIR;   # skip . .. and hidden
+             return 0 if @f && ! grep /\D/, @f;              # MH
+             closedir DIR;
+        }
+
+        return 0                                             # Other MH
+            if -f "$filename/.mh_sequences";
+
+        return 1;      # faked empty Mbox sub-folder (with subsub-folders?)
     }
 
     return 0 unless -f $filename;
