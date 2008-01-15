@@ -15,6 +15,7 @@ use Mail::Message::Field::Addresses;
 use Mail::Message::Field::URIs;
 
 my $atext = q[a-zA-Z0-9!#\$%&'*+\-\/=?^_`{|}~];  # from RFC
+my $atext_ill = q/\[\]/;     # illegal, but still used (esp spam)
 
 =chapter NAME
 
@@ -584,7 +585,7 @@ sub consumePhrase($)
         return ($phrase, $string);
     }
 
-    if($string =~ s/^\s*([$atext\ \t.]+)//o )
+    if($string =~ s/^\s*([${atext}${atext_ill}\ \t.]+)//o )
     {   (my $phrase = $1) =~ s/\s+$//;
         return CORE::length($phrase) ? ($phrase, $string) : (undef, $_[1]);
     }

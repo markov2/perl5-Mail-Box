@@ -146,7 +146,7 @@ sub init($)
 
     # MailBox names top folder directory '=', but IMAP needs '/'
     $folder = '/'
-       if $folder eq '=';
+        if $folder eq '=';
 
     # There's a disconnect between the URL parser and this code.
     # The URL parser always produces a full path (beginning with /)
@@ -164,37 +164,35 @@ sub init($)
     my $access    = $args->{access} ||= 'r';
     my $writeable = $access =~ m/w|a/;
     my $ch        = $self->{MBI_c_head}
-       = $args->{cache_head} || ($writeable ? 'NO' : 'DELAY');
+      = $args->{cache_head} || ($writeable ? 'NO' : 'DELAY');
 
     $args->{head_type} ||= 'Mail::Box::IMAP4::Head'
-       if $ch eq 'NO' || $ch eq 'PARTIAL';
+        if $ch eq 'NO' || $ch eq 'PARTIAL';
 
     $args->{body_type}  ||= 'Mail::Message::Body::Lines';
 
     $self->SUPER::init($args);
 
     $self->{MBI_domain}   = $args->{domain};
-    $self->{MBI_c_labels} = $args->{cache_labels}
-                         || ($writeable  ? 'NO' : 'DELAY');
-    $self->{MBI_c_body}   = $args->{cache_body}
-                         || ($writeable ? 'NO' : 'DELAY');
+    $self->{MBI_c_labels}
+      = $args->{cache_labels} || ($writeable ? 'NO' : 'DELAY');
+    $self->{MBI_c_body}
+      = $args->{cache_body}   || ($writeable ? 'NO' : 'DELAY');
 
 
     my $transport = $args->{transporter} || 'Mail::Transport::IMAP4';
     $transport = $self->createTransporter($transport, %$args)
-       unless ref $transport;
+        unless ref $transport;
 
     $self->transporter($transport);
 
     defined $transport
-       or return;
+        or return;
 
       $args->{create}
     ? $self->create($transport, $args)
     : $self;
 }
-
-#-------------------------------------------
 
 sub create($@)
 {   my($self, $name, $args) =  @_;
@@ -208,8 +206,6 @@ sub create($@)
     $self->transporter->createFolder($name);
 }
 
-#-------------------------------------------
-
 sub foundIn(@)
 {   my $self = shift;
     unshift @_, 'folder' if @_ % 2;
@@ -219,11 +215,7 @@ sub foundIn(@)
     || (exists $options{folder} && $options{folder} =~ m/^imap/);
 }
 
-#-------------------------------------------
-
 sub type() {'imap4'}
-
-#-------------------------------------------
 
 =method close OPTIONS
 Close the folder.  In the case of IMAP, more than one folder can use
@@ -240,8 +232,6 @@ sub close(@)
     $self;
 }
 
-#-------------------------------------------
-
 sub listSubFolders(@)
 {   my ($thing, %args) = @_;
     my $self = $thing;
@@ -252,8 +242,6 @@ sub listSubFolders(@)
     my $imap = $self->transporter;
     defined $imap ? $imap->folders($self) : ();
 }
-
-#-------------------------------------------
 
 sub nameOfSubfolder($;$) { $_[1] }
 
@@ -310,10 +298,7 @@ sub readMessages(@)
     $self;
 }
  
-#-------------------------------------------
-
 =method getHead MESSAGE
-
 Read the header for the specified message from the remote server.
 C<undef> is returned in case the message disappeared.
 
@@ -342,26 +327,20 @@ sub getHead($)
     $head;
 }
 
-#-------------------------------------------
-
 =method getHeadAndBody MESSAGE
-
 Read all data for the specified message from the remote server.
 Return head and body of the mesasge as list, or an empty list
 if the MESSAGE disappeared from the server.
 
 =warning Message $uidl disappeared from $folder.
-
 Trying to get the specific message from the server, but it appears to be
 gone.
 
 =warning Cannot find head back for $uidl in $folder.
-
 The header was read before, but now seems empty: the IMAP4 server does
 not produce the header lines anymore.
 
 =warning Cannot read body for $uidl in $folder.
-
 The header of the message was retreived from the IMAP4 server, but the
 body is not read, for an unknown reason.
 
@@ -403,10 +382,7 @@ sub getHeadAndBody($)
     ($head, $body->contentInfoFrom($head));
 }
 
-#-------------------------------------------
-
 =method body [BODY]
-
 =cut
 
 sub body(;$)
@@ -418,9 +394,6 @@ sub body(;$)
     $self->unique();
     $self->SUPER::body(@_);
 }
-
-#-------------------------------------------
-
 
 =method write OPTIONS
 The IMAP protocol usually writes the data immediately to the remote server,
@@ -446,14 +419,12 @@ sub write(@)
     $self->SUPER::write(%args, transporter => $imap) or return;
 
     if($args{save_deleted})
-    {   $self->log(NOTICE => "Impossible to keep deleted messages in IMAP")
+    {   $self->log(NOTICE => "Impossible to keep deleted messages in IMAP");
     }
-    else { $imap->destroyDeleted }
+    else { $imap->destroyDeleted($self->name) }
 
     $self;
 }
-
-#-------------------------------------------
 
 sub delete(@)
 {   my $self   = shift;
@@ -461,8 +432,6 @@ sub delete(@)
     $self->SUPER::delete(@_);   # subfolders
     $transp->deleteFolder($self->name);
 }
-
-#-------------------------------------------
 
 =method writeMessages OPTIONS
 =requires transporter OBJECT
@@ -478,8 +447,6 @@ sub writeMessages($@)
 
     $self;
 }
-
-#-------------------------------------------
 
 =method createTransporter CLASS, OPTIONS
 Create a transporter object (an instance of M<Mail::Transport::IMAP4>), where
@@ -525,8 +492,6 @@ sub createTransporter($@)
     $transporter;
 }
 
-#-------------------------------------------
-
 =method transporter [OBJECT]
 Returns the object which is the interface to the IMAP4 protocol handler.
 The IMAP4 handler has the current folder selected.
@@ -563,8 +528,6 @@ sub transporter(;$)
     $self->log(ERROR => "Couldn't select IMAP4 folder $name");
     undef;
 }
-
-#-------------------------------------------
 
 =method fetch ARRAY-OF-MESSAGES|MESSAGE-SELECTION, INFO
 Low-level data retreival about one or more messages via IMAP4 from

@@ -169,18 +169,14 @@ sub init($)
     :                              undef;
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDERNAME, OPTIONS
 
 =error Cannot create directory $dir for folder $name.
-
 While creating a file-organized folder, at most one level of directories
 is created above it.  Apparently, more levels of directories are needed,
 or the operating system does not allow you to create the directory.
 
 =error Cannot create folder file $name: $!
-
 The file-organized folder file cannot be created for the indicated reason.
 In common cases, the operating system does not grant you write access to
 the directory where the folder file should be stored.
@@ -220,8 +216,6 @@ sub create($@)
     $class;
 }
 
-#-------------------------------------------
-
 sub foundIn($@)
 {   my $class = shift;
     my $name  = @_ % 2 ? shift : undef;
@@ -234,18 +228,12 @@ sub foundIn($@)
     -f $filename;
 }
 
-#-------------------------------------------
-
 sub organization() { 'FILE' }
-
-#-------------------------------------------
 
 sub size()
 {   my $self = shift;
     $self->isModified ? $self->SUPER::size : -s $self->filename;
 }
-
-#-------------------------------------------
 
 sub close(@)
 {   my $self = $_[0];            # be careful, we want to set the calling
@@ -258,8 +246,6 @@ sub close(@)
 
     $rc;
 }
-
-#-------------------------------------------
 
 =c_method appendMessages OPTIONS
 
@@ -325,14 +311,11 @@ sub appendMessages(@)
 =section The folder
 
 =method filename
-
 Returns the filename for this folder, which may be an absolute or relative
 path to the file.
 
 =examples
-
  print $folder->filename;
-
 =cut
 
 sub filename() { shift->{MBF_filename} }
@@ -342,10 +325,8 @@ sub filename() { shift->{MBF_filename} }
 =section Internals
 
 =method parser
-
 Create a parser for this mailbox.  The parser stays alive as long as
 the folder is open.
-
 =cut
 
 sub parser()
@@ -372,8 +353,6 @@ sub parser()
     $parser;
 }
 
-#-------------------------------------------
-
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
@@ -389,13 +368,10 @@ sub readMessages(@)
     $self->updateMessages;
 }
  
-#-------------------------------------------
-
 =method updateMessages OPTIONS
 For file based folders, the file handle stays open until the folder
 is closed.  Update is therefore rather simple: move to the end
 of the last known message, and continue reading...
-
 =cut
 
 sub updateMessages(@)
@@ -427,8 +403,6 @@ sub updateMessages(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method messageCreateOptions [TYPE, CONFIG]
 Returns a key-value list of options to be used each time a new message
 is read from a file.  The list is preceeded by the TYPE of message which
@@ -436,7 +410,6 @@ has to be created.
 
 This data is used by M<readMessages()> and M<updateMessages()>.  With
 TYPE and CONFIG, a new configuration is set.
-
 =cut
 
 sub messageCreateOptions(@)
@@ -449,16 +422,12 @@ sub messageCreateOptions(@)
     @{$self->{MBF_create_options}};
 }
 
-#-------------------------------------------
-
 =method moveAwaySubFolder DIRECTORY, EXTENSION
-
 The DIRECTORY is renamed by appending the EXTENSION, which defaults to C<".d">,
 to make place for a folder file on that specific location.  C<false> is
 returned if this failed.
 
 =error Cannot move away sub-folder $dir
-
 =cut
 
 sub moveAwaySubFolder($$)
@@ -468,30 +437,23 @@ sub moveAwaySubFolder($$)
     $self;
 }
 
-#-------------------------------------------
-
 sub delete(@)
 {   my $self = shift;
     $self->SUPER::delete(@_);
     unlink $self->filename;
 }
 
-#-------------------------------------------
-
 =method write OPTIONS
 
 =option  policy 'REPLACE'|'INPLACE'|undef
 =default policy undef
-
 In what way will the mail folder be updated.  If not specified during the
 write, the value of the M<new(write_policy)> at folder creation is taken.
 
 Valid values:
 
 =over 4
-
 =item * C<REPLACE>
-
 First a new folder is written in the same directory as the folder which has
 to be updated, and then a call to move will throw away the old immediately
 replacing it by the new.
@@ -501,13 +463,11 @@ modified are copied from file to file, byte by byte.  This is much
 faster than printing the data which is will be done for modified messages.
 
 =item * C<INPLACE>
-
 The original folder file will be opened read/write.  All message which where
 not changed will be left untouched, until the first deleted or modified
 message is detected.  All further messages are printed again.
 
 =item * C<undef>
-
 As default, or when C<undef> is explicitly specified, first C<REPLACE> mode
 is tried.  Only when that fails, an C<INPLACE> update is performed.
 
@@ -528,24 +488,21 @@ mode.  Be warned that in this case folder locking via a lockfile is not
 possible as well.
 
 =warning Cannot remove folder $name file $filename: $!
-
 Writing an empty folder will usually cause that folder to be removed,
 which fails for the indicated reason.  M<new(remove_when_empty)>
-=warning Cannot remove folder $name file $filename: $!
 
+=warning Cannot remove folder $name file $filename: $!
 Writing an empty folder will usually cause that folder to be removed,
 which fails for the indicated reason.  M<new(remove_when_empty)>
 controls whether the empty folder will removed; setting it to false
 (C<0>) may be needed to avoid this message.
 
 =error Unable to update folder $self.
-
 When a folder is to be written, both replace and inplace write policies are
 tried,  If both fail, the whole update fails.  You may see other, related,
 error messages to indicate the real problem.
 
 =error File too short to get write message $nr ($size, $need)
-
 Mail::Box is lazy: it tries to leave messages in the folders until they
 are used, which saves time and memory usage.  When this message appears,
 something is terribly wrong: some lazy message are needed for updating the
@@ -558,7 +515,6 @@ to do with Windows incorrectly handling multiple filehandles open in the
 same file.
 
 =error Cannot replace $filename by $tempname, to update folder $name: $!
-
 The replace policy wrote a new folder file to update the existing, but
 was unable to give the final touch: replacing the old version of the
 folder file for the indicated reason.
@@ -661,7 +617,14 @@ sub _write_replace($)
     $old->close && $ok
         or return 0;
 
-    unlink $filename if $windows;
+    if($windows)
+    {   # Windows does not like to move to existing filenames
+        unlink $filename;
+
+        # Windows cannot move to files which are opened.
+        $self->parser->closeFile;
+    }
+
     unless(move $tmpnew, $filename)
     {   $self->log(WARNING =>
             "Cannot replace $filename by $tmpnew, to update folder $self: $!");

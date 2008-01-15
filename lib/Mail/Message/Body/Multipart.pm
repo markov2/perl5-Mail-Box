@@ -40,14 +40,12 @@ when a message contains attachments (parts).
 
 =option  boundary STRING
 =default boundary undef
-
 Separator to be used between parts of the message.  This separator must
 be unique in case the message contains nested multiparts (which are not
 unusual).  If C<undef>, a nice unique boundary will be generated.
 
 =option  epilogue BODY|STRING
 =default epilogue undef
-
 The text which is included in the main body after the final boundary.  This
 is usually empty, and has no meaning.
 
@@ -56,7 +54,6 @@ into a C<text/plain> body.
 
 =option  parts ARRAY-OF-(MESSAGES|BODIES)
 =default parts undef
-
 Specifies an initial list of parts in this body.  These may be full
 MESSAGES, or BODIES which transformed into messages before use.  Each
 message is coerced into a M<Mail::Message::Part> object.
@@ -67,7 +64,6 @@ of C<undef> will be skipped silently.
 
 =option  preamble BODY|STRING
 =default preamble undef
-
 The text which is included in the body before the first part.  It is
 common use to include a text to warn the user that the message is a
 multipart.  However, this was useful in earlier days: most mail
@@ -88,13 +84,10 @@ into a text/plain body.
    );
 
 =error Data not convertible to a message (type is $type)
-
 An object which is not coercable into a M<Mail::Message::Part> object was
 passed to the initiation.  The data is ignored.
 
 =cut
-
-#------------------------------------------
 
 sub init($)
 {   my ($self, $args) = @_;
@@ -148,16 +141,10 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 sub isMultipart() {1}
-
-#------------------------------------------
 
 # A multipart body is never binary itself.  The parts may be.
 sub isBinary() {0}
-
-#------------------------------------------
 
 sub clone()
 {   my $self     = shift;
@@ -173,8 +160,6 @@ sub clone()
      );
 
 }
-
-#------------------------------------------
 
 sub nrLines()
 {   my $self = shift;
@@ -194,8 +179,6 @@ sub nrLines()
     $nr;
 }
 
-#------------------------------------------
-
 sub size()
 {   my $self   = shift;
     my $bbytes = length($self->boundary) +4;  # \n--$b\n
@@ -211,11 +194,7 @@ sub size()
     $bytes;
 }
 
-#------------------------------------------
-
 sub string() { join '', shift->lines }
-
-#------------------------------------------
 
 sub lines()
 {   my $self     = shift;
@@ -245,8 +224,6 @@ sub lines()
     wantarray ? @lines : \@lines;
 }
 
-#------------------------------------------
-
 sub file()                    # It may be possible to speed-improve the next
 {   my $self   = shift;       # code, which first produces a full print of
     my $text;                 # the message in memory...
@@ -255,8 +232,6 @@ sub file()                    # It may be possible to speed-improve the next
     $dump->seek(0,0);
     $dump;
 }
-
-#------------------------------------------
 
 sub print(;$)
 {   my $self = shift;
@@ -292,8 +267,6 @@ sub print(;$)
 
     $self;
 }
-
-#------------------------------------------
 
 =method foreachLine(CODE)
 It is NOT possible to call some code for each line of a multipart,

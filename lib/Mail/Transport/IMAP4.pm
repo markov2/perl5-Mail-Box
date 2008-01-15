@@ -105,12 +105,8 @@ sub init($)
     $self->login             or return undef;
 }
 
-#------------------------------------------
-
 =method url
-
 Represent this imap4 connection as URL.
-
 =cut
 
 sub url()
@@ -205,13 +201,10 @@ sub authentication(@)
     @auth;
 }
 
-#------------------------------------------
-
 =method domain [DOMAIN]
 Used in NTLM authentication to define the Windows domain which is
 accessed.  Initially set by M<new(domain)> and defaults to the
 server's name.
-
 =cut
 
 sub domain(;$)
@@ -229,19 +222,13 @@ sub domain(;$)
 The follow methods handle protocol internals, and should not be used
 by a normal user of this class.
 
-=cut
-
-#------------------------------------------
-
 =method imapClient
-
 Returns the object which implements the IMAP4 protocol, an instance
 of a M<Mail::IMAPClient>, which is logged-in and ready to use.
 
 If the contact to the server was still present or could be established,
 an M<Mail::IMAPClient> object is returned.  Else, C<undef> is returned and
 no further actions should be tried on the object.
-
 =cut
 
 sub imapClient(;$)
@@ -249,11 +236,8 @@ sub imapClient(;$)
     @_ ? ($self->{MTI_client} = shift) : $self->{MTI_client};
 }
 
-#------------------------------------------
-
 =method createImapClient CLASS
 Create an object of CLASS, which extends L<Mail::IMAPClient>.
-
 =cut
 
 sub createImapClient($)
@@ -280,10 +264,7 @@ sub createImapClient($)
     $client;
 }
 
-#------------------------------------------
-
 =method login
-
 Establish a new connection to the IMAP4 server, using username and password.
 
 =error  IMAP4 requires a username and password
@@ -357,8 +338,6 @@ sub login(;$)
     undef;
 }
 
-#------------------------------------------
-
 =method currentFolder [FOLDERNAME]
 Be sure that the specific FOLDER is the current one selected.  If the
 folder is already selected, no IMAP traffic will be produced.
@@ -408,8 +387,6 @@ sub currentFolder(;$)
     undef;
 }
 
-#------------------------------------------
-
 =method folders [FOLDERNAME]
 Returns a list of folder names which are sub-folders of the specified
 FOLDERNAME.  Without FOLDERNAME, the top-level foldernames are returned.
@@ -443,8 +420,6 @@ sub folders(;$)
     keys %uniq;
 }
 
-#------------------------------------------
-
 =method ids
 Returns a list of UIDs which are defined by the IMAP server.
 =cut
@@ -455,17 +430,13 @@ sub ids($)
     $imap->messages;
 }
 
-#------------------------------------------
-
 =method getFlags FOLDER, ID
-
 Returns the values of all flags which are related to the message with the
 specified ID.  These flags are translated into the names which are
 standard for the MailBox suite.
 
 A HASH is returned.  Names which do not appear will also provide
 a value in the returned: the negative for the value is it was present.
-
 =cut
 
 # Explanation in Mail::Box::IMAP4::Message chapter DETAILS
@@ -506,25 +477,19 @@ sub getFlags($$)
     $labels;
 }
 
-#------------------------------------------
-
 =method listFlags
 Returns all predefined flags as list.
 =cut
 
 sub listFlags() { keys %flags2labels }
 
-#------------------------------------------
-
 =method setFlags ID, LABEL, VALUE, [LABEL, VALUE], ...
-
 Change the flags on the message which are represented by the label.  The
 value which can be related to the label will be lost, because IMAP only
 defines a boolean value, where MailBox labels can contain strings.
 
 Returned is a list of LABEL=>VALUE pairs which could not be send to
 the IMAP server.  These values may be cached in a different way.
-
 =cut
 
 # Mail::IMAPClient can only set one value a time, however we do more...
@@ -553,8 +518,6 @@ sub setFlags($@)
     @nonstandard;
 }
 
-#------------------------------------------
-
 =ci_method labelsToFlags HASH|PAIRS
 Convert MailBox labels into IMAP flags.  Returned is a string.  Unsupported
 labels are ignored.
@@ -582,8 +545,6 @@ sub labelsToFlags(@)
 
     join " ", sort @set;
 }
-
-#------------------------------------------
 
 =ci_method flagsToLabels WHAT|FLAGS
 In SCALAR context, a hash with labels is returned.  In LIST context, pairs
@@ -630,8 +591,6 @@ sub flagsToLabels($@)
     wantarray ? %labels : \%labels;
 }
 
-#------------------------------------------
-
 =method getFields UID, NAME, [NAME, ...]
 Get the records with the specified NAMES from the header.  The header
 fields are returned as list of M<Mail::Message::Field::Fast> objects.
@@ -651,8 +610,6 @@ sub getFields($@)
     @fields;
 }
 
-#------------------------------------------
-
 =method getMessageAsString MESSAGE|UID
 Returns the whole text of the specified message: the head and the body.
 =cut
@@ -662,8 +619,6 @@ sub getMessageAsString($)
     my $uid = ref $_[0] ? shift->unique : shift;
     $imap->message_string($uid);
 }
-
-#------------------------------------------
 
 =method fetch ARRAY-OF-MESSAGES, INFO
 Get some INFO about the MESSAGES from the server.  The specified messages
@@ -725,8 +680,6 @@ sub fetch($@)
     values %msgs;
 }
 
-#------------------------------------------
-
 =method appendMessage MESSAGE, FOLDERNAME
 Write the message to the server.
 =cut
@@ -741,19 +694,18 @@ sub appendMessage($$)
      );
 }
 
-#------------------------------------------
-
-=method destroyDeleted
+=method destroyDeleted FOLDER
 Command the server to delete for real all messages which are flagged to
 be deleted.
 =cut
 
-sub destroyDeleted()
-{   my $imap = shift->imapClient or return ();
-    $imap->expunge;
-}
+sub destroyDeleted($)
+{   my ($self, $folder) = @_;
+    defined $folder or return;
 
-#------------------------------------------
+    my $imap = shift->imapClient or return;
+    $imap->expunge($folder);
+}
 
 =method createFolder NAME
 Add a folder.
@@ -764,8 +716,6 @@ sub createFolder($)
     $imap->create(shift);
 }
 
-#------------------------------------------
-
 =method deleteFolder NAME
 Remove one folder.
 =cut
@@ -774,8 +724,6 @@ sub deleteFolder($)
 {   my $imap = shift->imapClient or return ();
     $imap->delete(shift);
 }
-
-#------------------------------------------
 
 =section Error handling
 

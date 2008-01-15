@@ -806,7 +806,7 @@ defined.  The parameters will be stripped off.
 
 sub contentType()
 {   my $head = shift->head;
-    my $ct   = defined $head ? $head->get('Content-Type') : '';
+    my $ct   = defined $head ? ($head->get('Content-Type'))[-1] : '';
     $ct      =~ s/\s*\;.*//;
     $ct || 'text/plain';
 }

@@ -156,8 +156,7 @@ sub restart()
 {   my $self     = shift;
     my $filename = $self->filename;
 
-    $self->closeFile or return;
-
+    $self->closeFile;
     $self->openFile( {filename => $filename, mode => $self->{MBP_mode}} )
         or return;
 

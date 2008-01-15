@@ -9,6 +9,25 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.080: Tue Jan 15 09:03:21 CET 2008
+
+	Fixes:
+
+	- write() bodies raw, not converting LF to CRLF on
+	  Windows [Daniel Schättgen]
+
+	- Mail::Message::Field::Full "study()" header fields, hang on
+	  parsing an attribute with '[]', rt.cpan.org#31912 [Jason HE]
+
+	- various IMAP4 improvements by [David Golden]
+
+	- Windows does not like to move files when they are still opened
+	  by a process, as MBOX mode 'replace' does.  Simple work-around
+	  after suggestion by [Jonathan Kamens]
+
+	- Double "Content-Type" in message headers caused confusion.
+	  [Anne van Bemmelen]
+
 version 2.079: Wed Nov 28 10:46:06 CET 2007
 
 	Changes:

@@ -26,7 +26,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 58;
+   {   plan tests => 64;
    }
 }
 
@@ -145,7 +145,7 @@ is($e->foldedBody, " body; attr1=aaa; attr2=b; attr3='c'\n",
 ## errors
 #
 
-my $f = $mmfs->new('f: c; a="missing quote');
+my $f = $mmfs->new('f: c; a="missing quote');  # bug report #31017
 ok(defined $f, 'missing quote');
 is($f->unfoldedBody, 'c; a="missing quote');
 is($f->foldedBody, " c; a=\"missing quote\n");
@@ -154,3 +154,15 @@ my $fa = $f->attribute('a');
 ok(defined $fa, 'f attribute a');
 is($fa->string, '; a=missing quote');
 is($fa->value, 'missing quote');
+
+my $g = $mmfs->new('g: c; a="with []"');      # bug report #31912
+ok(defined $g, '[]');
+my $ga = $g->attribute('a');
+ok(defined $ga);
+is($ga->value, 'with []');
+
+my $gb = $mmfs->new('g: c; filename=xxxx[1].pif');
+ok(defined $gb, 'xxxx[1].pif');
+my $gc = $gb->attribute('filename');
+ok(defined $gc);
+is($gc->value, 'xxxx[1].pif');

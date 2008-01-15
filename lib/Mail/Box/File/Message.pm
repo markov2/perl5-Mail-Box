@@ -22,12 +22,10 @@ extension.
 =chapter METHODS
 
 =c_method new OPTIONS
-
 Messages in file-based folders use the following options for creation:
 
 =option  from_line STRING
 =default from_line undef
-
 The line which begins each message in the file. Some people detest
 this line, but this is just how things were invented...
 

@@ -1065,19 +1065,14 @@ sub writable()  {shift->{MB_access} =~ /w|a|d/ }
 sub writeable() {shift->writable}  # compatibility [typo]
 sub readable()  {1}  # compatibility
 
-#-------------------------------------------
-
 =method access
 Returns the access mode of the folder, as set by M<new(access)>
 =cut
 
 sub access()    {shift->{MB_access}}
 
-#-------------------------------------------
-
 =method modified [BOOLEAN]
 Sets whether the folder is modified or not.
-
 =cut
 
 sub modified(;$)
@@ -1091,8 +1086,6 @@ sub modified(;$)
     $_->modified(0) foreach $self->messages;
     0;
 }
-
-#-------------------------------------------
 
 =method isModified
 Checks if the folder, as stored in memory, is modified.  A true value is
@@ -1137,8 +1130,6 @@ sub message(;$$)
     @_ ?  $self->{MB_messages}[$index] = shift : $self->{MB_messages}[$index];
 }
 
-#-------------------------------------------
-
 =method messageId MESSAGE-ID [,MESSAGE]
 
 With one argument, returns the message in the folder with the specified
@@ -1157,7 +1148,6 @@ The MESSAGE-ID may still be in angles, which will be stripped.  In that
 case blanks (which origin from header line folding) are removed too.  Other
 info around the angles will be removed too.
 
-
 =examples
 
  my $msg = $folder->messageId('<complex-message.id>');
@@ -1166,14 +1156,12 @@ info around the angles will be removed too.
  my $msg = $folder->messageId('garbage <complex-message.id> trash');
 
 =warning Message-id '$msgid' does not contain a domain.
-
 According to the RFCs, message-ids need to contain a unique random part,
 then an C<@>, and then a domain name.  This is made to avoid the creation
 of two messages with the same id.  The warning emerges when the C<@> is
 missing from the string.
 
 =warning Different messages with id $msgid
-
 The message id is discovered more than once within the same folder, but the
 content of the message seems to be different.  This should not be possible:
 each message must be unique.
@@ -1227,15 +1215,11 @@ sub messageId($;$)
 
 sub messageID(@) {shift->messageId(@_)} # compatibility
 
-#-------------------------------------------
-
 =method find MESSAGE-ID
-
 Like M<messageId()>, this method searches for a message with the
 MESSAGE-ID, returning the corresponding message object.  However, C<find>
 will cause unparsed message in the folder to be parsed until the message-id
 is found.  The folder will be scanned back to front.
-
 =cut
 
 sub find($)
@@ -1256,8 +1240,6 @@ sub find($)
 
     $msgids->{$msgid};
 }
-
-#-------------------------------------------
 
 =method messages ['ALL',RANGE,'ACTIVE','DELETED',LABEL,!LABEL,FILTER]
 
@@ -1340,8 +1322,6 @@ sub messages($;$)
     grep {$action->($_)} @{$self->{MB_messages}};
 }
 
-#-------------------------------------------
-
 =method nrMessages OPTIONS
 Simply calls M<messages()> in scalar context to return a count instead
 of the messages itself.  Some people seem to understand this better.
@@ -1349,10 +1329,7 @@ of the messages itself.  Some people seem to understand this better.
 
 sub nrMessages(@) { scalar shift->messages(@_) }
 
-#-------------------------------------------
-
 =method messageIds
-
 Returns a list of I<all> message-ids in the folder, including
 those of messages which are to be deleted.
 
@@ -1360,7 +1337,6 @@ For some folder-types (like MH), this method may cause all message-files
 to be read.  See their respective manual pages.
 
 =example
-
  foreach my $id ($folder->messageIds) {
     $folder->messageId($id)->print;
  }
@@ -1371,10 +1347,7 @@ sub messageIds()    { map {$_->messageId} shift->messages }
 sub allMessageIds() {shift->messageIds}  # compatibility
 sub allMessageIDs() {shift->messageIds}  # compatibility
 
-#-------------------------------------------
-
 =method current [NUMBER|MESSAGE|MESSAGE-ID]
-
 Some mail-readers keep the I<current> message, which represents the last
 used message.  This method returns [after setting] the current message.
 You may specify a NUMBER, to specify that that message number is to be
@@ -1382,10 +1355,8 @@ selected as current, or a MESSAGE/MESSAGE-ID (as long as you are sure
 that the header is already loaded, otherwise they are not recognized).
 
 =examples
-
  $folder->current(0);
  $folder->current($message);
-
 =cut
 
 sub current(;$)
@@ -1415,8 +1386,6 @@ sub current(;$)
     ($self->{MB_current} = $next)->label(current => 1);
     $next;
 }
-
-#-------------------------------------------
 
 =method scanForMessages MESSAGE, MESSAGE-IDS, TIMESPAN, WINDOW
 
@@ -1454,11 +1423,9 @@ Be warned that a message-id could already be known and therefore not
 found: check that first.
 
 =example scanning through a folder for a message
-
  my $refs   = $msg->get('References') or return;
  my @msgids = $ref =~ m/\<([^>]+\>/g;
  my @failed = $folder->scanForMessages($msg, \@msgids, '3 days', 50);
-
 =cut
 
 sub scanForMessages($$$$)
@@ -1472,8 +1439,7 @@ sub scanForMessages($$$$)
     my $nr_messages = $self->messages
         or return keys %search; 
 
-    my $startmsg = $self->messageId($startid)
-        if defined $startid;
+    my $startmsg = defined $startid ? $self->messageId($startid) : undef;
 
     # Set-up window-bound.
     my $bound = 0;
@@ -1505,8 +1471,6 @@ sub scanForMessages($$$$)
     $self->{MBM_last} = $last;
     keys %search;
 }
-
-#-------------------------------------------
 
 =method findFirstLabeled LABEL, [BOOLEAN, [ARRAY-OF-MSGS]]
 Find the first message which has this LABEL with the correct setting. The

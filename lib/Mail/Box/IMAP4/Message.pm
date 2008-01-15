@@ -66,15 +66,11 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =method size
-
 Returns the size of this message.  If the message is still on the remote
 server, IMAP is used to ask for the size.  When the message is already loaded
 onto the local system, the size of the parsed message is taken.  These
 sizes can differ because the difference in line-ending representation.
-
 =cut
 
 sub size($)
@@ -86,17 +82,12 @@ sub size($)
     $self->fetch('RFC822.SIZE');
 }
 
-#------------------------------------------
-
 sub recvstamp()
 {   my $date = shift->fetch('INTERNALDATE');
     defined $date ? str2time($date) : undef;
 }
 
-#-------------------------------------------
-
 =method label LABEL|PAIRS
-
 With only one argument, the value related to LABEL is returned.  With
 more that one argument, the list is interpreted a label-value PAIRS
 to be set.
@@ -111,14 +102,14 @@ Some labels are translated to the corresponding IMAP system labels.
 sub label(@)
 {   my $self = shift;
     my $imap = $self->folder->transporter or return;
-    my $id   = $self->unique;
+    my $id   = $self->unique or return;
 
     if(@_ == 1)
     {   # get one value only
         my $label  = shift;
         my $labels = $self->{MM_labels};
 	return $labels->{$label}
-	   if exists $labels->{$label} || exists $labels->{seen};
+	    if exists $labels->{$label} || exists $labels->{seen};
 
 	my $flags = $imap->getFlags($id);
         if($self->{MBIM_cache_labels})
@@ -153,24 +144,22 @@ sub label(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method labels
 Get the names of all labels (LIST context, not efficient in IMAP4), or
 a reference to a hash with labels.  You should only use the returned
 hash to read the labels, because changes made to it will not be passed
 to the remote server.  See M<labels()> to set values.
-
 =cut
 
 sub labels()
 {   my $self   = shift;
+    my $id     = $self->unique;
     my $labels = $self->SUPER::labels;
     $labels    = { %$labels } unless $self->{MBIM_cache_labels};
 
-    unless(exists $labels->{seen})
+    if($id && !exists $labels->{seen})
     {   my $imap = $self->folder->transporter or return;
-        my $flags = $imap->getFlags($self->unique);
+        my $flags = $imap->getFlags($id);
         @{$labels}{keys %$flags} = values %$flags;
     }
 
@@ -193,8 +182,6 @@ sub loadHead()
     $head;
 }
 
-#-------------------------------------------
-
 sub loadBody()
 {   my $self     = shift;
 
@@ -209,8 +196,6 @@ sub loadBody()
     $body;
 }
 
-#-------------------------------------------
-
 =method fetch [INFO, ...]
 Use the IMAP's C<UID FETCH IMAP> command to get some data about this
 message.  The INFO request is passed to M<Mail::Box::IMAP4::fetch()>.
@@ -224,8 +209,6 @@ sub fetch(@)
 
     @info==1 ? $answer->{$info[0]} : @{$answer}{@info};
 }
-
-#-------------------------------------------
 
 =method writeDelayed IMAP
 Write all delayed information, like label changes, to the server.  This

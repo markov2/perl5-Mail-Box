@@ -181,7 +181,9 @@ sub parse($)
 
     my $found = '';
     while($string =~ m/\S/)
-    {   if($string =~ s/^\s*\;\s*// && length $found)
+    {   my $len = length $string;
+
+        if($string =~ s/^\s*\;\s*// && length $found)
         {   my $attr = Mail::Message::Field::Attribute->new($found);
             $self->attribute($attr);
             $found = '';
@@ -191,6 +193,11 @@ sub parse($)
         $string =~ s/^\n//;
         (my $text, $string) = $self->consumePhrase($string);
         $found .= $text if defined $text;
+
+        if(length($string) == $len)
+        {   # nothing consumed, remove character to avoid endless loop
+            $string =~ s/^\s*\S//;
+        }
     }
 
     if(length $found)
