@@ -121,7 +121,7 @@ sub printStructure(;$$)
     my $subject = $self->get('Subject') || '';
     $subject    = ": $subject" if length $subject;
 
-    my $type    = $self->get('Content-Type') || '';
+    my $type    = $self->get('Content-Type', 0) || '';
     my $size    = $self->size;
     my $deleted = $self->label('deleted') ? ', deleted' : '';
 

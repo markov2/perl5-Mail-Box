@@ -332,7 +332,7 @@ May trigger completion, when the C<Content-Type> field is not defined.
 =cut
 
 sub isMultipart()
-{   my $type = shift->get('Content-Type');
+{   my $type = shift->get('Content-Type', 0);
     $type && scalar $type->body =~ m[^multipart/]i;
 }
 

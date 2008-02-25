@@ -9,6 +9,13 @@ NOTE: The number of changes and fixes for each release seem large, but
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
 
+version 2.081: Mon Feb 25 22:21:30 CET 2008
+
+	Fixes:
+
+	- another fix for the case of two "Content-Type" lines, hit
+	  by a recent, now frequently appearing, spam message.
+
 version 2.080: Tue Jan 15 09:03:21 CET 2008
 
 	Fixes:

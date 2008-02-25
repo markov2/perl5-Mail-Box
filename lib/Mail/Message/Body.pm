@@ -901,7 +901,7 @@ Transfer the body related info from the header into this body.
 sub contentInfoFrom($)
 {   my ($self, $head) = @_;
 
-    $self->type($head->get('Content-Type'));
+    $self->type($head->get('Content-Type', 0));
     $self->transferEncoding($head->get('Content-Transfer-Encoding'));
     $self->disposition($head->get('Content-Disposition'));
     $self->description($head->get('Content-Description'));
