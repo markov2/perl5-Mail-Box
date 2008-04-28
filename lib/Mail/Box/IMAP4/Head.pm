@@ -14,7 +14,7 @@ Mail::Box::IMAP4::Head - header fields related IMAP interface
 
 =chapter DESCRIPTION
 
-This class implements a pure IMAP4 protocol interface, where as few
+This class implements a pure IMAP4 protocol interface, where as little
 data is retreived from the header as possible.  This may look nice
 to you, but is not sufficient for many tasks.  For instance, you cannot
 removed or modify fields this way.
@@ -44,13 +44,9 @@ sub init($$)
     $self;
 }
 
-#------------------------------------------
-
 =method get NAME [,INDEX]
-
 Get the information about the header line NAME.  Realization will
 take place.
-
 =cut
 
 sub get($;$)
@@ -81,11 +77,7 @@ sub get($;$)
     :                  $fields[0];
 }
 
-#------------------------------------------
-
 sub guessBodySize() {undef}
-
-#-------------------------------------------
 
 sub guessTimestamp() {undef}
 

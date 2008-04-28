@@ -1,13 +1,20 @@
 CHANGELOG of Mail::Box version 2
 
-All changes were made by Mark Overmeer <mark@overmeer.net>, unless
-specified differently.
-
 NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
 nog meer problemen: CSS moet relatief, en nog mailbox.css resten
+
+version 2.082: Mon Apr 28 09:30:33 CEST 2008
+
+	Fixes:
+
+	- fix work-around for Mail::Message::Field::toDate() on Windows.
+	  Reported by rt.cpan.org#35155 [Kemal Ates]
+
+	- use Data::Format::strftime to replace POSIX's version, for
+	  weird Windows timezone. rt.cpan.org #35155 [Ron Murray]
 
 version 2.081: Mon Feb 25 22:21:30 CET 2008
 

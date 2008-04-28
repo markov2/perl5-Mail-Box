@@ -6,7 +6,7 @@ use base 'Mail::Reporter';
 
 use Carp;
 use Mail::Address;
-use POSIX      'strftime';
+use Date::Format 'strftime';
 use IO::Handle;
 
 our %_structured;  # not to be used directly: call isStructured!
@@ -625,7 +625,7 @@ sub toDate(@)
     my $time   = strftime($format, @time);
 
     # for C libs which do not (GNU compliantly) support %z
-    $time =~ s/ (\%z|[A-Z ]+)$/_tz_offset($1)/e;
+    $time =~ s/ (\%z|[A-Za-z ]+)$/_tz_offset($1)/e;
 
     $time; 
 }
