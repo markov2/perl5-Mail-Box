@@ -75,6 +75,10 @@ automatically be cloned.
 
 sub coerce($@)
 {   my ($class, $thing, $container) = (shift, shift, shift);
+    if($thing->isa($class))
+    {   $thing->container($container);
+        return $thing;
+    }
 
     return $class->buildFromBody($thing, $container, @_)
         if $thing->isa('Mail::Message::Body');

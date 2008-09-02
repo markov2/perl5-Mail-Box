@@ -9,7 +9,7 @@ use warnings;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 23;
+use Test::More tests => 22;
 use Mail::Address;
 
 use Mail::Message;
@@ -51,12 +51,12 @@ my $body = Mail::Message::Body::Lines->new
   , data      => \@lines
   );
 
-ok(defined $body);
+ok(defined $body, 'created body');
 
 my $msg  = Mail::Message->new(head => $head);
 $msg->body($body);
 
-ok(defined $msg);
+ok(defined $msg, 'created message');
 
 #
 # Create a simple reply
@@ -68,11 +68,8 @@ my $reply = $msg->reply
   , quote           => undef
   );
 
-ok(defined $reply);
+ok(defined $reply, 'created reply');
 isa_ok($reply, 'Mail::Message');
-
-my $equal = $reply->body==$msg->body;
-ok($equal);
 
 is(  $reply->head->get('to'), $msg->head->get('from'));
 is($reply->head->get('from'), $msg->head->get('to'));

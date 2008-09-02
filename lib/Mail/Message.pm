@@ -321,7 +321,8 @@ sub print(;$)
     my $out  = shift || select;
 
     $self->head->print($out);
-    $self->body->print($out);
+    my $body = $self->body;
+    $body->print($out) if $body;
     $self;
 }
 
@@ -432,8 +433,9 @@ and transformed into labels.  More labels can be added by the
 LABELS hash.  They are added later.
 
 =example
- $msg->head(M<Mail::Message::Head>->new);  # set
- my $head = $msg->head;                 # get
+ my $header = M<Mail::Message::Head>->new;
+ $msg->head($header);    # set
+ my $head = $msg->head;  # get
 =cut
 
 sub head(;$)
@@ -720,6 +722,7 @@ sub body(;$@)
     # Bodies of real messages must be encoded for safe transmission.
     # Message parts will get encoded on the moment the whole multipart
     # is transformed into a real message.
+
     my $body = $self->isPart ? $rawbody : $rawbody->encoded;
     $body->contentInfoTo($self->head);
 
@@ -734,16 +737,15 @@ sub body(;$@)
 
 =method decoded OPTIONS
 
-Decodes the body of this message, and returns it as a body object.  If there
-was no encoding, the body object as read from file is passed on, however,
-some more work will be needed when a serious encoding is encountered.
-The OPTIONS control how the conversion takes place.
+Decodes the body of this message, and returns it as a body object.
+If there was no encoding, the body object as read from file is passed
+on, however, some more work will be needed when a serious encoding
+is encountered.  The OPTIONS control how the conversion takes place.
 
-=option  keep BOOLEAN
-=default keep <false>
-Controls whether the decoded result will be kept.  If not, the decoding
-may be performed more than once.  However, it will consume extra
-resources...
+=option  charset CODESET|'PERL'
+=default charset C<PERL>
+Translate the bytes of the message into the CODESET.  When C<PERL> is
+given, the content will be translated into Perl strings.
 
 =option  result_type BODYTYPE
 =default result_type <type of body>
@@ -756,20 +758,17 @@ M<Mail::Message::Body>.
  $message->decoded->print(\*OUT);
  $message->decoded->print;
 
- my $dec = $message->body($message->decoded);
- my $dec = $message->decoded(keep => 1);   # same
-
 =cut
 
 sub decoded(@)
 {   my ($self, %args) = @_;
 
-    return $self->{MB_decoded} if $self->{MB_decoded};
-
     my $body    = $self->body->load or return;
-    my $decoded = $body->decoded(result_type => $args{result_type});
+    my $decoded = $body->decoded
+      ( result_type => $args{result_type}
+      , charset     => $args{charset}
+      );
 
-    $self->{MB_decoded} = $decoded if $args{keep};
     $decoded;
 }
 
@@ -806,9 +805,9 @@ defined.  The parameters will be stripped off.
 
 sub contentType()
 {   my $head = shift->head;
-    my $ct   = defined $head ? $head->get('Content-Type', 0) : '';
+    my $ct   = (defined $head ? $head->get('Content-Type', 0) : undef) || '';
     $ct      =~ s/\s*\;.*//;
-    $ct || 'text/plain';
+    length $ct ? $ct : 'text/plain';
 }
 
 =method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
@@ -828,7 +827,7 @@ you have to test yourself.
 
 'ACTIVE' and 'DELETED' check for the deleted flag on messages and
 message parts.  The FILTER is a code reference, which is called for
-each part of the messagei; each part as C<RECURSE> would return.
+each part of the message; each part as C<RECURSE> would return.
 
 =examples
  my @parts = $msg->parts;           # $msg not multipart: returns ($msg)
@@ -1272,7 +1271,8 @@ sub readBody($$;$$)
     my $body;
     if($bodytype->isDelayed)
     {   $body = $bodytype->new
-          ( message           => $self
+          ( message => $self
+          , charset => 'us-ascii'
           , $self->logSettings
           );
     }
@@ -1287,8 +1287,9 @@ sub readBody($$;$$)
         {   $bodytype = $nbody  }
 
         $body = $bodytype->new
-        ( message           => $self
-        , checked           => $self->{MM_trusted}
+        ( message => $self
+        , checked => $self->{MM_trusted}
+        , charset => 'us-ascii'
         , $self->logSettings
         );
 

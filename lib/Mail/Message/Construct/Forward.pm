@@ -135,7 +135,8 @@ sub forward(@)
 {   my $self    = shift;
     my %args    = @_;
 
-    return $self->forwardNo(@_) if exists $args{body};
+    return $self->forwardNo(@_)
+        if exists $args{body};
 
     my $include = $args{include} || 'INLINE';
     return $self->forwardInline(@_) if $include eq 'INLINE';

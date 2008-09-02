@@ -8,8 +8,8 @@ use Mail::Box::Parser;
 use Mail::Message;
 
 use Carp;
-use POSIX 'tmpnam';
-use File::Copy;
+use File::Temp qw/tempfile/;
+use File::Copy qw/copy/;
 
 =chapter NAME
 
@@ -33,13 +33,11 @@ access through a file is slower, it is saving a lot of memory.
 =c_method new OPTIONS
 
 =error Unable to read file $filename for message body file: $!
-
 A M<Mail::Message::Body::File> object is to be created from a named file, but
 it is impossible to read that file to retrieve the lines within.  Therefore,
 no copy to a temporary file can be made.
 
 =error Cannot write to temporary body file $filename: $!
-
 The message body is to be stored in a temporary file (probably because it is a
 large body), but for the indicated reason, this file cannot be created.
 
@@ -136,8 +134,6 @@ sub _data_from_lines(@)
     $self;
 }
 
-#------------------------------------------
-
 sub clone()
 {   my $self  = shift;
     my $clone = ref($self)->new(based_on => $self);
@@ -149,8 +145,6 @@ sub clone()
     $clone->{MMBF_size}    = $self->{MMBF_size};
     $self;
 }
-
-#------------------------------------------
 
 sub nrLines()
 {   my $self    = shift;
@@ -181,16 +175,13 @@ sub size()
     return $self->{MMBF_size}
        if exists $self->{MMBF_size};
 
-    my $size = -s $self->tempFilename;
+    my $size = eval { -s $self->tempFilename };
 
     $size   -= $self->nrLines
         if $Mail::Message::crlf_platform;   # remove count for extra CR's
 
     $self->{MMBF_size} = $size;
 }
-
-
-#------------------------------------------
 
 sub string()
 {   my $self = shift;
@@ -208,8 +199,6 @@ sub string()
     $return;
 }
 
-#------------------------------------------
-
 sub lines()
 {   my $self = shift;
 
@@ -226,14 +215,10 @@ sub lines()
     wantarray ? @r: \@r;
 }
 
-#------------------------------------------
-
 sub file()
 {   open my $tmp, '<', shift->tempFilename;
     $tmp;
 }
-
-#------------------------------------------
 
 sub print(;$)
 {   my $self = shift;
@@ -253,8 +238,6 @@ sub print(;$)
     $self;
 }
 
-#------------------------------------------
-
 sub read($$;$@)
 {   my ($self, $parser, $head, $bodytype) = splice @_, 0, 4;
     my $file = $self->tempFilename;
@@ -271,8 +254,6 @@ sub read($$;$@)
     $self;
 }
 
-#------------------------------------------
-
 # on UNIX always true.  Expensive to calculate on Windows: message size
 # may be off-by-one in rare cases.
 sub endsOnNewline() { shift->size==0 }
@@ -282,9 +263,7 @@ sub endsOnNewline() { shift->size==0 }
 =section Internals
 
 =method tempFilename [FILENAME]
-
 Returns the name of the temporary file which is used to store this body.
-
 =cut
 
 sub tempFilename(;$)
@@ -292,7 +271,7 @@ sub tempFilename(;$)
 
       @_                     ? ($self->{MMBF_filename} = shift)
     : $self->{MMBF_filename} ? $self->{MMBF_filename}
-    :                          ($self->{MMBF_filename} = tmpnam);
+    :                          ($self->{MMBF_filename} = (tempfile)[1]);
 }
 
 #------------------------------------------
@@ -302,10 +281,8 @@ sub tempFilename(;$)
 =section Cleanup
 
 =method DESTROY
-
 The temporary file is automatically removed when the body is
 not required anymore.
-
 =cut
 
 sub DESTROY { unlink shift->tempFilename }

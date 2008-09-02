@@ -26,14 +26,14 @@ Mail::Message::Body - the data of a body in a message
  my $body  = $msg->body;
  my @text  = $body->lines;
  my $text  = $body->string;
- my IO::Handle $file = $body->file;
+ my $file  = $body->file;  # IO::File
  $body->print(\*FILE);
 
  my $content_type = $body->type;
  my $transfer_encoding = $body->transferEncoding;
- my $encoded  = $body->encode(mime_type => 'text/html',
+ my $encoded = $body->encode(mime_type => 'text/html',
     charset => 'us-ascii', transfer_encoding => 'none');\n";
- my $decoded  = $body->decoded;
+ my $decoded = $body->decoded;
 
 =chapter DESCRIPTION
 
@@ -97,11 +97,12 @@ are message references B<within the same folder>.
 
 =cut
 
-use overload bool  => sub {1}   # $body->print if $body
-           , '""'  => 'string_unless_carp'
-           , '@{}' => 'lines'
-           , '=='  => sub {ref $_[1] && refaddr $_[0] == refaddr $_[1]}
-           , '!='  => sub {ref $_[1] && refaddr $_[0] != refaddr $_[1]};
+use overload
+    bool  => sub {1}   # $body->print if $body
+  , '""'  => 'string_unless_carp'
+  , '@{}' => 'lines'
+  , '=='  => sub {ref $_[1] && refaddr $_[0] == refaddr $_[1]}
+  , '!='  => sub {ref $_[1] && refaddr $_[0] != refaddr $_[1]};
 
 #------------------------------------------
 
@@ -121,11 +122,17 @@ got, and then call M<encode()> for what you need.
 The information about encodings must be taken from the specified BODY,
 unless specified differently.
 
-=option  charset STRING
-=default charset C<'us-ascii'>
+=option  charset CHARSET|'PERL'
+=default charset C<'PERL'> or <undef>
 Defines the character-set which is used in the data.  Only useful in
-combination with a C<mime_type> which refers to C<text> in any shape.
-This field is case-insensitive.
+combination with a C<mime_type> which refers to C<text> in any shape,
+which does not contain an explicit charset already.  This field is
+case-insensitive.
+
+When a known CHARSET is provided and the mime type says text, then the
+data is expected to be bytes in that particular encoding (see M<Encode>).
+When 'PERL' is given, then then the data is in Perl's internal encoding
+(either latin1 or utf8, you shouldn't know!)
 
 =option  checked BOOLEAN
 =default checked <false>
@@ -270,7 +277,7 @@ sub init($)
         elsif($file->isa('IO::Handle'))
         {    $self->_data_from_filehandle($file) or return }
         else
-        {    croak "message body: illegal datatype for file option" }
+        {    croak "message body: illegal datatype `".ref($file)."' for file option" }
     }
     elsif(defined(my $data = $args->{data}))
     {
@@ -282,7 +289,7 @@ sub init($)
         {   $self->_data_from_lines($data) or return;
         }
         else
-        {   croak "message body: illegal datatype for data option" }
+        {   croak "message body: illegal datatype `".ref($data)."' for data option" }
     }
     elsif(! $self->isMultipart && ! $self->isNested)
     {   # Neither 'file' nor 'data', so empty body.
@@ -308,14 +315,13 @@ sub init($)
     }
 
     if(ref $mime && $mime->isa('MIME::Type'))
-    {   $mime    = $mime->type;
+    {   $mime     = $mime->type;
     }
 
     if(defined(my $based = $args->{based_on}))
     {   $mime     = $based->type             unless defined $mime;
         $transfer = $based->transferEncoding unless defined $transfer;
         $disp     = $based->disposition      unless defined $disp;
-        $charset  = $based->charset          unless defined $charset;
         $descr    = $based->description      unless defined $descr;
 
         $self->{MMB_checked}
@@ -323,18 +329,19 @@ sub init($)
     }
     else
     {   $transfer = $args->{transfer_encoding};
-        $self->{MMB_checked} = $args->{checked}|| 0;
+        $self->{MMB_checked} = $args->{checked} || 0;
     }
 
     if(defined $mime)
-    {   #$charset ||= 'us-ascii' if $mime =~ m!^text/!i;
-        $mime = $self->type($mime);
-        $mime->attribute(charset => $charset) if defined $charset;
+    {   $mime = $self->type($mime);
+        $mime->attribute(charset => ($charset || 'PERL'))
+            if $mime =~ m!^text/!i && !$mime->attribute('charset');
     }
 
     $self->transferEncoding($transfer) if defined $transfer;
     $self->disposition($disp)          if defined $disp;
     $self->description($descr)         if defined $descr;
+    $self->type($mime) if defined $mime;
 
     $self->{MMB_eol}   = $args->{eol} || 'NATIVE';
 
@@ -373,8 +380,11 @@ body of any type.
  
 is equivalent with
 
- my $dec = $body->encode(mime_type => 'text/plain', charset => 'us-ascii',
-    transfer_encoding => 'none');
+ my $dec = $body->encode
+   ( mime_type         => 'text/plain'
+   , transfer_encoding => 'none'
+   , charset           => 'PERL'
+   );
 
 The C<$dec> which is returned is a body.  Ask with the M<mimeType()> method
 what is produced.  This C<$dec> body is B<not related to a header>.
@@ -388,7 +398,7 @@ sub decoded(@)
 {   my $self = shift;
     $self->encode
      ( mime_type         => 'text/plain'
-     , charset           => 'us-ascii'
+     , charset           => 'PERL'
      , transfer_encoding => 'none'
      , @_
      );

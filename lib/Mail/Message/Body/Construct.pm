@@ -78,11 +78,9 @@ sub foreachLine($)
 
 =method concatenate COMPONENTS
 
-Concatenate a list of elements into one new body.  The encoding is defined by
-the body where this method is called upon (and which does not need to be
-included in the result).
+Concatenate a list of elements into one new body.
 
-Specify a list of COMPONENTS.  Each component can be
+Specify a list of text COMPONENTS.  Each component can be
 a message (M<Mail::Message>, the body of the message is used),
 a plain body (M<Mail::Message::Body>), 
 C<undef> (which will be skipped),
@@ -99,39 +97,24 @@ an array of scalars (each providing one line).
 sub concatenate(@)
 {   my $self = shift;
 
-    my @bodies;
-    foreach (@_)
-    {   next unless defined $_;
-        push @bodies
-         , !ref $_           ? Mail::Message::Body::String->new(data => $_)
-         : ref $_ eq 'ARRAY' ? Mail::Message::Body::Lines->new(data => $_)
-         : $_->isa('Mail::Message')       ? $_->body
-         : $_->isa('Mail::Message::Body') ? $_
-         : carp "Cannot concatenate element ".@bodies;
-    }
+    return $self
+        if @_==1;
 
     my @unified;
-
-    my $changes  = 0;
-    foreach my $body (@bodies)
-    {   my $unified = $self->unify($body);
-        if(defined $unified)
-        {   $changes++ unless $unified==$body;
-            push @unified, $unified;
-        }
-        elsif($body->mimeType->mediaType eq 'text')
-        {   # Text stuff can be unified anyhow, although we do not want to
-            # include postscript or such.
-            push @unified, $body;
-        }
-        else { $changes++ }
+    foreach (@_)
+    {   next unless defined $_;
+        push @unified
+         , !ref $_           ? $_
+         : ref $_ eq 'ARRAY' ? @$_
+         : $_->isa('Mail::Message')       ? $_->body->decoded
+         : $_->isa('Mail::Message::Body') ? $_->decoded
+         : carp "Cannot concatenate element ".$_;
     }
 
-    return $self if @bodies==1 && $bodies[0]==$self;  # unmodified, and single
-
     ref($self)->new
-      ( based_on => $self
-      , data     => [ map {$_->lines} @unified ]
+      ( based_on  => $self
+      , mime_type => 'text/plain'
+      , data      => join('', @unified)
       );
 }
 

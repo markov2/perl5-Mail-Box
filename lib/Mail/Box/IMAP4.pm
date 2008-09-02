@@ -146,7 +146,7 @@ sub init($)
 
     # MailBox names top folder directory '=', but IMAP needs '/'
     $folder = '/'
-        if $folder eq '=';
+        if ! defined $folder || $folder eq '=';
 
     # There's a disconnect between the URL parser and this code.
     # The URL parser always produces a full path (beginning with /)

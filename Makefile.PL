@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.082';
+my $VERSION = '2.083';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -52,13 +52,13 @@ and a wrapper which is distributed separately from Mail::Box.
 You get read-only access to the dbx folders.
 REASON
 
-, [ Mail::SpamAssassin => '2.00', reason  => <<'REASON', warning => <<'WARN' ]
-Searching for spam in a mail folder needs the popular spam killer.
-REASON
-This distr is large: installing will take quite a while. You
-can install it later.  When your CPAN cache is small, this may
-break your Mail::Box installing process.
-WARN
+#, [ Mail::SpamAssassin => '2.00', reason  => <<'REASON', warning => <<'WARN' ]
+#Searching for spam in a mail folder needs the popular spam killer.
+#REASON
+#This distr is large: installing will take quite a while. You
+#can install it later.  When your CPAN cache is small, this may
+#break your Mail::Box installing process.
+#WARN
 
 , [ Mail::IMAPClient => '3.00', reason => <<'REASON' ]
 Required for IMAP4 support.

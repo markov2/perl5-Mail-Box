@@ -9,7 +9,7 @@ use warnings;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 29;
+use Test::More tests => 30;
 use IO::Scalar;
 
 use Mail::Message::Body::Lines;
@@ -41,11 +41,11 @@ is($b1->transferEncoding, '8bit');
 is($b1->disposition, 'none');
 
 my $p1 = Mail::Message->new(head => $h1);
+is($b1->charset, 'PERL');
+my $b1b = $p1->body($b1);
+is($b1b->charset, 'utf-8');
+$p1->print;
 
-my $equals = $p1->body($b1)==$b1;
-ok($equals);
-
-is($p1->get('Content-Type'), 'text/html');
 is($p1->get('Content-Transfer-Encoding'), '8bit');
 ok(! defined $p1->get('Content-Disposition'));
 
@@ -61,8 +61,9 @@ my $b2 = Mail::Message::Body::Lines->new
 ok($b2, 'body 2');
 
 my $p2 = Mail::Message->new(head => $h2);
-$equals = $p2->body($b2)==$b2;
-ok($equals);
+is($b2->charset, 'PERL');
+my $b2b = $p2->body($b2);
+is($b2b->charset, 'utf-8');
 
 # Empty multipart
 
@@ -83,7 +84,7 @@ $newbody->print($g);
 
 compare_message_prints($fakeout, <<'EXPECTED', 'print with attachment');
 --part-separator
-Content-Type: text/html
+Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p1 l1
@@ -102,14 +103,14 @@ $fakeout = '';
 $newerbody->print($g);
 compare_message_prints($fakeout, <<'EXPECTED', 'print with two attachments');
 --part-separator
-Content-Type: text/html
+Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
 
 --part-separator
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p2 l1
@@ -143,14 +144,14 @@ preamb1
 preamb2
 
 --part-separator
-Content-Type: text/html
+Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
 
 --part-separator
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p2 l1
@@ -184,14 +185,14 @@ preamb1
 preamb2
 
 --part-separator
-Content-Type: text/html
+Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p1 l1
 p1 l2
 
 --part-separator
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 p2 l1
@@ -230,7 +231,7 @@ From: me
 To: you
 Date: now
 Message-Id: <simple>
-Content-Type: text/html
+Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 MIME-Version: 1.0
 

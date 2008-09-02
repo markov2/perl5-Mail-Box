@@ -60,7 +60,7 @@ From: me
 To: you
 Date: now
 Message-Id: <simple>
-Content-Type: text/html
+Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 MIME-Version: 1.0
 

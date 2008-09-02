@@ -6,7 +6,10 @@ use strict;
 use File::Spec;
 use File::Basename;
 
-use lib qw/tests lib/;
+use lib qw(tests lib);
+
+# test env at home
+$ENV{PERL5LIB} .= qw(:/home/markov/shared/perl/IMAPClient/lib);
 
 use Config;
 use Tools;             # test tools

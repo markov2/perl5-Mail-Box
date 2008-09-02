@@ -17,7 +17,7 @@ Mail::Message::Head::Subset - subset of header information of a message
 
 =chapter SYNOPSIS
 
- my Mail::Message::Head::Subset $subset = ...;
+ my $subset = Mail::Message::Head::Subset->new(...)
  $subset->isa('M<Mail::Message::Head>')  # true
  $subset->guessBodySize               # integer or undef
  $subset->isDelayed                   # true

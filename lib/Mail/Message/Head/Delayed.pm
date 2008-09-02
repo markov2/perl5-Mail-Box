@@ -17,7 +17,7 @@ Mail::Message::Head::Delayed - a not-read header of a Mail::Message
 
 =chapter SYNOPSIS
 
- my Mail::Message::Head::Delayed $delayed = ...;
+ my $delayed = Mail::Message::Head::Delayed->new(...)
  $delayed->isa('Mail::Message::Head')  # true
  $delayed->guessBodySize               # undef
  $delayed->isDelayed                   # true

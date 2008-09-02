@@ -9,7 +9,7 @@ use warnings;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 24;
+use Test::More tests => 25;
 use Mail::Address;
 
 use Mail::Message;
@@ -146,6 +146,7 @@ my $preamble = Mail::Message::Body->new(data => "just checking\n");
 my $fwd = $msg->forwardAttach(preamble => $preamble, To => 'us');
 
 ok(defined $fwd,                        "create forwardAttach");
+isa_ok($fwd, 'Mail::Message');
 is(reproducable_text($fwd->string), <<ATTACH);
 From: you
 To: us
@@ -157,13 +158,13 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 just checking
 
 --boundary-<removed>
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 greetings!
@@ -188,7 +189,7 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 just checking
@@ -201,7 +202,7 @@ X-Loop: yes
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 greetings!
@@ -232,13 +233,13 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 just checking
 
 --boundary-<removed>
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 this is the first
@@ -278,7 +279,8 @@ Date: <removed>
 MIME-Version: 1.0
 
 --boundary-<removed>
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 
 Prelude
 [The forwarded message is attached]

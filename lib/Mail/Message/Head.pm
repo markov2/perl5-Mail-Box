@@ -20,8 +20,8 @@ Mail::Message::Head - the header of one message
  $head->add('From: me@localhost');
  $head->add(From => 'me@localhost');
  $head->add(Mail::Message::Field->new(From => 'me'));
- my Mail::Message::Field $subject = $head->get('subject');
- my Mail::Message::Field @rec = $head->get('received');
+ my $subject = $head->get('subject');
+ my @rec = $head->get('received');
  $head->delete('From');
 
 =chapter DESCRIPTION

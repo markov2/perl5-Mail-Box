@@ -4,7 +4,46 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
-nog meer problemen: CSS moet relatief, en nog mailbox.css resten
+version 2.083: Tue Sep  2 09:41:19 CEST 2008
+
+	Changes:
+
+	- FIX CHARACTER-SET HANDLING.  When a new body is created,
+	  it will get charset 'PERL', which means: Perl internal
+	  representation.  Also the decoded() body is of that.	As part
+	  of a message, the body with be translated into real utf-8.
+
+	  This change will make Mail::Box slower, but correct!  Check
+	  your applications!   Use $msg->decoded when you process the
+	  content.
+
+	- removed $msg->decoded option 'keep', because decoded object
+	  depends on temporary decoding parameters.
+
+	Fixes:
+
+	- use File::Temp, not POSIX::tmpnam, to work around Windows
+	  bug.  rt.cpan.org#35747 [Ron Murray]
+
+	- Mail::Message::contentType could produce "use of undefined"
+	  error message [Patrick Heesom]
+
+	- Fix listing IMAP folders. rt.cpan.org#36458 [Jonathan Kamens]
+
+	- do not set charset on non-text parts.
+
+	- no complaints for IMAP4 object without explicit folder
+	  name.  rt.cpan.org#37801 [Slaven Rezic]
+
+	- remove SpamAssassion question from installation: SAv2 is the
+	  only supported, but most people will not install that.
+
+	Improvements:
+
+	- doc-patch, where  "my Type @array" is not permitted
+	  anymore [Mike Andrews]
+
+	- do not coerce parts via messages into parts.
 
 version 2.082: Mon Apr 28 09:30:33 CEST 2008
 

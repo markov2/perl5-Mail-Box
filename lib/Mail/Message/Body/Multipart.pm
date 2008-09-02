@@ -424,7 +424,7 @@ sub foreachComponent($)
       );
 
     $_->container($constructed)
-       foreach @new_parts;
+        foreach @new_parts;
 
     $constructed;
 }
