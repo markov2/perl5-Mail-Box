@@ -588,8 +588,7 @@ sub bcc() { map {$_->addresses} shift->head->get('Bcc') }
 
 =method date
 Method has been removed for reasons of consistency.  Use M<timestamp()>
-or C<$msg->head->get('Date')>.
-=cut
+or C<< $msg->head->get('Date') >>.
 
 =method destinations
 Returns a list of M<Mail::Address> objects which contains the combined

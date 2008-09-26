@@ -4,6 +4,22 @@ NOTE: The number of changes and fixes for each release seem large, but
       usually limited to areas which are under development.  Mail::Box
       is a huge module, so there is always a lot of activity.
 
+version 2.084: Fri Sep 26 16:44:51 CEST 2008
+
+	Changes:
+
+	- no questions asked about Mail::Box::Parser::C; it is not
+	  really maintained as it should... but probably still works
+	  in most cases.
+
+	Fixes:
+
+	- change in TAP::Harness shows missing TAP::Parser::Aggregator
+	  in test.pl rt.cpan.org#39264 [Jerrad Pierce]
+
+	- removed (@) prototype on Mail::Internet::new replacement,
+	  because it produces a warning on 5.10
+
 version 2.083: Tue Sep  2 09:41:19 CEST 2008
 
 	Changes:

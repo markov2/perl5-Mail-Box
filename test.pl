@@ -16,7 +16,8 @@ use Tools;             # test tools
 use Mail::Reporter;    # to avoid 'too late for INIT'
 
 use IO::Dir;
-use TAP::Harness  ();
+use TAP::Harness            ();
+use TAP::Parser::Aggregator ();
 
 # we use Test::More without a plan here, but we don't want
 # Test::Builder to mess with the exit code

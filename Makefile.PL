@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.083';
+my $VERSION = '2.084';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -29,15 +29,17 @@ WARN
 
 my @optional =
 ( 
-  [ Mail::Box::Parser::C => '3.006'
-  , reason => <<'REASON', warning => <<'WARN' ]
-Speeds-up reading mail folders, though most time is consumed by
-Perl's administration of the processed data.
-REASON
-This module contains XS code, so you need a C compiler.
-WARN
 
-, [ Encode => '1.86', requires => sub { $] >= 5.007_003 }
+#Not mainted, hence disabled for 2.084.
+#  [ Mail::Box::Parser::C => '3.006'
+#  , reason => <<'REASON', warning => <<'WARN' ]
+#Speeds-up reading mail folders, though most time is consumed by
+#Perl's administration of the processed data.
+#REASON
+#This module contains XS code, so you need a C compiler.
+#WARN
+
+  [ Encode => '1.86', requires => sub { $] >= 5.007_003 }
   , reason  => <<'REASON', warning => <<'WARN' ]
 Conversions between character sets are done by Encode.  Many
 other Perl modules use Encode too.
