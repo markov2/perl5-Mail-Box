@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.085';
+my $VERSION = '2.086';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -39,15 +39,7 @@ my @optional =
 #This module contains XS code, so you need a C compiler.
 #WARN
 
-  [ Encode => '1.86', requires => sub { $] >= 5.007_003 }
-  , reason  => <<'REASON', warning => <<'WARN' ]
-Conversions between character sets are done by Encode.  Many
-other Perl modules use Encode too.
-REASON
-Encode is a huge package, but not complicated to install.
-WARN
-
-, [ Mail::Transport::Dbx => '0.04', reason  => <<'REASON' ]
+  [ Mail::Transport::Dbx => '0.04', reason  => <<'REASON' ]
 The wrapper to the Outlook's dbx files consists of a c-library
 named libdbx (website http://sourceforge.net/project/ol2mbox/),
 and a wrapper which is distributed separately from Mail::Box.
@@ -96,6 +88,7 @@ REASON
 
 my %prereq =
  ( Date::Parse    => 0.0
+ , Encode         => 2.26
  , File::Spec     => 0.7
  , File::Remove   => '0.20'
  , Errno          => 0.0
@@ -134,22 +127,23 @@ print <<'REQUIRED';
 REQUIRED
 
 my @errors;
-while(my ($module, $version) = each %prereq)
-{
+foreach my $module (sort keys %prereq)
+{   my $reqversion = $prereq{$module};
     eval "require $module";
+
     if($@ && $@ =~ m/^Can't locate /)
     {   print "    $module is not yet installed\n" }
     elsif($@)
     {   print "    $module produced an error:\n$@";
         push @errors, $module;
     }
-    elsif($module->VERSION < $version)
+    elsif($module->VERSION < $reqversion)
     {   print "    $module version ",$module->VERSION
-            , " is outdated; requires $version\n";
+            , " is outdated; requires $reqversion\n";
     }
     else
     {   print "    $module version ",$module->VERSION
-            , " is ok (required is $version)\n";
+            , " is ok (required is $reqversion)\n";
     }
 }
 
@@ -169,7 +163,7 @@ print <<'OPTIONAL';
 *
 OPTIONAL
 
-foreach my $optional (@optional)
+foreach my $optional (sort {$a->[0] cmp $b->[0]} @optional)
 {   my ($module, $version, %args) = @$optional;
     my $requirements = $args{requires} || sub {1};
     next unless $requirements->();
@@ -194,8 +188,10 @@ foreach my $optional (@optional)
         else { print "**** Optional $module compilation failed:\n$@\n" }
     }
     elsif(eval '$module->VERSION($version)' && $@)
-    {   print "**** Optional $module too old: requires $version but is ",
-            $module->VERSION,";$@\n";
+    {   my $error = $@ || '';
+        $error =~ s/[\r\n]+$//;
+        print "**** Optional $module too old: requires $version but is ",
+            $module->VERSION,";$error\n";
     }
     else
     {   my $v = $module->VERSION;
