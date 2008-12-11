@@ -297,17 +297,19 @@ sub threadStart($)
 
     while(my $parent = $thread->repliedTo)
     {   unless($parent->isDummy)
-        {   # Message already found no special action to be taken.
+        {   # Message already found, no special action to be taken.
             $thread = $parent;
             next;
         }
 
         foreach ($self->folders)
-        {   last unless $_->scanForMessages
-              ( $thread->messageId
-              , $parent->messageId
-              , $thread->message->timestamp - $self->{MBTM_timespan}
-              , $self->{MBTM_window}
+        {   my $message  = $thread->message;
+            my $timespan = $message->isDummy ? 'ALL'
+              : $message->timestamp - $self->{MBTM_timespan};
+
+            last unless $_->scanForMessages
+              ( $thread->messageId, $parent->messageId
+              , $timespan, $self->{MBTM_window}
               );
         }
 
@@ -513,8 +515,9 @@ sub _process_delayed_nodes()
 sub _process_delayed_message($$)
 {   my ($self, $node, $message) = @_;
     my $msgid = $message->messageId;
-    my $head  = $message->head;  # will force parsing of head when not
-                         # done yet.
+
+    # will force parsing of head when not done yet.
+    my $head  = $message->head or return $self;
 
     my $replies;
     if(my $irt  = $head->get('in-reply-to'))

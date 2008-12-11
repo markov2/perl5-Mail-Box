@@ -1,25 +1,23 @@
+== README   Mail::Box v2
+Last update: 2008-09-26
 
-README   Mail::Box v2
-
-
-The Mail::Box folder is a modern mail-folder manager -- at least at
-the moment of this writing ;)  It is written to replace Mail::Folder,
-although it interface is different.
+The Mail::Box folder is a modern mail-folder manager --at least at the
+moment of this writing ;)  It is written to be a replacement of MailTools
+and Mail::Folder, an alternative to the Email::* set of modules.
 
 The most important modules are Mail::Box::Manager, Mail::Box, and
-Mail::Message.  Their documentation explain the features in more
-detail than this document.  The Mail::Box-Overview page describe
-each set of modules in more detail.
+Mail::Message.  Their documentation explain the features in more detail
+than this document.  The Mail::Box-Overview page describe each set of
+modules in more detail.
+Start reading at http://perl.overmeer.net/mailbox/html/Mail_Box-Index/
 
 Other descriptive documents in this module:
-
     README.FAQ           Frequently asked questions
     README.todo          Thoughts about possible extensions
 
-Mail::Box version 1.xxx runs on perl 5.005 and up Mail::Box version
-2.xxx is much faster and more flexible, but only runs on perl 5.6.1
-and up. It is not fully compatible with previous versions, although
-conversion will usually not be too hard.
+Mail::Box version 1.xxx (developed in 2000 and 2001) runs on perl 5.005
+and up, Mail::Box version 2.xxx is much faster and more flexible, but
+only runs on perl 5.6.1 and up.
 
 ===== Contributors
 
@@ -41,18 +39,19 @@ people have to mentioned in special:
 
 ===== Status
 
-Although the implementation of Mail::Box is young, it already has a
-large number of features.
+This module has been used by dozens of people, on many different
+platforms.  Some problems do surface sometimes:
 
-See the file README.status to see what has been tested and what
-hasn't.  Version 1.300 contained 300 tests, but that is certainly not
-sufficient to call the module `well tested'.  Version 2.01 had over 500
-tests, which is quite ok.  Mail::Box version 2.014 contains close to 2500
-tests -much better- and over 9000 lines of pure code in 67 packages.
+  . on Windows, some methods (like moving messages between some
+    kinds of folders) do not work.  Windows can not rename a file
+    which is locked, for instance... so where this is used you may
+    get hurt.  No Windows specialist has provided a patch to solve
+    this correctly.
+
+  . the IMAP implementation got stalled when Mail::IMAPClient was
+    not maintained.  I lack the time to complete it.
 
 ===== Features
-
-= AUTOLOAD messages.
 
 The Mail::Box modules try to keep messages stored in the mailbox
 file(s) for as long as possible.  The message is read from file and
@@ -75,75 +74,3 @@ are copied from the old folder into a new one byte-by-byte.  When you
 open a folder with 1000 messages, and modify two messages, only those
 two get parsed and recomposed.  All 998 other messages are simple
 byte-by-byte copied into the replacement file.
-
-= Support for various folder types
-
-Currently supported:
-
-* Mbox folders, see Mail::Box::Mbox
-  One file per folder, with many messages in each file.
-
-* MH folders, see Mail::Box::MH
-  One directory per folder, with each message in a separate file.
-
-See STATUS for my wishlist of supported folder types.
-
-= Support for message construction
-
-Create messages from data. Easily create replies, forwards, and bounces.
-Conversions between different message types (even foreign to Mail::Box)
-Transfer encoding and decoding without hassle.
-
-= Support for message thread construction
-
-The current implementation has a very basic message thread
-construction algorithm. At the moment, only the In-Reply-To and the
-References fields are taken into account.  This could be optimized,
-for instance by looking at the subject.  Read more about threading in
-Mail::Box::Threads.
-
-= Various kinds of locking
-
-There are three kinds of locking:
-* Locking via a .lock (dotlock) file.
-* Locking using flock (mbox folders only)
-* Locking via a .lock (dotlock) file which is NFS-safe.
-
-Read more about locking in Mail::Box::Locker.
-
-= Managing folders
-
-A special folder manager was designed to keep track of opened folders.
-This is the main object that most users will use. (Read its
-documentation Mail::Box::Manager before trying anything else.)
-
-= Tied access
-
-If you like, you can tie a folder to an array, and use it that way.
-See Mail::Box::Tie.
-
-
-===== Differences with Mail::Folder
-
-The popular Mail::Folder package has been around for many years.  It
-is written to use Mail::Internet, instead of the more powerful
-MIME::Entity messages.  But Mail::Message objects are even more
-flexible.
-
-Mail::Folder does not support discussion thread detection, nor
-autoloading of message data.  Therefore, it is much slower in
-accessing the folders.
-
-Another major difference is that the object structure of Mail::Folder
-is less clear than that of Mail::Box.  The supported mailbox types are
-separately implemented and share less code than they could.  The
-folders manage themselves instead of being managed by a separate
-folder manager object.
-
-======
-
-Website:     http://perl.overmeer.net/mailbox/
-
-Mailinglist: mailbox-subscribe@perl.overmeer.net
-
-Author:      Mark Overmeer   mark@overmeer.net

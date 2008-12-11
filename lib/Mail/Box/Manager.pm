@@ -793,16 +793,23 @@ sub copyMessage(@)
     $folder = $self->isOpenFolder($folder) || $folder
         unless ref $folder;
 
-    my @coerced
-     = ref $folder
-     ? map {$_->copyTo($folder, share => $args{share})} @messages
-     : $self->appendMessages(@messages, %args, folder => $folder);
-
-    # hidden option, do not use it: it's designed to optimize moveMessage
-    if($args{_delete})
-    {   $_->label(deleted => 1) foreach @messages;
+    unless(ref $folder)
+    {   my @c = $self->appendMessages(@messages, %args, folder => $folder);
+        if($args{_delete})
+        {   $_->label(deleted => 1) for @messages;
+        }
+        return @c;
     }
 
+    my @coerced;
+    foreach my $msg (@messages)
+    {   if($msg->folder eq $folder)  # ignore move to same folder
+        {   push @coerced, $msg;
+            next;
+        }
+        push @coerced, $msg->copyTo($folder, share => $args{share});
+        $msg->label(deleted => 1) if $args{_delete};
+    }
     @coerced;
 }
 

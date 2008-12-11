@@ -49,7 +49,7 @@ sub encode($@)
     my @lines;
 
     my $changes = 0;
-    foreach ($self->lines)
+    foreach ($body->lines)
     {   $changes++ if s/[\000\013]//g;
         push @lines, $_;
     }

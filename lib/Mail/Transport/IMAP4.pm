@@ -412,7 +412,7 @@ sub folders(;$)
     my $sep   = $imap->separator;
     my $level = 1 + (defined $top ? () = $top =~ m/\Q$sep\E/g : -1);
 
-    # There may be dupplications, thanks to subdirs so we uniq it
+    # There may be duplications, thanks to subdirs so we uniq it
     my %uniq;
     $uniq{(split /\Q$sep\E/, $_)[$level] || ''}++ for @folders;
     delete $uniq{''};

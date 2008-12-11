@@ -11,6 +11,10 @@ use MIME::Types;
 use File::Basename 'basename';
 use Encode         'find_encoding';
 
+# http://www.iana.org/assignments/character-sets
+use Encode::Alias;
+define_alias(qr/^unicode-?1-?1-?utf-?([78])$/i => '"UTF-$1"');  # rfc1642
+
 my $mime_types;
 
 =chapter NAME
@@ -147,8 +151,6 @@ sub encode(@)
     #
     # The only translations implemented now is content transfer encoding.
     #
-#warn "TranferEncoding ($trans_was) -> ($trans_to)\n";
-#warn "Charset ($char_was) -> ($char_to)\n";
 
     return $self
         if   $trans_was eq   $trans_to
@@ -168,10 +170,8 @@ sub encode(@)
         return $self;
     }
 
-    my $recoded;
-    if(lc($char_was) eq lc($char_to))
-    {   $recoded = $decoded;
-    }
+    my $recoded = $decoded;
+    if(lc($char_was) eq lc($char_to)) { ; }
     elsif($char_was eq 'PERL')   
     {   if(my $recoder = find_encoding $char_to)
         {   $recoded = $bodytype->new
@@ -197,11 +197,9 @@ sub encode(@)
         my $to   = find_encoding $char_to;
         if(!$from)
         {   $self->log(WARNING => "Charset `$char_was' is not known.");
-            $recoded = $decoded;
         }
         elsif(!$to)
         {   $self->log(WARNING => "Charset `$char_to' is not known.");
-            $recoded = $decoded;
         }
         else
         {   $recoded = $bodytype->new

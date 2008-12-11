@@ -152,6 +152,7 @@ Only the HTML version of this manual page will list the sections.
       <li>scan header and body (M<Mail::Box::Search::Grep>)
       <li>check for spam (M<Mail::Box::Search::SpamAssassin>) 
       </ul>
+  <li>Managing messages located in folders (Mail::Box::Message)
   </ul>
 
 <li><strong><a name="ftypes">Folder types</a></strong>

@@ -497,6 +497,10 @@ may interfere with your markup characters.
 
 Be warned: language information, which is defined in RFC2231, is ignored.
 
+Encodings with unknown charsets are left untouched [requires v2.085,
+otherwise croaked].  Unknown characters within an charset are replaced by
+a '?'.
+
 =option  is_text BOOLEAN
 =default is_text C<1>
 
@@ -512,13 +516,17 @@ an unencoded word.  Phrases and comments are texts.
 
 =cut
 
-sub _decoder($$$)
-{   my ($charset, $encoding, $encoded) = @_;
+sub _decoder($$$$)
+{   my ($charset, $encoding, $encoded, $whole) = @_;
     $charset   =~ s/\*[^*]+$//;   # string language, not used
-    $charset ||= 'us-ascii';
+    my $to_utf8 = Encode::find_encoding($charset || 'us-ascii')
+        or return $whole;
 
     my $decoded;
-    if(lc($encoding) eq 'q')
+    if($encoding !~ /\S/)
+    {   $decoded = $encoded;
+    }
+    elsif(lc($encoding) eq 'q')
     {   # Quoted-printable encoded
         $encoded =~ s/_/ /g;
         $decoded = MIME::QuotedPrint::decode_qp($encoded);
@@ -530,10 +538,10 @@ sub _decoder($$$)
     }
     else
     {   # unknown encodings ignored
-        return $encoded;
+        return $whole;
     }
 
-    Encode::decode($charset, $decoded, 0);
+    $to_utf8->decode($decoded, Encode::FB_DEFAULT);  # error-chars -> '?'
 }
 
 sub decode($@)
@@ -543,7 +551,8 @@ sub decode($@)
        # dirty trick to get this done: add an explicit blank.
        $encoded =~ s/\?\=\s(?!\s*\=\?|$)/_?= /gs;
     }
-    $encoded =~ s/\=\?([^?\s]*)\?([^?\s]*)\?([^?\s]*)\?\=\s*/_decoder($1,$2,$3)/gse;
+    $encoded =~ s/\=\?([^?\s]*)\?([^?\s]*)\?([^?\s]*)\?\=\s*/
+                  _decoder($1,$2,$3,$encoded)/gse;
 
     $encoded;
 }

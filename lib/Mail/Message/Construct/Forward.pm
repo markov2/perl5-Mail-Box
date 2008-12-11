@@ -71,24 +71,20 @@ M<Mail::Address> objects.
 
 =option  From ADDRESSES
 =default From <'to' in current>
-
 Your identification, by default taken from the C<To> field of the
 source message.
 
 =option  Bcc ADDRESSES
 =default Bcc undef
-
 Receivers of blind carbon copies: their names will not be published to
 other message receivers.
 
 =option  Cc ADDRESSES
 =default Cc undef
-
 The carbon-copy receivers, by default none.
 
 =option  Date DATE
 =default Date <now>
-
 The date to be used in the message sent.
 
 =option  Message-ID STRING
@@ -242,14 +238,12 @@ effective for single-part messages.
 
 =option  prelude BODY
 =default prelude undef
-
 The line(s) which will be added before the quoted forwarded lines.
 If nothing is specified, the result of the M<forwardPrelude()> method
 is used.  When C<undef> is specified, no prelude will be added.
 
 =option  postlude BODY
 =default postlude undef
-
 The line(s) which to be added after the quoted reply lines.  Create a
 body for it first.  This should not include the signature, which has its
 own option.  The signature will be added after the postlude when the
@@ -257,7 +251,6 @@ forwarded message is C<INLINE>d.
 
 =option  quote CODE|STRING
 =default quote undef
-
 Mangle the lines of an C<INLINE>d reply with CODE, or by prepending a
 STRING to each line.  The routine specified by CODE is called when the
 line is in C<$_>.
@@ -276,7 +269,6 @@ the postlude.
 
 =option  strip_signature REGEXP|STRING|CODE
 =default strip_signature C<qr/^--\s/>
-
 Remove the signature of the sender.  The value of this parameter is
 passed to M<Mail::Message::Body::stripSignature(pattern)>, unless the
 source text is not included.  The signature is stripped from the message

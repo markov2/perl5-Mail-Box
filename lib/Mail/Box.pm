@@ -1325,6 +1325,10 @@ sub messages($;$)
 =method nrMessages OPTIONS
 Simply calls M<messages()> in scalar context to return a count instead
 of the messages itself.  Some people seem to understand this better.
+Note that nrMessages() will default to returning a count of
+C<ALL> messages in the folder, including both C<ACTIVE> and C<DELETED>.
+
+The OPTIONS are passed to (and explained in) M<messages()>.
 =cut
 
 sub nrMessages(@) { scalar shift->messages(@_) }

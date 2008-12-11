@@ -496,8 +496,8 @@ sub get($)
 Study the content of a field, like M<get()> does, with as main difference
 that a M<Mail::Message::Field::Full> object is returned.  These objects
 stringify to an utf8 decoded representation of the data contained in
-the field, where M<get()> does not decode.
-See M<Mail::Message::Field::study()>.
+the field, where M<get()> does not decode.  When the field does not exist,
+then C<undef> is returned.  See M<Mail::Message::Field::study()>.
 
 =example the study() short-cut for header fields
  print $msg->study('to'), "\n";
@@ -506,6 +506,10 @@ Is equivalent to:
 
  print $msg->head->study('to'), "\n";       # and
  print $msg->head->get('to')->study, "\n";
+
+or better:
+ if(my $to = $msg->study('to')) { print "$to\n" }
+ if(my $to = $msg->get('to')) { print $to->study, "\n" }
 =cut
 
 sub study($)
