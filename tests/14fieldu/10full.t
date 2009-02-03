@@ -204,7 +204,7 @@ use utf8;
 while(@ex_qp)
 {   my ($from, $to) = (shift @ex_qp, shift @ex_qp);
     my $utf8_to = decode('iso-8859-1', $to);
-    is($d->decode($from), $utf8_to);
+    is($d->decode($from), $utf8_to, $from);
 }
 
 #

@@ -636,6 +636,10 @@ M<Mail::Box::Manager::copyMessage()> via the manager.
 
 Messages with id's which already exist in this folder are not added.
 
+BE WARNED that message labels may get lost when a message is moved from
+one folder type to an other.  An attempt is made to translate labels,
+but there are many differences in interpretation by applications.
+
 =option  share BOOLEAN
 =default share <not used>
 Try to share the physical resource of the current message with the

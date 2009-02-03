@@ -919,8 +919,10 @@ Labels are used to store knowledge about handling of the message within
 the folder.  Flags about whether a message was read, replied to, or
 scheduled for deletion.
 
-Some labels are taken from the header's C<Status> and C<X-Status> lines,
-however folder types like MH define a separate label file.
+Some labels are taken from the header's C<Status> and C<X-Status> lines.
+Folder types like MH define a separate label file, and Maildir adds
+letters to the message filename.  But the MailBox labels are always the
+same.
 
 =examples
  print $message->label('seen');

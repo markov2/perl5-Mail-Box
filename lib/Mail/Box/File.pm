@@ -104,7 +104,7 @@ my $default_folder_dir = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
 
 sub _default_body_type($$)
 {   my $size = shift->guessBodySize || 0;
-    'Mail::Message::Body::'.($size > 10000 ? 'File' : 'Lines');
+    'Mail::Message::Body::'.($size > 100000 ? 'File' : 'Lines');
 }
 
 sub init($)
@@ -115,9 +115,9 @@ sub init($)
 
     return unless defined $self->SUPER::init($args);
 
-    my $class = ref $self;
+    my $class    = ref $self;
 
-    my $filename         = $self->{MBF_filename}
+    my $filename = $self->{MBF_filename}
        = $class->folderToFilename
            ( $self->name
            , $self->folderdir

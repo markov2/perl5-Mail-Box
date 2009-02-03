@@ -817,9 +817,15 @@ sub copyMessage(@)
 
 =method moveMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
 
-Move a message from one folder to another.  Be warned that removals from
-a folder only take place when the folder is closed, so the message is only
-flagged to be deleted in the opened source folder.
+Move a message from one folder to another.
+
+BE WARNED that removals from a folder only take place when the folder
+is closed, so the message is only flagged to be deleted in the opened
+source folder.
+
+BE WARNED that message labels may get lost when a message is moved from
+one folder type to an other.  An attempt is made to translate labels,
+but there are many differences in interpretation by applications.
 
  $mgr->moveMessage($received, $inbox->message(1))
 
@@ -841,10 +847,6 @@ sub moveMessage(@)
 #-------------------------------------------
 
 =section Manage message threads
-
-=cut
-
-#-------------------------------------------
 
 =method threads [FOLDERS], OPTIONS
 
@@ -910,11 +912,9 @@ sub threads(@)
 =section Internals
 
 =method toBeThreaded FOLDER, MESSAGES
-
 Signal to the manager that all thread managers which are using the
 specified folder must be informed that new messages are
 coming in.
-
 =cut
 
 sub toBeThreaded($@)
@@ -922,14 +922,10 @@ sub toBeThreaded($@)
     $_->toBeThreaded(@_) foreach @{$self->{MBM_threads}};
 }
 
-#-------------------------------------------
-
 =method toBeUnthreaded FOLDER, MESSAGES
-
 Signal to the manager that all thread managers which are using the
 specified folder must be informed that new messages are
 or going out.
-
 =cut
 
 sub toBeUnthreaded($@)
@@ -937,13 +933,10 @@ sub toBeUnthreaded($@)
     $_->toBeUnthreaded(@_) foreach @{$self->{MBM_threads}};
 }
 
-#-------------------------------------------
-
 =method decodeFolderURL URL
-
 Try to decompose a folder name which is specified as URL (see open())
-into separate options.
-
+into separate options.  Special characters like @-sign, colon, and slash
+used in the user or password parts must be passed URL-encoded.
 =cut
 
 sub decodeFolderURL($)
@@ -963,10 +956,12 @@ sub decodeFolderURL($)
                       !x;
 
     $username ||= $ENV{USER} || $ENV{LOGNAME};
+    $password ||= '';
 
-    $password ||= '';        # decode password from url
-    $password   =~ s/\+/ /g;
-    $password   =~ s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
+    for($username, $password)
+    {   s/\+/ /g;
+        s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
+    }
 
     $hostname ||= 'localhost';
 
@@ -981,8 +976,6 @@ sub decodeFolderURL($)
 #-------------------------------------------
 
 =section Error handling
-
-=cut
 
 =chapter DETAILS
 On many places in the documentation you can read that it is useful to

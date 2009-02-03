@@ -50,13 +50,14 @@ sub filename(;$)
     $flags{$_}++ foreach split //, $flags;
 
     $self->SUPER::label
-     ( draft   => ($flags{D} || 0)
-     , flagged => ($flags{F} || 0)
-     , replied => ($flags{R} || 0)
-     , seen    => ($flags{S} || 0)
-     , deleted => ($flags{T} || 0)
+     ( draft   => (delete $flags{D} || 0)
+     , flagged => (delete $flags{F} || 0)
+     , replied => (delete $flags{R} || 0)
+     , seen    => (delete $flags{S} || 0)
+     , deleted => (delete $flags{T} || 0)
 
-     , passed  => ($flags{P} || 0)   # uncommon
+     , passed  => (delete $flags{P} || 0)    # uncommon
+     , unknown => join('', sort keys %flags) # application specific
      );
 
     if(defined $oldname && ! move $oldname, $newname)
@@ -126,7 +127,8 @@ sub labelsToFilename()
       . ($labels->{passed}  ? 'P' : '')
       . ($labels->{replied} ? 'R' : '')
       . ($labels->{seen}    ? 'S' : '')
-      . ($labels->{deleted} ? 'T' : '');
+      . ($labels->{deleted} ? 'T' : '')
+      . ($labels->{unknown} || '');
 
     my $newset = $labels->{accepted} ? 'cur' : 'new';
     if($set ne $newset)
