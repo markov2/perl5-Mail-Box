@@ -493,6 +493,7 @@ sub init($)
           , timeout  => $args->{lock_timeout}
           , expires  => $args->{lock_wait}
           , file     => ($args->{lockfile} || $args->{lock_file})
+          , $self->logSettings
           );
 
     $self;
@@ -503,11 +504,9 @@ sub init($)
 =section The folder
 
 =method folderdir [DIRECTORY]
-
 Get or set the DIRECTORY which is used to store mail-folders by default.
 
 =examples
-
  print $folder->folderdir;
  $folder->folderdir("$ENV{HOME}/nsmail");
 
@@ -521,42 +520,29 @@ sub folderdir(;$)
 
 sub foundIn($@) { shift->notImplemented }
 
-#-------------------------------------------
-
 =method name
-
 Returns the name of the folder.  What the name represents depends on
 the actual type of mailbox used.
 
 =examples
-
  print $folder->name;
  print "$folder";       # overloaded stringification
-
 =cut
 
 sub name() {shift->{MB_foldername}}
 
-#-------------------------------------------
-
 =method type
-
 Returns a name for the type of mail box.  This can be C<mbox>, C<mh>,
 C<maildir>, or C<pop3>.
-
 =cut
 
 sub type() {shift->notImplemented}
 
-#-------------------------------------------
-
 =method url
-
 Represent the folder as a URL (Universal Resource Locator) string.  You may
 pass such a URL as folder name to M<Mail::Box::Manager::open()>.
 
 =example
-
  print $folder->url;
  # may result in
  #   mbox:/var/mail/markov   or
@@ -569,23 +555,16 @@ sub url()
     $self->type . ':' . $self->name;
 }
 
-#-------------------------------------------
-
 =method size
-
 Returns the size of the folder in bytes, not counting in the deleted
 messages.  The error in the presented result may be as large as 10%,
 because the in-memory representation of messages is not always the
 same as the size when they are written.
-
 =cut
 
 sub size() { sum map { $_->size } shift->messages('ACTIVE') }
 
-#-------------------------------------------
-
 =method update OPTIONS
-
 Read new messages from the folder, which where received after opening
 it.  This is quite dangerous and shouldn't be possible: folders which
 are open are locked.  However, some applications do not use locks or
@@ -594,7 +573,6 @@ failsafe) and incorporates them in the open folder administration.
 
 The OPTIONS are extra values which are passed to the
 M<updateMessages()> method which is doing the actual work here.
-
 =cut
 
 sub update(@)
@@ -613,21 +591,14 @@ sub update(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method organization
-
 Returns how the folder is organized: as one C<FILE> with many messages,
 a C<DIRECTORY> with one message per file, or by a C<REMOTE> server.
-
 =cut
 
 sub organization() { shift->notImplemented }
 
-#-------------------------------------------
-
 =method addMessage MESSAGE, OPTIONS
-
 Add a message to the folder.  A message is usually a
 M<Mail::Box::Message> object or a sub-class thereof.  The message
 shall not be in an other folder, when you use this method.
@@ -692,8 +663,6 @@ ERROR
     $coerced;
 }
 
-#-------------------------------------------
-
 =method addMessages MESSAGE [, MESSAGE, ...]
 Adds a set of MESSAGE objects to the open folder at once.  For some folder
 types this may be faster than adding them one at a time.
@@ -702,16 +671,12 @@ types this may be faster than adding them one at a time.
  $folder->addMessages($msg1, $msg2, ...);
 =cut
 
-
 sub addMessages(@)
 {   my $self = shift;
     map {$self->addMessage($_)} @_;
 }
 
-#-------------------------------------------
-
 =method copyTo FOLDER, OPTIONS
-
 Copy the folder's messages to a new folder.  The new folder may be of
 a different type.
 
@@ -754,19 +719,16 @@ folder types do support it by creating a hardlink (on UNIX/Linux).
  $mh->close; $imap->close;
 
 =error Destination folder $name is not writable.
-
 The folder where the messages are copied to is not opened with write
 access (see M<new(access)>).  This has no relation with write permission
 to the folder which is controled by your operating system.
 
 =error Copying failed for one message.
-
 For some reason, for instance disc full, removed by external process, or
 read-protection, it is impossible to copy one of the messages.  Copying will
 proceed for the other messages.
 
 =error Unable to create subfolder $name of $folder.
-
 The copy includes the subfolders, but for some reason it was not possible
 to copy one of these.  Copying will proceed for all other sub-folders.
 
@@ -848,8 +810,6 @@ sub _copy_to($@)
 
     $self;
 }
-
-#-------------------------------------------
 
 =method close OPTIONS
 
@@ -944,10 +904,7 @@ Suggestion: \$folder->close(write => 'NEVER')");
     $rc;
 }
 
-#-------------------------------------------
-
 =method delete OPTIONS
-
 Remove the specified folder file or folder directory (depending on
 the type of folder) from disk.  Of course, THIS IS DANGEROUS: you "may"
 lose data.  Returns a C<true> value on success.
@@ -969,7 +926,6 @@ data if the system crashes or if there are software problems.
  $folder->delete;
 
 =error Folder $name not deleted: not writable.
-
 The folder must be opened with write access via M<new(access)>, otherwise
 removing it will be refused.  So, you may have write-access according to
 the operating system, but that will not automatically mean that this

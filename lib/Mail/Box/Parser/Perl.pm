@@ -93,8 +93,7 @@ sub readHeader()
 {   my $self  = shift;
     my $file  = $self->{MBPP_file};
 
-    my $start = $file->tell;
-    my @ret   = ($start, undef);
+    my @ret   = ($file->tell, undef);
     my $line  = $file->getline;
 
   LINE:
@@ -310,7 +309,7 @@ sub openFile($)
     return unless $fh;
     $self->{MBPP_file}       = $fh;
 
-    binmode $fh, ':raw'
+    $fh->binmode(':raw')
        if ref($fh) eq 'GLOB' || $fh->can('BINMODE');
 
     $self->{MBPP_separators} = [];

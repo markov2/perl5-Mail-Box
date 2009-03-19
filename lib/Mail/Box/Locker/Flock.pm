@@ -29,16 +29,11 @@ operating systems do not support C<flock>.
 =chapter METHODS
 
 =c_method new OPTIONS
-
 =default method C<'FLOCK'>
 
 =cut
 
-#-------------------------------------------
-
 sub name() {'FLOCK'}
-
-#-------------------------------------------
 
 sub _try_lock($)
 {   my ($self, $file) = @_;
@@ -52,7 +47,6 @@ sub _unlock($)
     $self;
 }
 
-#-------------------------------------------
 
 =method lock
 
@@ -115,12 +109,8 @@ sub lock()
     return 0;
 }
 
-#-------------------------------------------
-
 =method isLocked
-
 =error Unable to check lock file $filename for $folder: $!
-
 To check whether the filename is used to flock a folder, the file must be
 opened.  Apparently this fails, which does not mean that the folder is
 locked neither that it is unlocked.
@@ -145,8 +135,6 @@ sub isLocked()
     1;
 }
 
-#-------------------------------------------
-
 sub unlock()
 {   my $self = shift;
 
@@ -155,7 +143,5 @@ sub unlock()
 
     $self;
 }
-
-#-------------------------------------------
 
 1;

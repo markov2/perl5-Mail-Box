@@ -27,20 +27,24 @@ safer, so that version is preferred.
 =chapter METHODS
 
 =c_method new OPTIONS
+You may also pass all OPTIONS understood by the initiated lockers
+used by the multi locker.
 
 =default method C<'MULTI'>
 
-=option  use ARRAY
+=option  use ARRAY-of-(NAMES|LOCKER)
 =default use <all possible>
 
-Array of locker types and locker objects to be used to lock one
-folder.  The type names are converted into objects.
+Array of locker type NAMES or LOCKER objects to be used to lock one
+folder.  The type NAMES are converted into objects.  When you create your
+own LOCKER objects, be sure to set the timeout very short (preferrably
+to 1).
 
 Some locking types are not available on some platforms, so they will
 not be excluded from the default list (NFS POSIX Flock).
 
 =example using a subset of multi-lockers
- my $locker = Mail::Box::Locker::Multy->new(use => ['DOTLOCK','FLOCK']);
+ my $locker = Mail::Box::Locker::Multi->new(use => ['DOTLOCK','FLOCK']);
 
 =cut
 
@@ -49,14 +53,21 @@ sub init($)
     $self->SUPER::init($args);
 
     my @use
-     = exists $args->{use} ? @{$args->{use}}
+     = exists $args->{use} ? @{delete $args->{use}}
      : $^O =~ m/mswin/i    ? qw/    POSIX Flock/
      :                       qw/NFS POSIX Flock/;
 
     my (@lockers, @used);
 
     foreach my $method (@use)
-    {   my $locker = eval
+    {   if(UNIVERSAL::isa($method, 'Mail::Box::Locker'))
+        {   push @lockers, $method;
+            (my $used = ref $method) =~ s/.*\:\://;
+            push @used, $used;
+            next;
+        }
+
+        my $locker = eval
         {   Mail::Box::Locker->new
               ( %$args
               , method  => $method
@@ -78,8 +89,6 @@ sub init($)
 
 sub name() {'MULTI'}
 
-#-------------------------------------------
-
 sub _try_lock($)
 {   my $self     = shift;
     my @successes;
@@ -96,8 +105,6 @@ sub _try_lock($)
     1;
 }
 
-#-------------------------------------------
-
 sub unlock()
 {   my $self = shift;
     return $self unless $self->{MBL_has_lock};
@@ -107,8 +114,6 @@ sub unlock()
 
     $self;
 }
-
-#-------------------------------------------
 
 sub lock()
 {   my $self  = shift;
@@ -127,8 +132,6 @@ sub lock()
     return 0;
 }
 
-#-------------------------------------------
-
 sub isLocked()
 {   my $self     = shift;
     $self->_try_lock($self->filename) or return 0;
@@ -145,7 +148,5 @@ Returns a list with all locker objects used by this object.
 =cut
 
 sub lockers() { @{shift->{MBLM_lockers}} }
-
-#-------------------------------------------
 
 1;

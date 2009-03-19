@@ -45,9 +45,10 @@ The object used as boolean will always return C<true>
 
 =cut
 
-use overload '""' => 'string'
-           , bool => sub {1}
-           ;
+use overload
+    '""' => 'string'
+    , bool => sub {1}
+    ;
 
 #------------------------------------------
 
@@ -94,7 +95,12 @@ sub coerce($@)
    bless $from, $class;
 }
 
-#------------------------------------------
+sub init($)
+{   my ($self, $args) = @_;
+    $self->SUPER::init($args);
+    $self->{MMFA_encoding} = delete $args->{encoding};
+    $self;
+}
 
 =method parse STRING
 
@@ -110,6 +116,17 @@ sub parse($)
     my $parsed = Mail::Message::Field::Addresses->new('To' => shift);
     defined $parsed ? ($parsed->addresses)[0] : ();
 }
+
+#------------------------------------------
+
+=section Accessors
+
+=method encoding
+Character-set encoding, like 'q' and 'b', to be used when non-ascii
+characters are to be transmitted.
+=cut
+
+sub encoding() {shift->{MMFA_encoding}}
 
 #------------------------------------------
 
@@ -130,7 +147,8 @@ this method in string context.
 
 sub string()
 {   my $self  = shift;
-    my @opts  = (charset => $self->charset); # language => $self->language
+    my @opts  = (charset => $self->charset, encoding => $self->encoding);
+       # language => $self->language
 
     my @parts;
     my $name    = $self->phrase;

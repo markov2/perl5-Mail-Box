@@ -255,7 +255,8 @@ sub parse($)
             my $angle;
             if($string =~ s/^\s*\<([^>]*)\>//s) { $angle = $1 }
             elsif($real_phrase)
-            {   $self->log(ERROR => "Ignore unrelated phrase $string");
+            {   $string =~ s/^\s*\"(.*?)\r?\n//;
+                $self->log(ERROR => "Ignore unrelated phrase `$1'");
                 next;
             }
             elsif(defined $phrase)

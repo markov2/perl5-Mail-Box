@@ -109,7 +109,8 @@ How long can a lock exist?  If a different e-mail program leaves a stale
 lock, then this lock will be removed automatically after the specified
 number of seconds.
 
-=requires folder FOLDER
+=option  folder FOLDER
+=default folder <undef>
 Which FOLDER is to be locked, a M<Mail::Box> object.
 
 =option  timeout SECONDS|'NOTIMEOUT'
@@ -173,16 +174,12 @@ sub init($)
 
     $self->SUPER::init($args);
 
-    $self->{MBL_folder}   = $args->{folder}
-        or croak "No folder specified to be locked.\n";
-
-    weaken($self->{MBL_folder});
-
     $self->{MBL_expires}  = $args->{expires}   || 3600;  # one hour
     $self->{MBL_timeout}  = $args->{timeout}   || 10;    # ten secs
     $self->{MBL_filename} = $args->{file}      || $args->{folder}->name;
     $self->{MBL_has_lock} = 0;
 
+    $self->folder($args->{folder});
     $self;
 }
 
@@ -191,44 +188,38 @@ sub init($)
 =section The Locker
 
 =method name
-
 Returns the method used to lock the folder. See the M<new(method)> for
 details on how to specify the lock method.  The name of the method is
 returned in upper-case.
 
 =examples
-
  if($locker->name eq 'FLOCK') ...
 
 =cut
 
 sub name {shift->notImplemented}
 
-#-------------------------------------------
-
 sub lockMethod($$$$)
 {   confess "Method removed: use inheritance to implement own method."
 }
 
-#-------------------------------------------
-
-=method folder
-
+=method folder [FOLDER]
 Returns the folder object which is locker.
-
 =cut
 
-sub folder() {shift->{MBL_folder}}
+sub folder(;$)
+{   my $self = shift;
+    @_ && $_[0] or return $self->{MBL_folder};
 
-#-------------------------------------------
+    $self->{MBL_folder} = shift;
+    weaken $self->{MBL_folder};
+}
 
 =method filename [FILENAME]
-
 Returns the filename which is used to lock the folder, optionally after
 setting it to the specified FILENAME.
 
 =example
-
  print $locker->filename;
 
 =cut
@@ -244,41 +235,29 @@ sub filename(;$)
 =section Locking
 
 =method lock FOLDER
-
 Get a lock on a folder.  This will return false if the lock fails.
 
 =examples
-
  die unless $locker->lock;
  if($folder->locker->lock) {...}
-
 =cut
 
 sub lock($) { shift->{MBL_has_lock} = 1 }
 
-#-------------------------------------------
-
 =method isLocked
-
 Test if the folder is locked by this or a different application.
 
 =examples
-
  if($locker->isLocked) {...}
  if($folder->locker->isLocked) {...}
-
 =cut
 
 sub isLocked($) {0}
 
-#-------------------------------------------
-
 =method hasLock
-
 Check whether the folder has the lock.
 
 =examples
-
  if($locker->hasLock) {...}
  if($folder->locker->hasLock) {...}
 
@@ -286,14 +265,10 @@ Check whether the folder has the lock.
 
 sub hasLock() {shift->{MBL_has_lock}}
 
-#-------------------------------------------
-
 =method unlock
-
 Undo the lock on a folder.
 
 =examples
-
  $locker->unlock;
  $folder->locker->unlock;
 

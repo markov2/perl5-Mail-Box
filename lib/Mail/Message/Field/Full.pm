@@ -337,7 +337,7 @@ difference with comments, which have do specified meaning.  Some special
 characters in the phrase will cause it to be surrounded with double
 quotes: do not specify them yourself.
 
-The OPTIONS are C<charset>, C<language>, and C<encoding> as always.
+The OPTIONS are C<charset>, C<language>, and C<encoding>, as always.
 
 =cut
 

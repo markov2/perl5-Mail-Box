@@ -8,6 +8,32 @@ Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
+version 2.088: Thu Mar 19 08:54:31 CET 2009
+
+	Fixes:
+
+	- ::Parser::Perl should call binmode() as method on the file-
+	  handle to work. [Ashwini Singh]
+
+	- pre-created locker object cannot be passed to Mail::Box::open()
+	  because its creation requires a Mail::Box object. [Mark Hedges]
+
+	- recover from illegal phrases in email addresses, for studied
+	  fields in Mail::Message::Field::Addresses [Robert Bruccole]
+
+	- require Date::Format, introduced in 2.082 [cpantesters]
+
+	Improvements:
+
+	- specify encoding type of character-set (q or b) with
+	  Mail::Message::Field::Address objects.
+	  Requested by [Alexander Averyanov]
+
+	- default mail box locker object should use the same logging
+	  settings as the mail box itself.  Spotted by [Mark Hedges]
+
+	- the existence of Mail/Makefile.PL was an accident.
+
 version 2.087: Tue Feb  3 12:41:10 CET 2009
 
 	Fixes:
