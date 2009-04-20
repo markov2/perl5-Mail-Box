@@ -134,9 +134,10 @@ my $long;
 $utf8 = decode('iso-8859-1', $long);
 
 is($b->encode($utf8, charset => 'ISO-8859-9', language => 'nl-BE'),
-  '=?ISO-8859-9*nl-BE?q?This_is_a_long_@text,_with_!!_a_few_w3iRD_=A1_=A2_=A3?= '
-. '=?ISO-8859-9*nl-BE?q?_=A4_=A5_=A6_=A7_=A8_=A9_=AA_=AB_=AC_=AD_=AE_=AF_=B0_?= '
-. '=?ISO-8859-9*nl-BE?q?=B1_=B2_=B3_=B4_characters_in_it...?='
+ '=?ISO-8859-9*nl-BE?q?This_is_a_long_@text,_with_!!_a_few_w3iRD_=A1_=A2_=A3?= '
+. '=?ISO-8859-9*nl-BE?q?_=A4_=A5_=A6_=A7_=A8_=A9_=AA_=AB_=AC_=AD_=AE_=AF_=B0?= '
+. '=?ISO-8859-9*nl-BE?q?_=B1_=B2_=B3_=B4_characters_in_it...?='
+
   );
 is($b->encode($utf8, charset => 'ISO-8859-9'),
   '=?ISO-8859-9?q?This_is_a_long_@text,_with_!!_a_few_w3iRD_=A1_=A2_=A3_=A4_?= '

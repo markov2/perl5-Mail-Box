@@ -546,7 +546,7 @@ sub writeMessages($)
         return;
     }
 
-    $self->parser->restart;
+#   $self->parser->restart;
     $self;
 }
 
@@ -592,25 +592,25 @@ sub _write_replace($)
             $message->moveLocation($newbegin - $oldbegin)
                if defined $oldbegin;
             $reprint++;
+            next;
         }
-        else
-        {   my ($begin, $end) = $message->fileLocation;
-            my $need = $end-$begin;
 
-            $old->seek($begin, 0);
-            my $whole;
-            my $size = $old->read($whole, $need);
+        my ($begin, $end) = $message->fileLocation;
+        my $need = $end-$begin;
 
-            $self->log(ERROR => "File too short to get write message "
-                                . $message->seqnr. " ($size, $need)")
-               unless $size == $need;
+        $old->seek($begin, 0);
+        my $whole;
+        my $size = $old->read($whole, $need);
 
-            $new->print($whole);
-            $new->print("\n");
+        $self->log(ERROR => "File too short to get write message "
+                            . $message->seqnr. " ($size, $need)")
+           unless $size == $need;
 
-            $message->moveLocation($newbegin - $oldbegin);
-            $kept++;
-        }
+        $new->print($whole);
+        $new->print("\n");
+
+        $message->moveLocation($newbegin - $oldbegin);
+        $kept++;
     }
 
     my $ok = $new->close;

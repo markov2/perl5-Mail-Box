@@ -26,13 +26,22 @@ same name as the folder, extended by C<.lock>.
 
 =c_method new OPTIONS
 
-=option  file FILENAME
 =default file <folderfile>C<.lock>
 
-Name of the file to lock.  By default, the folder's name is extended with
-C<.lock>.
+Name of the file to lock.  By default, the folder's name is extended
+with C<.lock>.
 
+=option dotlock_file FILENAME
+=option dotlock_file <undef>
+Alternative name for C<file>, especially useful to confusion when
+the multi locker is used.
 =cut
+
+sub init($)
+{   my ($self, $args) = @_;
+    $args->{file} = $args->{dotlock_file} if $args->{dotlock_file};
+    $self->SUPER::init($args);
+}
 
 sub name() {'DOTLOCK'}
 

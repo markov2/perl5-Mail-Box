@@ -29,7 +29,17 @@ handle which is reading.  Not all platforms support POSIX locking.
 
 =default method C<POSIX>
 
+=option  posix_file FILENAME
+=default posix_file <undef>
+Alternative name for C<file>, especially useful to avoid confusion
+when the multi-locker is used.
 =cut
+
+sub init($)
+{   my ($self, $args) = @_;
+    $args->{file} = $args->{posix_file} if $args->{posix_file};
+    $self->SUPER::init($args);
+}
 
 sub name() {'POSIX'}
 

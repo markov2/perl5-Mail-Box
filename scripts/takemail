@@ -117,8 +117,8 @@ sub parse_mailboxes() {
                 next MESSAGE if $hd =~ $pat;
             }
             
-            if($Outbox)     { $Manager->copyMessage($Outbox, $msg) }
-            else            { $msg->print }
+            if($Outbox) { $Manager->copyMessage($Outbox, $msg) }
+            else        { $msg->write }
             
         }
     }

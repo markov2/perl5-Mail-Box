@@ -419,6 +419,16 @@ The RFCs only permit base64 (C<b > or C<B >) or quoted-printable
 
 =cut
 
+sub _mime_word($$) { "$_[0]$_[1]?=" }
+sub _encode_b($)   { MIME::Base64::encode_base64(shift, '')  }
+sub _encode_q($)
+{   my $chunk = shift;
+    $chunk =~ s#([\x00-\x1F=\x7F-\xFF])#sprintf "=%02X", ord $1#ge;
+    $chunk =~ s#([_\?])#sprintf "=%02X", ord $1#ge;
+    $chunk =~ s/ /_/g;
+    $chunk;
+}
+
 sub encode($@)
 {   my ($self, $utf8, %args) = @_;
 
@@ -443,45 +453,45 @@ sub encode($@)
     }
     else { $encoding = 'q' }
 
-    my $encoded  = Encode::encode($charset, $utf8, 0);
+    return $utf8
+        if lc($encoding) eq 'q'
+        && $utf8 =~ m/\A[\p{IsASCII}]+\z/ms
+        && !$args{force};
 
-    no utf8;
+    my $pre = '=?'. $charset. ($lang ? '*'.$lang : '') .'?'.$encoding.'?';
 
-    my $pre      = '=?'. $charset. ($lang ? '*'.$lang : '') .'?'.$encoding.'?';
-    my $ready    = '';
-
-    if(lc $encoding eq 'q')
-    {   # Quoted printable encoding
-        my $qp   = $encoded;
-        $qp      =~ s#([\x00-\x1F=\x7F-\xFF])#sprintf "=%02X", ord $1#ge;
-
-        return $qp           # string only contains us-ascii?
-           if !$args{force} && $qp eq $utf8;
-
-        $qp      =~ s#([_\?])#sprintf "=%02X", ord $1#ge;
-        $qp      =~ s/ /_/g;
-
-        my $take = 70 - CORE::length($pre);
-        while(CORE::length($qp) > $take+1)
-        {   $qp =~ s#^(.{$take}.?.?[^=][^=])## or warn $qp;
-            $ready .= "$pre$1?= ";
+    my @result;
+    if(lc($encoding) eq 'q')
+    {   my $llen = 73 - length $pre;
+        my $chunk  = '';
+        while(length(my $chr = substr($utf8, 0, 1, '')))
+        {   $chr  = Encode::encode($charset, $chr, 0);
+            my $echr = _encode_q($chr);
+            if(bytes::length($chunk) + bytes::length($chr) > $llen)
+            {   push @result, _mime_word($pre, $chunk);
+                $chunk = '';
+            }
+            $chunk .= $echr;
         }
-        $ready .= "$pre$qp?=" if CORE::length($qp);
+        push @result, _mime_word($pre, $chunk)
+            if length($chunk);
     }
-
     else
-    {   # base64 encoding
-        require MIME::Base64;
-        my $maxchars = int((74-CORE::length($pre))/4) *4;
-        my $bq       = MIME::Base64::encode_base64($encoded);
-        $bq =~ s/\s*//gs;
-        while(CORE::length($bq) > $maxchars)
-        {   $ready .= $pre . substr($bq, 0, $maxchars, '') . '?= ';
+    {   my $encoded = Encode::encode($charset, $utf8, 0);
+         my $llen = int((73 - length($pre)) / 4) * 3;
+         my $chunk  = '';
+         while(length(my $chr = substr($encoded, 0, 1, '')))
+         {   if(bytes::length($chunk) + bytes::length($chr) > $llen)
+             {   push @result, _mime_word($pre, _encode_b($chunk));
+                 $chunk = '';
+             }
+             $chunk .= $chr;
         }
-        $ready .= "$pre$bq?=";
+        push @result, _mime_word($pre, _encode_b($chunk))
+            if length $chunk;
     }
 
-    $ready;
+    join ' ', @result;
 }
 
 =ci_method decode STRING, OPTIONS
