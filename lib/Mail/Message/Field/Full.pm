@@ -465,23 +465,22 @@ sub encode($@)
     {   my $llen = 73 - length $pre;
         my $chunk  = '';
         while(length(my $chr = substr($utf8, 0, 1, '')))
-        {   $chr  = Encode::encode($charset, $chr, 0);
-            my $echr = _encode_q($chr);
+        {   $chr  = _encode_q Encode::encode($charset, $chr, 0);
             if(bytes::length($chunk) + bytes::length($chr) > $llen)
             {   push @result, _mime_word($pre, $chunk);
                 $chunk = '';
             }
-            $chunk .= $echr;
+            $chunk .= $chr;
         }
         push @result, _mime_word($pre, $chunk)
             if length($chunk);
     }
     else
-    {   my $encoded = Encode::encode($charset, $utf8, 0);
-         my $llen = int((73 - length($pre)) / 4) * 3;
+    {    my $llen = int((73 - length($pre)) / 4) * 3;
          my $chunk  = '';
-         while(length(my $chr = substr($encoded, 0, 1, '')))
-         {   if(bytes::length($chunk) + bytes::length($chr) > $llen)
+         while(length(my $chr = substr($utf8, 0, 1, '')))
+         {   my $chr = Encode::encode($charset, $chr, 0);
+             if(bytes::length($chunk) + bytes::length($chr) > $llen)
              {   push @result, _mime_word($pre, _encode_b($chunk));
                  $chunk = '';
              }

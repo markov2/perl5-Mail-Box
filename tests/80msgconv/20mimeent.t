@@ -33,6 +33,7 @@ my $me   = MIME::Entity->build
  , 'X-Again'     => 'repeating header and again'
  , Data          => [ <DATA> ]
  );
+close DATA;
 
 ok($me);
 

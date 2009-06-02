@@ -42,7 +42,7 @@ sub filename(;$)
     return $newname if defined $oldname && $oldname eq $newname;
 
     my ($id, $semantics, $flags)
-     = $newname =~ m!(.*?)(?:\:([12])\,([A-Z]*))!
+     = $newname =~ m!(.*?)(?:\:([12])\,([A-Za-z]*))!
      ? ($1, $2, $3)
      : ($newname, '','');
 

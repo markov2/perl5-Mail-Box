@@ -8,6 +8,23 @@ Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
+version 2.090: Tue Jun  2 11:56:28 CEST 2009
+
+	Fixes:
+
+	- second attempt to use Encode to do base64/qp encoding in
+	  Mail::Message::Field::Full,  This time with test script.
+	  [Alexander Averyanov]
+
+	- Mail::Box::Locker::POSIX lock did always succeed.
+	  rt.cpan.org#46003 [Rainer Schöpf] via Debian#528364
+
+	- Maildir accept lower-case flags
+	  rt.cpan.org#42182 [Hardaker]
+
+	- Message parser needlessly required read access to folders.
+	  rt.cpan.org #46388 [Mike Ekberg]
+
 version 2.089: Mon Apr 20 21:00:34 CEST 2009
 
 	Fixes:

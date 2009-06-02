@@ -562,7 +562,7 @@ sub _write_new($)
     $new->close or return 0;
 
     $self->log(PROGRESS =>
-                  "Wrote new folder $self with ".@{$args->{messages}}."msgs.");
+        "Wrote new folder $self with ".@{$args->{messages}}."msgs.");
     1;
 }
 

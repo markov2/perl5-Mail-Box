@@ -67,27 +67,19 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDERNAME, OPTIONS
-
 Creation is not supported for dbx folders.
-
 =cut
 
 sub create($@) {  shift->notImplemented }
 
-#-------------------------------------------
-
 =c_method foundIn [FOLDERNAME], [OPTIONS]
-
 If no FOLDERNAME is specified, then the value of the C<folder> option
 is taken.  A dbx folder is a file which name ends on C<.dbx> (case
 insensitive).
 
 =option  folder FOLDERNAME
 =default folder undef
-
 =cut
 
 sub foundIn($@)
@@ -99,13 +91,9 @@ sub foundIn($@)
     $name =~ m/\.dbx$/i;
 }
 
-#-------------------------------------------
-
 sub writeMessages($) { shift->notImplemented }
 sub appendMessages($) { shift->notImplemented }
 sub type() { 'dbx' }
-
-#-------------------------------------------
 
 sub readMessages()
 {   my ($self, %args) = @_;
@@ -141,11 +129,7 @@ sub readMessages()
     $self;
 }
 
-#-------------------------------------------
-
 sub updateMessages() { shift }
-
-#-------------------------------------------
 
 sub nameOfSubFolder($;$)
 {   my $thing  = shift;
@@ -154,14 +138,10 @@ sub nameOfSubFolder($;$)
     defined $parent ?  File::Spec->catfile(dirname($parent), $name) : $name;
 }
 
-#-------------------------------------------
-
 =ci_method listSubFolders OPTIONS
-
 It is adviced to set the C<check> flag, because dbx folder often list
 large amounts of folder names which do not really exist.  However, checking
 does consume some time.
-
 =cut
 
 sub listSubFolders(@)
@@ -195,10 +175,8 @@ sub listSubFolders(@)
 =section Internals
 
 =ci_method folderToFilename FOLDERNAME, FOLDERDIR
-
 Translate a folder name into a filename, using the
 FOLDERDIR value to replace a leading C<=>.
-
 =cut
 
 sub folderToFilename($$)
@@ -208,17 +186,13 @@ sub folderToFilename($$)
     $name;
 }
 
-#-------------------------------------------
-
 =method parser
-
 The parsing of messages is a combined job for the M<Mail::Transport::Dbx>
 module (to get the right data) and M<read()>.  Asking for the parser
 will provide the transporter object.  If asked more than once, each time
 the same object will be returned.
 
 =error Cannot read dbx folder file $filename.
-
 =cut
 
 sub parser()
