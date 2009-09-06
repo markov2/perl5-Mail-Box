@@ -528,8 +528,11 @@ an unencoded word.  Phrases and comments are texts.
 sub _decoder($$$)
 {   my ($charset, $encoding, $encoded) = @_;
     $charset   =~ s/\*[^*]+$//;   # language component not used
-    my $to_utf8 = Encode::find_encoding($charset || 'us-ascii')
-        or return $encoded;
+    my $to_utf8 = Encode::find_encoding($charset || 'us-ascii');
+    unless($to_utf8)
+    {  $encoded =~ s/_/ /g;
+       return $encoded;
+    }
 
     my $decoded;
     if($encoding !~ /\S/)
@@ -555,7 +558,6 @@ sub _decoder($$$)
 
 sub decode($@)
 {   my ($self, $encoded, %args) = @_;
-    my $is_text = defined $args{is_text} ? $args{is_text} : 1;
     if(defined $args{is_text} ? $args{is_text} : 1)
     {  # in text, blanks between encoding must be removed, but otherwise kept :(
        # little trick to get this done: add an explicit blank.

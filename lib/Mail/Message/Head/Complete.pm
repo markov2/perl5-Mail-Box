@@ -984,11 +984,10 @@ one.
 
 sub createFromLine()
 {   my $self   = shift;
-
-    my $from   = $self->get('from') || '';
-    my $stamp  = $self->timestamp;
-    my $sender = $from =~ m/(\<.*?\>)/ ? $1 : 'unknown';
-    "From $sender ".(gmtime $stamp)."\n";
+    my $sender = $self->message->sender;
+    my $stamp  = $self->recvstamp || $self->timestamp || time;
+    my $addr   = defined $sender ? $sender->address : 'unknown';
+    "From $addr ".(gmtime $stamp)."\n"
 }
 
 #------------------------------------------

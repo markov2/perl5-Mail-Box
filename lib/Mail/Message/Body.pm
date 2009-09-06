@@ -354,13 +354,9 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 =method clone
-
 Return a copy of this body, usually to be included in a cloned
 message. Use M<Mail::Message::clone()> for a whole message.
-
 =cut
 
 sub clone() {shift->notImplemented}
@@ -404,14 +400,16 @@ sub decoded(@)
      );
 }
 
-#------------------------------------------
-
 =method eol ['CR'|'LF'|'CRLF'|'NATIVE']
-
 Returns the character (or characters) which are used to separate lines
-within this body.  When a kind of separator is specified, the body
-is translated to contain the specified line endings.
+within this body.  When a kind of separator is specified, the body is
+translated to contain the specified line endings.
 
+=example
+ my $body = $msg->decoded->eol('NATIVE');
+ my $char = $msg->decoded->eol;
+
+=warning Unknown line terminator $eol ignored
 =cut
 
 sub eol(;$)
@@ -425,15 +423,20 @@ sub eol(;$)
              :                   'LF';
     }
 
-    return $eol if $eol eq $self->{MMB_eol} && $self->checked;
+    return $self if $eol eq $self->{MMB_eol} && $self->checked;
     my $lines = $self->lines;
+    if(@$lines)
+    {   # sometimes texts lack \n on last line
+        $lines->[-1] .= "\n";
+       
 
-       if($eol eq 'CR')    {s/[\015\012]+$/\015/     foreach @$lines}
-    elsif($eol eq 'LF')    {s/[\015\012]+$/\012/     foreach @$lines}
-    elsif($eol eq 'CRLF')  {s/[\015\012]+$/\015\012/ foreach @$lines}
-    else
-    {   $self->log(WARNING => "Unknown line terminator $eol ignored.");
-        return $self->eol('NATIVE');
+           if($eol eq 'CR')   {s/[\015\012]+$/\015/     for @$lines}
+        elsif($eol eq 'LF')   {s/[\015\012]+$/\012/     for @$lines}
+        elsif($eol eq 'CRLF') {s/[\015\012]+$/\015\012/ for @$lines}
+        else
+        {   $self->log(WARNING => "Unknown line terminator $eol ignored");
+            return $self->eol('NATIVE');
+        }
     }
 
     (ref $self)->new
@@ -464,35 +467,24 @@ sub message(;$)
     $self->{MMB_message};
 }
 
-#------------------------------------------
-
 =method isDelayed
-
 Returns a true or false value, depending on whether the body of this
 message has been read from file.  This can only false for a
 M<Mail::Message::Body::Delayed>.
-
 =cut
 
 sub isDelayed() {0}
 
-#------------------------------------------
-
 =method isMultipart
 Returns whether this message-body contains parts which are messages
 by themselves.
-
 =cut
 
 sub isMultipart() {0}
 
-#------------------------------------------
-
 =method isNested
-
 Only true for a message body which contains exactly one sub-message:
 the C<Mail::Message::Body::Nested> body type.
-
 =cut
 
 sub isNested() {0}
@@ -550,10 +542,8 @@ Returns a M<MIME::Type> object which is related to this body's type.  This
 differs from the C<type> method, which results in a M<Mail::Message::Field>.
 
 =example
-
  if($body->mimeType eq 'text/html') {...}
  print $body->mimeType->simplified;
-
 =cut
 
 sub mimeType()
@@ -570,21 +560,14 @@ sub mimeType()
        = $mime_types->type($body) || MIME::Type->new(type => $body);
 }
 
-#------------------------------------------
-
 =method charset
-
 Returns the character set which is used in the text body as string.  This
 is part of the result of what the C<type> method returns.
-
 =cut
 
 sub charset() { shift->type->attribute('charset') }
 
-#------------------------------------------
-
 =method transferEncoding [STRING|FIELD]
-
 Returns the transfer-encoding of the data within this body as
 M<Mail::Message::Field> (which stringifies to its content).  If it
 needs to be changed, call the M<encode()> or M<decoded()> method.
@@ -612,11 +595,7 @@ sub transferEncoding(;$)
        : Mail::Message::Field->new('Content-Transfer-Encoding' => $set);
 }
 
-
-#------------------------------------------
-
 =method description [STRING|FIELD]
-
 Returns (optionally after setting) the informal description of the body
 content.  The related header field is C<Content-Description>.
 A M<Mail::Message::Field> object is returned (which stringifies into
@@ -625,7 +604,6 @@ was specified.
 
 The argument can be a STRING (which is converted into a field), or a
 fully prepared header field.
-
 =cut
 
 sub description(;$)
@@ -637,10 +615,7 @@ sub description(;$)
        : Mail::Message::Field->new('Content-Description' => $disp);
 }
 
-#------------------------------------------
-
 =method disposition [STRING|FIELD]
-
 Returns (optionally after setting) how the message can be disposed
 (unpacked).  The related header field is C<Content-Disposition>.
 A M<Mail::Message::Field> object is returned (which stringifies into
@@ -649,7 +624,6 @@ was specified.
 
 The argument can be a STRING (which is converted into a field), or a
 fully prepared header field.
-
 =cut
 
 sub disposition(;$)
@@ -662,13 +636,9 @@ sub disposition(;$)
        : Mail::Message::Field->new('Content-Disposition' => $disp);
 }
 
-#------------------------------------------
-
 =method checked [BOOLEAN]
-
 Returns whether the body encoding has been checked or not (optionally
 after setting the flag to a new value).
-
 =cut
 
 sub checked(;$)
@@ -676,26 +646,18 @@ sub checked(;$)
     @_ ? ($self->{MMB_checked} = shift) : $self->{MMB_checked};
 }
 
-#------------------------------------------
-
 =method nrLines
-
 Returns the number of lines in the message body.  For multi-part messages,
 this includes the header lines and boundaries of all the parts.
-
 =cut
 
 sub nrLines(@)  {shift->notImplemented}
 
-#------------------------------------------
-
 =method size
-
 The total number of bytes in the message body. The size of the body
 is computed in the shape it is in. For example, if this is a base64
 encoded message, the size of the encoded data is returned; you may
 want to call M<Mail::Message::decoded()> first.
-
 =cut
 
 sub size(@)  {shift->notImplemented}
@@ -705,15 +667,12 @@ sub size(@)  {shift->notImplemented}
 =section Access to the payload
 
 =method string
-
 Return the content of the body as a scalar (a single string).  This is
 a copy of the internally kept information.
 
 =examples
-
  my $text = $body->string;
  print "Body: $body\n";     # by overloading
-
 =cut
 
 sub string() {shift->notImplemented}
@@ -726,10 +685,7 @@ sub string_unless_carp()
     "$class object";
 }
 
-#------------------------------------------
-
 =method lines
-
 Return the content of the body as a list of lines (in LIST context) or a
 reference to an array of lines (in SCALAR context).  In scalar context the
 array of lines is cached to avoid needless copying and therefore provide
@@ -744,7 +700,6 @@ the essential internal variables of the M<Mail::Message::Body> may not be
 updated.
 
 =examples
-
  my @lines    = $body->lines;     # copies lines
  my $line3    = ($body->lines)[3] # only one copy
  print $lines[0];
@@ -759,10 +714,7 @@ updated.
 
 sub lines() {shift->notImplemented}
 
-#------------------------------------------
-
 =method file
-
 Return the content of the body as a file handle.  The returned stream may
 be a real file, or a simulated file in any form that Perl supports.  While
 you may not be able to write to the file handle, you can read from it.
@@ -770,39 +722,27 @@ you may not be able to write to the file handle, you can read from it.
 WARNING: Even if the file handle supports writing, do not write
 to the file handle. If you do, some of the internal values of the
 M<Mail::Message::Body> may not be updated.
-
 =cut
 
 sub file(;$) {shift->notImplemented}
 
-#------------------------------------------
-
 =method print [FILEHANDLE]
-
 Print the body to the specified FILEHANDLE (defaults to the selected handle).
 The handle may be a GLOB, an M<IO::File> object, or... any object with a
 C<print()> method will do.  Nothing useful is returned.
-
 =cut
 
 sub print(;$) {shift->notImplemented}
 
-#------------------------------------------
-
 =method printEscapedFrom FILEHANDLE
-
 Print the body to the specified FILEHANDLE but all lines which start
 with 'From ' (optionally already preceded by E<gt>'s) will habe an E<gt>
 added in front.  Nothing useful is returned.
-
 =cut
 
 sub printEscapedFrom($) {shift->notImplemented}
 
-#------------------------------------------
-
 =method write OPTIONS
-
 Write the content of the body to a file.  Be warned that you may want to
 decode the body before writing it!
 
@@ -834,8 +774,6 @@ sub write(@)
     $self;
 }
 
-#------------------------------------------
-
 =method endsOnNewline
 Returns whether the last line of the body is terminated by a new-line
 (in transport it will become a CRLF).  An empty body will return true
@@ -843,8 +781,6 @@ as well: the newline comes from the line before it.
 =cut
 
 sub endsOnNewline() {shift->notImplemented}
-
-#------------------------------------------
 
 =method stripTrailingNewline
 Remove the newline from the last line, or the last line if it does not
@@ -877,13 +813,10 @@ of the header.
 
 sub read(@) {shift->notImplemented}
 
-#------------------------------------------
-
 =method contentInfoTo HEAD
 Copy the content information (the C<Content-*> fields) into the specified
 HEAD.  The body was created from raw data without the required information,
 which must be added.  See also M<contentInfoFrom()>.
-
 =cut
 
 sub contentInfoTo($)
@@ -901,11 +834,8 @@ sub contentInfoTo($)
     $self;
 }
 
-#------------------------------------------
-
 =method contentInfoFrom HEAD
 Transfer the body related info from the header into this body.
-
 =cut
 
 sub contentInfoFrom($)
@@ -920,10 +850,8 @@ sub contentInfoFrom($)
     $self;
 
 }
-#------------------------------------------
 
 =method modified [BOOLEAN]
-
 Change the body modification flag.  This will force a re-write of the body
 to a folder file when it is closed.  It is quite dangerous to change the
 body: the same body may be shared between messages within your program.
@@ -933,7 +861,6 @@ change the body of the message: no two messages should have the same id.
 
 Without value, the current setting is returned, although you can better use
 M<isModified()>.
-
 =cut
 
 sub modified(;$)
@@ -942,39 +869,28 @@ sub modified(;$)
    $self->{MMB_modified} = shift;
 }
 
-#------------------------------------------
-
 =method isModified
 Returns whether the body has changed.
-
 =cut
 
-sub isModified() {  shift->{MMB_modified} }
-
-#------------------------------------------
+sub isModified() { shift->{MMB_modified} }
 
 =method fileLocation [BEGIN,END]
-
 The location of the body in the file.  Returned a list containing begin and
 end.  The begin is the offsets of the first byte if the folder used for
 this body.  The end is the offset of the first byte of the next message.
-
 =cut
 
-sub fileLocation(;@) {
-    my $self = shift;
+sub fileLocation(;@)
+{   my $self = shift;
     return @$self{ qw/MMB_begin MMB_end/ } unless @_;
     @$self{ qw/MMB_begin MMB_end/ } = @_;
 }
 
-#------------------------------------------
-
 =method moveLocation [DISTANCE]
-
 Move the registration of the message to a new location over DISTANCE.  This
 is called when the message is written to a new version of the same
 folder-file.
-
 =cut
 
 sub moveLocation($)
@@ -984,12 +900,8 @@ sub moveLocation($)
     $self;
 }
 
-#------------------------------------------
-
 =method load
-
 Be sure that the body is loaded.  This returns the loaded body.
-
 =cut
 
 sub load() {shift}
@@ -999,13 +911,11 @@ sub load() {shift}
 =section Error handling
 
 =method AUTOLOAD
-
 When an unknown method is called on a message body object, this may
 not be problematic.  For performance reasons, some methods are
 implemented in separate files, and only demand-loaded.  If this
 delayed compilation of additional modules does not help, an error
 will be produced.
-
 =cut
 
 my @in_encode = qw/check encode encoded eol isBinary isText unify

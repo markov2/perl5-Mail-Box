@@ -65,7 +65,7 @@ sub write(;$)
     my $escaped = $self->escapedBody;
     $out->print($self->fromLine);
 
-    my $size  = sum map {length($_)} @$escaped;
+    my $size  = sum 0, map {length($_)} @$escaped;
 
     my $head  = $self->head;
     $head->set('Content-Length' => $size); 
