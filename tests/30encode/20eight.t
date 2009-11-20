@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Encoding and Decoding of 8bit
 #

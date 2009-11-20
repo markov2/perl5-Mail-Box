@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #### test run untainted!  Otherwise we will not find a relative
 #### mutt_dotlock program.
 #

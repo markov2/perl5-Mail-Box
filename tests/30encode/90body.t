@@ -1,6 +1,4 @@
-#!/usr/bin/perl -T
-#
-#
+#!/usr/bin/env perl -T
 
 use strict;
 use warnings;

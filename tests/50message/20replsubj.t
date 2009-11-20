@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Test the creation of reply subjects
 #

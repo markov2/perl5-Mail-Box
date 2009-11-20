@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Test processing of message bodies which have their content stored
 # in a file.

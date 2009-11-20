@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Test body-structure capturing for IMAP servers
 

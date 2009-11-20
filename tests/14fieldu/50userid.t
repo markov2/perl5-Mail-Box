@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Test processing in combination with User::Identity as documented in
 # Mail::Message::Field.

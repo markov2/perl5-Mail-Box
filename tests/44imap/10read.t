@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Test reading of IMAP4 folders.
 # The environment has some requirements:

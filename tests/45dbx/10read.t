@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl -T
 #
 # Test reading of dbx folders.
 #

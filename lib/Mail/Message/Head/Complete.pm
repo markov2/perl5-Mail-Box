@@ -144,7 +144,7 @@ will be added.  Another possibility is to specify a raw header LINE, or a
 header line nicely split-up in NAME and BODY, in which case the
 field constructor is called for you.
 
-LINE or BODY specifications which are terminated by a new-line are considered 
+LINE or BODY specifications which are terminated by a new-line are considered
 to be correctly folded.  Lines which are not terminated by a new-line will
 be folded when needed: new-lines will be added where required.  It is strongly
 adviced to let MailBox do the folding for you.
@@ -225,7 +225,7 @@ listed here.
 =cut
 
 sub names() {shift->knownNames}
- 
+
 #------------------------------------------
 
 =method grepNames [NAMES|ARRAY-OF-NAMES|REGEXS]
@@ -363,7 +363,7 @@ sub reset($@)
     $self->addOrderedFields(@fields);
     $self;
 }
- 
+
 #------------------------------------------
 
 =method delete NAME
@@ -464,7 +464,7 @@ sub removeFields(@)
 {   my $self = shift;
     (bless $self, 'Mail::Message::Head::Partial')->removeFields(@_);
 }
-   
+
 #------------------------------------------
 
 =method removeFieldsExcept STRING|REGEXP, [STRING|REGEXP, ...]
@@ -614,7 +614,7 @@ sub printUndisclosed($)
 #------------------------------------------
 
 =method printSelected FILEHANDLE, (STRING|REGEXP)s
-                                                                                
+
 Like the usual M<print()>, the header lines are printed to the specified
 FILEHANDLE.  In this case, however, only the fields with names as specified by
 STRING (case insensative) or REGEXP are printed.  They will stay the in-order
@@ -624,7 +624,7 @@ of the source header.
  $head->printSelected(STDOUT, qw/Subject From To/, qr/^x\-(spam|xyz)\-/i)
 
 =cut
-                                                                                
+
 sub printSelected($@)
 {   my ($self, $fh) = (shift, shift);
 
@@ -642,7 +642,7 @@ sub printSelected($@)
         elsif(ref $fh eq 'GLOB') { print $fh "\n" }
         else                     { $fh->print("\n") }
     }
-                                                                                
+
     $self;
 }
 
@@ -1041,7 +1041,7 @@ but no subroutine is defined yet, one will be created.
 
   $many_msg->messageIdPrefix(\&new_msgid);
   Mail::Message::Head::Complete->messageIdPrefix(&new_msgid);
- 
+
 =cut
 
 sub messageIdPrefix(;$$)

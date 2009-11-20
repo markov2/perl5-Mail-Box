@@ -8,6 +8,16 @@ Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
+version 2.092: Fri Nov 20 16:13:46 CET 2009
+
+	Fixes:
+
+	- do not set all signal handlers to "exit(0)"
+	  rt.cpan.org#50433 [Slaven Rezic]
+
+	- do not enforce the use of /usr/bin/perl in the test-scripts,
+	  but use the perl which is selected via the path.
+
 version 2.091: Sun Sep  6 23:54:17 CEST 2009
 
 	Fixes:
@@ -391,7 +401,7 @@ version 2.070: Sun Mar 25 17:11:29 CEST 2007
 	  already exists.
 
 	- converted pod/html generation to use OODoc 0.99
-          Reordered the published packages on the website.
+	  Reordered the published packages on the website.
 
 	- added missing "markers" file to html-package [Michael Bolien]
 
@@ -472,7 +482,7 @@ version 2.066: Sat Jul 29 13:28:09 CEST 2006
 	  [John Gardiner Myers]
 
 	IMAP4 Fixes and improvements by [Scott Bronson].
-        Patches reworked by MarkOv
+	Patches reworked by MarkOv
 
 	- Mail::Transport::IMAP4 unpack of remote capabilities wrong
 	  Reported by [Scott Bronson]
@@ -590,7 +600,7 @@ version 2.061: Wed Jun 22 19:39:09 CEST 2005
 	  angle brackets.  Patch by [gjmyers]
 
 	- Mail::Transport::Sendmail options to trySend() were ignored.
-          [Andriy Gapon]
+	  [Andriy Gapon]
 
 	- Mail::Message::timestamp() didn't trigger load of lazy message.
 	  [found by Eric Dorland]
@@ -821,7 +831,7 @@ version 2.057: Thu Aug 26 14:31:34 CEST 2004
 	- Increased the status of the IMAP folder client from alpha to beta.
 
 	- New methods
-             Mail::Box::Manager::folderdir()
+	     Mail::Box::Manager::folderdir()
 	     Mail::Box::Manager::defaultFolderType()
 
 	- New methods
@@ -886,8 +896,8 @@ version 2.056: Sat Jul 31 13:28:29 CEST 2004
 	  to Locker object.
 
 	- [Mime Mimic] noticed that a message reply used "sender", not
-          "From" addresses when no "Reply-To" field is present. This is
-          not according RFC2822.  Sender should never be used.
+	  "From" addresses when no "Reply-To" field is present. This is
+	  not according RFC2822.  Sender should never be used.
 
 	- [Jason Woodward] found a $_ localization error in POP3, which
 	  could result in "Can't call method "xxx" without a package or
@@ -1010,7 +1020,7 @@ version 2.055: Sun May 16 15:41:59 CEST 2004
 	  not get charset=us-ascii added automatically.
 
 	- [Blair Zajac] typo in Makefile.PL text, and removal of stutters
-          in the documentation.
+	  in the documentation.
 
 	Improvements:
 
@@ -1085,2187 +1095,2187 @@ version 2.053: Thu Dec  4 00:13:50 CET 2003
 
 version 2.052: Wed Dec  3 21:04:45 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - Mail::Transport::Send did not pass the options to the various
-          trySend() methods.  Now $msg->send(to => ...) will be respected.
+	- Mail::Transport::Send did not pass the options to the various
+	  trySend() methods.  Now $msg->send(to => ...) will be respected.
 
-        - [Tim Sellar] fixed the message type default where the Content-Type
-          field is empty.
+	- [Tim Sellar] fixed the message type default where the Content-Type
+	  field is empty.
 
-        - Corrected some typos in Mail::Box-index, and added reference to
-          HTML::FromMail
+	- Corrected some typos in Mail::Box-index, and added reference to
+	  HTML::FromMail
 
-        - 'use' line reshuffling in all test scripts, because Test::Harness
-          changed behavior.
+	- 'use' line reshuffling in all test scripts, because Test::Harness
+	  changed behavior.
 
-        - [Matthew Darwin] found double 'Content-Type' fields after build()
-          From now on, you can overrule the content-type of the constructed
-          message, for instance to 'multipart/alternative' without problems.
+	- [Matthew Darwin] found double 'Content-Type' fields after build()
+	  From now on, you can overrule the content-type of the constructed
+	  message, for instance to 'multipart/alternative' without problems.
 
-        - A list of sorted threads could not handle threads starting at the
-          same time: only one was listed.
+	- A list of sorted threads could not handle threads starting at the
+	  same time: only one was listed.
 
-        - Reply on a message which lists multiple reply-to addresses
-          confused replyPrelude(). Spotted by [Nick Ing-Simmons]
+	- Reply on a message which lists multiple reply-to addresses
+	  confused replyPrelude(). Spotted by [Nick Ing-Simmons]
 
-        - Mail::Transport::SMTP could not handle illegal sender address.
-          Discovered by [Matthew Darwin] 
+	- Mail::Transport::SMTP could not handle illegal sender address.
+	  Discovered by [Matthew Darwin] 
 
-        - Mail::Message->build with data => '' failed: contains no lines
-          at all, which was not correctly handled. Reported by
-          [Matthew Darwin].
+	- Mail::Message->build with data => '' failed: contains no lines
+	  at all, which was not correctly handled. Reported by
+	  [Matthew Darwin].
 
-        - $msg->coerce() does not clear the deleted flag anymore.
+	- $msg->coerce() does not clear the deleted flag anymore.
 
-        Improvements:
+	Improvements:
 
-        - Basic IMAP4 implementation.  Included for testing purpose only.
+	- Basic IMAP4 implementation.  Included for testing purpose only.
 
-        - 'delete' is changed into a full-class label, not a special
-          case.  This simplified the code on many places.  The delete(),
-          isDeleted(), and deleted() methods on a message are now
-          simply short-cuts for $msg->label(deleted)
+	- 'delete' is changed into a full-class label, not a special
+	  case.  This simplified the code on many places.  The delete(),
+	  isDeleted(), and deleted() methods on a message are now
+	  simply short-cuts for $msg->label(deleted)
 
-        - Removed most use of File::Spec from Mail::Box::MH and
-          Mail::Box::Maildir, because it consumed considerable time:
-          [Anthony D. Urso] reported 20%)
-          doing things not required to perform correctly on Unix or
-          Windows.
+	- Removed most use of File::Spec from Mail::Box::MH and
+	  Mail::Box::Maildir, because it consumed considerable time:
+	  [Anthony D. Urso] reported 20%)
+	  doing things not required to perform correctly on Unix or
+	  Windows.
 
-        - Ignore sending messages with SMTP when no addresses are specified
-          to send the message to.
+	- Ignore sending messages with SMTP when no addresses are specified
+	  to send the message to.
 
-        - Warnings about lacking optional modules is nicer in Makefile.PL
+	- Warnings about lacking optional modules is nicer in Makefile.PL
 
-        - Added large warning to Makefile.PL when people have the perl
-          version (not the XS version) of Scalar::Util installed on their
-          system.  That breaks everything! The correct version can not
-          automatically be reinstalled because the version numbers are the
-          same.
+	- Added large warning to Makefile.PL when people have the perl
+	  version (not the XS version) of Scalar::Util installed on their
+	  system.  That breaks everything! The correct version can not
+	  automatically be reinstalled because the version numbers are the
+	  same.
 
-        - Recent changes (bugs) in Test::Harness required an update of
-          the test process.
+	- Recent changes (bugs) in Test::Harness required an update of
+	  the test process.
 
-        - test.pl reports the version of some installed modules, to help
-          responding to error reports.
+	- test.pl reports the version of some installed modules, to help
+	  responding to error reports.
 
-        - [Anthony D. Urso] supplied a patch to use the Received headers
-          to provide a message time-stamp.  Mail::Message::Head::Complete
-          now contains a ::timestamp() to get the user supplied date (which
-          is untrustable in case of spam) and ::recvstamp() which uses other
-          means.  The Mail::Message::timestamp() will, from now on, prefer
-          the date provided by ::recvstamp and use ::timestamp as fallback.
+	- [Anthony D. Urso] supplied a patch to use the Received headers
+	  to provide a message time-stamp.  Mail::Message::Head::Complete
+	  now contains a ::timestamp() to get the user supplied date (which
+	  is untrustable in case of spam) and ::recvstamp() which uses other
+	  means.  The Mail::Message::timestamp() will, from now on, prefer
+	  the date provided by ::recvstamp and use ::timestamp as fallback.
 
-          There are other sources to get a good stamp from, for instance
-          the MBOX "From " line, but that is not implemented (yet)
+	  There are other sources to get a good stamp from, for instance
+	  the MBOX "From " line, but that is not implemented (yet)
 
-        - [asta] used $msg->parts, but the doc of the method was ignoring
-          the facts that the message/rfc822 and multipart "wrappers" of
-          the parts are not returned.
+	- [asta] used $msg->parts, but the doc of the method was ignoring
+	  the facts that the message/rfc822 and multipart "wrappers" of
+	  the parts are not returned.
 
-        - $folder->current made lazy, so only calculated when used.  When
-          no message is labeled 'current', then the first not seen is
-          returned.
-          
-        - New method $folder->findFirstLabeled.
+	- $folder->current made lazy, so only calculated when used.  When
+	  no message is labeled 'current', then the first not seen is
+	  returned.
+	  
+	- New method $folder->findFirstLabeled.
 
-        - New option Mail::Box::Manager->new(autodetect) limits the set of
-          default folder-types in the folder type autodetection attempt.
-          Requested by [Nick Ing-Simmons]
+	- New option Mail::Box::Manager->new(autodetect) limits the set of
+	  default folder-types in the folder type autodetection attempt.
+	  Requested by [Nick Ing-Simmons]
 
-        - The HTML manual now also indexes NOTICE log messages.  Not all
-          NOTICE messages are described yet.
+	- The HTML manual now also indexes NOTICE log messages.  Not all
+	  NOTICE messages are described yet.
 
 version 2.051: Mon Nov  3 16:16:09 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - [Tim Sellar] example/build.pl omission: ::Body->new(type =>
-          should be ::Body->new(mime_type =>
+	- [Tim Sellar] example/build.pl omission: ::Body->new(type =>
+	  should be ::Body->new(mime_type =>
 
-        - [Lutz Gehlen] bumped into a mistake in the (not finished)
-          ::Field::Full code: the class of unstructured fields was
-          composed improperly.
+	- [Lutz Gehlen] bumped into a mistake in the (not finished)
+	  ::Field::Full code: the class of unstructured fields was
+	  composed improperly.
 
-        - study()ing multi-line fields produced an improper field
-          names.
+	- study()ing multi-line fields produced an improper field
+	  names.
 
-        Improvements:
+	Improvements:
 
-        - [Matthew Walker] added the distiction between CommuniGatePro
-          and CommunGate software to the Mail::Message::Head::ListGroup 
-          mailinglist detector.
+	- [Matthew Walker] added the distiction between CommuniGatePro
+	  and CommunGate software to the Mail::Message::Head::ListGroup 
+	  mailinglist detector.
 
-        - [Tim Sellar] suggested to ignore undef values in build(),
-          which will simplify the code of the user.
+	- [Tim Sellar] suggested to ignore undef values in build(),
+	  which will simplify the code of the user.
 
-        - Added detector for MailScanner spam groups.
+	- Added detector for MailScanner spam groups.
 
-        - new Mail::Message::Head::SpamGroup::spamDetected() and
-              Mail::Message::Head::Complete::spamDetected()
+	- new Mail::Message::Head::SpamGroup::spamDetected() and
+	      Mail::Message::Head::Complete::spamDetected()
 
-        - Mail::Message::Replace::MailInternet::read() distinguishes
-          between Mail::Message->read() and $mailinternet_object->read
+	- Mail::Message::Replace::MailInternet::read() distinguishes
+	  between Mail::Message->read() and $mailinternet_object->read
 
 version 2.050: Tue Sep 30 18:27:11 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - An (unintended) change of behaviour in Text::MagicTemplate
-          (which is used to produce the POD and HTML) made all produced
-          manuals exactly the same.
+	- An (unintended) change of behaviour in Text::MagicTemplate
+	  (which is used to produce the POD and HTML) made all produced
+	  manuals exactly the same.
 
-        Improvements:
+	Improvements:
 
-        - [Matthew Walker] contributed various improvements to the ListGroup
-          detection and documentation.  Detection for Listserv software
-          was added, and rfc2918 should have been rfc2919.
+	- [Matthew Walker] contributed various improvements to the ListGroup
+	  detection and documentation.  Detection for Listserv software
+	  was added, and rfc2918 should have been rfc2919.
 
-        - [Matthew Walker] made test/Tools::copy_dir() skip directories.
+	- [Matthew Walker] made test/Tools::copy_dir() skip directories.
 
-        - Implementation of Mail::Message::Replace::MailInternet and
-          ::MailHeader, as drop-in replacements for Mail::Internet and
-          Mail::Header.  Very alpha! not tested yet!
+	- Implementation of Mail::Message::Replace::MailInternet and
+	  ::MailHeader, as drop-in replacements for Mail::Internet and
+	  Mail::Header.  Very alpha! not tested yet!
 
 version 2.049: Mon Sep 29 13:32:47 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - [Liz Mattijsen] Makefile.PL requires IO::Handle in some
-          environments.
+	- [Liz Mattijsen] Makefile.PL requires IO::Handle in some
+	  environments.
 
-        - [Terrence Brennon] found a doc and a code mistake in
-          example/strip-attachement.pl
+	- [Terrence Brennon] found a doc and a code mistake in
+	  example/strip-attachement.pl
 
-        - [Ron Savage] showed that the Text::Autoformat module produces
-          different output on different machines, caused by breaking
-          words.  Breaking now disabled the for the tests, so test
-          should result in the same everywhere.
+	- [Ron Savage] showed that the Text::Autoformat module produces
+	  different output on different machines, caused by breaking
+	  words.  Breaking now disabled the for the tests, so test
+	  should result in the same everywhere.
 
-        - Some Mail::Transport::* senders did not pass-on the Bcc field
-          to their application.  Reported by [Phil Hagen].
+	- Some Mail::Transport::* senders did not pass-on the Bcc field
+	  to their application.  Reported by [Phil Hagen].
 
-        - [Stefan Wolfsheimer] and [Mark Scarton] report a missing $ in
-          ::ResentGroup, which broke the "delivered-to" field in resent
-          groups.
+	- [Stefan Wolfsheimer] and [Mark Scarton] report a missing $ in
+	  ::ResentGroup, which broke the "delivered-to" field in resent
+	  groups.
 
-        - [Jason Woodward] reported that there were still some problems
-          with $msg->forward().  Hope to have fixed them, this time.
+	- [Jason Woodward] reported that there were still some problems
+	  with $msg->forward().  Hope to have fixed them, this time.
 
-        - $msg->send now really has a default which will be loaded
-          automatically as well.
+	- $msg->send now really has a default which will be loaded
+	  automatically as well.
 
-        - When you try to open the same folder twice, using the manager
-          (as you should), the second time will fail.  This is needed,
-          because there are too many complications, like locking.
+	- When you try to open the same folder twice, using the manager
+	  (as you should), the second time will fail.  This is needed,
+	  because there are too many complications, like locking.
 
-        Improvements:
+	Improvements:
 
-        - Mail::Box::Parser::Perl used $sep =~ m/^From / to recognize the
-          MBOX separator.  Now it uses $sep eq 'From ', which is faster.
+	- Mail::Box::Parser::Perl used $sep =~ m/^From / to recognize the
+	  MBOX separator.  Now it uses $sep eq 'From ', which is faster.
 
-        - Mail::Message::Body::new(data) now corrects scalars values
-          which do not end on a "\n".  Convinced by [Mike Mimic]
+	- Mail::Message::Body::new(data) now corrects scalars values
+	  which do not end on a "\n".  Convinced by [Mike Mimic]
 
-        - Object::Realize::Later v0.14 required
+	- Object::Realize::Later v0.14 required
 
-        - Mail::Box::File::updateMessages() implemented, for instance for
-          $mbox->update calls.  Test in tests/40mbox/80update.t
+	- Mail::Box::File::updateMessages() implemented, for instance for
+	  $mbox->update calls.  Test in tests/40mbox/80update.t
 
-        - Maildir subfolder names can start with a dot, as reported by
-          [Paul Simons].
+	- Maildir subfolder names can start with a dot, as reported by
+	  [Paul Simons].
 
-        - Ability to add options to the command-line of sendmail when
-          started as MTU.  Saw this need in a script of [Adam Augustine]
+	- Ability to add options to the command-line of sendmail when
+	  started as MTU.  Saw this need in a script of [Adam Augustine]
 
-        - Test-script of MIME::Entity conversion purges the M::E objects
-          after being used, otherwise trashing files are left in the tests
-          directory.
+	- Test-script of MIME::Entity conversion purges the M::E objects
+	  after being used, otherwise trashing files are left in the tests
+	  directory.
 
-        - Added Mail::Message::Body(::Encode)::dispositionFilename and
-          Mail::Message::Body::write() which will help to export data
-          found in a message(-part) to the file-system.
+	- Added Mail::Message::Body(::Encode)::dispositionFilename and
+	  Mail::Message::Body::write() which will help to export data
+	  found in a message(-part) to the file-system.
 
 version 2.048: Tue Aug 26 19:50:06 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - [Jason Woodward] reported that reply on multiparts (with only
-          one part) failed.  For this release, forward() has been rewritten.
-          reply() may be the victim for the next release.
+	- [Jason Woodward] reported that reply on multiparts (with only
+	  one part) failed.  For this release, forward() has been rewritten.
+	  reply() may be the victim for the next release.
 
-        - [Joe Junkin] reported a problem to send messages where the
-          body is not in a temporary file via SMTP.
+	- [Joe Junkin] reported a problem to send messages where the
+	  body is not in a temporary file via SMTP.
 
-        - Added required Mail::Message::Wrapper::SpamAssassin method
-          get_pristine_header()
+	- Added required Mail::Message::Wrapper::SpamAssassin method
+	  get_pristine_header()
 
-        - [Simon Cozens] demonstrated that converting MIME::Entity objects
-          into Mail::Message's lost content related headers.  This required
-          a small redesign on when data is copied from header to body and
-          vice versa.
+	- [Simon Cozens] demonstrated that converting MIME::Entity objects
+	  into Mail::Message's lost content related headers.  This required
+	  a small redesign on when data is copied from header to body and
+	  vice versa.
 
-        - Mail::Message::Body::Multipart;;stripSignature stripped all
-          but signatures :(
+	- Mail::Message::Body::Multipart;;stripSignature stripped all
+	  but signatures :(
 
-        - requires Test::Harness which defines _run_test_scripts, so
-          increased the required VERSION. [Liz Mattijsen]
+	- requires Test::Harness which defines _run_test_scripts, so
+	  increased the required VERSION. [Liz Mattijsen]
 
-        - [Steven Benson] found-out that manager objects where kept
-          alive too long.
+	- [Steven Benson] found-out that manager objects where kept
+	  alive too long.
 
-        - [Rob Holland] reports that a '=' is valid in a Maildir filename,
-          and supplied a patch.
+	- [Rob Holland] reports that a '=' is valid in a Maildir filename,
+	  and supplied a patch.
 
-        - [Joe Junkin] found another spot where <$body> was used on a
-          non-GLOB.  In Mail::Transport::SMTP, this time.
+	- [Joe Junkin] found another spot where <$body> was used on a
+	  non-GLOB.  In Mail::Transport::SMTP, this time.
 
-        Improvements:
+	Improvements:
 
-        - Added Mail::Message::Head::FieldGroup as base class for
-          Mail::Message::Head::(List|Spam|Resent)Group.
+	- Added Mail::Message::Head::FieldGroup as base class for
+	  Mail::Message::Head::(List|Spam|Resent)Group.
 
-        - Reimplemented Mail::Message::Head::ResentGroup to be based on
-          a MMH::FieldGroup.
+	- Reimplemented Mail::Message::Head::ResentGroup to be based on
+	  a MMH::FieldGroup.
 
-        - Added Mail::Message::Head::SpamGroup to detect/produce/remove
-          sets of header fields which relate to spam detection software.
-          Tests in tests/31fgroups/30spam.t
+	- Added Mail::Message::Head::SpamGroup to detect/produce/remove
+	  sets of header fields which relate to spam detection software.
+	  Tests in tests/31fgroups/30spam.t
 
-        - Moved detection of mailinglist type in Mail::Message::Head::Listgroup
-          from method type() to from().
+	- Moved detection of mailinglist type in Mail::Message::Head::Listgroup
+	  from method type() to from().
 
-        - Added Mail::Report::addReport, to merge reports from one object
-          into an other, require by [Matthew Lockner]
+	- Added Mail::Report::addReport, to merge reports from one object
+	  into an other, require by [Matthew Lockner]
 
-        - [Matthew Lockner] wished to able to get parser errors back on
-          Mail::Message->read.  These errors are now copied from the parser
-          object into the message.
+	- [Matthew Lockner] wished to able to get parser errors back on
+	  Mail::Message->read.  These errors are now copied from the parser
+	  object into the message.
 
-        - Added Habeas-SWE (Sender Warranted E-mail) as abbreviation in field
-          names which is always in caps, on request by [Ronnie Paskin]
+	- Added Habeas-SWE (Sender Warranted E-mail) as abbreviation in field
+	  names which is always in caps, on request by [Ronnie Paskin]
 
-        - Moved 20resent.t and 40list.t from tests/12head to tests/31fgroups.
+	- Moved 20resent.t and 40list.t from tests/12head to tests/31fgroups.
 
-        - New methods Mail::Message::Head::Complete::removeContentInfo(),
-          Mail::Message::Body::contentInfoFrom(head) and ...To(head)
+	- New methods Mail::Message::Head::Complete::removeContentInfo(),
+	  Mail::Message::Body::contentInfoFrom(head) and ...To(head)
 
-        - As result of an extended discussion with [Simon Cozens], it
-          seems that object-by-object conversion between MIME::Entity
-          and Mail::Message objects will keep on producing problems.
-          Therefore a stringify-reparse strategy is used from now on.
-          Mail::Message::Convert::MimeEntity is very straight-forward
-          now, but a less efficient.
+	- As result of an extended discussion with [Simon Cozens], it
+	  seems that object-by-object conversion between MIME::Entity
+	  and Mail::Message objects will keep on producing problems.
+	  Therefore a stringify-reparse strategy is used from now on.
+	  Mail::Message::Convert::MimeEntity is very straight-forward
+	  now, but a less efficient.
 
-        - [Jason Woodward] convinced me to implement
-          Mail::Message::forward(include => 'ENCAPSULATE'), which adds
-          the source message as message/rfc822.  The whole forward
-          implementation has been re-implemented and re-documented.
+	- [Jason Woodward] convinced me to implement
+	  Mail::Message::forward(include => 'ENCAPSULATE'), which adds
+	  the source message as message/rfc822.  The whole forward
+	  implementation has been re-implemented and re-documented.
 
-        - [Kees Dekker] was (understandably) confused by the explanation
-          of $folder->isModified()  This has been improved.
+	- [Kees Dekker] was (understandably) confused by the explanation
+	  of $folder->isModified()  This has been improved.
 
 version 2.047: Thu Aug  7 23:59:53 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - For MBOX and POP3, delayed header will be read before labels()
-          or label() return the values, because only reading will cause
-          the [X-]Status fields to be parsed into labels.
+	- For MBOX and POP3, delayed header will be read before labels()
+	  or label() return the values, because only reading will cause
+	  the [X-]Status fields to be parsed into labels.
 
-        - Tests are now suitable for perl5.8.1
+	- Tests are now suitable for perl5.8.1
 
-        - [Kees Dekker] with Solaris and perl5.8.1 showed me that
-          Mail::Box::Locker::POSIX was so broken that its tests worked
-          on other versions :(
+	- [Kees Dekker] with Solaris and perl5.8.1 showed me that
+	  Mail::Box::Locker::POSIX was so broken that its tests worked
+	  on other versions :(
 
-        Improvements:
+	Improvements:
 
-        - Moved all questions about optional modules from test.pl to
-          Makefile.PL.  Hope for a cleaner installation.
+	- Moved all questions about optional modules from test.pl to
+	  Makefile.PL.  Hope for a cleaner installation.
 
-        - On request by [Jason Woodward], POP3 received messages will
-          get their Status and X-Status fields processed.  POP3 has no
-          other means to pass-on status information, although not all
-          servers support these fields.
+	- On request by [Jason Woodward], POP3 received messages will
+	  get their Status and X-Status fields processed.  POP3 has no
+	  other means to pass-on status information, although not all
+	  servers support these fields.
 
-        - The library should now be taint-safe: all test-scripts now run
-          in taint mode!
+	- The library should now be taint-safe: all test-scripts now run
+	  in taint mode!
 
-        - The POP3 test-scripts now share common code in Tools.pm
+	- The POP3 test-scripts now share common code in Tools.pm
 
-        - New release for Mail::Box::Parser::C (as separate package)
-          which ignores message lines starting with 'From ' as
-          separators in broken MBOX folders (like mutt produces).
+	- New release for Mail::Box::Parser::C (as separate package)
+	  which ignores message lines starting with 'From ' as
+	  separators in broken MBOX folders (like mutt produces).
 
-        - Added Mail::box::Parser::C to the list of optional modules.
+	- Added Mail::box::Parser::C to the list of optional modules.
 
-        - Refolding and Mail::Message::Field::AddrGroup will produce
-          the address strings in alphabetic order, to get a reproduceable
-          result (required for 5.8.1)
+	- Refolding and Mail::Message::Field::AddrGroup will produce
+	  the address strings in alphabetic order, to get a reproduceable
+	  result (required for 5.8.1)
 
-        - Disabled detection of folder "changed during access", until
-          all folder types support 'update()'.
+	- Disabled detection of folder "changed during access", until
+	  all folder types support 'update()'.
 
 version 2.046: Thu Jul 31 12:25:47 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - [Kees Dekker] found that HPUX mangles %z int textual timezone,
-          so Mail::Message::Field::toDate() has changed again.  Quite
-          complex now.
+	- [Kees Dekker] found that HPUX mangles %z int textual timezone,
+	  so Mail::Message::Field::toDate() has changed again.  Quite
+	  complex now.
 
-        - [Kees Dekker] fixed a missed test for undef in
-          Mail::Message::Head::ListGroup::display().
+	- [Kees Dekker] fixed a missed test for undef in
+	  Mail::Message::Head::ListGroup::display().
 
-        - [Kees Dekker] reported a problem in tests/42maildir/20write
-          which was caused by a missing $folder->close;
+	- [Kees Dekker] reported a problem in tests/42maildir/20write
+	  which was caused by a missing $folder->close;
 
-        - [Blair Zajac] & [Kees Dekker] signalled that User::Identity
-          and URI are prerequisits now.
+	- [Blair Zajac] & [Kees Dekker] signalled that User::Identity
+	  and URI are prerequisits now.
 
-        - [Kingpin] Wrong quotes in warnings and a typo, in
-          Mail/Message/Body/Encoding.pm
+	- [Kingpin] Wrong quotes in warnings and a typo, in
+	  Mail/Message/Body/Encoding.pm
 
-        - $msg->send was showing lines not to be disclosed by default,
-          which is wrong.
+	- $msg->send was showing lines not to be disclosed by default,
+	  which is wrong.
 
-        - [Jan Stapel] reported prints of "GLOB()"s where text was
-          expected.  This was a new bug in Mail::Message::Body::File
+	- [Jan Stapel] reported prints of "GLOB()"s where text was
+	  expected.  This was a new bug in Mail::Message::Body::File
 
-        Improvements:
+	Improvements:
 
-        - [David Coppit] has a short list of improvements in handling
-          blank lines at the end of messages and message parts, which
-          will decrease the differences between a message read and then
-          printed.
+	- [David Coppit] has a short list of improvements in handling
+	  blank lines at the end of messages and message parts, which
+	  will decrease the differences between a message read and then
+	  printed.
 
 version 2.045: Tue Jul 29 20:23:30 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - A lot of files were missing from the distribution because OODoc
-          had a bug.
+	- A lot of files were missing from the distribution because OODoc
+	  had a bug.
 
-        Improvements:
+	Improvements:
 
-        - Object::Realize::Later documentation is now part of MailBox's
-          html output too.  Join the club!
+	- Object::Realize::Later documentation is now part of MailBox's
+	  html output too.  Join the club!
 
 version 2.044: Tue Jul 29 13:52:32 CEST 2003
 
-        Interface changes!!
+	Interface changes!!
 
-        - Mail::Message::rebuild() tags where inconsequently named.  Now
-          remove_html_alternative_to_text => removeHtmlAlternativeToText
-          text_alternative_for_html => textAlternativeForHtml
+	- Mail::Message::rebuild() tags where inconsequently named.  Now
+	  remove_html_alternative_to_text => removeHtmlAlternativeToText
+	  text_alternative_for_html => textAlternativeForHtml
 
-        - [Anthony D. Urso] hinted that opening a Maildir folder should
-          not automatically move messages from 'new' to 'cur'.  Added a
-          label 'accepted' to control this.
-          See Maildir::new(accept_new) which must be set to get the
-          same behavior as before.
+	- [Anthony D. Urso] hinted that opening a Maildir folder should
+	  not automatically move messages from 'new' to 'cur'.  Added a
+	  label 'accepted' to control this.
+	  See Maildir::new(accept_new) which must be set to get the
+	  same behavior as before.
 
-        - Mail::Box::Maildir::updateMessages was incorrect: inconsistent
-          behavior with other updateMessages().  Removed for now.
+	- Mail::Box::Maildir::updateMessages was incorrect: inconsistent
+	  behavior with other updateMessages().  Removed for now.
 
-        Fixes:
+	Fixes:
 
-        - Some print()s did not distriguish between GLOBs and IO::Files
+	- Some print()s did not distriguish between GLOBs and IO::Files
 
-        - [Martin Thurn] detected a problem with the call of
-          Mail::Box::FastScalar in Mail::Box::POP3
+	- [Martin Thurn] detected a problem with the call of
+	  Mail::Box::FastScalar in Mail::Box::POP3
 
-        - [Yuval Kojman] fixed Field::toDate() on systems without glibc.
+	- [Yuval Kojman] fixed Field::toDate() on systems without glibc.
 
-        Improvements:
+	Improvements:
 
-        - Mail::Message::new(labels) did not work, but was not described
-          either.
+	- Mail::Message::new(labels) did not work, but was not described
+	  either.
 
-        - Moved all modules to lib/, which removes the need for a nested
-          Makefile.PL, improperly handled by new gnu-make/ExtUtils::MakeMaker
-          combinations.
+	- Moved all modules to lib/, which removes the need for a nested
+	  Makefile.PL, improperly handled by new gnu-make/ExtUtils::MakeMaker
+	  combinations.
 
-        - added UserIdentity to the HTML documentation tree.
+	- added UserIdentity to the HTML documentation tree.
 
-        - added list detector Mail::Message::Head::ListGroup based on
-          information collected in Mail::ListDetector.
-          Tests in 12head/40list.t
+	- added list detector Mail::Message::Head::ListGroup based on
+	  information collected in Mail::ListDetector.
+	  Tests in 12head/40list.t
 
-        - added Mail::Messsage::Head::Complete::listGroup()
-                Mail::Messsage::Head::Complete::addListGroup()
-                Mail::Messsage::Head::Complete::removeListGroup()
-                Mail::Messsage::Head::Partial::removeListGroup()
+	- added Mail::Messsage::Head::Complete::listGroup()
+	        Mail::Messsage::Head::Complete::addListGroup()
+	        Mail::Messsage::Head::Complete::removeListGroup()
+	        Mail::Messsage::Head::Partial::removeListGroup()
 
-        - added example 'smaller.pl' to demonstrate how to get rit
-          of selected headers (and how much you gain by it)
+	- added example 'smaller.pl' to demonstrate how to get rit
+	  of selected headers (and how much you gain by it)
 
-        - added description how to reduce the size of headers by removing
-          groups of fields.
+	- added description how to reduce the size of headers by removing
+	  groups of fields.
 
-        - added method $folder->size which estimated a folder size, but
-          may be slow.
+	- added method $folder->size which estimated a folder size, but
+	  may be slow.
 
-        - debugged and tested Mail::Message::Field::Addresses,
-          Mail::Message::Field::Address, and Mail::Message::Field::AddrGroup,
-          with tests in tests/14fieldu/51addr.t
+	- debugged and tested Mail::Message::Field::Addresses,
+	  Mail::Message::Field::Address, and Mail::Message::Field::AddrGroup,
+	  with tests in tests/14fieldu/51addr.t
 
-        - Added Mail::Message::Field::URIs with tests in
-          tests/14fieldu/52uris.
+	- Added Mail::Message::Field::URIs with tests in
+	  tests/14fieldu/52uris.
 
-        - MailBox now depends on the URI distribution
+	- MailBox now depends on the URI distribution
 
-        - Move Mail::Box::Message::shortString and ::shortSize to
-          Mail::Message.
+	- Move Mail::Box::Message::shortString and ::shortSize to
+	  Mail::Message.
 
-        - Simplified Mail::Message::sender().
+	- Simplified Mail::Message::sender().
 
-        - Rewrote Mail::Message::Head::createReceived to work on headers
-          which are not inside a message.
+	- Rewrote Mail::Message::Head::createReceived to work on headers
+	  which are not inside a message.
 
-        - "make test" will produce some more text, and permits skipping
-          all tests for fast installation.
+	- "make test" will produce some more text, and permits skipping
+	  all tests for fast installation.
 
 version 2.043: Thu Jul 10 10:18:51 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - [Greg Matheson] small doc-fix for Mail::Message::Body::Construct
-          foreachLine().
+	- [Greg Matheson] small doc-fix for Mail::Message::Body::Construct
+	  foreachLine().
 
-        - [Wiggins d'Anconia] time generated by strftime left %z on non-gnu
-          systems.  On those systems, a work-around is made using
-          Date::Format.
+	- [Wiggins d'Anconia] time generated by strftime left %z on non-gnu
+	  systems.  On those systems, a work-around is made using
+	  Date::Format.
 
-        - appendMessage in Mail::Box::File coerces message into the
-          correct sub-class.
+	- appendMessage in Mail::Box::File coerces message into the
+	  correct sub-class.
 
-        - Mail::Message::Head::Delayed is not empty.
+	- Mail::Message::Head::Delayed is not empty.
 
-        - Mail::Message->read will strip the status fields from the header
-          by default, for security considerations.
+	- Mail::Message->read will strip the status fields from the header
+	  by default, for security considerations.
 
-        - Mail::Message->bounce will not interpret status fields.
+	- Mail::Message->bounce will not interpret status fields.
 
-        Improvements:
+	Improvements:
 
-        - labelsToStatus and statusToLabels are now only implemented for
-          file based folder types, like mbox.
+	- labelsToStatus and statusToLabels are now only implemented for
+	  file based folder types, like mbox.
 
-        - Implemented Mail::Box::Message::Destructed with a
-          Mail::Box::Message::destruct(), Mail::Message::destruct(), and
-          Mail::Message::Part::destruct(), tests/50mesage/60destruct.t
-          to forcefully free-up most memory used by a message.
+	- Implemented Mail::Box::Message::Destructed with a
+	  Mail::Box::Message::destruct(), Mail::Message::destruct(), and
+	  Mail::Message::Part::destruct(), tests/50mesage/60destruct.t
+	  to forcefully free-up most memory used by a message.
 
-        - Added Mail::Box-Index, the documentation index.
+	- Added Mail::Box-Index, the documentation index.
 
-        - Extended documentation about
-          . various ways to access header field data
-          . message labels (flags)
-          . various class relations
+	- Extended documentation about
+	  . various ways to access header field data
+	  . message labels (flags)
+	  . various class relations
 
-        - Now requires Object::Realize::Later version 0.12
+	- Now requires Object::Realize::Later version 0.12
 
-        - [Todd Richmond] contributed Mail::Box::FastScalar, which is
-          a replacement of IO::Scalar... but faster.  It should be a
-          separate module, but for now it has a place.
-          FastScalar is faster and does not leak, as its brother.
+	- [Todd Richmond] contributed Mail::Box::FastScalar, which is
+	  a replacement of IO::Scalar... but faster.  It should be a
+	  separate module, but for now it has a place.
+	  FastScalar is faster and does not leak, as its brother.
 
-        - Removed last uses of IO::ScalarArray, because it seeks awfully
-          slow.
+	- Removed last uses of IO::ScalarArray, because it seeks awfully
+	  slow.
 
-        - Added Mail::Message::study()
-                Mail::Message::Head::study()
-          but it is not usuable yet.
+	- Added Mail::Message::study()
+	        Mail::Message::Head::study()
+	  but it is not usuable yet.
 
 version 2.042: Tue May 20 14:32:05 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - Added message-id to the wrong side of the Reference field
-          in reply() and forward().  Fix by [Mike Mimic]
+	- Added message-id to the wrong side of the Reference field
+	  in reply() and forward().  Fix by [Mike Mimic]
 
-        - [Tassilo v Parseval] reported an error when HTML::FormatText
-          was not installed.
+	- [Tassilo v Parseval] reported an error when HTML::FormatText
+	  was not installed.
 
-        - [Alex Liberman] found that searching nested messages failed,
-          because they were treated as multiparts.
+	- [Alex Liberman] found that searching nested messages failed,
+	  because they were treated as multiparts.
 
-        - [Todd Richmond] demonstrated that multiparts contained circular
-          references, which increased memory consumption.  Not hard too
-          fix.
+	- [Todd Richmond] demonstrated that multiparts contained circular
+	  references, which increased memory consumption.  Not hard too
+	  fix.
 
-        Improvements:
+	Improvements:
 
-        - Implemented Mail::Box::Dbx to read Outlook Express files.  Tests
-          in tests/45dbx/*
+	- Implemented Mail::Box::Dbx to read Outlook Express files.  Tests
+	  in tests/45dbx/*
 
-        - Implemented Mail::Message::Head::Partial, which will contain
-          a subset of headers without knowing where to find the rest
-          of it.  ::Subset knows where to get the rest.  Tests in
-          tests/12head/30partial.t
+	- Implemented Mail::Message::Head::Partial, which will contain
+	  a subset of headers without knowing where to find the rest
+	  of it.  ::Subset knows where to get the rest.  Tests in
+	  tests/12head/30partial.t
 
-        - $head->removeFields(), $head->removeFieldsExcept() and
-          $head->removeResentGroups to free up memory. This "upgrades" a
-          complete header into a partial header.
+	- $head->removeFields(), $head->removeFieldsExcept() and
+	  $head->removeResentGroups to free up memory. This "upgrades" a
+	  complete header into a partial header.
 
 version 2.041: Thu May  8 14:05:32 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - [Supriya Jagadeesh] showed that reply(include => NO) did not
-          work. Apparently, no-one used it before.
+	- [Supriya Jagadeesh] showed that reply(include => NO) did not
+	  work. Apparently, no-one used it before.
 
-        - [Shagren] showed a patch to avoid an locale based date field
-          to be produced, where rfc2822 requires an English format.
-          As change, the locale based parts of strftime are avoided.
+	- [Shagren] showed a patch to avoid an locale based date field
+	  to be produced, where rfc2822 requires an English format.
+	  As change, the locale based parts of strftime are avoided.
 
-        - sendmail and started with extra -i flag, to avoid stop at lines
-          in message which only contain a dot.  Spotted by [Tim Sellar]
+	- sendmail and started with extra -i flag, to avoid stop at lines
+	  in message which only contain a dot.  Spotted by [Tim Sellar]
 
-        - [Bill Moseley] detected that examples/reply.pl called an
-          non-existing quotePrelude(), which should have been replyPrelude().
+	- [Bill Moseley] detected that examples/reply.pl called an
+	  non-existing quotePrelude(), which should have been replyPrelude().
 
-        - [Dimitris Glynos] Mail::Message::Field::Full:_decoder() should
-          decode, not encode :(
+	- [Dimitris Glynos] Mail::Message::Field::Full:_decoder() should
+	  decode, not encode :(
 
-        - [Dimitris Glynos] Mail::Message::Construct::reply() did not
-          use the subject of the sender to create a new answer.
+	- [Dimitris Glynos] Mail::Message::Construct::reply() did not
+	  use the subject of the sender to create a new answer.
 
-        Improvements:
+	Improvements:
 
-        - Translated all docs to use OODoc.  Many small fixes in the docs
-          were the result.
+	- Translated all docs to use OODoc.  Many small fixes in the docs
+	  were the result.
 
-        - Removed $folder->clone, because it implemented the same as
-          $folder->openRelatedFolder, which has a much better name to
-          describe the action performed.
+	- Removed $folder->clone, because it implemented the same as
+	  $folder->openRelatedFolder, which has a much better name to
+	  describe the action performed.
 
-        - Rewrote documentation for Mail::Box::scanFromMessages().  It now
-          also accepts a timespan as value.
+	- Rewrote documentation for Mail::Box::scanFromMessages().  It now
+	  also accepts a timespan as value.
 
-        - Documented all available overloading (which is quite important).
+	- Documented all available overloading (which is quite important).
 
-        - Mail::Message::Construct has been taken apart in multiple
-          Mail::Message::Construct::* packages because it grew too
-          large and it simplifies including examples.
+	- Mail::Message::Construct has been taken apart in multiple
+	  Mail::Message::Construct::* packages because it grew too
+	  large and it simplifies including examples.
 
-        - Added Mail::Message::Construct::Rebuild, which can modify
-          existing messages.  Very slick!
+	- Added Mail::Message::Construct::Rebuild, which can modify
+	  existing messages.  Very slick!
 
-        - Mail::Message::Part's get an empty header by default.
+	- Mail::Message::Part's get an empty header by default.
 
 version 2.040: Mon Apr 14 15:48:54 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - Mail::Transport::Exim could not find destinations().  Move that
-          method from MT::SMTP to MT::Send.  Thanks to [Greg Matheson].
+	- Mail::Transport::Exim could not find destinations().  Move that
+	  method from MT::SMTP to MT::Send.  Thanks to [Greg Matheson].
 
-        - [Dimitris Glynos] fixed one more place where a failed login
-          for POP3 caused Mail::Box to hick-up.
+	- [Dimitris Glynos] fixed one more place where a failed login
+	  for POP3 caused Mail::Box to hick-up.
 
-        - [Dimitris Glynos] made Mail::Box care about succesfull reading
-          of messages.
+	- [Dimitris Glynos] made Mail::Box care about succesfull reading
+	  of messages.
 
-        - [Shagren] reported that the CRLF changes on POP3 did break
-          POP3 under Windows.  The problem is that the IO::* modules
-          (like IO::Socket) do not implement BINMODE: you can not set
-          them in 'raw' mode.  Implemented a work-around.
+	- [Shagren] reported that the CRLF changes on POP3 did break
+	  POP3 under Windows.  The problem is that the IO::* modules
+	  (like IO::Socket) do not implement BINMODE: you can not set
+	  them in 'raw' mode.  Implemented a work-around.
 
-        - [Steve Lewis] explained why information about a body was not
-          preserved over a clone().  He provided a patch.
+	- [Steve Lewis] explained why information about a body was not
+	  preserved over a clone().  He provided a patch.
 
-        - [Todd Richmond] found-out that Content-Type lines sometimes
-          doubled.  The reason behind this was that header and body
-          shared the same field structures, which blocked the auto-
-          destruction of header lines which were obsoleted: the old
-          Content-Type line in the header was kept alive by the body.
+	- [Todd Richmond] found-out that Content-Type lines sometimes
+	  doubled.  The reason behind this was that header and body
+	  shared the same field structures, which blocked the auto-
+	  destruction of header lines which were obsoleted: the old
+	  Content-Type line in the header was kept alive by the body.
 
-        - [Michael D Richards] reported another corruption in construction
-          of binary attachments.  Fixed that as well.
+	- [Michael D Richards] reported another corruption in construction
+	  of binary attachments.  Fixed that as well.
 
-        Improvements:
+	Improvements:
 
-        - [Alexander Bauer] reported a very slow Mail::Message->read
-          for large messages.  This was due to IO::ScalarArray (being
-          extremely slow in seeks), which now is replaced by IO::Scalar.
+	- [Alexander Bauer] reported a very slow Mail::Message->read
+	  for large messages.  This was due to IO::ScalarArray (being
+	  extremely slow in seeks), which now is replaced by IO::Scalar.
 
-        - Do not use eval{binmode $fh}, but carefully check whether the
-          $fh can handle binmode before calling it in the parser.
+	- Do not use eval{binmode $fh}, but carefully check whether the
+	  $fh can handle binmode before calling it in the parser.
 
-        - Remove newlines from header field data which is passed as
-          objects.  When they stringify with newlines included, this
-          disturbes folding.
+	- Remove newlines from header field data which is passed as
+	  objects.  When they stringify with newlines included, this
+	  disturbes folding.
 
-        - Added comments on how (not) to change the body of a bounced
-          message.  Do never do it, but if you have to then...
+	- Added comments on how (not) to change the body of a bounced
+	  message.  Do never do it, but if you have to then...
 
-        - Mail::Message::Construct::reply handles nested messages and
-          binary files better to construct an answer.
+	- Mail::Message::Construct::reply handles nested messages and
+	  binary files better to construct an answer.
 
 version 2.039: Sun Mar 30 17:34:43 CEST 2003
 
-        Fixes:
+	Fixes:
 
-        - [Phil Holden] supplied a patch to Mail::Transport::POP3 to
-          send CRLF line terminations, and improvements on handling
-          the welcome message.
+	- [Phil Holden] supplied a patch to Mail::Transport::POP3 to
+	  send CRLF line terminations, and improvements on handling
+	  the welcome message.
 
-        - [Mike Cudmore] found a bug which caused a call to parts() on
-          lazy nested messages.
+	- [Mike Cudmore] found a bug which caused a call to parts() on
+	  lazy nested messages.
 
-        - [delepine@u-picardie.fr] patched conversion of Mail::Message
-          to Mail::Header in Mail::Message::Convert::MailInternet.
+	- [delepine@u-picardie.fr] patched conversion of Mail::Message
+	  to Mail::Header in Mail::Message::Convert::MailInternet.
 
-        - [Sebastian Willert] showed that multipart/anythings were
-          always changed into multipart/mixed things after an
-          operation on them, like attach.
+	- [Sebastian Willert] showed that multipart/anythings were
+	  always changed into multipart/mixed things after an
+	  operation on them, like attach.
 
-        - [Dimitris Glynos] found that a log-in failure for POP3 tried
-          to establish the connection twice.
+	- [Dimitris Glynos] found that a log-in failure for POP3 tried
+	  to establish the connection twice.
 
-        - [Michael D Richards] reported corruption in construction of
-          binary attachments, which was caused by buildFromBody always
-          converting CRLF -> LF (on Unix).  Removed this.
+	- [Michael D Richards] reported corruption in construction of
+	  binary attachments, which was caused by buildFromBody always
+	  converting CRLF -> LF (on Unix).  Removed this.
 
-        - [Christoph Dahl] reported that header field attributes with
-          blanks around the '=' where not detected.  Some flexibility
-          added.
+	- [Christoph Dahl] reported that header field attributes with
+	  blanks around the '=' where not detected.  Some flexibility
+	  added.
 
-        - [Eugene Eric Kim] reported the problem where incorrect in-reply-to
-          or References fields could cause thread cycles which where not
-          usuable.  Cycles will be ignored.
+	- [Eugene Eric Kim] reported the problem where incorrect in-reply-to
+	  or References fields could cause thread cycles which where not
+	  usuable.  Cycles will be ignored.
 
-        Improvements:
+	Improvements:
 
-        - [Marty Pauley] supplied a patch to use MIME::QuotedPrint for
-          Mail::Message::TransferEnc::QuotedPrint.  Originally, the
-          module implemented en/decoding by itself in Perl, however
-          since MIME::QP is a code module, the advantages disappeared.
+	- [Marty Pauley] supplied a patch to use MIME::QuotedPrint for
+	  Mail::Message::TransferEnc::QuotedPrint.  Originally, the
+	  module implemented en/decoding by itself in Perl, however
+	  since MIME::QP is a code module, the advantages disappeared.
 
-        - Mail::Message::Body::Multipart's preamble and epilogue now
-          accepts strings, so you so not have to create a body for them
-          explicitly.
+	- Mail::Message::Body::Multipart's preamble and epilogue now
+	  accepts strings, so you so not have to create a body for them
+	  explicitly.
 
 version 2.038: Wed Feb 26 16:20:03 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - It was not possible to remove POP3 messages with $msg->delete
-          noticed [Jason Woodward]
+	- It was not possible to remove POP3 messages with $msg->delete
+	  noticed [Jason Woodward]
 
-        - An empty header field could still be a cause of problems.  They
-          were removed from the header, with a warning.  Now changed the
-          warning into a notice message, and the fields are kept.  A fix
-          and test by [Marty Pauley]
+	- An empty header field could still be a cause of problems.  They
+	  were removed from the header, with a warning.  Now changed the
+	  warning into a notice message, and the fields are kept.  A fix
+	  and test by [Marty Pauley]
 
-        - POP3 messages where not readible when the server does not support
-          UIDLs.  Silly bug, solved by [Andreas Fitzner].
+	- POP3 messages where not readible when the server does not support
+	  UIDLs.  Silly bug, solved by [Andreas Fitzner].
  
 version 2.037: Sun Feb 23 14:53:50 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - MBOX write policy INPLACE contained serious bugs.  Upgrade
-          adviced if you use it (not the default) reported by [Michael Reece],
-          but by [Greg Matheson] before.
+	- MBOX write policy INPLACE contained serious bugs.  Upgrade
+	  adviced if you use it (not the default) reported by [Michael Reece],
+	  but by [Greg Matheson] before.
 
-        - Mail::Box::Manager::decodeFolderURL() return ref hash instead of
-          hash values.  Patched by [Benjamin Pineau]
+	- Mail::Box::Manager::decodeFolderURL() return ref hash instead of
+	  hash values.  Patched by [Benjamin Pineau]
 
-        - MB::Mbox::Message::print() did not encapsulate 'From ' lines.
-          Behavior has changed: print() will only simply print head and
-          body, and write() will encapsulate a message as required for the
-          folder.  Problem detected by [Nik Clayton]
+	- MB::Mbox::Message::print() did not encapsulate 'From ' lines.
+	  Behavior has changed: print() will only simply print head and
+	  body, and write() will encapsulate a message as required for the
+	  folder.  Problem detected by [Nik Clayton]
 
-        - For retreival of addresses, the whole field contents of an
-          address field is used, not only till the first semi-colon.
+	- For retreival of addresses, the whole field contents of an
+	  address field is used, not only till the first semi-colon.
 
-        - [Melvyn Sopacua] reported an accidental call to 'confess', which
-          was a left-over of the debugging process.  It triggered for an
-          MH index, when a field was requested which was not defined.
+	- [Melvyn Sopacua] reported an accidental call to 'confess', which
+	  was a left-over of the debugging process.  It triggered for an
+	  MH index, when a field was requested which was not defined.
 
-        Improvements:
+	Improvements:
 
-        - Many warning and error message have changed a little to be
-          more consistent or (in most cases) much clearer about the
-          meaning.
+	- Many warning and error message have changed a little to be
+	  more consistent or (in most cases) much clearer about the
+	  meaning.
 
-        - added isModified() methods as alternative to modified(), which is
-          more consistent with other method names.
+	- added isModified() methods as alternative to modified(), which is
+	  more consistent with other method names.
 
-        - added isDeleted() methods as alternative to deleted(), which is
-          more consistent with other method names.
+	- added isDeleted() methods as alternative to deleted(), which is
+	  more consistent with other method names.
 
-        - [Benjamin Pineau] found the cause of an enormous slow-down while
-          parsing large messages: tell() and seek() in IO::ScalarArray
-          objects.   With a small patch, everything goes smooth and fast:
-          use getpos() and setpos()....
+	- [Benjamin Pineau] found the cause of an enormous slow-down while
+	  parsing large messages: tell() and seek() in IO::ScalarArray
+	  objects.   With a small patch, everything goes smooth and fast:
+	  use getpos() and setpos()....
 
-        - Translated Mail::Message:TransferEnc::Base64 to use MIME::Base64,
-          now MIME::Base64 is a core module for 5.8.0.  The old algorithm
-          was not able to handle too long encoded lines, as [Chris
-          Kungfoohampster] discovered.
+	- Translated Mail::Message:TransferEnc::Base64 to use MIME::Base64,
+	  now MIME::Base64 is a core module for 5.8.0.  The old algorithm
+	  was not able to handle too long encoded lines, as [Chris
+	  Kungfoohampster] discovered.
 
-        - Testfile 40mbox/30delete.t should renamed to 40mbox/30delay.t
-          Testfile 40mbox/70inline.t should renamed to 40mbox/70inplace.t
+	- Testfile 40mbox/30delete.t should renamed to 40mbox/30delay.t
+	  Testfile 40mbox/70inline.t should renamed to 40mbox/70inplace.t
 
 version 2.036: Thu Feb 13 18:18:29 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - More attempts to protect $_ against eval's which apparently
-          change it in ./test.pl.  Hope the installation is smooth now.
+	- More attempts to protect $_ against eval's which apparently
+	  change it in ./test.pl.  Hope the installation is smooth now.
 
-        - CPAN::install can come back to a different file-system location
-          when installation is completed.  Try to restore that in test.pl.
-          
-        - [Tom Allison] discovered that a folder opened for 'a' does
-          not work with addMessage(): the messages where not read.
+	- CPAN::install can come back to a different file-system location
+	  when installation is completed.  Try to restore that in test.pl.
+	  
+	- [Tom Allison] discovered that a folder opened for 'a' does
+	  not work with addMessage(): the messages where not read.
 
-        - [Simon Cozens] found two problems in $msg->parts($coderef) and
-          $msg->parts('ACTIVE'|'DELETED') on non-folder messages.
+	- [Simon Cozens] found two problems in $msg->parts($coderef) and
+	  $msg->parts('ACTIVE'|'DELETED') on non-folder messages.
 
-        - [James Sanford] found that conversion to MIME::Entity did not
-          work for nested multiparts.  Mail::Message::Construct::lines()
-          was not context sensitive (now returns ref-array in scalar context),
-          and detection of multipart was wrong in case of nested multiparts.
+	- [James Sanford] found that conversion to MIME::Entity did not
+	  work for nested multiparts.  Mail::Message::Construct::lines()
+	  was not context sensitive (now returns ref-array in scalar context),
+	  and detection of multipart was wrong in case of nested multiparts.
 
-        - [Karen Craven], [Tom Allison] and [Michael D Richards] where right
-          with their explanation why message-ids were created incorrectly.
+	- [Karen Craven], [Tom Allison] and [Michael D Richards] where right
+	  with their explanation why message-ids were created incorrectly.
 
-        Improvements:
+	Improvements:
 
-        - Mail::Transport now also supports 'postfix' as alias for
-          'sendmail', thanks to a question by [Tom Allison].
+	- Mail::Transport now also supports 'postfix' as alias for
+	  'sendmail', thanks to a question by [Tom Allison].
 
-        - Tests for unicode fields are moved to their own directory,
-          tests/14fieldu, which is not considered critical on failure.
+	- Tests for unicode fields are moved to their own directory,
+	  tests/14fieldu, which is not considered critical on failure.
 
-        - Copyright set to 2001-2003
+	- Copyright set to 2001-2003
 
-        - [Todd Richmond] requested to keep the folding of fields when they
-          are added to a header.  Field::setWrapLength() has been changed not
-          to re-fold already folded fields.
+	- [Todd Richmond] requested to keep the folding of fields when they
+	  are added to a header.  Field::setWrapLength() has been changed not
+	  to re-fold already folded fields.
 
-        - As explained by [Eric Wheeler], spam and virus filters do not like
-          the message parser to stop on broken headers.  Therefore, a new
-          option Mail::Box::new(fix_headers) is created.  This option progresses
-          into a few other classes, and should be usable with all folder types.
+	- As explained by [Eric Wheeler], spam and virus filters do not like
+	  the message parser to stop on broken headers.  Therefore, a new
+	  option Mail::Box::new(fix_headers) is created.  This option progresses
+	  into a few other classes, and should be usable with all folder types.
 
 version 2.035: Fri Jan 24 20:41:23 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - Mail::Reporter::defaultTrace() now accepts names as well.
-          Recieved a fix by [David A Golden]
+	- Mail::Reporter::defaultTrace() now accepts names as well.
+	  Recieved a fix by [David A Golden]
 
-        - Mail::Message::Field::attribute() now returns (undef) when
-          the attribute is not defined.  Patched by [Marty Pauley]
+	- Mail::Message::Field::attribute() now returns (undef) when
+	  the attribute is not defined.  Patched by [Marty Pauley]
 
-        - [Jost Krieger] found that getline() in ::Base64 does catch
-          the read line in $_, which could be expected reading its doc.
+	- [Jost Krieger] found that getline() in ::Base64 does catch
+	  the read line in $_, which could be expected reading its doc.
 
-        - message/rfc822 within delayed multiparts are now triggered
-          correctly.
+	- message/rfc822 within delayed multiparts are now triggered
+	  correctly.
 
-        - [Beirne Konarski] found out that eval{} in test.pl sometimes
-          modified $_, which broke installations.
+	- [Beirne Konarski] found out that eval{} in test.pl sometimes
+	  modified $_, which broke installations.
 
-        - Headers from body where lost in multipart. Reported by [Nik Clayton].
+	- Headers from body where lost in multipart. Reported by [Nik Clayton].
 
-        Improvements:
+	Improvements:
 
-        - {Greg Matheson] contributed Mail::Transport::Exim, to send
-          email using an external exim client.
+	- {Greg Matheson] contributed Mail::Transport::Exim, to send
+	  email using an external exim client.
 
-        - Added Mail::Transport::new(executable) which offers you a
-          way to explicitly specify where the transfer agent is located.
+	- Added Mail::Transport::new(executable) which offers you a
+	  way to explicitly specify where the transfer agent is located.
 
-        - Changed Mail::Transport::SMTP::init(debug) option into
-          smtp_debug, to show that it is not Mail::Box which is being
-          traced, but the low level SMTP drivers only.
+	- Changed Mail::Transport::SMTP::init(debug) option into
+	  smtp_debug, to show that it is not Mail::Box which is being
+	  traced, but the low level SMTP drivers only.
 
-        - Added some example options to examples/send.pl, which showed
-          some inconveniences of Mail::Message::send(), which have been
-          solved.
+	- Added some example options to examples/send.pl, which showed
+	  some inconveniences of Mail::Message::send(), which have been
+	  solved.
 
-        - [David A Golden] wrote Mail::Classification based on Mail::Box,
-          which is a learning spam filter.  References added to README.FAQ
+	- [David A Golden] wrote Mail::Classification based on Mail::Box,
+	  which is a learning spam filter.  References added to README.FAQ
 
-        - Doc-fix in Mail::Message::from/to/cc/bcc() by [Greg Matheson].
+	- Doc-fix in Mail::Message::from/to/cc/bcc() by [Greg Matheson].
 
-        - Renamed Mail::Message::Field*::folded_body() and ::unfolded_body()
-          to ::foldedBody() and ::unfoldedBody(), to be consequent with
-          the method naming of Mail::Box.
+	- Renamed Mail::Message::Field*::folded_body() and ::unfolded_body()
+	  to ::foldedBody() and ::unfoldedBody(), to be consequent with
+	  the method naming of Mail::Box.
 
-        - Mail::Message::TransferEnc::Base64::_decode_from_lines() does
-          not warn anymore in case of a line which only contains padding.
-          Found by [David A Golden]
+	- Mail::Message::TransferEnc::Base64::_decode_from_lines() does
+	  not warn anymore in case of a line which only contains padding.
+	  Found by [David A Golden]
 
-        - Mail::Messsage::Field::stripCFWS() now understands escaped quotes
-          and parenthesis.  Parenthesis within quotes are not seen as comment
-          anymore.
+	- Mail::Messsage::Field::stripCFWS() now understands escaped quotes
+	  and parenthesis.  Parenthesis within quotes are not seen as comment
+	  anymore.
 
-        - Implemented Mail::Message::Field::Full with many tests in
-          tests/11field/40full.t.  Implements RFC2047.
+	- Implemented Mail::Message::Field::Full with many tests in
+	  tests/11field/40full.t.  Implements RFC2047.
 
-        - Implemented Mail::Message::Field::Attribute with many tests in
-          tests/11field/41attr.t   It implements field attribute understanding
-          as defined in RFC2822 and RFC2045, with the extensions about
-          parameter encoding and continuations as defined in RFC2231.
+	- Implemented Mail::Message::Field::Attribute with many tests in
+	  tests/11field/41attr.t   It implements field attribute understanding
+	  as defined in RFC2822 and RFC2045, with the extensions about
+	  parameter encoding and continuations as defined in RFC2231.
 
-        - Implemented Mail::Message::Field::Unstructured, as first
-          category of fields.  Tests in test/11field/42unstr.t
+	- Implemented Mail::Message::Field::Unstructured, as first
+	  category of fields.  Tests in test/11field/42unstr.t
 
-        - Added Maildir quotas to the long wishlist.  Suggested by
-          [Brian Grossman]
+	- Added Maildir quotas to the long wishlist.  Suggested by
+	  [Brian Grossman]
 
-        - On request by [David A Golden], Mail::Reporter now returns
-          Scalar::Util::dualvar values where the use may wish to know
-          the numeric value as well as the string representation of an
-          error level.  Tests added in tests/10report/10errors.
+	- On request by [David A Golden], Mail::Reporter now returns
+	  Scalar::Util::dualvar values where the use may wish to know
+	  the numeric value as well as the string representation of an
+	  error level.  Tests added in tests/10report/10errors.
 
-        - Modified examples/grep.pl you unix-grep syntax
+	- Modified examples/grep.pl you unix-grep syntax
 
-        - Mail::Box::Search now takes nested messages under the flag of
-          multiparts (search or not to search, that's the question)
+	- Mail::Box::Search now takes nested messages under the flag of
+	  multiparts (search or not to search, that's the question)
 
-        - Mail::Message->build and buildFromBody now accept a pre-filled
-          header.
+	- Mail::Message->build and buildFromBody now accept a pre-filled
+	  header.
 
-        - Mail::Message->build accepts a new option 'files', which is
-          an abbreviation for multiple 'file' options.
+	- Mail::Message->build accepts a new option 'files', which is
+	  an abbreviation for multiple 'file' options.
 
-        - Mail::Message::TransferEnc::decode() now als decodes chars above
-          127 and tab.  Escape characters are still not decoded for safety
-          reasons.  On request by [Marty Pauley]
+	- Mail::Message::TransferEnc::decode() now als decodes chars above
+	  127 and tab.  Escape characters are still not decoded for safety
+	  reasons.  On request by [Marty Pauley]
 
 version 2.034: Thu Jan  2 15:08:56 CET 2003
 
-        Fixes:
+	Fixes:
 
-        - When a message is added to a folder, it shall be flagged as
-          modified, otherwise the message is not written when the folder
-          closes.  Problem discovered by [Greg Matheson].
+	- When a message is added to a folder, it shall be flagged as
+	  modified, otherwise the message is not written when the folder
+	  closes.  Problem discovered by [Greg Matheson].
 
-        - Mail::Message->read() did not inspect the status fields.
-          Spotted by [Simon von Janowsky]
+	- Mail::Message->read() did not inspect the status fields.
+	  Spotted by [Simon von Janowsky]
 
-        - When an empty field is folded, at least a new-line must be
-          produced.
+	- When an empty field is folded, at least a new-line must be
+	  produced.
 
-        - Mail::Box::File::appendMessage() doesn't need to open the folder
-          locked: appending should be a safe action. Reported by [Greg Matheson].
+	- Mail::Box::File::appendMessage() doesn't need to open the folder
+	  locked: appending should be a safe action. Reported by [Greg Matheson].
 
-        - multipart->lines accidentally did not include the headers of the
-          parts.  Spotted by [Constantin Khatsckevich]
+	- multipart->lines accidentally did not include the headers of the
+	  parts.  Spotted by [Constantin Khatsckevich]
 
-        Enhancements:
+	Enhancements:
 
-        - Resent Groups in the header now also support Delivered-To.
+	- Resent Groups in the header now also support Delivered-To.
 
-        - Renamed some toString() methods to the more consistent name string(),
-          without breaking backwards compatibility.
+	- Renamed some toString() methods to the more consistent name string(),
+	  without breaking backwards compatibility.
 
 version 2.033: Thu Dec 12 11:23:42 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - [Greg Matheson] found a truncate() difference between Windows and
-          UNIX: fewer errors for the Windows test.
+	- [Greg Matheson] found a truncate() difference between Windows and
+	  UNIX: fewer errors for the Windows test.
 
-        - [Greg Matheson] solved problem with mbox write-replace related to
-          \n -> CRLF translations vice versa.  The number of problems for
-          Mail::Box on Windows decreased even furter.
+	- [Greg Matheson] solved problem with mbox write-replace related to
+	  \n -> CRLF translations vice versa.  The number of problems for
+	  Mail::Box on Windows decreased even furter.
 
-        - Some improvements of the tests.pl scripts, related to the
-          installation of optional modules when Term::ReadKey is not
-          installed.
+	- Some improvements of the tests.pl scripts, related to the
+	  installation of optional modules when Term::ReadKey is not
+	  installed.
 
-        - Mail::Message::Part::parent() 4th try to solve... on some places,
-          the body was returned, in other places the surrounding message.
-          This was partially caused by the confusion created by the name
-          of the method.  Therefore, the method is renamed to "container"
-          which returns a Mail::Message::Body::Multipart or ::Nested.
+	- Mail::Message::Part::parent() 4th try to solve... on some places,
+	  the body was returned, in other places the surrounding message.
+	  This was partially caused by the confusion created by the name
+	  of the method.  Therefore, the method is renamed to "container"
+	  which returns a Mail::Message::Body::Multipart or ::Nested.
 
-        - appendMessage requires access => 'a' to the folder. [Greg Matheson]
+	- appendMessage requires access => 'a' to the folder. [Greg Matheson]
 
-        - Parts of multiparts which do not contain any header lines were
-          stopping the parser to look for more parts: all the rest was put
-          in the epilogue of the multipart.  Detected by [Melvyn Sopacua]
+	- Parts of multiparts which do not contain any header lines were
+	  stopping the parser to look for more parts: all the rest was put
+	  in the epilogue of the multipart.  Detected by [Melvyn Sopacua]
 
-        - Mail::Message::Part's can contain empty bodies.  Spotted by
-          [Melvyn Sopacua]
+	- Mail::Message::Part's can contain empty bodies.  Spotted by
+	  [Melvyn Sopacua]
 
-        - Hopefully, the installation of option modules has smoothened
-          a little.
+	- Hopefully, the installation of option modules has smoothened
+	  a little.
 
-        - Mail::Box::File::appendMessage() didn't check success for
-          opening a folder. Reported by [Melvyn Sopacua]
+	- Mail::Box::File::appendMessage() didn't check success for
+	  opening a folder. Reported by [Melvyn Sopacua]
 
-        - default for $mgr->appendMessage was to create an MH, not an mbox
-          folder.
+	- default for $mgr->appendMessage was to create an MH, not an mbox
+	  folder.
 
-        Improvements:
+	Improvements:
 
-        - tests/55locking/20flock excluded for Windows: no flock implemented.
+	- tests/55locking/20flock excluded for Windows: no flock implemented.
 
-        - Added examples/strip-attachments.pl by [Pjotr Prins]
+	- Added examples/strip-attachments.pl by [Pjotr Prins]
 
-        - Mail::Reporter::AUTOLOAD will produce a class name in the error
-          message if a class method failed...  The blank is not very
-          informative.
+	- Mail::Reporter::AUTOLOAD will produce a class name in the error
+	  message if a class method failed...  The blank is not very
+	  informative.
 
-        - "create" is now a valid option for Mail::Box::(Mbox|MH|Maildir)::new,
-          which required some changes in the Mail::Box::Manager as well.
+	- "create" is now a valid option for Mail::Box::(Mbox|MH|Maildir)::new,
+	  which required some changes in the Mail::Box::Manager as well.
 
 version 2.032: Fri Nov 29 19:59:47 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - Enforce Text::FormatPS version 2.01, because the output format
-          has changed.  Scripts adapted to the new layout.  [Blair Zajac]
+	- Enforce Text::FormatPS version 2.01, because the output format
+	  has changed.  Scripts adapted to the new layout.  [Blair Zajac]
 
-        - Required Term::ReadKey for installation. [Greg Matheson]
+	- Required Term::ReadKey for installation. [Greg Matheson]
 
-        - Silly problem with lock-filenames... detected by [Blair Zajac]
+	- Silly problem with lock-filenames... detected by [Blair Zajac]
 
-        - $part->toplevel did not return a message, but a body.  Detected
-          by [Pjotr Prins]
+	- $part->toplevel did not return a message, but a body.  Detected
+	  by [Pjotr Prins]
 
-        - $part->delete did not seem to have an effect... silly bug caused
-          this problem, which was spotted by [Pjotr Prins].
+	- $part->delete did not seem to have an effect... silly bug caused
+	  this problem, which was spotted by [Pjotr Prins].
 
-        Improvements:
+	Improvements:
 
-        - Removed dependency from Term::ReadKey.
+	- Removed dependency from Term::ReadKey.
 
-        - $msg->printStructure shows parts which are flagged to be deleted.
+	- $msg->printStructure shows parts which are flagged to be deleted.
 
 version 2.031: Mon Nov 25 14:50:23 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - Mail::Box::Locker::new(file) has now comparible meaning for DotLock
-          and flock locking methods.
+	- Mail::Box::Locker::new(file) has now comparible meaning for DotLock
+	  and flock locking methods.
 
-        - Removed Mail::Box::Locker::POSIX from Windows options: not all fcntls
-          present.
+	- Removed Mail::Box::Locker::POSIX from Windows options: not all fcntls
+	  present.
 
-        Improvements:
+	Improvements:
 
-        - MBOX handling of the parser much simplified.
+	- MBOX handling of the parser much simplified.
 
-        - [Blair Zajac] is still nitpicking about close()...
+	- [Blair Zajac] is still nitpicking about close()...
 
-        - $Mail::Message::crlf_platform added as central resource for all
-          modules which have to know.
+	- $Mail::Message::crlf_platform added as central resource for all
+	  modules which have to know.
 
-        - Mail::Message::Body::File::size() compensates for "superfluous" CRs
-          in the file's line-endings.
+	- Mail::Message::Body::File::size() compensates for "superfluous" CRs
+	  in the file's line-endings.
 
-        - Messages in test-scripts are compared by a special function which
-          permits differences in Content-Length for platforms with CRLF
-          (Windows)
-        
-        - Message sizes in thread-dumps within test-scripts are ignored by
-          a special function, but only on CRLF platforms like Windows.
+	- Messages in test-scripts are compared by a special function which
+	  permits differences in Content-Length for platforms with CRLF
+	  (Windows)
+	
+	- Message sizes in thread-dumps within test-scripts are ignored by
+	  a special function, but only on CRLF platforms like Windows.
 
-        - Some code has moved from Mail::Box::Parser::Perl into
-          Mail::Box::Parser Cannot break existing code.
+	- Some code has moved from Mail::Box::Parser::Perl into
+	  Mail::Box::Parser Cannot break existing code.
 
-        - Quite some code has moved from Mail::Box::File to Mail::Box::Mbox.
-          Cannot break existing code.
+	- Quite some code has moved from Mail::Box::File to Mail::Box::Mbox.
+	  Cannot break existing code.
 
-        - Added Mail::Box::Search::IMAP as place-holder for a dedicated (remote)
-          search implementation using the IMAP protocol features.
+	- Added Mail::Box::Search::IMAP as place-holder for a dedicated (remote)
+	  search implementation using the IMAP protocol features.
 
-        - Added Mail::Transport::IMAP, Mail::Box::IMAP, and
-          Mail::Box::IMAP::Message with some pseudo-code how IMAP folders
-          could be handled.
+	- Added Mail::Transport::IMAP, Mail::Box::IMAP, and
+	  Mail::Box::IMAP::Message with some pseudo-code how IMAP folders
+	  could be handled.
 
-        - Improved the docs on ::POP3
+	- Improved the docs on ::POP3
 
-        - Mail::Box::POP3 now refuses addMessage() and addMessages() with nice
-          errors.   When someone implements the writing extensions to POP3, this
-          may change.  update() still has to be implemented
+	- Mail::Box::POP3 now refuses addMessage() and addMessages() with nice
+	  errors.   When someone implements the writing extensions to POP3, this
+	  may change.  update() still has to be implemented
 
-        - Multipart message will also have a Content-Length in the header.
+	- Multipart message will also have a Content-Length in the header.
 
-        - Mail::Message::Convert::MailInternet requires Mail::Message
-          [Adam Byrtek 'alpha']
+	- Mail::Message::Convert::MailInternet requires Mail::Message
+	  [Adam Byrtek 'alpha']
 
-        - New version of tests/POP3/server, which can be used to test
-          the POP3 client against some weird POP3 servers. [Liz Mattijsen]
+	- New version of tests/POP3/server, which can be used to test
+	  the POP3 client against some weird POP3 servers. [Liz Mattijsen]
 
-        - Upgraded Mail::Box::write() to allow mid-life writes of files.
+	- Upgraded Mail::Box::write() to allow mid-life writes of files.
 
-        - Removed option Mail::Box::write(keep_deleted), because it is
-          unsafe.
+	- Removed option Mail::Box::write(keep_deleted), because it is
+	  unsafe.
 
-        - Replaced all uses of FileHandle by IO::File.
+	- Replaced all uses of FileHandle by IO::File.
 
-        - test scripts ask for optional packages to be installed.  The user
-          will be asked per package... more info about it has been added,
-          for instance the option Mail::SpamAssassin.
+	- test scripts ask for optional packages to be installed.  The user
+	  will be asked per package... more info about it has been added,
+	  for instance the option Mail::SpamAssassin.
 
 version 2.029: Mon Nov  4 21:06:30 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - Empty header lines where printed without trailing new-line.  This
-          was spotted by [Blair Zajac] soon after the release which broke
-          it: do not use 2.028
+	- Empty header lines where printed without trailing new-line.  This
+	  was spotted by [Blair Zajac] soon after the release which broke
+	  it: do not use 2.028
 
-        - Some extra checks for the return-code of close(), added as wished
-          for by [Blair Zajac]
+	- Some extra checks for the return-code of close(), added as wished
+	  for by [Blair Zajac]
 
 version 2.028: Mon Nov 4 15:08:57 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - [Greg Matheson] decovered a small bug in the 10field test-script.
-          After being corrected, it showed a mistake in MM::Field with folding
-          very long words in field bodies. This bug was corrected.
+	- [Greg Matheson] decovered a small bug in the 10field test-script.
+	  After being corrected, it showed a mistake in MM::Field with folding
+	  very long words in field bodies. This bug was corrected.
 
-        - Fixed a parser bug in MBOX, which showed an error when closing
-          a folder without explicit write before it.  Reported by
-          [David A Golden]
+	- Fixed a parser bug in MBOX, which showed an error when closing
+	  a folder without explicit write before it.  Reported by
+	  [David A Golden]
 
-        - [Blair Zajac] reported that the multipart boundary was not
-          added to the Content-Type field.
+	- [Blair Zajac] reported that the multipart boundary was not
+	  added to the Content-Type field.
 
-        - [Sebastian Krahmer] adviced me to put a very strong warning against
-          the use of mailx (Mail::Transport::Mailx), which is accepted because
-          the funarability has been proven: mailx is exploitable insecure.
+	- [Sebastian Krahmer] adviced me to put a very strong warning against
+	  the use of mailx (Mail::Transport::Mailx), which is accepted because
+	  the funarability has been proven: mailx is exploitable insecure.
 
-        - [Shagren] hit a POP3 server which does not add a blank at the end
-          of each message.  The last line of his message body was removed
-          because Mail::Transport::POP3 did not anticipate that.
+	- [Shagren] hit a POP3 server which does not add a blank at the end
+	  of each message.  The last line of his message body was removed
+	  because Mail::Transport::POP3 did not anticipate that.
 
-        Improvements:
+	Improvements:
 
-        - In joint forces with [Greg Matheson], some small improvements have
-          been made in the mailbox parser for Windows...  But it is still
-          far from perfect.
+	- In joint forces with [Greg Matheson], some small improvements have
+	  been made in the mailbox parser for Windows...  But it is still
+	  far from perfect.
 
 version 2.027: Sat Oct 26 08:52:32 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Lazy Mail::Box::Dir::Message::print() (mbox and mh messages)
-          used File::Copy's copy(), which cannot handle IO::Lines file
-          objects as destination.  Replaced by own implementation.
-          [Tony Bowden] reported this problem, and fix my patch as well.
+	- Lazy Mail::Box::Dir::Message::print() (mbox and mh messages)
+	  used File::Copy's copy(), which cannot handle IO::Lines file
+	  objects as destination.  Replaced by own implementation.
+	  [Tony Bowden] reported this problem, and fix my patch as well.
 
-        - Mail::Box::find() was not able to get the id of the first
-          lazy-loaded message.
+	- Mail::Box::find() was not able to get the id of the first
+	  lazy-loaded message.
 
-        - The empty line which preceeds a separator in mbox folders
-          was accidenitally included in the body of the message before
-          it (this was quite hard to fix) [Albert Schueller]
+	- The empty line which preceeds a separator in mbox folders
+	  was accidenitally included in the body of the message before
+	  it (this was quite hard to fix) [Albert Schueller]
 
-        - Mail::Message::Body::Multipart::foreachComponent(), used by many
-          multipart methods, created Mail::Message i.s.o. Mail::Message::Part
-          objects.  This is not right: especially encode() and decode()
-          where frustrated by it.   Same for nested messages.  Signalled by
-          [Mike Cudmore]
+	- Mail::Message::Body::Multipart::foreachComponent(), used by many
+	  multipart methods, created Mail::Message i.s.o. Mail::Message::Part
+	  objects.  This is not right: especially encode() and decode()
+	  where frustrated by it.   Same for nested messages.  Signalled by
+	  [Mike Cudmore]
 
-        Improvement:
+	Improvement:
 
-        - Mail::Transfer::POP3 implemented by [Liz Mattijsen].
+	- Mail::Transfer::POP3 implemented by [Liz Mattijsen].
 
-        - [Shagren] found the first reason to modify Mail::Transfer::POP3
-          a little.
+	- [Shagren] found the first reason to modify Mail::Transfer::POP3
+	  a little.
 
-        - Mail::Box::POP3 and Mail::Box::POP3::Message should be working
-          now.  Mo Tests are included.
+	- Mail::Box::POP3 and Mail::Box::POP3::Message should be working
+	  now.  Mo Tests are included.
 
-        - Reorganized the tests.  This is needed, because the number of
-          testscripts grew too long for Windows!  Besides, I need more
-          control over installation of optional packages.
+	- Reorganized the tests.  This is needed, because the number of
+	  testscripts grew too long for Windows!  Besides, I need more
+	  control over installation of optional packages.
 
-        - All folder-types now have a type() method.
+	- All folder-types now have a type() method.
 
-        - All folder-types now have a url() method, which result van be
-          used to specify a complex folder name to the Mail::Box::Manager.
+	- All folder-types now have a url() method, which result van be
+	  used to specify a complex folder name to the Mail::Box::Manager.
 
-        - [David Favor] asked to show the filename when an illegal header
-          is detected by the parser.
+	- [David Favor] asked to show the filename when an illegal header
+	  is detected by the parser.
 
-        - Rewrote Mail::Box::scanForMessage() in search of a bug reported
-          by [Shagren] concerning Mail::Box::find()  But it was not the
-          cause.  Still, the method has improved.
+	- Rewrote Mail::Box::scanForMessage() in search of a bug reported
+	  by [Shagren] concerning Mail::Box::find()  But it was not the
+	  cause.  Still, the method has improved.
 
-        - Changed  split /(?<=\n)/  into  split /^/  everywhere.
+	- Changed  split /(?<=\n)/  into  split /^/  everywhere.
 
 version 2.026: Mon Oct  7 23:39:07 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Default package for $msg->send was broken.  Reported by
-         [Jeremy Banks]
+	- Default package for $msg->send was broken.  Reported by
+	 [Jeremy Banks]
 
-        Improvements:
+	Improvements:
 
-        - Mail::Message::Field::wellformedName() produces better results,
-          thanks to [Emmet Cailfield]
+	- Mail::Message::Field::wellformedName() produces better results,
+	  thanks to [Emmet Cailfield]
 
-        - Many more tests are succeeding under Windows, since
-          [Greg Matheson] sent me the output of the tests based
-          on Test::More.  Thanks Greg!
+	- Many more tests are succeeding under Windows, since
+	  [Greg Matheson] sent me the output of the tests based
+	  on Test::More.  Thanks Greg!
 
-        - Mail::Transport::SMTP warns when send(To => $to) is used where
-          send(to => $to) is needed.  [Jeremy Banks]
+	- Mail::Transport::SMTP warns when send(To => $to) is used where
+	  send(to => $to) is needed.  [Jeremy Banks]
 
-        - Mail::Message::Head::ResentGroup::set(field)       added
-          Mail::Message::Head::ResentGroup::createReceived() added
-          Mail::Message::Head::ResentGroup::destinations()   added
+	- Mail::Message::Head::ResentGroup::set(field)       added
+	  Mail::Message::Head::ResentGroup::createReceived() added
+	  Mail::Message::Head::ResentGroup::destinations()   added
 
-        - Mail::Message::Construct::bounce() now adds Resent-* lines
-          to the first Received line, if available.
+	- Mail::Message::Construct::bounce() now adds Resent-* lines
+	  to the first Received line, if available.
 
-        - Mail::Message::Head::ResentGroup::new() creates a received
-          field if not defined.
+	- Mail::Message::Head::ResentGroup::new() creates a received
+	  field if not defined.
 
-        - Mail::Message::Head::Clone uses $head->addNoRealize i.s.o add(),
-          and thereby does not re-fold the headers anymore.
+	- Mail::Message::Head::Clone uses $head->addNoRealize i.s.o add(),
+	  and thereby does not re-fold the headers anymore.
 
-        - Deleting or resetting a non-existing field in the header will
-          not flag the message to be 'modified'.
+	- Deleting or resetting a non-existing field in the header will
+	  not flag the message to be 'modified'.
 
-        - Implemented Mail::Box::Search::SpamAssassin, a spam filter
+	- Implemented Mail::Box::Search::SpamAssassin, a spam filter
 
-        - Implemented Mail::Message::Wrapper::SpamAssassin, a wrapper
-          used in the new spam filter.
+	- Implemented Mail::Message::Wrapper::SpamAssassin, a wrapper
+	  used in the new spam filter.
 
-        - Implemented authorization for SMTP, based in work by
-          [Michael de Beer]
+	- Implemented authorization for SMTP, based in work by
+	  [Michael de Beer]
 
-        - X-Spam-* headers are not disclosed for transmission.
+	- X-Spam-* headers are not disclosed for transmission.
 
 version 2.025: Mon Sep 23 13:11:57 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Accidentally left debug-printstatements in Mail::Transport::SMTP
+	- Accidentally left debug-printstatements in Mail::Transport::SMTP
 
-        - Fixed "from" address used in Mail::Transport::SMTP.
+	- Fixed "from" address used in Mail::Transport::SMTP.
 
-        Improvements:
+	Improvements:
 
-        - MIME-Version header line automatically added to constructed
-          messages (rfc 2045). [Matthew Darwin]
+	- MIME-Version header line automatically added to constructed
+	  messages (rfc 2045). [Matthew Darwin]
 
 version 2.024: Sun Sep 22 23:06:55 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - SMTP sending accidentally only included the headers *not* to
-          be disclosed :(  The check has the correct negation in
-          Mail::Message::Field::toDisclose() now.
-          Reported by [Matthew Darwin]
+	- SMTP sending accidentally only included the headers *not* to
+	  be disclosed :(  The check has the correct negation in
+	  Mail::Message::Field::toDisclose() now.
+	  Reported by [Matthew Darwin]
 
-        - Generated messages without message-id must get one assigned.
-          Reported by [Matthew Darwin]
+	- Generated messages without message-id must get one assigned.
+	  Reported by [Matthew Darwin]
 
-        Improvements:
+	Improvements:
 
-        - All tests converted to use Test::More, which produces better
-          feedback on failures. Hopefully, failures on Windows will
-          start disappearing now.
+	- All tests converted to use Test::More, which produces better
+	  feedback on failures. Hopefully, failures on Windows will
+	  start disappearing now.
 
-        - Mail::Box::Dir::Message's take their size from the real
-          file (unless they are modified)
+	- Mail::Box::Dir::Message's take their size from the real
+	  file (unless they are modified)
 
-        - Mail::Box::Mbox now derived from new Mail::Box::File
+	- Mail::Box::Mbox now derived from new Mail::Box::File
 
-        - Mail::Box::Mbox::Message now derived from new
-          Mail::Box::File::Message.
+	- Mail::Box::Mbox::Message now derived from new
+	  Mail::Box::File::Message.
 
-        - Set the shape of the message-id with
-          Mail::Message::Head::messageIdPrefix()
+	- Set the shape of the message-id with
+	  Mail::Message::Head::messageIdPrefix()
 
-        - A message constructed without data will be an empty text
-          message, not an empty multipart :(
+	- A message constructed without data will be an empty text
+	  message, not an empty multipart :(
 
-        - Mail::Message::Construct::build() now calls buildFromBody()
-          to prepare the whole message, instead of doing it itself.
-          You can also specify field objects to buld() now.
+	- Mail::Message::Construct::build() now calls buildFromBody()
+	  to prepare the whole message, instead of doing it itself.
+	  You can also specify field objects to buld() now.
 
-        - From and To fields are no longer required to construct a
-          message.  They may be filled-in later.
+	- From and To fields are no longer required to construct a
+	  message.  They may be filled-in later.
 
-        - Mail::Message::Construct::bounce() now uses the
-          MM::Head::ResentGroup object, which much improved outcome.
+	- Mail::Message::Construct::bounce() now uses the
+	  MM::Head::ResentGroup object, which much improved outcome.
 
-        - Made a start with Mail::Box::Search::SpamAssassin.
+	- Made a start with Mail::Box::Search::SpamAssassin.
 
 version 2.023: Sat Sep 14 11:11:03 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - t/65search.t failed for some Perl versions, dependent on the
-          hash implementation.  Mail::Box::Search::Grep::inHead did
-          not use MM::Head::orderedFields() yet. Discovered by
-          [Blair & Liz & Greg & Conrad Heiney]
+	- t/65search.t failed for some Perl versions, dependent on the
+	  hash implementation.  Mail::Box::Search::Grep::inHead did
+	  not use MM::Head::orderedFields() yet. Discovered by
+	  [Blair & Liz & Greg & Conrad Heiney]
 
-        - Mail::Box::Mbox includes IO::File with () to avoid colission
-          between constant definitions in IO::File and POSIX.  Fixed
-          by [Marcel Gruenauer]
+	- Mail::Box::Mbox includes IO::File with () to avoid colission
+	  between constant definitions in IO::File and POSIX.  Fixed
+	  by [Marcel Gruenauer]
 
 version 2.022: Mon Sep  9 18:55:01 CEST 2002
 
-        Detailed checks against RFC2822 is in progress, which means that
-        some changes have to be made.  The API had to be changed on some
-        places, but on most places could be kept unchanged.
+	Detailed checks against RFC2822 is in progress, which means that
+	some changes have to be made.  The API had to be changed on some
+	places, but on most places could be kept unchanged.
 
-        Application breakers:
+	Application breakers:
 
-        - $msg->from now returns a list fo addresses!  Mind the context!
-          required by the RFC.
+	- $msg->from now returns a list fo addresses!  Mind the context!
+	  required by the RFC.
 
-        - stringified $body->type returns whole Content-Type body.  Use
-          $body->mimeType!  Example:
-             if($msg->type eq 'text/html')     # breaks now
-             if($msg->mimeType eq 'text/html') # works as always
+	- stringified $body->type returns whole Content-Type body.  Use
+	  $body->mimeType!  Example:
+	     if($msg->type eq 'text/html')     # breaks now
+	     if($msg->mimeType eq 'text/html') # works as always
 
-        - a header field stringifies to "body; comment", not only
-          the body.
+	- a header field stringifies to "body; comment", not only
+	  the body.
 
-        Fixes:
+	Fixes:
 
-        - Messages which of unknown Content-Type (unknown by MIME::Types)
-          could cause segmentation violates.  Solved by [Darrell Fuhriman]
+	- Messages which of unknown Content-Type (unknown by MIME::Types)
+	  could cause segmentation violates.  Solved by [Darrell Fuhriman]
 
-        - In Mail::Box::Manager, the method foldertypes() was called, which
-          should have been folderTypes(). [Swapnil Khabiya]
+	- In Mail::Box::Manager, the method foldertypes() was called, which
+	  should have been folderTypes(). [Swapnil Khabiya]
 
-        - Mail::Message::Construct::replyPrelude produced warning when
-          from address of originating message dit not defined a user's
-          name.  Now it has a fallback. Reported by [Jon Thomason]
+	- Mail::Message::Construct::replyPrelude produced warning when
+	  from address of originating message dit not defined a user's
+	  name.  Now it has a fallback. Reported by [Jon Thomason]
 
-        Improvements:
+	Improvements:
 
-        - new method Mail::Box::Message::moveTo()
+	- new method Mail::Box::Message::moveTo()
 
-        - new method Mail::Message::sender()
+	- new method Mail::Message::sender()
 
-        - Mail::Message::Convert::selectedFields() retuns fields now
-          (in the right order), not field names.
+	- Mail::Message::Convert::selectedFields() retuns fields now
+	  (in the right order), not field names.
 
-        - Mail::Reporter::log() now also as class method.
+	- Mail::Reporter::log() now also as class method.
 
-        - Mail::Reporter::defaultTrace() to set program global defaults
-          for logging and tracing.
+	- Mail::Reporter::defaultTrace() to set program global defaults
+	  for logging and tracing.
 
-        - New class Mail::Message::Head::ResentGroup with tests in
-          t/12head1r.t
+	- New class Mail::Message::Head::ResentGroup with tests in
+	  t/12head1r.t
 
-        - Mali::Message::Construct::printStructure now accepts a filehandle.
+	- Mali::Message::Construct::printStructure now accepts a filehandle.
 
-        - reply() takes return address from: Reply-To || Sender || From
-          (Sender added)
+	- reply() takes return address from: Reply-To || Sender || From
+	  (Sender added)
 
-        I have re-read specification rfc2822, and reimplemented the three
-        Mail::Message::Field* objects.  The next changes are made to
-        these objects:
+	I have re-read specification rfc2822, and reimplemented the three
+	Mail::Message::Field* objects.  The next changes are made to
+	these objects:
 
-        - field data is only stored in folded form to improve performance
-          during parsing and reduce memory consumption (which is quite
-          high for headers) but also to be able to handle structured fields
-          better.  This introduced two new methods:
-            folded_body()
-            unfolded_body()
-          The body(), comment(), and content() are quite different now,
-          although return the same results.
+	- field data is only stored in folded form to improve performance
+	  during parsing and reduce memory consumption (which is quite
+	  high for headers) but also to be able to handle structured fields
+	  better.  This introduced two new methods:
+	    folded_body()
+	    unfolded_body()
+	  The body(), comment(), and content() are quite different now,
+	  although return the same results.
 
-        - toDate() without argument returns an rfc2822 valid date
-           representing the current local time.
+	- toDate() without argument returns an rfc2822 valid date
+	   representing the current local time.
 
-        - new() accepts attributes.  The OPTIONS are only available
-           for ::Flex fields.                                    
+	- new() accepts attributes.  The OPTIONS are only available
+	   for ::Flex fields.                                    
 
-        - attributes handle escapes of quotes in quoted strings.
+	- attributes handle escapes of quotes in quoted strings.
 
-        - new method length() which returns the total field length.
+	- new method length() which returns the total field length.
 
-        - new method toDisclose() which tells
-          Mail::Message::Head::printUndisclosed whether the header should
-          be visible for extenal receivers.
+	- new method toDisclose() which tells
+	  Mail::Message::Head::printUndisclosed whether the header should
+	  be visible for extenal receivers.
 
-        - new method stripCFWS() removes comments and folding white space from
-          header lines.  This should only be used on structured header
-          fields.  Tests in t/11cfws.t
+	- new method stripCFWS() removes comments and folding white space from
+	  header lines.  This should only be used on structured header
+	  fields.  Tests in t/11cfws.t
 
-        - new method dateToTimestamp converts a date in RFC2822 spec into
-          a timestamp.
+	- new method dateToTimestamp converts a date in RFC2822 spec into
+	  a timestamp.
 
-        Also Mail::Message::Head got revisited.  The order of the fields
-        is protected stronger.
+	Also Mail::Message::Head got revisited.  The order of the fields
+	is protected stronger.
 
-        - new method orderedFields()
+	- new method orderedFields()
 
-        - new method addResentGroup()
+	- new method addResentGroup()
 
-        - new method resentGroups()
+	- new method resentGroups()
 
-        - new method removeField($field)
+	- new method removeField($field)
 
 version 2.021: Tue Aug 20 17:42:24 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Requires HTML::TreeBuilder release 3.13 or newer, if you want to
-          use Mail::Message::Convert::HtmlFormat*.pm, because 3.12 contains
-          a serious bug.  Resolved by [Blair Zajac]
+	- Requires HTML::TreeBuilder release 3.13 or newer, if you want to
+	  use Mail::Message::Convert::HtmlFormat*.pm, because 3.12 contains
+	  a serious bug.  Resolved by [Blair Zajac]
 
-        - A mistake in the previous release could cause that parts of
-          multiparts where lazy.  This is not correct: all parts must be
-          extracted at once.  Detected by [Jost Krieger]
+	- A mistake in the previous release could cause that parts of
+	  multiparts where lazy.  This is not correct: all parts must be
+	  extracted at once.  Detected by [Jost Krieger]
 
-        - Another bug introduced with the previous release was the
-          removal of automatic body-to-messagepart coercion.
+	- Another bug introduced with the previous release was the
+	  removal of automatic body-to-messagepart coercion.
 
-        - When a nested body was checked on encoding, it accidentally returned
-          its nested content, in stead of itself.  Detected by [Blair Zajac]
+	- When a nested body was checked on encoding, it accidentally returned
+	  its nested content, in stead of itself.  Detected by [Blair Zajac]
 
-        - Mail::Message::isMultipart triggered the body, which is not needed
-          because the info is in the header as well.
+	- Mail::Message::isMultipart triggered the body, which is not needed
+	  because the info is in the header as well.
 
-        - pod2html translators are terrible.  Put more sofistication in
-          my html-polisher.
+	- pod2html translators are terrible.  Put more sofistication in
+	  my html-polisher.
 
-        Improvements:
+	Improvements:
 
-        - Carp is stringifying objects, which is terrible in combination with
-          overloading stringification on message headers and bodies.  Therefore,
-          a special exception for stringification is added to return a
-          different result to Carp.
+	- Carp is stringifying objects, which is terrible in combination with
+	  overloading stringification on message headers and bodies.  Therefore,
+	  a special exception for stringification is added to return a
+	  different result to Carp.
 
-        - The Mail::Box::determineBodyType is simplified.
+	- The Mail::Box::determineBodyType is simplified.
 
-        - Multiparts and Nested (rcf822) message are now also delayed when
-          their size is not known (often the case) or too large.
+	- Multiparts and Nested (rcf822) message are now also delayed when
+	  their size is not known (often the case) or too large.
 
-        - Implemented Mail::Message::Part::buildFromBody() to assist the
-          improved Mail::Message::Part::coerce()
+	- Implemented Mail::Message::Part::buildFromBody() to assist the
+	  improved Mail::Message::Part::coerce()
 
-        - Testing cloning of complex messages in t/58clone.t
+	- Testing cloning of complex messages in t/58clone.t
 
 version 2.019: Thu Aug 15 09:46:42 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Parsing messages could destroy $_ and IN/OUT file-handles from
-          the user's program.  Found a few places in Mail/Message/Body/*.pm
-          Problem spotted by [Jerrad Pierce]
+	- Parsing messages could destroy $_ and IN/OUT file-handles from
+	  the user's program.  Found a few places in Mail/Message/Body/*.pm
+	  Problem spotted by [Jerrad Pierce]
 
-        - Mail::Message::Head::Delayed extends a Mail::Message::Head, not
-          a Mail::Reporter.
+	- Mail::Message::Head::Delayed extends a Mail::Message::Head, not
+	  a Mail::Reporter.
 
-        - Using an Index with MH folders caused each message header to be
-          triggered: a considerable slowdown.
+	- Using an Index with MH folders caused each message header to be
+	  triggered: a considerable slowdown.
 
-        Improvements:
+	Improvements:
 
-        - [Blair Zajac] donated a large set of documentation fixes.
-          Even some hidden bugs got fixed this way.
+	- [Blair Zajac] donated a large set of documentation fixes.
+	  Even some hidden bugs got fixed this way.
 
-        - Implemented Mail::Message::Body::Multipart::file(), because
-          it is required for Mail::Transport::SMTP.  Spotted by
-          [Marty J. Riley]
+	- Implemented Mail::Message::Body::Multipart::file(), because
+	  it is required for Mail::Transport::SMTP.  Spotted by
+	  [Marty J. Riley]
 
-        - Mail::Box::Tie::ARRAY and ::HASH simulate real arrays and hashes
-          better with respect to deleted items.
+	- Mail::Box::Tie::ARRAY and ::HASH simulate real arrays and hashes
+	  better with respect to deleted items.
 
-        - Mail::Box::Message::Dummy is renamed into Mail::Message::Dummy,
-          which inherit from Mail::Message, not Mail::Box::Message.
+	- Mail::Box::Message::Dummy is renamed into Mail::Message::Dummy,
+	  which inherit from Mail::Message, not Mail::Box::Message.
 
-        - Mail::Message::Dummy's now follow the standard pattern of
-          Mail::Message.
+	- Mail::Message::Dummy's now follow the standard pattern of
+	  Mail::Message.
 
-        - The Mail::Box::Thread::Manager is now also an extension of a
-          Mail::Reporter.
+	- The Mail::Box::Thread::Manager is now also an extension of a
+	  Mail::Reporter.
 
-        - The Mail::Box::Thread::Node is now also extends Mail::Reporter.
+	- The Mail::Box::Thread::Node is now also extends Mail::Reporter.
 
-        - Added extra doc to MH::Message to avoid confusion between seqnr
-          and filename (which is a number as well).  Needed by
-          [Jerrad Pierce]
+	- Added extra doc to MH::Message to avoid confusion between seqnr
+	  and filename (which is a number as well).  Needed by
+	  [Jerrad Pierce]
 
-        - Mail::Message::Part::clone is not a special case of clone at all.
-          Removed.
+	- Mail::Message::Part::clone is not a special case of clone at all.
+	  Removed.
 
-        - Mail::Message::Part::coerce() was much too complicated: most work
-          is already done in Mail::Message::coerce()
+	- Mail::Message::Part::coerce() was much too complicated: most work
+	  is already done in Mail::Message::coerce()
 
-        - The documentation and sometimes also the location of code in
-          Mail::Message::Head* packages has been improved.
+	- The documentation and sometimes also the location of code in
+	  Mail::Message::Head* packages has been improved.
 
-        - Improvements in text of Mail::Box-Overview.
+	- Improvements in text of Mail::Box-Overview.
 
 version 2.018: Wed Jul 10 23:03:08 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Parser will immediately study multipart en nested messages,
-          because otherwise it will get stuck in nasty multi-level
-          situations.  Discovered by [Francois Petillon]
+	- Parser will immediately study multipart en nested messages,
+	  because otherwise it will get stuck in nasty multi-level
+	  situations.  Discovered by [Francois Petillon]
 
-        - More picky with quotes in header field attributes...  Continuing
-          story with weird multipart boundary strings.  This time,
-          [Blair Zajac] forced some improvements.
+	- More picky with quotes in header field attributes...  Continuing
+	  story with weird multipart boundary strings.  This time,
+	  [Blair Zajac] forced some improvements.
 
-        - Empty headers were not properly skipped.  Usually this went
-          undetected...  however not in a very rare case [Blair Zajac]
+	- Empty headers were not properly skipped.  Usually this went
+	  undetected...  however not in a very rare case [Blair Zajac]
 
-        - For read-only folders, the manager always complained about
-          "closing changed folders".  Reported by [Blair Zajac] and fixed.
+	- For read-only folders, the manager always complained about
+	  "closing changed folders".  Reported by [Blair Zajac] and fixed.
 
-        - [Greg Matheson] tries to get Mail::Box running on the Cygwin
-          platform, which will benefit everyone, because it is stricter
-          than UNIX in some cases.... for instance, the Perl parser 
-          objects left the file-handle open....
+	- [Greg Matheson] tries to get Mail::Box running on the Cygwin
+	  platform, which will benefit everyone, because it is stricter
+	  than UNIX in some cases.... for instance, the Perl parser 
+	  objects left the file-handle open....
 
-        - [Blair Zajac] detected that double messages in a read-only
-          folder cause "Changes not written to read-only folder"
-          messages.  Not anymore: the doubles will not be flagged for
-          deletion.
+	- [Blair Zajac] detected that double messages in a read-only
+	  folder cause "Changes not written to read-only folder"
+	  messages.  Not anymore: the doubles will not be flagged for
+	  deletion.
 
-        Improvements:
+	Improvements:
 
-        - Filenames sometime contained double /'s between folderdir and
-          foldername.  Removed.
+	- Filenames sometime contained double /'s between folderdir and
+	  foldername.  Removed.
 
-        - Foldernames can be specified like this:
-             pop3://username:password@host:port/folder
-          which is broken into separate arguments in a very early stage.
-          This is especially useful when the name is passed in $ENV{MAIL}
+	- Foldernames can be specified like this:
+	     pop3://username:password@host:port/folder
+	  which is broken into separate arguments in a very early stage.
+	  This is especially useful when the name is passed in $ENV{MAIL}
 
-        - Start of implementation for Mail::Transport::POP3.
+	- Start of implementation for Mail::Transport::POP3.
 
-        - To make space for ::POP3, which is a message receiver, the
-          message senders are now derived from Mail::Transport::Send.
-          New options are added which certainly improve the interface.
-          New packages:
-             Mail::Transport::Send
-             Mail::Transport::Receive
-             Mail::Transport::POP3
-          
-        - Foldernames via $mgr->open() may be specified as URL, for instance
-             $mgr->open('mbox:/tmp/inbox')
-             $mgr->open('pop3://me:secret@pop3.server.com:120')
+	- To make space for ::POP3, which is a message receiver, the
+	  message senders are now derived from Mail::Transport::Send.
+	  New options are added which certainly improve the interface.
+	  New packages:
+	     Mail::Transport::Send
+	     Mail::Transport::Receive
+	     Mail::Transport::POP3
+	  
+	- Foldernames via $mgr->open() may be specified as URL, for instance
+	     $mgr->open('mbox:/tmp/inbox')
+	     $mgr->open('pop3://me:secret@pop3.server.com:120')
 
-        - $mgr->close($folder) and ->closeAllFolders() accept the
-          normal options for $folder->close(OPTIONS).
+	- $mgr->close($folder) and ->closeAllFolders() accept the
+	  normal options for $folder->close(OPTIONS).
 
-        - $folder->appendMessage($msg) now returns the coerced message.
+	- $folder->appendMessage($msg) now returns the coerced message.
 
-        - Mail::Box::Dir::messageId() should not trigger headers to
-          find unparsed headers with the id: that's the task of
-          Mail::Box::find().  The code was not consistent with the docs.
+	- Mail::Box::Dir::messageId() should not trigger headers to
+	  find unparsed headers with the id: that's the task of
+	  Mail::Box::find().  The code was not consistent with the docs.
 
-        - Removed Mail::Box::Dir::readAllHeaders()... it contained a
-          bug, so was apperently never used.  And that's a good thing.
+	- Removed Mail::Box::Dir::readAllHeaders()... it contained a
+	  bug, so was apperently never used.  And that's a good thing.
 
-        - Small set of additions to Mail::Box::Net and Mail::Box::POP3
-          Still in the early stages of development.
+	- Small set of additions to Mail::Box::Net and Mail::Box::POP3
+	  Still in the early stages of development.
 
-        - The parser will complain about files which were modified while
-          it was working with it.  Some cases where the parser accidentally
-          stayed open were closed to resolve the complaints for the tests.
+	- The parser will complain about files which were modified while
+	  it was working with it.  Some cases where the parser accidentally
+	  stayed open were closed to resolve the complaints for the tests.
 
 version 2.017: Fri Jul  5 17:06:08 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Thanks to [Liz Mattijsen] for the detection of some flaws in
-          the QuotedPrintable encoding.  Fixed it.
+	- Thanks to [Liz Mattijsen] for the detection of some flaws in
+	  the QuotedPrintable encoding.  Fixed it.
 
-        - Nested (rfc822) message clone() did not work.  Detected by
-          [Blair Zajac]
+	- Nested (rfc822) message clone() did not work.  Detected by
+	  [Blair Zajac]
 
-        - [Greg Matheson] is fixing the test suite for Windows.  Very good
-          work.  Changes made in t/65search.t
+	- [Greg Matheson] is fixing the test suite for Windows.  Very good
+	  work.  Changes made in t/65search.t
 
-        Improvements:
+	Improvements:
 
-        - Deleted parts will not be returned in $multipart_body->lines
+	- Deleted parts will not be returned in $multipart_body->lines
 
-        - Deleted parts will not be counted in $multipart_body->nrLines
-          and ->size
+	- Deleted parts will not be counted in $multipart_body->nrLines
+	  and ->size
 
-        - Deleted parts will not be cloned.
+	- Deleted parts will not be cloned.
 
-        - For efficiency reasons, $multipart_body->foreachComponent
-          will skip deleted parts as well.
+	- For efficiency reasons, $multipart_body->foreachComponent
+	  will skip deleted parts as well.
 
-        - Mail::Box::messages() accepts
-             range:       $folder->messages(3, 100)
-             non-deleted: $folder->messages('ACTIVE')
-             deleted:     $folder->messages('DELETED')
-             labeled:     $folder->messages('seen')
-             labeled:     $folder->messages('!seen')
-             code:        $folder->messages( sub {$_[0]->size > 10000} )
-          limiting the default result being all messages.
+	- Mail::Box::messages() accepts
+	     range:       $folder->messages(3, 100)
+	     non-deleted: $folder->messages('ACTIVE')
+	     deleted:     $folder->messages('DELETED')
+	     labeled:     $folder->messages('seen')
+	     labeled:     $folder->messages('!seen')
+	     code:        $folder->messages( sub {$_[0]->size > 10000} )
+	  limiting the default result being all messages.
 
-        - Mail::Message::parts() accepts
-             non-deleted: $msg->parts('ACTIVE')
-             deleted:     $msg->parts('DELETED')
-             nested:      $msg->parts('RECURSE');
-             code:        $msg->parts( sub {$_[0]->size > 10000)} )
+	- Mail::Message::parts() accepts
+	     non-deleted: $msg->parts('ACTIVE')
+	     deleted:     $msg->parts('DELETED')
+	     nested:      $msg->parts('RECURSE');
+	     code:        $msg->parts( sub {$_[0]->size > 10000)} )
 
-        - Mail::Message::Body::Multipart::parts accepts
-             non-deleted: $body->parts('ACTIVE')
-             deleted:     $body->parts('DELETED')
-             nested:      $body->parts('RECURSE');
-             code:        $body->parts( sub {$_[0]->size > 10000)} )
+	- Mail::Message::Body::Multipart::parts accepts
+	     non-deleted: $body->parts('ACTIVE')
+	     deleted:     $body->parts('DELETED')
+	     nested:      $body->parts('RECURSE');
+	     code:        $body->parts( sub {$_[0]->size > 10000)} )
 
-        - Mail::Box::allMessageIds() renamed to messageIds(), but old
-          name still available.
+	- Mail::Box::allMessageIds() renamed to messageIds(), but old
+	  name still available.
 
-        - Add suggestion to close() without writing changes.
+	- Add suggestion to close() without writing changes.
 
-        - Avoid testing of maildir folders for Windows.  They are not
-          supported, because maildir uses characters in filenames which
-          are not acceptabled for the Windows file-systyem. [Greg Matheson]
+	- Avoid testing of maildir folders for Windows.  They are not
+	  supported, because maildir uses characters in filenames which
+	  are not acceptabled for the Windows file-systyem. [Greg Matheson]
 
-        - Added Mail::Box::POP3, Mail::Box::POP3::Message
-          Mail::Box::Net, and Mail::Box::Net::Message as first steps to
-          a POP3 implementation.
+	- Added Mail::Box::POP3, Mail::Box::POP3::Message
+	  Mail::Box::Net, and Mail::Box::Net::Message as first steps to
+	  a POP3 implementation.
 
 version 2.016: Tue Jun 25 16:24:54 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - [Edward Wildgoose] was very persist in pushing me to test
-          return codes in Mail::Transport::SMTP.  Late transport failures
-          are reported back now.
+	- [Edward Wildgoose] was very persist in pushing me to test
+	  return codes in Mail::Transport::SMTP.  Late transport failures
+	  are reported back now.
 
-        - [Jeff Squyres] attributes in header fields must be matched
-          case-insensitive.
+	- [Jeff Squyres] attributes in header fields must be matched
+	  case-insensitive.
 
-        - $folder->writeable --> $folder->writable, but old method
-          kept for backwards compatibility.
+	- $folder->writeable --> $folder->writable, but old method
+	  kept for backwards compatibility.
 
-        - [Andreas Piper] AIX also requires r+ on a file to get locking
-          via FLOCK to work.  I made the detection 'compile-time'.
+	- [Andreas Piper] AIX also requires r+ on a file to get locking
+	  via FLOCK to work.  I made the detection 'compile-time'.
 
-        - The folder to be locked was optional, but used in error messages.
-          Now if is not optional anymore, thanks to [Andreas Piper]
+	- The folder to be locked was optional, but used in error messages.
+	  Now if is not optional anymore, thanks to [Andreas Piper]
 
-        - Simulated sub-folders in Mbox were not correctly automagically
-          created.
+	- Simulated sub-folders in Mbox were not correctly automagically
+	  created.
 
-        Improvements:
+	Improvements:
 
-        - Document fixes in Mail/Transport/SMTP.pm by [Liz Mattijsen]
+	- Document fixes in Mail/Transport/SMTP.pm by [Liz Mattijsen]
 
-        - Recursive copying of whole folders, which may include
-          conversions with Mail::Box::copyTo() with tests in t/66copyto.t
+	- Recursive copying of whole folders, which may include
+	  conversions with Mail::Box::copyTo() with tests in t/66copyto.t
 
-        - Interface change:
-            $mgr->addMessages,   $folder->addMessage,
-            $mgr->appendMessage, $folder->appendMessage,
-            $mgr->moveMessage,   $folder->copyMessage,
-            $message->copyTo
-          now all return the coerced message(s), because that is much
-          more useful than the message which are passed into the
-          method call, the folder, or the class.
+	- Interface change:
+	    $mgr->addMessages,   $folder->addMessage,
+	    $mgr->appendMessage, $folder->appendMessage,
+	    $mgr->moveMessage,   $folder->copyMessage,
+	    $message->copyTo
+	  now all return the coerced message(s), because that is much
+	  more useful than the message which are passed into the
+	  method call, the folder, or the class.
 
-        - Mail::Box::Manager::open() is rewritten, and a such much improved.
+	- Mail::Box::Manager::open() is rewritten, and a such much improved.
 
-        - Much stricter handling of folder closing and folder deletion:
-          when a manager is used, folders are removed before global
-          cleamup commences.
+	- Much stricter handling of folder closing and folder deletion:
+	  when a manager is used, folders are removed before global
+	  cleamup commences.
 
-        - Mail::Box::Manager::registerType is not requiring all known
-          folder types anymore.  This means that adding folder types
-          is without cost now: they are compiled only when used.
+	- Mail::Box::Manager::registerType is not requiring all known
+	  folder types anymore.  This means that adding folder types
+	  is without cost now: they are compiled only when used.
 
 version 2.015: Tue Jun 18 19:41:45 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Duplicated messages without subject or to fields will
-          not produce errors anymore.
+	- Duplicated messages without subject or to fields will
+	  not produce errors anymore.
 
-        - Duplicated messages produce NOTICE now, not WARNINGS.  Same
-          for empty fields and other minor things the parser detects.
+	- Duplicated messages produce NOTICE now, not WARNINGS.  Same
+	  for empty fields and other minor things the parser detects.
 
-        - Multiparts where not correctly processed when read from STDIN:
-          the body type was '::Lines' only. Bug reported by [Evan Borgstrom]
+	- Multiparts where not correctly processed when read from STDIN:
+	  the body type was '::Lines' only. Bug reported by [Evan Borgstrom]
 
-        - Bogus message-IDs  <>  caused problems, but these situations are
-          avoided now.  Problem found by [Jost Krieger]
+	- Bogus message-IDs  <>  caused problems, but these situations are
+	  avoided now.  Problem found by [Jost Krieger]
 
-        Improvements:
+	Improvements:
 
-        - message/rfc822 messages are handled now via a
-          Mail::Message::Body::Nested.pm, Tests in t/21p9rfc.t
-          This all because [Max Poduhoroff] asked for it  ;-)
+	- message/rfc822 messages are handled now via a
+	  Mail::Message::Body::Nested.pm, Tests in t/21p9rfc.t
+	  This all because [Max Poduhoroff] asked for it  ;-)
 
-        - Removed all tests for Inline::C parser....
+	- Removed all tests for Inline::C parser....
 
-        - Mail::Message::Body::AUTOLOAD handles errors better, which
-          should provide nicer error-messages.
+	- Mail::Message::Body::AUTOLOAD handles errors better, which
+	  should provide nicer error-messages.
 
-        - Updates on MH/Maildir messages will first be created in an
-          'invisible' name, to avoid accidental access to partially
-          written messages Mail::Box::Dir::Message::create()
+	- Updates on MH/Maildir messages will first be created in an
+	  'invisible' name, to avoid accidental access to partially
+	  written messages Mail::Box::Dir::Message::create()
 
-        - Mail::Message::Parts can be deleted (ignored for printing and
-          sending).  $part->deleted, $part->deleted(0), if($part->deleted)
+	- Mail::Message::Parts can be deleted (ignored for printing and
+	  sending).  $part->deleted, $part->deleted(0), if($part->deleted)
 
-        - timestamp() prefers time from last Received field over first
-          [Jost Krieger]
+	- timestamp() prefers time from last Received field over first
+	  [Jost Krieger]
 
-        - Mail::Transport::SMTP:
-            contactServer()  --> contactAnyServer()
-            new method tryConnectTo($host, @options);
+	- Mail::Transport::SMTP:
+	    contactServer()  --> contactAnyServer()
+	    new method tryConnectTo($host, @options);
 
-        - $msg->printStructure for debugging purposes
-          (see Mail::Message::Construct)
+	- $msg->printStructure for debugging purposes
+	  (see Mail::Message::Construct)
 
-        - Now requires MIME::Types v1.001
+	- Now requires MIME::Types v1.001
 
-        - Mail::Message $msg   implemented $msg->string, ->lines, ->file
-        
+	- Mail::Message $msg   implemented $msg->string, ->lines, ->file
+	
 version 2.014: Tue Jun 11 16:26:13 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Forgot to implement the 'delete' method for a header field.  The
-          'reset' method was available to achieve it, but harder to discover
-          for unexperienced programmers.  Now 'delete' simply calls 'reset'.
-          Spotted by [Mark Weiler]
+	- Forgot to implement the 'delete' method for a header field.  The
+	  'reset' method was available to achieve it, but harder to discover
+	  for unexperienced programmers.  Now 'delete' simply calls 'reset'.
+	  Spotted by [Mark Weiler]
 
-        - A coerce() from Mail::Message to Mail::Box::Message has to clear
-          the deleted flag (to avoid errors).  At the same time, the
-          modified flag is cleared.  Detected by [Max Maischein]
+	- A coerce() from Mail::Message to Mail::Box::Message has to clear
+	  the deleted flag (to avoid errors).  At the same time, the
+	  modified flag is cleared.  Detected by [Max Maischein]
 
-        - create option to Maildir's works now.
+	- create option to Maildir's works now.
 
-        - Signature separator '--'  ==> '-- '
+	- Signature separator '--'  ==> '-- '
 
-        - [Gilles Darold] found that  m!(['"]?)([^\1])\1!  doesn't work.
-          apparently, [^\1] is not working.  Temporarily fixed with [^'"]
-          in Mail::Message::Field.
+	- [Gilles Darold] found that  m!(['"]?)([^\1])\1!  doesn't work.
+	  apparently, [^\1] is not working.  Temporarily fixed with [^'"]
+	  in Mail::Message::Field.
 
-        Improvements:
+	Improvements:
 
-        - Mail::Transport::SMTP is working now.
+	- Mail::Transport::SMTP is working now.
 
-        - The 'clone' operation on a message will return a Mail::Message
-          object, which avoids complications with copying message between
-          different kinds of folders.
+	- The 'clone' operation on a message will return a Mail::Message
+	  object, which avoids complications with copying message between
+	  different kinds of folders.
 
-        - Maildir messages are moved from 'new' to 'cur' with the new
-          method 'accept'.
+	- Maildir messages are moved from 'new' to 'cur' with the new
+	  method 'accept'.
 
-        - Mbox, MH, pure Perl parser, and modules status "Released" 
-         (was "beta")
+	- Mbox, MH, pure Perl parser, and modules status "Released" 
+	 (was "beta")
 
-        - Maildir status "Alpha" (was "under development")
+	- Maildir status "Alpha" (was "under development")
 
-        - Added some docs to Mail::Transport about receiving messages
-          via POP3.  This code may appear in the near future.
+	- Added some docs to Mail::Transport about receiving messages
+	  via POP3.  This code may appear in the near future.
 
-        - Implemented Mail::Message::Convert::TextAutoformat, t/90textaf.t
+	- Implemented Mail::Message::Convert::TextAutoformat, t/90textaf.t
 
-        - Implemented Mail::Message::Convert::HtmlFormatText, t/90htmlft.t
+	- Implemented Mail::Message::Convert::HtmlFormatText, t/90htmlft.t
 
-        - Implemented Mail::Message::Convert::HtmlFormatPS, t/90htmlfps.t
+	- Implemented Mail::Message::Convert::HtmlFormatPS, t/90htmlfps.t
 
-        - Initial coding of Mail::Message::Convert::Html, t/90html.t
+	- Initial coding of Mail::Message::Convert::Html, t/90html.t
 
-        - Mail::Message::Head::grepNames() now accepts regexes as well.
+	- Mail::Message::Head::grepNames() now accepts regexes as well.
 
-        - Mail::Message::Field::wellformedName method added which returns
-          preferred capitization of a field's name.  The name() method
-          returns the lower-cased name.  Tests in t/11field1.t
+	- Mail::Message::Field::wellformedName method added which returns
+	  preferred capitization of a field's name.  The name() method
+	  returns the lower-cased name.  Tests in t/11field1.t
 
-        - Mail::Message::Field::content returns both body and comment
-          part of the message header line.
+	- Mail::Message::Field::content returns both body and comment
+	  part of the message header line.
 
-        - added Mail::Message::Body::charset() to simplify code.
+	- added Mail::Message::Body::charset() to simplify code.
 
-        - removed useless Mail::Message::printUndisclosed().
+	- removed useless Mail::Message::printUndisclosed().
 
 version 2.013: Thu May 23 11:30:35 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - Create MH directories when asked to. [Greg Matheson] reported
-          the problem.
+	- Create MH directories when asked to. [Greg Matheson] reported
+	  the problem.
 
-        - Mail::Box::Locker::new "timeout" and "wait" options where too
-          confusing to be implemented correctly.  So they didn't work
-          as described.  Now, they are called "expire" and "timeout".
-          Thanks to [John B Batzel] for pointing-out the problems.
+	- Mail::Box::Locker::new "timeout" and "wait" options where too
+	  confusing to be implemented correctly.  So they didn't work
+	  as described.  Now, they are called "expire" and "timeout".
+	  Thanks to [John B Batzel] for pointing-out the problems.
 
-        - Messages with empty bodies where not accepted at all.  This
-          combined with a mistake in treating these errors in Mbox
-          folders gave <undef>s when asked for a body.
+	- Messages with empty bodies where not accepted at all.  This
+	  combined with a mistake in treating these errors in Mbox
+	  folders gave <undef>s when asked for a body.
 
-        Improvements:
+	Improvements:
 
-        - Maildir implementation runs all its tests.  Still there are
-          some support functions lacking.  Reports are that sub-folders
-          are to be implemented differently.
+	- Maildir implementation runs all its tests.  Still there are
+	  some support functions lacking.  Reports are that sub-folders
+	  are to be implemented differently.
 
 version 2.012: Mon Apr 22 15:53:05 CEST 2002
 
-        Fixes:
+	Fixes:
 
-        - [alex] found-out that remove_when_empty and save_on_exit
-          could not be set to false for Mail::Box'es.
+	- [alex] found-out that remove_when_empty and save_on_exit
+	  could not be set to false for Mail::Box'es.
 
-        - [Cory Johns] examples/reply.pl closed the folder but
-          later still used one of its messages.  This is not
-          permitted, but may be allowed later.
+	- [Cory Johns] examples/reply.pl closed the folder but
+	  later still used one of its messages.  This is not
+	  permitted, but may be allowed later.
 
-        - [Robin Berjon] multiple improvements to the Maildir
-          implementation.  Not finalized yet.
+	- [Robin Berjon] multiple improvements to the Maildir
+	  implementation.  Not finalized yet.
 
-        - Mail::Message::Construct->build
-          called          Body->new(filename =>
-          which must be   Body->new(file =>
+	- Mail::Message::Construct->build
+	  called          Body->new(filename =>
+	  which must be   Body->new(file =>
 
-        - Two fixes in Base64 encoding....  Problem reported by
-          [Bernd Patolla]
+	- Two fixes in Base64 encoding....  Problem reported by
+	  [Bernd Patolla]
 
-        - Forgot to use File::Copy in Mail::Message::Body::File.
-          reported by [Andre Schultze]
+	- Forgot to use File::Copy in Mail::Message::Body::File.
+	  reported by [Andre Schultze]
 
-        Improvements:
+	Improvements:
 
-        - Creation of new message-files for Mail::Box::Dir::Message
-          extensions implemented by a create($filename) method which
-          tries to be very smart.
+	- Creation of new message-files for Mail::Box::Dir::Message
+	  extensions implemented by a create($filename) method which
+	  tries to be very smart.
 
-        - [Mark Ethan Trostler] Mail::Message::Field::attribute
-          with value of <undef> gave complaints.  For now, these
-          calls with <undef> will be ingnored.  In the close future
-          they will remove the attribute.
+	- [Mark Ethan Trostler] Mail::Message::Field::attribute
+	  with value of <undef> gave complaints.  For now, these
+	  calls with <undef> will be ingnored.  In the close future
+	  they will remove the attribute.
 
-        - Removed references to HTML.pm from all files...
+	- Removed references to HTML.pm from all files...
 
 version 2.011: Sun Mar  3 23:51:41 CET 2002
 
-        Improvements:    -- one day of rapid development ;)
+	Improvements:    -- one day of rapid development ;)
 
-        - Mail::Message::read was confusing many users.  Therefore, it
-          has been renamed to readFromParser.
+	- Mail::Message::read was confusing many users.  Therefore, it
+	  has been renamed to readFromParser.
 
-        - Now read() became unused, it is used to implement
-          my $msg = Mail::Message->read(\*STDIN);
-          Please use it sparsely.
+	- Now read() became unused, it is used to implement
+	  my $msg = Mail::Message->read(\*STDIN);
+	  Please use it sparsely.
 
-        - Implemented Mail::Box::Maildir->writeMessages and
-          Mail::Box::Maildir->appendMessages.  Tests in t/44mdir*.t
-          Still small things to fix.
+	- Implemented Mail::Box::Maildir->writeMessages and
+	  Mail::Box::Maildir->appendMessages.  Tests in t/44mdir*.t
+	  Still small things to fix.
 
-        - Mail::Message::clone() includes labels now.
+	- Mail::Message::clone() includes labels now.
 
 version 2.010: Sun Mar  3 16:05:16 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - Fixed serious mis-calculation for delayed bodies in MH folders.
-          The 'fail-safe' approach did safe the programs till now, but
-          it is much better now: correct 'Content-Length' headers will
-          safe you time now.
+	- Fixed serious mis-calculation for delayed bodies in MH folders.
+	  The 'fail-safe' approach did safe the programs till now, but
+	  it is much better now: correct 'Content-Length' headers will
+	  safe you time now.
 
-        - Improved quite some doc-issues in Mail::Box::MH::(Label|Index).pm
+	- Improved quite some doc-issues in Mail::Box::MH::(Label|Index).pm
 
-        - Prototype of Mail::Message::Body::_data_from_lines was @_, which
-          is a silly typo checked by bleadperl... [Marcel Gruenauer]
+	- Prototype of Mail::Message::Body::_data_from_lines was @_, which
+	  is a silly typo checked by bleadperl... [Marcel Gruenauer]
 
-        - Mail::Box::Parser::Perl line 87, binmode without filehandle...
-          reported by [Marcel Gruenauer]  But now it is causing problems
-          with perlio in 5.7.2 ...
+	- Mail::Box::Parser::Perl line 87, binmode without filehandle...
+	  reported by [Marcel Gruenauer]  But now it is causing problems
+	  with perlio in 5.7.2 ...
 
-        - Minor changes to scripts/takemail by [Tassilo v Parseval]
+	- Minor changes to scripts/takemail by [Tassilo v Parseval]
 
-        - Mistakes in the docs of Mail::Box::Search::Grep, found by
-          [Tassilo v Parseval]
+	- Mistakes in the docs of Mail::Box::Search::Grep, found by
+	  [Tassilo v Parseval]
 
-        - Accidentally took only non-delayed messages in Grep: wrong
-          default.  Detected by [Tassilo v Parseval]
+	- Accidentally took only non-delayed messages in Grep: wrong
+	  default.  Detected by [Tassilo v Parseval]
 
-        - The METHOD INDEXes ended with a list of links to related
-          manual-pages which where not expanded correctly by pod.
-          Therefor is was changed: now the INDEX starts with the
-          man-pages which will have correct links this time.
+	- The METHOD INDEXes ended with a list of links to related
+	  manual-pages which where not expanded correctly by pod.
+	  Therefor is was changed: now the INDEX starts with the
+	  man-pages which will have correct links this time.
 
-        Improvements:
+	Improvements:
 
-        - Changed encoders/decoders status from ALPHA to BETA.
+	- Changed encoders/decoders status from ALPHA to BETA.
 
-        - Removed organization option to new() for Mail::Boxes: it is
-          not modifyable.  The method which shows whether the folder
-          is DIRECTORY or FILE organized will stay.
+	- Removed organization option to new() for Mail::Boxes: it is
+	  not modifyable.  The method which shows whether the folder
+	  is DIRECTORY or FILE organized will stay.
 
-        - *PARTIAL* implementation of Maildir folders, which did have large
-          implications for the MH implementation.  The maildir implementation
-          is NOT READY yet.
+	- *PARTIAL* implementation of Maildir folders, which did have large
+	  implications for the MH implementation.  The maildir implementation
+	  is NOT READY yet.
 
-          New class structure:
+	  New class structure:
 
-            Mail::Box::MH
-            is a Mail::Box::Dir            <-- new
-            is a Mail::Box
+	    Mail::Box::MH
+	    is a Mail::Box::Dir            <-- new
+	    is a Mail::Box
 
-            Mail::Box::MH::Message
-            is a Mail::Box::Dir::Message   <-- new
-            is a Mail::Box::Message
-            is a Mail::Message
+	    Mail::Box::MH::Message
+	    is a Mail::Box::Dir::Message   <-- new
+	    is a Mail::Box::Message
+	    is a Mail::Message
 
-            Mail::Box::Maildir             <-- new
-            is a Mail::Box::Dir            <-- new
-            is a Mail::Box
+	    Mail::Box::Maildir             <-- new
+	    is a Mail::Box::Dir            <-- new
+	    is a Mail::Box
 
-            Mail::Box::Maildir::Message    <-- new
-            is a Mail::Box::Dir::Message   <-- new
-            is a Mail::Box::Message
+	    Mail::Box::Maildir::Message    <-- new
+	    is a Mail::Box::Dir::Message   <-- new
+	    is a Mail::Box::Message
 
-        - Massive changes in label management, required to facilitate
-          Maildir labels which are in the filename.
+	- Massive changes in label management, required to facilitate
+	  Maildir labels which are in the filename.
 
-        - Added /usr/lib to the safe_directories are searched by
-          Mail::Transport for binaries [Slaven Rezic]
+	- Added /usr/lib to the safe_directories are searched by
+	  Mail::Transport for binaries [Slaven Rezic]
 
-        - Any Mail::Box type may implement an 'updateMessages'.  When
-          $mailbox->update is called and 'updateMessages' exists, the
-          folder tries to figure-out changes in the folder which were
-          made by external programs.  External programs may add messages
-          to the end of the folder without applying a lock, which is
-          dangerous.
+	- Any Mail::Box type may implement an 'updateMessages'.  When
+	  $mailbox->update is called and 'updateMessages' exists, the
+	  folder tries to figure-out changes in the folder which were
+	  made by external programs.  External programs may add messages
+	  to the end of the folder without applying a lock, which is
+	  dangerous.
 
 version 2.009: Wed Feb 20 09:03:56 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - Forgot to update METHOD INDEX
+	- Forgot to update METHOD INDEX
 
-        - t/65search1g.t tests Mail::Box::Search::Grep, which found
-          some problems in the implementation which are fixed now.
+	- t/65search1g.t tests Mail::Box::Search::Grep, which found
+	  some problems in the implementation which are fixed now.
 
-        Improvements:
+	Improvements:
 
-        - Mail::Box::Manager::threads() now also works when the folders
-          are not used as named parameter:
-             $mgr->threads(folders => [$inbox, $outbox]);  # was
-             $mgr->threads($inbox, $outbox);               # added
+	- Mail::Box::Manager::threads() now also works when the folders
+	  are not used as named parameter:
+	     $mgr->threads(folders => [$inbox, $outbox]);  # was
+	     $mgr->threads($inbox, $outbox);               # added
 
-        - Default output file-handle changed from STDOUT to the selected
-          file-handle (see perldoc -f select)... usually this will
-          return STDOUT.
+	- Default output file-handle changed from STDOUT to the selected
+	  file-handle (see perldoc -f select)... usually this will
+	  return STDOUT.
 
 version 2.008: Mon Feb 18 16:11:52 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - [Alan Kelm] proved me that the other perl modules are wrong,
-          wrapping the header-lines more often than the RFC permits.  So,
-          wrapping on ';' and '.' is removed.  Wrapped headers are always
-          accepted, so there is no difference when reading a folder.
+	- [Alan Kelm] proved me that the other perl modules are wrong,
+	  wrapping the header-lines more often than the RFC permits.  So,
+	  wrapping on ';' and '.' is removed.  Wrapped headers are always
+	  accepted, so there is no difference when reading a folder.
 
-        - Added 'use Mail::Address' to Mail::Message::Field
-          [Walery Studennikov]
+	- Added 'use Mail::Address' to Mail::Message::Field
+	  [Walery Studennikov]
 
-        - [Andreas Marcel Riechert] Added -I flag for {net|open}bsd with
-          mailx in Mail::Transport::Mailx
+	- [Andreas Marcel Riechert] Added -I flag for {net|open}bsd with
+	  mailx in Mail::Transport::Mailx
 
-        - The parent of a Multipart body after reading accidentally was
-          a body, not a message.  Fixed in Mail::Message::Body::Multipart.
+	- The parent of a Multipart body after reading accidentally was
+	  a body, not a message.  Fixed in Mail::Message::Body::Multipart.
 
-        Improvements:
+	Improvements:
 
-        - New modules Mail::Box::Search and Mail::Box::Search::Grep, however
-          they still need testing.  De docs have to be updated too.
-          Mail::Box::Search::Spam must be a piece of cake now.
-          Example in examples/grep.pl
+	- New modules Mail::Box::Search and Mail::Box::Search::Grep, however
+	  they still need testing.  De docs have to be updated too.
+	  Mail::Box::Search::Spam must be a piece of cake now.
+	  Example in examples/grep.pl
 
-        - Replaced -w flag in test-scripts by 'use warnings'
+	- Replaced -w flag in test-scripts by 'use warnings'
 
-        - Centralized definition of folder-files in t/Tools.pm to
-          simplify implementation on Windows.
+	- Centralized definition of folder-files in t/Tools.pm to
+	  simplify implementation on Windows.
 
-        - t/00windows.t to convert t/mbox.src to t/mbox.win with CRLF
-          line-terminations.
+	- t/00windows.t to convert t/mbox.src to t/mbox.win with CRLF
+	  line-terminations.
 
-        - moved Mail::Message::Body::Encode::eol to
-          Mail::Message::Body::eol because is always needed and
-          hence triggered the parsing of Encode..
+	- moved Mail::Message::Body::Encode::eol to
+	  Mail::Message::Body::eol because is always needed and
+	  hence triggered the parsing of Encode..
 
-        - Mail::Message::Body::eol option NATIVE will be translated into
-          LF, CR or CRLF.
+	- Mail::Message::Body::eol option NATIVE will be translated into
+	  LF, CR or CRLF.
 
-        - Mail::Message::Body::*::size will return the size of the
-          message as stored in the file, so taking care of \n which
-          becomes CRLF on some systems.
+	- Mail::Message::Body::*::size will return the size of the
+	  message as stored in the file, so taking care of \n which
+	  becomes CRLF on some systems.
 
-        - Croak when $mgr->copyTo/moveTo is used with a message which
-          is not part of a folder yet: appendMessage should be used instead.
+	- Croak when $mgr->copyTo/moveTo is used with a message which
+	  is not part of a folder yet: appendMessage should be used instead.
 
-        - Mail::Box::Thread::Node::threadMessages() collects all messages
-          which are in a thread.
+	- Mail::Box::Thread::Node::threadMessages() collects all messages
+	  which are in a thread.
 
 version 2.007: Mon Jan 14 10:07:09 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - [Alan Kelm] found a mistake in Mail::Box::Locker::DotLock::_try_lock
+	- [Alan Kelm] found a mistake in Mail::Box::Locker::DotLock::_try_lock
 
-        - [Alan Kelm] updated some docs about locking.
+	- [Alan Kelm] updated some docs about locking.
 
-        - [Alan Kelm] folder->new keep_dups option.
+	- [Alan Kelm] folder->new keep_dups option.
 
-        - [Alan Kelm] fixed a stupid bug: messages printed to MBOX folders
-          did not get an empty line after them (before the from-line).
-          changed  print('') into print("\n") in Mail::Box::Mbox::Messages.pm
-          Mail::Box doesn't need that line, but other mail-agents might.
+	- [Alan Kelm] fixed a stupid bug: messages printed to MBOX folders
+	  did not get an empty line after them (before the from-line).
+	  changed  print('') into print("\n") in Mail::Box::Mbox::Messages.pm
+	  Mail::Box doesn't need that line, but other mail-agents might.
 
-        Improvements:
+	Improvements:
 
-        - Avoid colissions between two messages which falsily share
-          messageID.  One will get a new number.
+	- Avoid colissions between two messages which falsily share
+	  messageID.  One will get a new number.
 
-        - Start implementing understanding of CRLF / CR and foreign
-          line-endings
+	- Start implementing understanding of CRLF / CR and foreign
+	  line-endings
 
-        - Implemented stricter checks.  When a body is created, it is
-          not trusted until the data is checked.  This is lazy again ;)
-          Specify the checked option for the body is you are sure the
-          data is correct.  Also for the folders: when they are `trusted',
-          all bodies will be created `checked', which boosts performance
-          when used with the Perl parser.
+	- Implemented stricter checks.  When a body is created, it is
+	  not trusted until the data is checked.  This is lazy again ;)
+	  Specify the checked option for the body is you are sure the
+	  data is correct.  Also for the folders: when they are `trusted',
+	  all bodies will be created `checked', which boosts performance
+	  when used with the Perl parser.
 
 version 2.006: Wed Jan  2 08:27:21 CET 2002
 
-        Fixes:
+	Fixes:
 
-        - Accidentally typed   (@_)  as prototype of some methods.  Found
-          by [Jeffrey Friedl]
+	- Accidentally typed   (@_)  as prototype of some methods.  Found
+	  by [Jeffrey Friedl]
 
 version 2.005: Sun Dec 30 14:25:22 CET 2001
 
-        Fixes:
+	Fixes:
 
-        - Because of a bug related to weak references in the 5.6.0
-          Perl core, 5.6.1 is required now...
+	- Because of a bug related to weak references in the 5.6.0
+	  Perl core, 5.6.1 is required now...
 
-        Improvements:
+	Improvements:
 
-        - Rewrote Mail::Box::Parser::Perl, to avoid use of unget_line.
-          At the same time, the detection of the folder's line mode is
-          simplified.  However, not seek is sparsely used... maybe as
-          next improvement this could be avoided as well.
+	- Rewrote Mail::Box::Parser::Perl, to avoid use of unget_line.
+	  At the same time, the detection of the folder's line mode is
+	  simplified.  However, not seek is sparsely used... maybe as
+	  next improvement this could be avoided as well.
 
-        - The performance is improved considerably when the folder
-          is trusted.  However, a little slowdown can be experienced
-          for untrusted folders, because better CRLF handling.
+	- The performance is improved considerably when the folder
+	  is trusted.  However, a little slowdown can be experienced
+	  for untrusted folders, because better CRLF handling.
 
-        - $mboxmsg->fileLocation returns only begin message in scalar
-          context.
+	- $mboxmsg->fileLocation returns only begin message in scalar
+	  context.
 
-        - readHeader returns ref-array for each field i.s.o. four
-          elements in a list.
+	- readHeader returns ref-array for each field i.s.o. four
+	  elements in a list.
 
-        - Mail::Box::Parser::inDosmode is now called
-          Mail::Box::Parser::lineSeparator.  Although a start has been
-          made to support Windows and non-native folders, it is not
-          fully implemented yet.
+	- Mail::Box::Parser::inDosmode is now called
+	  Mail::Box::Parser::lineSeparator.  Although a start has been
+	  made to support Windows and non-native folders, it is not
+	  fully implemented yet.
 
-        - Updated the Mail::Box::Parser manual-page.
+	- Updated the Mail::Box::Parser manual-page.
 
 version 2.004: Sun Dec 16 22:53:06 CET 2001
 
-        Fixes:
+	Fixes:
 
-        - I didn't know yet, but you can do things like:
-            $reply->head->add(To => $orig->head->get('From'));
-          because of stringification ;)
+	- I didn't know yet, but you can do things like:
+	    $reply->head->add(To => $orig->head->get('From'));
+	  because of stringification ;)
 
-        - $message->from also may return the content of the Sender header.
+	- $message->from also may return the content of the Sender header.
 
-        - Mail::Message::Construct::quotePrelude renamed to
-          ::replyPrelude, which is more consequent.
+	- Mail::Message::Construct::quotePrelude renamed to
+	  ::replyPrelude, which is more consequent.
 
-        New:
+	New:
 
-        - Added Mail::Message::Construct::forward() and ::forwardSubject.
-          With tests in t/57*
+	- Added Mail::Message::Construct::forward() and ::forwardSubject.
+	  With tests in t/57*
 
-        - Replies are even more flexible now.
+	- Replies are even more flexible now.
 
 version 2.003: Sat Dec 15 00:47:50 CET 2001
 
-        Fixes:
+	Fixes:
 
-        - Moved stuff from Mail::Message::Head::read to
-          Mail::Box::Parser::readHeader to improve parser indepency and
-          speed.
+	- Moved stuff from Mail::Message::Head::read to
+	  Mail::Box::Parser::readHeader to improve parser indepency and
+	  speed.
 
-        - [Marcel de Boer] showed me that labels were not treated
-          right in Mail::Box v2.  Moved from Mail::Box::Message to
-          Mail::Message and Mail::Message::Head.
+	- [Marcel de Boer] showed me that labels were not treated
+	  right in Mail::Box v2.  Moved from Mail::Box::Message to
+	  Mail::Message and Mail::Message::Head.
 
-        - [Marcel de Boer] also found a problem with cloning of multi-
-          parts which got solved: a Mail::Message::Part is cloned to
-          be a Mail::Message!
+	- [Marcel de Boer] also found a problem with cloning of multi-
+	  parts which got solved: a Mail::Message::Part is cloned to
+	  be a Mail::Message!
 
-        - Quite a speed improvement too.
+	- Quite a speed improvement too.
 
-        - Changed version policy
+	- Changed version policy
 
 version 2.002: Fri Dec 13 17:46:01 CET 2001
 
-        Fixes:
+	Fixes:
 
-        - Better (less complaining) recovery of bad header parsing.
+	- Better (less complaining) recovery of bad header parsing.
 
-        - Removed a back-reference from a locker object to the folder,
-          by which the folders where kept alive although out of scope.
-          "circular reference".  According the errors I got when
-          removing this one, there should be no strong refs left.
+	- Removed a back-reference from a locker object to the folder,
+	  by which the folders where kept alive although out of scope.
+	  "circular reference".  According the errors I got when
+	  removing this one, there should be no strong refs left.
 
-        - replaced many "warn"s by "$self->log(WARNING =>"s in
-          Mail::Box::Manager.
+	- replaced many "warn"s by "$self->log(WARNING =>"s in
+	  Mail::Box::Manager.
 
-        - Improved handling and creating folders in the Mail::Box::Manager.
+	- Improved handling and creating folders in the Mail::Box::Manager.
 
-        - A header may be empty, but then it will be 'false'.  This is
-          needed to correctly recover corrupted mbox folders.
+	- A header may be empty, but then it will be 'false'.  This is
+	  needed to correctly recover corrupted mbox folders.
 
-        New:
+	New:
 
-        - Mail::Message::Field::Fast implements a fast but dirty way to
-          store the header information.  Tested in t/11field1.t
-          It saves about 10% memory and 7% performance.
+	- Mail::Message::Field::Fast implements a fast but dirty way to
+	  store the header information.  Tested in t/11field1.t
+	  It saves about 10% memory and 7% performance.
 
-        - Mail::Message::Field::Flex implements an extendible but slower
-          way to manage the data.  Tested in t/11field2.t
+	- Mail::Message::Field::Flex implements an extendible but slower
+	  way to manage the data.  Tested in t/11field2.t
 
 version 2.00_19: Wed Dec 12 22:13:56 CET 2001
 
-        Most work about sending messages.  Slight extension of the
-        interface for some other packages.
+	Most work about sending messages.  Slight extension of the
+	interface for some other packages.
 
-        Fixes:
+	Fixes:
 
-        - Removed Tassilo's header parser optimization in favor of
-          split again, because it breaks on empty fields.
+	- Removed Tassilo's header parser optimization in favor of
+	  split again, because it breaks on empty fields.
 
-        - [Tassilo v Parseval] added some 'binmode OUT' lines to
-          make 98% of the tests succeed on Windows!!  But I am not
-          sure that is the right answer.  More on that later.
+	- [Tassilo v Parseval] added some 'binmode OUT' lines to
+	  make 98% of the tests succeed on Windows!!  But I am not
+	  sure that is the right answer.  More on that later.
 
-        New:
+	New:
 
-        - Added to/from/cc/bcc/subject methods to Mail::Message, to
-          hide Resent- header lines which overrule these fields in the
-          header.  Required for correct rfc822 support.
+	- Added to/from/cc/bcc/subject methods to Mail::Message, to
+	  hide Resent- header lines which overrule these fields in the
+	  header.  Required for correct rfc822 support.
 
-        - Added destinations() to Mail::Message.
+	- Added destinations() to Mail::Message.
 
-        - Added isResent() to Mail::Message::Field.
+	- Added isResent() to Mail::Message::Field.
 
-        - Added addresses() to Mail::Message::Field, which returns a list
-          of addresses as specified by the header line.
+	- Added addresses() to Mail::Message::Field, which returns a list
+	  of addresses as specified by the header line.
 
-        - Added pod reference to Mail::Message's service methods on header
-          lines.
+	- Added pod reference to Mail::Message's service methods on header
+	  lines.
 
-        - Added Mail::Message::Head::Complete::printUndisclosed() and
-          Mail::Message::printUndisclosed() which is the same as print()
-          but leaving the Cc and Bcc headers out.
+	- Added Mail::Message::Head::Complete::printUndisclosed() and
+	  Mail::Message::printUndisclosed() which is the same as print()
+	  but leaving the Cc and Bcc headers out.
 
-        - Added Mail::Transport::putContent($message)
+	- Added Mail::Transport::putContent($message)
 
-        - Added Mail::Transport::SMTP shaped after Net/SMTP, but much more
-          facilities and real Perl 5 code!  Not ready yet.
+	- Added Mail::Transport::SMTP shaped after Net/SMTP, but much more
+	  facilities and real Perl 5 code!  Not ready yet.
 
 version 2.00_18: Mon Dec 10 22:19:44 CET 2001
 
-        - Added some requires for package FileHandle.
+	- Added some requires for package FileHandle.
 
-        - Added Mail::Transport::Qmail (cannot test it, but expect it
-          to work)
+	- Added Mail::Transport::Qmail (cannot test it, but expect it
+	  to work)
 
-        - Reorganized (and improved the docs) on all Transport modules.
+	- Reorganized (and improved the docs) on all Transport modules.
 
-        - Added POSIX fcntl locking.
+	- Added POSIX fcntl locking.
 
-        - [Tassilo v Parseval] demonstrated the fastest way to split
-          a header, determined by benchmarking 6 variations on the theme.
-          Used in Mail::Box::Parser::Perl.pm
+	- [Tassilo v Parseval] demonstrated the fastest way to split
+	  a header, determined by benchmarking 6 variations on the theme.
+	  Used in Mail::Box::Parser::Perl.pm
 
 version 2.00_17: Sat Dec  8 23:10:06 CET 2001
 
-        - Moved scripts/web/* to scripts/
+	- Moved scripts/web/* to scripts/
 
-        - Header line options in Mail::Message::Construct::reply start
-          with capitals too.
+	- Header line options in Mail::Message::Construct::reply start
+	  with capitals too.
 
-        - Added Mail::Message::Body::Multipart::stripSignature
+	- Added Mail::Message::Body::Multipart::stripSignature
 
-        - Simplified Mail::Message::Construct::reply a little
+	- Simplified Mail::Message::Construct::reply a little
 
-        - Fixed problem with the resulting body-types where delayed bodies
-          where used to be encoded and decoded.
+	- Fixed problem with the resulting body-types where delayed bodies
+	  where used to be encoded and decoded.
 
-        - Extra checks for From-line in mbox folders, to help incorrectly
-          formatted folders.
+	- Extra checks for From-line in mbox folders, to help incorrectly
+	  formatted folders.
 
-        - [Tassilo v Parseval] discovered the problematic recovery for
-          erroneous headers.  Some recovery is tried.
+	- [Tassilo v Parseval] discovered the problematic recovery for
+	  erroneous headers.  Some recovery is tried.
 
 version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
 
-        First beta of Mail::Box version 2
+	First beta of Mail::Box version 2
 
-        Most import changes:
+	Most import changes:
 
-        * Replaced all use of MIME::Parser, Mail::Internet, and MIME::Entity,
-          althought the foreign message types are still useable in some
-          places.
+	* Replaced all use of MIME::Parser, Mail::Internet, and MIME::Entity,
+	  althought the foreign message types are still useable in some
+	  places.
 
-        * All code has been changed.  Simple things, like opening a folder,
-          reading messages and such are the same.  However handling of
-          messages is really different from the MIME::Entity/Mail::Internet
-          implementation.  Your message handling must be body-oriented ;)
-          tranforming a body into a new body, into a new body, and
-          finally create a new message from it.  See Mail::Box-Cookbook.
+	* All code has been changed.  Simple things, like opening a folder,
+	  reading messages and such are the same.  However handling of
+	  messages is really different from the MIME::Entity/Mail::Internet
+	  implementation.  Your message handling must be body-oriented ;)
+	  tranforming a body into a new body, into a new body, and
+	  finally create a new message from it.  See Mail::Box-Cookbook.
 
-        * Moved code to use 5.6.0 features, so no support for 5.005
-          anymore.  This is required for Inline::C and Unicode support.
-          Mail::Box releases below 2 will be supported for some time
-          for people with `old' perl.
+	* Moved code to use 5.6.0 features, so no support for 5.005
+	  anymore.  This is required for Inline::C and Unicode support.
+	  Mail::Box releases below 2 will be supported for some time
+	  for people with `old' perl.
 
-        * Parsing in Inline::C or plain Perl
+	* Parsing in Inline::C or plain Perl
 
-        * folder->open(take_headers) removed
-          folder->open(extract) replaces folder->open(lazy_extract) to
-          avoid double negation in your program.
-          listFolders became listSubFolders
-          allMessages became messages(); so $folder->messages always
-          returns all.
+	* folder->open(take_headers) removed
+	  folder->open(extract) replaces folder->open(lazy_extract) to
+	  avoid double negation in your program.
+	  listFolders became listSubFolders
+	  allMessages became messages(); so $folder->messages always
+	  returns all.
 
-        * Unfolding of headers considered stupid: headers which are
-          structured (check Mail::Message::Field::isStructured) may always
-          be multi-lined. Just specify the right options when you scan
-          through the line with regular expressions.
+	* Unfolding of headers considered stupid: headers which are
+	  structured (check Mail::Message::Field::isStructured) may always
+	  be multi-lined. Just specify the right options when you scan
+	  through the line with regular expressions.
 
-        * All packages is separate files.
+	* All packages is separate files.
 
-        * Many more test, a few example files, Mail::Box-Overview and
-          Mail::Box-Cookbook.
+	* Many more test, a few example files, Mail::Box-Overview and
+	  Mail::Box-Cookbook.
 

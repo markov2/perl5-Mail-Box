@@ -13,11 +13,6 @@ use Carp;
 use Scalar::Util 'weaken';
 use List::Util   qw/sum first/;
 
-#-------------------------------------------
-# Clean exits required to remove lockfiles and to save changes.
-
-$SIG{INT} = $SIG{QUIT} = $SIG{PIPE} = $SIG{TERM} = sub {exit 0};
-
 =chapter NAME
 
 Mail::Box - manage a mailbox, a folder with messages

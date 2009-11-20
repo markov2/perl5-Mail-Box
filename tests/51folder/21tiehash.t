@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 
 #
 # Test access to folders using ties on hashes.

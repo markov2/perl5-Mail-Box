@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/env perl -T
 #
 # Test the processing of a whole message header, not the reading of a
 # header from file.
