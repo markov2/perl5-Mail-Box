@@ -129,7 +129,7 @@ combination with a C<mime_type> which refers to C<text> in any shape,
 which does not contain an explicit charset already.  This field is
 case-insensitive.
 
-When a known CHARSET is provided and the mime type says text, then the
+When a known CHARSET is provided and the mime type says "text", then the
 data is expected to be bytes in that particular encoding (see M<Encode>).
 When 'PERL' is given, then then the data is in Perl's internal encoding
 (either latin1 or utf8, you shouldn't know!)
@@ -332,16 +332,15 @@ sub init($)
         $self->{MMB_checked} = $args->{checked} || 0;
     }
 
-    if(defined $mime)
-    {   $mime = $self->type($mime);
-        $mime->attribute(charset => ($charset || 'PERL'))
-            if $mime =~ m!^text/!i && !$mime->attribute('charset');
-    }
+    $mime ||= 'text/plain';
+    $mime = $self->type($mime);
+    $mime->attribute(charset => ($charset || 'PERL'))
+        if $mime =~ m!^text/!i && !$mime->attribute('charset');
 
     $self->transferEncoding($transfer) if defined $transfer;
     $self->disposition($disp)          if defined $disp;
     $self->description($descr)         if defined $descr;
-    $self->type($mime) if defined $mime;
+    $self->type($mime);
 
     $self->{MMB_eol}   = $args->{eol} || 'NATIVE';
 
@@ -965,9 +964,9 @@ is used.
   
 =section Body class implementation
 
-The body of a message can be stored in many ways.  Roughtly, the
+The body of a message can be stored in many ways.  Roughly, the
 implementations can be split in two groups: the data collectors and
-the complex bodies.  The primer implement various ways to access data,
+the complex bodies. The primer implement various ways to access data,
 and are full compatible: they only differ in performance and memory
 footprint under different circumstances.  The latter are created to
 handle complex multiparts and lazy extraction.
@@ -1032,6 +1031,36 @@ Nested messages, like C<message/rfc822>: they contain a message in
 the body.  For most code, they simply behave like multiparts.
 
 =back
+
+=section Character encoding PERL
+
+A body object can be part of a message, or stand-alone.  In case it
+is a part of a message, the "transport encoding" and the content must
+be in a shape that the data can be transported via SMTP.
+
+However, when you want to process the body data in simple Perl (or when
+you construct the body data from normal Perl strings), you need to be
+aware of Perl's internal representation of strings. That can either be
+latin1 or utf8 (not real UTF-8, but something alike, see the perlunicode
+manual page)  So, before you start using the data from an incoming message,
+do
+
+    my $body  = $msg->decoded;
+    my @lines = $body->lines;
+
+Now, the body has character-set 'PERL' (when it is text)
+
+When you create a new body which contains text content (the default),
+it will be created with character-set 'PERL' unless you specify a
+character-set explicitly.
+
+   my $body = Mail::Box::Body::Lines->new(data => \@lines);
+   # now mime=text/plain, charset=PERL
+
+   my $msg  = Mail::Message->buildFromBody($body);
+   $msg->body($body);
+   $msg->attach($body);   # etc
+   # these all will convert the charset=PERL into real utf-8
 
 =cut
 

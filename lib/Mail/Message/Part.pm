@@ -138,17 +138,6 @@ sub toplevel()
 
 sub isPart() { 1 }
 
-=method printEscapedFrom FILEHANDLE
-Prints the message part, but all lines which start with 'From ' will get
-a leading C<gt>.  See M<Mail::Message::Body::printEscapedFrom()>.
-=cut
-
-sub printEscapedFrom($)
-{   my ($self, $out) = @_;
-    $self->head->print($out);
-    $self->body->printEscapedFrom($out);
-}
-
 sub readFromParser($;$)
 {   my ($self, $parser, $bodytype) = @_;
 
@@ -165,6 +154,20 @@ sub readFromParser($;$)
     $self->head($head);
     $self->storeBody($body->contentInfoFrom($head));
     $self;
+}
+
+#-----------------
+=section The message
+
+=method printEscapedFrom FILEHANDLE
+Prints the message part, but all lines which start with 'From ' will get
+a leading E<gt>.  See M<Mail::Message::Body::printEscapedFrom()>.
+=cut
+
+sub printEscapedFrom($)
+{   my ($self, $out) = @_;
+    $self->head->print($out);
+    $self->body->printEscapedFrom($out);
 }
 
 =section Cleanup

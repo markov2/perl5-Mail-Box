@@ -18,7 +18,7 @@ Mail::Box::Locker::Flock - lock a folder using kernel file-locking
 
 =chapter DESCRIPTION
 
-The C<::Flock> object lock the folder by creating an exclusive lock on
+The C<::Flock> object locks the folder by creating an exclusive lock on
 the file using the kernel's C<flock> facilities.  This lock is created
 on a separate file-handle to the folder file, so not the handle which
 is reading.

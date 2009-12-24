@@ -83,6 +83,7 @@ Only the HTML version of this manual page will list the sections.
       <ul>
       <li>L<Mail::Message::Body/Data collector bodies>
       <li>L<Mail::Message::Body/Complex bodies>
+      <li>L<Mail::Message::Body/Character encoding PERL>
       </ul>
   </ul>
 

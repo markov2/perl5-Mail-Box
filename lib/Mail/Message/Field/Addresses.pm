@@ -14,25 +14,28 @@ Mail::Message::Field::Addresses - Fields with e-mail addresses
 
 =chapter SYNOPSIS
 
- my $f = M<Mail::Message::Field>->new(Cc =>
-                'Mail::Box <mailbox@overmeer.net>');
+  my $cc = Mail::Message::Field::Full->new('Cc');
+  my $me = Mail::Message::Field::Address->parse('"Test" <test@mail.box>')
+     or die;
 
- my $cc = Mail::Message::Field->new('Cc');
- $cc->addAddress('Mail::Box <mailbox@overmeer.net>');
- $cc->addAddress
-   ( phrase  => 'Mail::Box'
-   , email   => 'mailbox@overmeer.net'
-   , comment => 'Our mailing list'     # deprecated by RFC
-   );
+  my $other = Mail::Message::Field::Address->new(phrase => 'Other'
+     , address => 'other@example.com')
+     or die;
 
- mu $ma = M<Mail::Message::Field::Address>->new(...);
- $cc->addAddress($ma);
+  $cc->addAddress($me);
+  $cc->addAddress($other, group => 'them');
+  $cc->addAddress(phrase => 'third', address => 'more@any.museum'
+    , group => 'them');
 
- my $mi = M<Mail::Identity>->new(...);
- $cc->addAddress($mi);
+  my $group = $cc->addGroup(name => 'collegues');
+  $group->addAddress($me);
+  $group->addAddress(phrase => "You", address => 'you@example.com');
 
- my $g  = M<Mail::Message::Field::AddrGroup>->new(...);
- $cc->addGroup($g);
+  my $msg = Mail::Message->build(Cc => $cc);
+  print $msg->string;
+
+  my $g  = M<Mail::Message::Field::AddrGroup>->new(...);
+  $cc->addGroup($g);
 
 =chapter DESCRIPTION
 
@@ -118,6 +121,7 @@ sub addAddress(@)
 
     my $set = $self->group($group) || $self->addGroup(name => $group);
     $set->addAddress($email);
+    $email;
 }
 
 #------------------------------------------

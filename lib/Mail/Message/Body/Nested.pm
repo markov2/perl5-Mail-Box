@@ -75,15 +75,9 @@ sub init($)
     $self;
 }
 
-#------------------------------------------
-
 sub isNested() {1}
 
-#------------------------------------------
-
 sub isBinary() { shift->nested->body->isBinary }
-
-#------------------------------------------
 
 sub clone()
 {   my $self     = shift;
@@ -95,43 +89,29 @@ sub clone()
      );
 }
 
-#------------------------------------------
-
 sub nrLines() { shift->nested->nrLines }
 
-#------------------------------------------
-
 sub size()    { shift->nested->size }
-
-#------------------------------------------
 
 sub string()
 {    my $nested = shift->nested;
      defined $nested ? $nested->string : '';
 }
 
-#------------------------------------------
-
 sub lines()
 {    my $nested = shift->nested;
      defined $nested ? ($nested->lines) : ();
 }
-
-#------------------------------------------
 
 sub file()
 {    my $nested = shift->nested;
      defined $nested ? $nested->file : undef;
 }
 
-#------------------------------------------
-
 sub print(;$)
 {   my $self = shift;
     $self->nested->print(shift || select);
 }
-
-#------------------------------------------
 
 =method foreachLine(CODE)
 It is NOT possible to call some code for each line of a nested
@@ -150,23 +130,14 @@ sub foreachLine($)
     confess;
 }
 
-
-#------------------------------------------
-
 sub check() { shift->forNested( sub {$_[1]->check} ) }
-
-#------------------------------------------
 
 sub encode(@)
 {   my ($self, %args) = @_;
     $self->forNested( sub {$_[1]->encode(%args)} );
 }
 
-#------------------------------------------
-
 sub encoded() { shift->forNested( sub {$_[1]->encoded} ) }
-
-#------------------------------------------
 
 sub read($$$$)
 {   my ($self, $parser, $head, $bodytype) = @_;
@@ -180,8 +151,6 @@ sub read($$$$)
     $self;
 }
 
-#-------------------------------------------
-
 sub fileLocation()
 {   my $nested   = shift->nested;
 
@@ -190,11 +159,7 @@ sub fileLocation()
     );
 }
 
-#-------------------------------------------
-
 sub endsOnNewline() { shift->nested->body->endsOnNewline }
-
-#------------------------------------------
 
 sub moveLocation($)
 {   my $self   = shift;
@@ -206,20 +171,14 @@ sub moveLocation($)
     $self;
 }
 
-#------------------------------------------
-
 =section Access to the payload
 
 =method nested
-
 Returns the M<Mail::Message::Part> message which is enclosed within
 this body.
-
 =cut
 
 sub nested() { shift->{MMBN_nested} }
-
-#------------------------------------------
 
 =method forNested CODE
 
@@ -254,6 +213,6 @@ sub forNested($)
     $created;
 }
 
-#-------------------------------------------
+sub toplevel() { my $msg = shift->message; $msg ? $msg->toplevel : undef}
 
 1;

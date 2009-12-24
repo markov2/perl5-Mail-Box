@@ -559,6 +559,8 @@ sub boundary(;$)
 
 sub endsOnNewline() { 1 }
 
+sub toplevel() { my $msg = shift->message; $msg ? $msg->toplevel : undef}
+
 #-------------------------------------------
 
 =section Error handling

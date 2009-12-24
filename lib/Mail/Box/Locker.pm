@@ -72,6 +72,10 @@ provided by the operating system.  However, this does not work on all
 systems, such as network filesystems, and such. This also doesn't work on
 folders based on directories (M<Mail::Box::Dir> and derived).
 
+=item 'FCNTLLOCK' | 'fcntllock'
+POSIX locking via M<File::FcntlLock>, which works on more platforms.
+However, that module requires a C compiler to install.
+
 =item 'POSIX' | 'posix'
 Use the POSIX standard fcntl locking.
 
@@ -132,13 +136,14 @@ Name of the file to lock.  By default, the name of the folder is taken.
 =cut
 
 my %lockers =
-  ( DOTLOCK => __PACKAGE__ .'::DotLock'
-  , FLOCK   => __PACKAGE__ .'::Flock'
-  , MULTI   => __PACKAGE__ .'::Multi'
-  , MUTT    => __PACKAGE__ .'::Mutt'
-  , NFS     => __PACKAGE__ .'::NFS'
-  , NONE    => __PACKAGE__
-  , POSIX   => __PACKAGE__ .'::POSIX'
+  ( DOTLOCK   => __PACKAGE__ .'::DotLock'
+  , FCNTLLOCK => __PACKAGE__ .'::FcntlLock'
+  , FLOCK     => __PACKAGE__ .'::Flock'
+  , MULTI     => __PACKAGE__ .'::Multi'
+  , MUTT      => __PACKAGE__ .'::Mutt'
+  , NFS       => __PACKAGE__ .'::NFS'
+  , NONE      => __PACKAGE__
+  , POSIX     => __PACKAGE__ .'::POSIX'
   );
 
 sub new(@)

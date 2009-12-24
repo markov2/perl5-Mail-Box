@@ -9,7 +9,7 @@ use warnings;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 22;
+use Test::More tests => 23;
 use Mail::Address;
 
 use Mail::Message;
@@ -119,6 +119,7 @@ $reply = $msg->reply
   , quote       => sub {chomp; "> ".reverse."\n"}
   , postlude    => $postlude
   , Bcc         => Mail::Address->new('username', 'user@example.com')
+  , 'X-Extra'   => 'Additional headers'
   );
 
 is(  $reply->head->get('to'), $msg->head->get('from'));
@@ -126,6 +127,7 @@ is($reply->head->get('from'), $msg->head->get('to'));
 ok(!defined $reply->head->get('cc'));
 ok(!defined $reply->head->get('skip'));
 is($reply->head->get('bcc'), 'username <user@example.com>');
+is($reply->head->get('x-extra'), 'Additional headers');
 
 #$reply->print;
 is($reply->body->string, <<'EXPECT');

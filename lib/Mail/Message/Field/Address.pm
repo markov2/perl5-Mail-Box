@@ -83,11 +83,10 @@ sub coerce($@)
 {  my ($class, $addr, %args) = @_;
    return () unless defined $addr;
 
-   return $class->parse($addr) unless ref $addr;
+   ref $addr or return $class->parse($addr);
+   $addr->isa($class) and return $addr;
 
-   return $addr if $addr->isa($class);
-
-   my $from = $class->from($addr);
+   my $from = $class->from($addr, %args);
 
    Mail::Reporter->log(ERROR => "Cannot coerce a ".ref($addr)." into a $class"),
       return () unless defined $from;

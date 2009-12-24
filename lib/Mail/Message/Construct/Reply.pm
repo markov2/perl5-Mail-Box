@@ -28,17 +28,20 @@ functionality related to creating message replies.
 
 =method reply OPTIONS
 
-Start a reply to this message.  Some of the header-lines of the original
-message will be taken.  A message-id will be assigned.  Some header lines
+Start a reply to this message. Some of the header-lines of the original
+message will be taken. A message-id will be assigned. Some header lines
 will be updated to facilitate message-thread detection
 (see M<Mail::Box::Thread::Manager>).
 
-You may reply to a whole message or a message part.
-You may wish to overrule some of the default header settings for the
-reply immediately, or you may do that later with C<set> on the header.
+You may reply to a whole message or a message part.  You may wish to
+overrule some of the default header settings for the reply immediately,
+or you may do that later with C<set> on the header.
 
 ADDRESSES may be specified as string, or
 a M<Mail::Address> object, or as array of M<Mail::Address> objects.
+
+All OPTIONS which are not listed below AND start with a capital, will
+be added as additional headers to the reply message.
 
 =option  body BODY
 =default body undef
@@ -174,6 +177,7 @@ M<Mail::Message::replySubject()> is used.
    , strip_signature => 1
    , signature       => $my_pgp_key
    , group_reply     => 1
+   , 'X-Extra'       => 'additional header'
    );
 
 =error Cannot include reply source as $include.
@@ -245,14 +249,14 @@ sub reply(@)
     my $mainhead = $self->toplevel->head;
 
     # Where it comes from
-    my $from = $args{From};
+    my $from = delete $args{From};
     unless(defined $from)
     {   my @from = $self->to;
         $from    = \@from if @from;
     }
 
     # To whom to send
-    my $to = $args{To};
+    my $to = delete $args{To};
     unless(defined $to)
     {   my $reply = $mainhead->get('reply-to');
         $to       = [ $reply->addresses ] if defined $reply;
@@ -266,24 +270,21 @@ sub reply(@)
     defined $to or return;
 
     # Add Cc
-    my $cc = $args{Cc};
+    my $cc = delete $args{Cc};
     if(!defined $cc && $args{group_reply})
     {   my @cc = $self->cc;
         $cc    = [ $self->cc ] if @cc;
     }
 
-    # Add Bcc
-    my $bcc = $args{Bcc};
-
     # Create a subject
-    my $srcsub  = $args{Subject};
+    my $srcsub  = delete $args{Subject};
     my $subject
      = ! defined $srcsub ? $self->replySubject($self->subject)
      : ref $srcsub       ? $srcsub->($self->subject)
      :                     $srcsub;
 
     # Create a nice message-id
-    my $msgid   = $args{'Message-ID'};
+    my $msgid   = delete $args{'Message-ID'};
     $msgid      = "<$msgid>" if $msgid && $msgid !~ /^\s*\<.*\>\s*$/;
 
     # Thread information
@@ -345,7 +346,9 @@ sub reply(@)
 
     my $newhead = $reply->head;
     $newhead->set(Cc  => $cc)  if $cc;
-    $newhead->set(Bcc => $args{Bcc}) if $args{Bcc};
+    $newhead->set(Bcc => delete $args{Bcc}) if $args{Bcc};
+    $newhead->add($_ => $args{$_})
+        for sort grep /^[A-Z]/, keys %args;
 
     # Ready
 

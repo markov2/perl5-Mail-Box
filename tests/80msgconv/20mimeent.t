@@ -2,6 +2,9 @@
 #
 # Test conversions between Mail::Message and MIME::Entity
 #
+# MIME::Parser::Filer produces msg-????-1.txt files in the
+# test directory :(
+#
 
 use strict;
 use warnings;
@@ -89,6 +92,7 @@ ok($body);
 @lines = $body->as_lines;
 cmp_ok(@lines, "==", 6);
 
+$back->purge;
 $me->purge;
 
 #

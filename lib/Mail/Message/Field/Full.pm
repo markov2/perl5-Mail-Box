@@ -529,10 +529,7 @@ sub _decoder($$$)
 {   my ($charset, $encoding, $encoded) = @_;
     $charset   =~ s/\*[^*]+$//;   # language component not used
     my $to_utf8 = Encode::find_encoding($charset || 'us-ascii');
-    unless($to_utf8)
-    {  $encoded =~ s/_/ /g;
-       return $encoded;
-    }
+    $to_utf8 or return $encoded;
 
     my $decoded;
     if($encoding !~ /\S/)
@@ -557,16 +554,25 @@ sub _decoder($$$)
 }
 
 sub decode($@)
-{   my ($self, $encoded, %args) = @_;
-    if(defined $args{is_text} ? $args{is_text} : 1)
-    {  # in text, blanks between encoding must be removed, but otherwise kept :(
-       # little trick to get this done: add an explicit blank.
-       $encoded =~ s/\?\=\s(?!\s*\=\?|$)/_?= /gs;
-    }
-    $encoded =~ s/\=\?([^?\s]*)\?([^?\s]*)\?([^?\s]*)\?\=\s*/
-                  _decoder($1,$2,$3)/gse;
+{   my $self    = shift;
+    my @encoded = split /(\=\?[^?]*\?[bqBQ]?\?[^?]*\?\=)/, shift;
+    my %args    = @_;
 
-    $encoded;
+    my $is_text = defined $args{is_text} ? $args{is_text} : 1;
+    my @decoded = shift @encoded;
+
+    while(@encoded)
+    {   shift(@encoded) =~ /\=\?([^?\s]*)\?([^?\s]*)\?([^?\s]*)\?\=/;
+        push @decoded, _decoder $1, $2, $3;
+
+        @encoded or last;
+
+        # in text, blanks between encoding must be removed, but otherwise kept
+        if($is_text && $encoded[0] !~ m/\S/) { shift @encoded }
+        else { push @decoded, shift @encoded }
+    }
+
+    join '', @decoded;
 }
 
 #------------------------------------------
