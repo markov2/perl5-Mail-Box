@@ -916,8 +916,8 @@ M<Mail::Message::Head> objects. A field is a combination of a I<name>,
 I<body>, and I<attributes>.  Especially the term "body" is cause for
 confusion: sometimes the attributes are considered to be part of the body.
 
-The name of the field is followed by a colon ("C<:>", not preceeded by
-blanks, but followed by one blank).  Each attribute is preceeded by
+The name of the field is followed by a colon ("C<:>", not preceded by
+blanks, but followed by one blank).  Each attribute is preceded by
 a separate semi-colon ("C<;>").  Names of fields are case-insensitive and
 cannot contain blanks.
 

@@ -42,7 +42,7 @@ Create an object which maintains one set of resent headers.  The
 FIELDS are M<Mail::Message::Field> objects from the same header.
 
 OPTIONS which start with capitals will be used to construct additional
-fields.  These option names are prepended with C<Resent->, keeping the
+fields.  These option names are prepended with C<Resent-*>, keeping the
 capitization of what is specified.
 
 =option  head OBJECT
@@ -193,7 +193,7 @@ sub messageHead(;$)
 =method orderedFields
 
 Returns the fields in the order as should appear in header according
-to rfc2822.  For the C<Resent-> fields of the group, the order is
+to rfc2822.  For the C<Resent-*> fields of the group, the order is
 not that important, but the C<Return-Path>, C<Delivered-To>, and C<Received>
 must come first.  Only fields mentioned in the RFC are returned.
 
@@ -459,7 +459,7 @@ sub isResentGroupFieldName($) { $resent_field_names{lc $_[1]} }
 
 =method createReceived [DOMAIN]
 
-Create a recieved field for this resent group.  This is automatically
+Create a received field for this resent group.  This is automatically
 called if none was specified during creation of this resent group object.
 
 The content of this field is described in RFC2821 section 4.4.  It could use

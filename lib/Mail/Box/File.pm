@@ -251,7 +251,7 @@ sub close(@)
 
 Appending messages to a file based folder which is not opened is a little
 risky.  In practice, this is often done without locking the folder.  So,
-an other application may write to the folder at the same time... :(  Hopefully,
+another application may write to the folder at the same time... :(  Hopefully,
 all goes fast enough that the chance on collition is small.
 
 All OPTIONS of M<Mail::Box::Mbox::new()> can be supplied.
@@ -405,7 +405,7 @@ sub updateMessages(@)
 
 =method messageCreateOptions [TYPE, CONFIG]
 Returns a key-value list of options to be used each time a new message
-is read from a file.  The list is preceeded by the TYPE of message which
+is read from a file.  The list is preceded by the TYPE of message which
 has to be created.
 
 This data is used by M<readMessages()> and M<updateMessages()>.  With
@@ -725,6 +725,8 @@ sub folderToFilename($$;$)
 sub tmpNewFolder($) { shift->filename . '.tmp' }
 
 #-------------------------------------------
+
+=section DETAILS
 
 =subsection File based folders
 

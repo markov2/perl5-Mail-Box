@@ -18,7 +18,7 @@ Mail::Message::TransferEnc - message transfer encoder/decoder
 =chapter DESCRIPTION
 
 This class is the base for various encoders and decoders, which are
-used during transport of the message.  This packages, and all which are
+used during transport of the message.  These packages, and all which are
 derived, are invoked by the message's M<Mail::Message::decoded()> and
 M<Mail::Message::encode()> methods:
 

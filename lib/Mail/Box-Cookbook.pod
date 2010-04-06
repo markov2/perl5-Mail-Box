@@ -197,14 +197,14 @@ when you have the message on STDIN or an array of lines which is supplied
 by an external program.
 
 Very important to remember from now on: information about the content of
-the body (the C<Content-> lines in the header) is stored within the body
+the body (the C<Content-*> lines in the header) is stored within the body
 object, for as long as the body is not contained with a message object.
 
 For instance, C<$message> method C<decoded> returns the decoded body of the
 C<$message>.  It is a body object by itself, however outside a real
 message.  Then you may want to play around with it, by concatenating
 some texts: again resulting in a new body.  Each body contains the
-right C<Content-> information.  Then, finally, you create a message
+right C<Content-*> information.  Then, finally, you create a message
 specifying the body and extra header lines.  At that moment you need
 to specify the source and destination addresses (the C<From> and C<To> lines>).
 At that moment, the body will automatically be encoded to be acceptable for

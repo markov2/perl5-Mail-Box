@@ -9,6 +9,32 @@ Limitations to be fixed:
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
 
+version 2.094: Tue Apr  6 11:17:15 CEST 2010
+
+	Fixes:
+
+	- parse address phrase with line fold in ::Full:Addresses
+	  rt.cpan.org#55309 [Diomidis Spinellis]
+
+	- handle empty preambles and postludes in multiparts even
+	  very strict, because the may be signed.
+	  rt.cpan.org#54529 [John Gardiner Myers]
+
+	Improvements:
+
+	- fix documentation on use of Mail::Message::Head::build()
+	  and a few more minor documentation errors.  [Kiss Gabor]
+
+	- $msg->reply fallback to From address, not only Reply-To
+
+	- add example/unpack.pl
+
+	- added install configuration choice "none". Also control
+	  via environment variables.
+
+	- spelling fixes.
+	  rt.cpan.org#53127 [Salvatore Bonaccorso]
+
 version 2.093: Thu Dec 24 17:02:06 CET 2009
 
 	Fixes:

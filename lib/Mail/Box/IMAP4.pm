@@ -91,7 +91,7 @@ C<NO>.
 =option  cache_head 'NO'|'PARTIAL'|'DELAY'
 =default cache_head C<NO> or C<DELAY>
 For a read-only folder, C<DELAY> is the default, otherwise C<NO> is
-choosen.  The four configuration parameter have subtile consequences.
+chosen.  The four configuration parameter have subtile consequences.
 To start with a table:
 
         [local cache]  [write]  [default head_type]
@@ -155,8 +155,8 @@ sub init($)
     # Also, this code can't handle a trailing slash and there's
     # no reason to ever offer one.  Strip that too.
     if($folder ne '/')
-    {   $folder =~ s#^/+##g;
-        $folder =~ s#/+$##g;
+    {   $folder =~ s,^/+,,g;
+        $folder =~ s,/+$,,g;
     }
 
     $args->{folder} = $folder;

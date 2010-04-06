@@ -102,7 +102,7 @@ lock: it will give you dead-locks.
 
 =warning Removed expired lockfile $filename.
 A lock file was found which was older than the expiration period as
-specified with M<new(timeout)>.  The lock file was succesfully
+specified with M<new(timeout)>.  The lock file was successfully
 removed.
 
 =error Unable to remove expired lockfile $lockfile: $!

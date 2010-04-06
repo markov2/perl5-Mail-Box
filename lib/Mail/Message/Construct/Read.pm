@@ -38,7 +38,7 @@ is certainly B<not> your best choice.
 
 Some people use this method in a procmail script: the message arrives
 at stdin, so we only have a filehandle.  In this case, you are stuck
-with this method.  The message is preceeded by a line which can be used
+with this method.  The message is preceded by a line which can be used
 as message separator in mbox folders.  See the example how to handle
 that one.
 

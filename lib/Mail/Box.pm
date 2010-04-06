@@ -1357,7 +1357,7 @@ them in the folder.
 When all message-ids are known, then looking-up messages is simple:
 they are found in a plain hash using M<messageId()>.  But Mail::Box
 is lazy where it can, so many messages may not have been read from
-file yet, and that's the prefered situation, because that saves
+file yet, and that's the preferred situation, because that saves
 time and memory.
 
 It is not smart to search for the messages from front to back in

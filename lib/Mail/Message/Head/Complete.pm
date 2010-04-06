@@ -147,7 +147,7 @@ field constructor is called for you.
 LINE or BODY specifications which are terminated by a new-line are considered
 to be correctly folded.  Lines which are not terminated by a new-line will
 be folded when needed: new-lines will be added where required.  It is strongly
-adviced to let MailBox do the folding for you.
+advised to let MailBox do the folding for you.
 
 The return value of this method is the M<Mail::Message::Field> object
 which is created (or was specified).
@@ -676,7 +676,7 @@ the order as they appear in the header: the most recent one first.
 See also M<addResentGroup()> and M<removeResentGroups()>.
 
 A resent group contains a set of header fields whose names start
-with C<Resent->.  Before the first C<Resent> line is I<trace> information,
+with C<Resent-*>.  Before the first C<Resent> line is I<trace> information,
 which is composed of an optional C<Return-Path> field and an required
 C<Received> field.
 

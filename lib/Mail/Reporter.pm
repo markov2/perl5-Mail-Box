@@ -36,7 +36,7 @@ constructor M<new()>.
 =c_method new OPTIONS
 
 This error container is also the base constructor for all modules, (as long
-as there is no need for an other base object)  The constructor always accepts
+as there is no need for another base object)  The constructor always accepts
 the following OPTIONS related to error reports.
 
 =option  log LEVEL

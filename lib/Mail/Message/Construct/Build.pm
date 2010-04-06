@@ -45,7 +45,7 @@ fields are used for other purposes as listed below.  Each field may be used
 more than once.  Pairs where the value is C<undef> are ignored.
 
 If more than one C<data>, C<file>, and C<attach> is specified,
-a multi-parted message is created.  Some C<Content-> fields are
+a multi-parted message is created.  Some C<Content-*> fields are
 treated separately: to enforce the content lines of the produced
 message body B<after> it has been created.  For instance, to explicitly
 state that you wish a C<multipart/alternative> in stead of the default

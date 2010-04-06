@@ -256,17 +256,8 @@ sub reply(@)
     }
 
     # To whom to send
-    my $to = delete $args{To};
-    unless(defined $to)
-    {   my $reply = $mainhead->get('reply-to');
-        $to       = [ $reply->addresses ] if defined $reply;
-    }
-
-    unless(defined $to)
-    {   my @from  = $self->from;
-        $to     ||= \@from if @from;
-    }
-
+    my $to = delete $args{To}
+          || $mainhead->get('reply-to') || $mainhead->get('from');
     defined $to or return;
 
     # Add Cc

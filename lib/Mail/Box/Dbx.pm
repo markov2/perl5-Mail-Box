@@ -139,7 +139,7 @@ sub nameOfSubFolder($;$)
 }
 
 =ci_method listSubFolders OPTIONS
-It is adviced to set the C<check> flag, because dbx folder often list
+It is advised to set the C<check> flag, because dbx folder often list
 large amounts of folder names which do not really exist.  However, checking
 does consume some time.
 =cut
@@ -244,7 +244,7 @@ requires a C compiler.  Besides, the module will have its own life.
 
 The title of this section is to attract your attension, but is does
 not describe anything special related to DBX or MBOX: you can convert
-any kind of mail folder into an other with the following code.
+any kind of mail folder into another with the following code.
 
 =example converting folders
 

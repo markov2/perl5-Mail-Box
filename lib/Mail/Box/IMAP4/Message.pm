@@ -259,7 +259,7 @@ sub writeDelayed($$)
 
 Labels (or flags) are known to all folder formats, but differ how they
 are stored.  Some folder types use message header lines to keep the
-labels, other use a seperate file.  The IMAP protocol does not specify
+labels, other use a separate file.  The IMAP protocol does not specify
 how the labels are kept on the server, but does specify how they are named.
 
 The label names as defined by the IMAP protocol are standardized into

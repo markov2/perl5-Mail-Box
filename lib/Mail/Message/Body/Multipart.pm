@@ -45,7 +45,7 @@ be unique in case the message contains nested multiparts (which are not
 unusual).  If C<undef>, a nice unique boundary will be generated.
 
 =option  epilogue BODY|STRING
-=default epilogue undef
+=default epilogue ''
 The text which is included in the main body after the final boundary.  This
 is usually empty, and has no meaning.
 
@@ -163,7 +163,7 @@ sub clone()
 
 sub nrLines()
 {   my $self = shift;
-    my $nr   = 1;     # trailing boundary
+    my $nr   = 0;
 
     if(my $preamble = $self->preamble)
     {   $nr += $preamble->nrLines;
@@ -175,7 +175,10 @@ sub nrLines()
         $nr++ if $part->body->endsOnNewline;
     }
 
-    if(my $epilogue = $self->epilogue) { $nr += $epilogue->nrLines }
+    if(my $epilogue = $self->epilogue)
+    {   $nr += $epilogue->nrLines +1;
+    }
+
     $nr;
 }
 
@@ -183,14 +186,15 @@ sub size()
 {   my $self   = shift;
     my $bbytes = length($self->boundary) +4;  # \n--$b\n
 
-    my $bytes  = $bbytes +2;   # last boundary, \n--$b--\n
+    my $bytes  = $bbytes +1;   # last boundary, \n--$b--
     if(my $preamble = $self->preamble)
          { $bytes += $preamble->size }
     else { $bytes -= 1 }      # no leading \n
 
     $bytes += $bbytes + $_->size foreach $self->parts('ACTIVE');
-    if(my $epilogue = $self->epilogue) { $bytes += $epilogue->size }
-
+    if(my $epilogue = $self->epilogue)
+    {   $bytes += $epilogue->size +1;
+    }
     $bytes;
 }
 
@@ -216,10 +220,12 @@ sub lines()
     if(!@lines) { ; }
     elsif($lines[-1] =~ m/\n$/) { push @lines, "\n" }
     else { $lines[-1] .= "\n" }
-    push @lines, "--$boundary--\n";
+    push @lines, "--$boundary--";
 
-    my $epilogue = $self->epilogue;
-    push @lines, $epilogue->lines if $epilogue;
+    if(my $epilogue = $self->epilogue)
+    {   $lines[-1] .= "\n";
+        push @lines, $epilogue->lines;
+    }
 
     wantarray ? @lines : \@lines;
 }
@@ -251,7 +257,7 @@ sub print(;$)
             $part->print($out);
         }
         print $out "\n" if $count++;
-        print $out "--$boundary--\n";
+        print $out "--$boundary--";
     }
     else
     {   foreach my $part ($self->parts('ACTIVE'))
@@ -260,10 +266,13 @@ sub print(;$)
             $part->print($out);
         }
         $out->print("\n") if $count++;
-        $out->print("--$boundary--\n");
+        $out->print("--$boundary--");
     }
 
-    if(my $epilogue = $self->epilogue) { $epilogue->print($out) }
+    if(my $epilogue = $self->epilogue)
+    {   $out->print("\n");
+        $epilogue->print($out);
+    }
 
     $self;
 }
@@ -322,7 +331,7 @@ sub read($$$$)
        ->read($parser, $head);
 
     $self->{MMBM_preamble} = $preamble
-        if defined $preamble && $preamble->nrLines > 0;
+        if defined $preamble;
 
     # Get the parts.
 
@@ -347,10 +356,10 @@ sub read($$$$)
         ->read($parser, $head);
 
     $self->{MMBM_epilogue} = $epilogue
-        if defined $epilogue && $epilogue->nrLines > 0;
+        if defined $epilogue;
 
     my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
-            : @parts            ? ($parts[-1]->fileLocation)[1]
+            : @parts            ? ($parts[-1]->body->fileLocation)[1]
             : defined $preamble ? ($preamble->fileLocation)[1]
             :                      $begin;
 

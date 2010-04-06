@@ -136,7 +136,7 @@ sub init($)
     $self;
 }
 
-=method build [PAIR|FIELD]-LIST
+=c_method build [PAIR|FIELD]-LIST
 A fast way to construct a header with many lines.
 The PAIRs are C<(name, content)> pairs of the header, but it is also possible
 to pass M<Mail::Message::Field> objects.   A
@@ -145,7 +145,7 @@ M<Mail::Message::Head::Complete::build()>, and then each field
 is added.  Double field names are permitted.
 
 =examples
- my $subject = Mail::Message::Full->new(Subject => 'xyz');
+ my $subject = Mail::Message::Field->new(Subject => 'xyz');
 
  my $head = Mail::Message::Head->build
   ( From     => 'me@example.com'

@@ -22,7 +22,7 @@ Mail::Message::Wrapper::SpamAssassin - Connect a Mail::Message with Mail::SpamAs
 =chapter SYNOPSIS
 
  # WARNING: requires OLD SpamAssassion 2.x, not the new 3.x
- # See Mail::Box::Search::SpamAssassin for the prefered interface
+ # See Mail::Box::Search::SpamAssassin for the preferred interface
  # However, it is possible to do:
 
  my $msg    = ...;   # some Mail::Message object

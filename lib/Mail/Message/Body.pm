@@ -132,7 +132,8 @@ case-insensitive.
 When a known CHARSET is provided and the mime type says "text", then the
 data is expected to be bytes in that particular encoding (see M<Encode>).
 When 'PERL' is given, then then the data is in Perl's internal encoding
-(either latin1 or utf8, you shouldn't know!)
+(either latin1 or utf8, you shouldn't know!) More details in
+L</Character encoding PERL>
 
 =option  checked BOOLEAN
 =default checked <false>

@@ -116,7 +116,7 @@ sub identity() { shift->{MBMU_id} }
 
 =method inbox [NAME]
 (Set and) get the NAME of the mailbox which is considered the folder
-for incoming mail.  In many protocols, this folder is handled seperately.
+for incoming mail.  In many protocols, this folder is handled separately.
 For instance in IMAP this is the only case-insensitive folder name.
 =cut
 

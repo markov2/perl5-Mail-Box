@@ -71,7 +71,7 @@ my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
 cmp_ok($body->parts, "==", 0);
 $body->print($g);
-is($fakeout, "--part-separator--\n");
+is($fakeout, "--part-separator--");
 
 # First attachment
 
@@ -82,7 +82,7 @@ ok($newbody != $body);
 cmp_ok($newbody->parts, "==", 1);
 $newbody->print($g);
 
-compare_message_prints($fakeout, <<'EXPECTED', 'print with attachment');
+compare_message_prints($fakeout."\n", <<'EXPECTED', 'print with attachment');
 --part-separator
 Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
@@ -101,7 +101,7 @@ cmp_ok($newerbody->parts, "==", 2);
 
 $fakeout = '';
 $newerbody->print($g);
-compare_message_prints($fakeout, <<'EXPECTED', 'print with two attachments');
+compare_message_prints($fakeout."\n", <<'EXPECTED', 'print with two attachments');
 --part-separator
 Content-Type: text/html; charset="utf-8"
 Content-Transfer-Encoding: 8bit
@@ -209,7 +209,7 @@ my $m1 = Mail::Message->buildFromBody($body, From => 'me', To => 'you',
 
 $fakeout = '';
 $m1->print($g);
-compare_message_prints($fakeout, <<'EXPECTED', 'build from multipart body');
+compare_message_prints($fakeout."\n", <<'EXPECTED', 'build from multipart body');
 From: me
 To: you
 Date: now

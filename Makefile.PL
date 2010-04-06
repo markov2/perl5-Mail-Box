@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.093';
+my $VERSION = '2.094';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -87,26 +87,26 @@ REASON
 );
 
 my %prereq =
- ( Date::Parse    => 0.0
- , Encode         => 2.26
- , File::Spec     => 0.7
- , File::Remove   => '0.20'
- , Errno          => 0.0
- , Scalar::Util   => 1.13
- , Object::Realize::Later => 0.14
- , Mail::Address  => 0.0
- , MIME::Types    => 1.004
- , Sys::Hostname  => 0.0
- , Test::More     => 0.47
- , TAP::Harness   => '3.00'
- , MIME::Base64   => 0.0
- , URI            => 1.23
- , IO::Scalar     => 0.0
+ ( Date::Format   => 0
+ , Date::Parse    => 0.0
  , Digest::HMAC_MD5 => 0.0
- , User::Identity => '0.93'
- , Time::Zone     => 0
+ , Encode         => 2.26
+ , Errno          => 0.0
+ , File::Remove   => '0.20'
+ , File::Spec     => 0.7
+ , IO::Scalar     => 0.0
+ , Mail::Address  => 0.0
+ , MIME::Base64   => 0.0
+ , MIME::Types    => 1.004
+ , Object::Realize::Later => 0.14
+ , Scalar::Util   => 1.13
+ , Sys::Hostname  => 0.0
+ , TAP::Harness   => '3.00'
+ , Test::More     => 0.47
  , Test::Pod      => '1.00'
- , Date::Format   => 0
+ , Time::Zone     => 0
+ , URI            => 1.23
+ , User::Identity => '0.93'
  );
 
 my $default_install_answer
@@ -216,13 +216,16 @@ foreach my $optional (sort {$a->[0] cmp $b->[0]} @optional)
     }
     
     my $install = $default_install_answer
-     || prompt "Do you want to install $module? yes/no/all"
+     || prompt "Do you want to install $module? yes/no/all/none"
              , (-t STDIN ? 'y' : 'n');
 
     $install = $default_install_answer = 'y'
-        if $install eq 'a';
+        if $install =~ m/^a/i;
 
-    next unless $install eq 'y';
+    $install = $default_install_answer = 'n'
+        if $install =~ m/^non/i;
+
+    next if $install !~ m/^y/i;
 
     my $distr = $args{distr} || $module;
 

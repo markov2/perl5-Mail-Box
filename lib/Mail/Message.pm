@@ -1002,17 +1002,17 @@ sub delete()
 
 =method deleted [BOOLEAN]
 Set the delete flag for this message.  Without argument, the method
-returns the same as M<isDeleted()>, which is prefered.  When a true
+returns the same as M<isDeleted()>, which is preferred.  When a true
 value is given, M<delete()> is called.
 
 =examples
  $message->deleted(1);          # delete
- $message->delete;              # delete (prefered)
+ $message->delete;              # delete (preferred)
 
  $message->deleted(0);          # undelete
 
  if($message->deleted) {...}    # check
- if($message->isDeleted) {...}  # check (prefered)
+ if($message->isDeleted) {...}  # check (preferred)
 =cut
 
 sub deleted(;$)

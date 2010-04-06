@@ -227,6 +227,7 @@ sub addAttribute($;@)
 sub parse($)
 {   my ($self, $string) = @_;
     my ($group, $email) = ('', undef);
+    $string =~ s/\s+/ /gs;
 
     while(1)
     {   (my $comment, $string) = $self->consumeComment($string);
@@ -259,8 +260,8 @@ sub parse($)
             my $angle;
             if($string =~ s/^\s*\<([^>]*)\>//s) { $angle = $1 }
             elsif($real_phrase)
-            {   $string =~ s/^\s*\"(.*?)\r?\n//;
-                $self->log(ERROR => "Ignore unrelated phrase `$1'");
+            {   $self->log(ERROR => "Ignore unrelated phrase `$1'")
+                    if $string =~ s/^\s*\"(.*?)\r?\n//;
                 next;
             }
             elsif(defined $phrase)

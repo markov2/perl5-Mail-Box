@@ -33,7 +33,7 @@ of header fields as trace.
 
 When a message is received, the Mail Transfer Agent (MTA) adds a
 C<Received> field to the header.  As OPTIONS, you may specify lines
-which are added to the resent group of that received field.  C<Resent->
+which are added to the resent group of that received field.  C<Resent-*>
 is prepended before the field-names automatically, unless already present.
 
 You may also specify an instantiated M<Mail::Message::Head::ResentGroup> (RG)
