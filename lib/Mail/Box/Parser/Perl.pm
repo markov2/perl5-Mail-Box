@@ -210,8 +210,7 @@ sub _read_stripped_lines(;$$)
             push @$lines, $line;
         }
 
-        if(!@$lines) { $lines = undef }
-        elsif($lines->[-1] =~ s/(\r?\n)\z//)
+        if(@$lines && $lines->[-1] =~ s/(\r?\n)\z//)
         {   $file->seek(-length($1), 1);
             pop @$lines if length($lines->[-1])==0;
         }

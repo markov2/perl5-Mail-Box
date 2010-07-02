@@ -163,7 +163,7 @@ sub clone()
 
 sub nrLines()
 {   my $self = shift;
-    my $nr   = 0;
+    my $nr   = 1;  # trailing part-sep
 
     if(my $preamble = $self->preamble)
     {   $nr += $preamble->nrLines;
@@ -176,7 +176,7 @@ sub nrLines()
     }
 
     if(my $epilogue = $self->epilogue)
-    {   $nr += $epilogue->nrLines +1;
+    {   $nr += $epilogue->nrLines;
     }
 
     $nr;
@@ -186,14 +186,14 @@ sub size()
 {   my $self   = shift;
     my $bbytes = length($self->boundary) +4;  # \n--$b\n
 
-    my $bytes  = $bbytes +1;   # last boundary, \n--$b--
+    my $bytes  = $bbytes +2;   # last boundary, \n--$b--\n
     if(my $preamble = $self->preamble)
          { $bytes += $preamble->size }
     else { $bytes -= 1 }      # no leading \n
 
     $bytes += $bbytes + $_->size foreach $self->parts('ACTIVE');
     if(my $epilogue = $self->epilogue)
-    {   $bytes += $epilogue->size +1;
+    {   $bytes += $epilogue->size;
     }
     $bytes;
 }
@@ -330,6 +330,9 @@ sub read($$$$)
     my $preamble = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
        ->read($parser, $head);
 
+    $preamble->nrLines
+        or undef $preamble;
+
     $self->{MMBM_preamble} = $preamble
         if defined $preamble;
 
@@ -355,15 +358,18 @@ sub read($$$$)
     my $epilogue = Mail::Message::Body::Lines->new(@msgopts, @sloppyopts)
         ->read($parser, $head);
 
-    $self->{MMBM_epilogue} = $epilogue
-        if defined $epilogue;
-
     my $end = defined $epilogue ? ($epilogue->fileLocation)[1]
             : @parts            ? ($parts[-1]->body->fileLocation)[1]
             : defined $preamble ? ($preamble->fileLocation)[1]
             :                      $begin;
-
     $self->fileLocation($begin, $end);
+
+   $epilogue->nrLines
+        or undef $epilogue;
+
+    $self->{MMBM_epilogue} = $epilogue
+        if defined $epilogue;
+
     $self;
 }
 

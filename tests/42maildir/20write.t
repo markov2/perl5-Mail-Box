@@ -110,7 +110,7 @@ is($msg12->filename, 'folders/maildir.src/cur/110000010.l.43:2,');
 ok($msg12->label('accepted'),                      "12 accepted");
 cmp_ok($msg12->label(accepted => 0), '==', 0,      'un-accept a message');
 ok(! $msg12->label('accepted'));
-is($msg12->filename, 'folders/maildir.src/new/110000010.l.43:2,');
+is($msg12->filename, 'folders/maildir.src/new/110000010.l.43');
 ok(!$msg12->modified);   # message is not modified
 ok($folder->modified);   # ... but the folder is modified
                          #     (which implies nothing)

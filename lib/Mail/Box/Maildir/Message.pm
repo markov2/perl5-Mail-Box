@@ -119,7 +119,7 @@ sub labelsToFilename()
     my $old    = $self->filename;
 
     my ($folderdir, $set, $oldname)
-      = $old =~ m!(.*)/(new|cur|tmp)/([^:]*)(\:[^:]*)?$!;
+      = $old =~ m!(.*)/(new|cur|tmp)/(.+?)(\:2,[^:]*)?$!;
 
     my $newflags    # alphabeticly ordered!
       = ($labels->{draft}   ? 'D' : '')
@@ -136,7 +136,8 @@ sub labelsToFilename()
         $folder->modified(1) if defined $folder;
     }
 
-    my $new = File::Spec->catfile($folderdir, $newset, "$oldname:2,$newflags");
+    my $new = File::Spec->catfile($folderdir, $newset
+      , $oldname . ($newset eq 'new' && $newflags eq '' ? '' : ":2,$newflags"));
 
     if($new ne $old)
     {   unless(move $old, $new)

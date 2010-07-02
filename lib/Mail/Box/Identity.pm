@@ -72,7 +72,7 @@ new messages have arrived.
 
 =option   inferiors   BOOLEAN
 =default  inferiors   1
-Can this folder have childs?  If not, this is cleared.
+Can this folder have children?  If not, this is cleared.
 
 =option   deleted BOOLEAN
 =default  deleted <false>
