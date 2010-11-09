@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 #
 # Test the reading from file of message bodies which have their content
 # stored in a an array of lines.

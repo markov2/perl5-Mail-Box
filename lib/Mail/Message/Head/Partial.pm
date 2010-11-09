@@ -29,7 +29,7 @@ Header information consumes a considerable amount of memory.  Most of this
 information is only useful during a short period of time in your program,
 or sometimes it is not used at all.  You then can decide to remove most
 of the header information.  However, be warned that it will be lost
-permanently: the header (and therefore the messsage) gets mutulated!
+permanently: the header (and therefore the message) gets mutulated!
 
 =chapter METHODS
 

@@ -47,7 +47,7 @@ capitization of what is specified.
 
 =option  head OBJECT
 =default head <created automatically>
-The header where the data is stored in.  Be dafault a
+The header where the data is stored in. By default a
 M<Mail::Message::Head::Partial> is created for you.
 
 =option  message_head HEAD

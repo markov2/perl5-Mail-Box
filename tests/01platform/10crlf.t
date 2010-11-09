@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 # On Windows, the test mailbox must be have lines which are
 # separated by CRLFs.  The mbox.src which is supplied is UNIX-style,
 # so only has LF line-terminations.  In this script, this is

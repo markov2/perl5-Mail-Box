@@ -63,12 +63,12 @@ sub foreachLine($)
             $changes++ if $becomes ne $_;
         }
         else {$changes++}
-     }
+    }
       
-     $changes
+    $changes
         or return $self;
 
-     ref($self)->new
+    ref($self)->new
       ( based_on => $self
       , data     => \@result
       );

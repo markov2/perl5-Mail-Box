@@ -123,7 +123,7 @@ sub url()
 =method authentication ['AUTO'|TYPE|LIST-OF-TYPES]
 Returned is a list of pairs (ref arrays) each describing one possible
 way to contact the server. Each pair contains a mechanism name and
-a challange callback (which may be C<undef>).
+a challenge callback (which may be C<undef>).
 
 The settings are used by M<login()> to get server access.  The initial
 value origins from M<new(authenticate)>, but may be changed later.

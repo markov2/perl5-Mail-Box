@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 # Test conversions between Mail::Message and Email::Simple
 #
 # The tests are stolen from the MIME::Entity test-script, which

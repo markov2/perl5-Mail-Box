@@ -96,6 +96,7 @@ my @basic_folder_types =
   , [ maildir => 'Mail::Box::Maildir' ]
   , [ pop     => 'Mail::Box::POP3'    ]
   , [ pop3    => 'Mail::Box::POP3'    ]
+  , [ pop3s   => 'Mail::Box::POP3s'   ]
   , [ imap    => 'Mail::Box::IMAP4'   ]
   , [ imap4   => 'Mail::Box::IMAP4'   ]
   );
@@ -377,6 +378,12 @@ sub open(@)
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 110;
         $args{folder} = $name = "pop3://$un\@$srv:$port";
+    }
+    elsif($type eq 'pop3s')
+    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+        my $srv  = $args{server_name} ||= 'localhost';
+        my $port = $args{server_port} ||= 995;
+        $args{folder} = $name = "pop3s://$un\@$srv:$port";
     }
     elsif($type eq 'imap4')
     {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
@@ -946,7 +953,7 @@ sub decodeFolderURL($)
        my ($type, $username, $password, $hostname, $port, $path)
           = $name =~ m!^(\w+)\:             # protocol
                        (?://
-                          (?:([^:@./]*)     # username
+                          (?:([^:@/]*)      # username
                             (?:\:([^@/]*))? # password
                            \@)?
                            ([\w.-]+)?       # hostname

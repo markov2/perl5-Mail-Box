@@ -196,16 +196,19 @@ sub update() {shift->notImplemented}
 
 =section Internals
 
-=method popClient
+=method popClient OPTIONS
 Returns the pop client object.  This does not establish the connection.
+
+=option  use_ssl BOOLEAN
+=default use_ssl <false>
 
 =error Cannot create POP3 client for $name.
 The connection to the POP3 server cannot be established.  You may see
 more, related, error messages about the failure.
 =cut
 
-sub popClient()
-{   my $self = shift;
+sub popClient(%)
+{   my ($self, %args) = @_;
 
     return $self->{MBP_client}
         if defined $self->{MBP_client};
@@ -219,6 +222,7 @@ sub popClient()
       , hostname     => $self->{MBN_hostname}
       , port         => $self->{MBN_port}
       , authenticate => $self->{MBP_auth}
+      , use_ssl      => $args{use_ssl}
       );
 
     $self->log(ERROR => "Cannot create POP3 client for $self.")

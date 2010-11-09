@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 
 #
 # Test writing of mbox folders using the inplace policy.

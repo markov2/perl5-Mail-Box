@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 # Test list command for IMAP servers
 #
 # A lot of the basic administration handling is tested in 52manager/30collect.t

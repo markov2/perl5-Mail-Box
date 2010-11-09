@@ -158,9 +158,7 @@ Used for M<clone(shallow_head)>.
 
 sub copyTo($@)
 {   my ($self, $folder) = (shift, shift);
-    my $clone = $self->clone(@_);
-
-    $folder->addMessage($clone);
+    $folder->addMessage($self->clone(@_));
 }
 
 =method moveTo FOLDER, OPTIONS

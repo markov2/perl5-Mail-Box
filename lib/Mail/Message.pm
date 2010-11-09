@@ -944,7 +944,7 @@ sub label($;$@)
 }
 
 =method labels
-Returns all known labels.  In SCALAR context, it returns the knowledge
+Returns all known labels. In SCALAR context, it returns the knowledge
 as reference to a hash.  This is a reference to the original data, but
 you shall *not* change that data directly: call C<label> for
 changes!

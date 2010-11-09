@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 
 #
 # Test appending messages on Maildir folders.

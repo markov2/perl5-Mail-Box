@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 #
 # Encoding and Decoding of Base64
 # Could use some more tests....

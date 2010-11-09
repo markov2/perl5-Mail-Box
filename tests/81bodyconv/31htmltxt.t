@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 #
 # Test conversions from HTML/XHTML to plain text with HTML::FormatText
 #

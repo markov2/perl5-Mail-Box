@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -T
+#!/usr/bin/env perl
 #
 # Test processing of header-fields in flexible format: only single fields,
 #  not whole headers.  This also doesn't cover reading headers from file.
