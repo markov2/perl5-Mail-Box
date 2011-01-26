@@ -557,8 +557,6 @@ body.  If none was read from file, then one will be assigned.  With
 STRING you explicitly set the boundary to be used.
 =cut
 
-my $unique_boundary = time;
-
 sub boundary(;$)
 {   my $self  = shift;
     my $mime  = $self->type;
@@ -568,7 +566,7 @@ sub boundary(;$)
         return $boundary if defined $boundary;
     }
 
-    my $boundary = @_ && defined $_[0] ? (shift) : "boundary-".$unique_boundary++;
+    my $boundary = @_ && defined $_[0] ? (shift) : "boundary-".int rand(1000000);
     $self->type->attribute(boundary => $boundary);
 }
 

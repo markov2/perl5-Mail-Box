@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.096';
+my $VERSION = '2.097';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -181,7 +181,7 @@ foreach my $optional (sort {$a->[0] cmp $b->[0]} @optional)
         }
     }
 
-    print "\n";
+#   print "\n";
     eval "require $module";
     if($@)
     {   if($@ =~ m/^Can't locate /)
@@ -271,7 +271,7 @@ EXTENDS		= ../UserIdentity:../MimeTypes:../ORL:../MailTools2
 
 # for POD
 FIRST_YEAR      = 2001
-EMAIL           = mailbox@overmeer.net
+EMAIL           = perl@overmeer.net
 WEBSITE         = http://perl.overmeer.net/mailbox/
 
 # for HTML

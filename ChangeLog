@@ -1,12 +1,30 @@
-CHANGELOG of Mail::Box version 2
 
-NOTE: The number of changes and fixes for each release seem large, but
-      usually limited to areas which are under development.  Mail::Box
-      is a huge module, so there is always some activity.
+===== ChangeLog of Mail::Box version 2.*
 
 Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
+
+version 2.097: Wed Jan 26 16:11:41 CET 2011
+
+	Fixes:
+
+	- override Mail::Transport::Sendmail destinations included
+	  original destinations.
+	  rt.cpan.org#64266 [Andrew Beverley]
+
+	Improvements:
+
+	- added examples/strip-spam-markup.pl by [Gary Funck]
+
+	- do not hardcode perl version in test.pl, hopefully resolving many
+	  cpantesters complaints.
+
+	- randomize boundary string to avoid (undemonstrated) security risks
+	  with boundary guessing.
+
+	- manual pages produced with new version of OODoc, producing more
+	  condensed output.
 
 version 2.096: Tue Nov  9 10:04:25 CET 2010
 
