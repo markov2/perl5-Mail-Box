@@ -151,7 +151,7 @@ sub _is_good_end($)
     return 1 unless defined $line;
 
         substr($line, 0, length $sep) eq $sep
-    && ($sep ne 'From ' || $line =~ m/ (19[789]|20[01])\d\b/ );
+    && ($sep ne 'From ' || $line =~ m/ (?:19[6-9]|20[0-2])[0-9]\b/ );
 }
 
 sub readSeparator()

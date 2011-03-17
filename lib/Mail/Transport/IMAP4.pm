@@ -337,7 +337,7 @@ sub currentFolder(;$)
 
     my $name = shift;
 
-    if(exists $self->{MTI_folder} && $name eq $self->{MTI_folder})
+    if(defined $self->{MTI_folder} && $name eq $self->{MTI_folder})
     {   $self->log(DEBUG => "Folder $name already selected.");
         return $name;
     }

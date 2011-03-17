@@ -448,7 +448,7 @@ sub head(;$)
         return undef;
     }
 
-    $self->log(INTERNAL => "wrong type of head for message $self")
+    $self->log(INTERNAL => "wrong type of head ($head) for message $self")
         unless ref $head && $head->isa('Mail::Message::Head');
 
     $head->message($self);

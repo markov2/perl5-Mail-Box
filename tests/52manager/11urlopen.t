@@ -18,7 +18,7 @@ my $mgr = Mail::Box::Manager->new;
 
 $ENV{USER} = 'Jan';
 
-sub same(@$)
+sub same(@)
 {   my $expect = pop @_;
     my $made   = { @_ };
 

@@ -61,9 +61,9 @@ sub init($)
     $self->SUPER::init($args) or return;
 
     $self->{MTP_auth} = $args->{authenticate} || 'AUTO';
+    $self->{MTP_ssl}  = $args->{use_ssl};
     return unless $self->socket;   # establish connection
 
-    $self->{MTP_ssl}  = $args->{use_ssl};
     $self;
 }
 
@@ -74,10 +74,8 @@ sub init($)
 =section Exchanging information
 
 =method ids
-
 Returns a list (in list context) or a reference to a list (in scalar context)
 of all ID's which are known by the server on this moment.
-
 =cut
 
 sub ids(;@)
@@ -89,12 +87,10 @@ sub ids(;@)
 #------------------------------------------
 
 =method messages
-
 Returns (in scalar context only) the number of messages that are known
 to exist in the mailbox.
 
 =error Cannot get the messages of pop3 via messages()
-
 It is not possible to retreive all messages on a remote POP3 folder
 at once: each shall be taken separately.  The POP3 folder will hide this
 for you.
@@ -110,20 +106,13 @@ sub messages()
     $self->{MTP_messages};
 }
 
-#------------------------------------------
-
 =method folderSize
-
 Returns the total number of octets used by the mailbox on the remote server.
-
 =cut
 
 sub folderSize() { shift->{MTP_total} }
 
-#------------------------------------------
-
 =method header ID, [BODYLINES]
-
 Returns a reference to an array which contains the header of the message
 with the specified ID.  C<undef> is returned if something has gone wrong.
 
@@ -131,7 +120,6 @@ The optional integer BODYLINES specifies the number of lines from the body
 which should be added, by default none.
 
 =example
-
  my $ref_lines = $pop3->header($uidl);
  print @$ref_lines;
 
@@ -148,16 +136,12 @@ sub header($;$)
     $self->sendList($socket, "TOP $n $bodylines$CRLF");
 }
 
-#------------------------------------------
-
 =method message ID
-
 Returns a reference to an array which contains the lines of the
 message with the specified ID.  Returns C<undef> if something has gone
 wrong.
 
 =example
-
  my $ref_lines = $pop3->message($uidl);
  print @$ref_lines;
 
@@ -182,14 +166,10 @@ sub message($;$)
     $message;
 }
 
-#------------------------------------------
-
 =method messageSize ID
-
 Returns the size of the message which is indicated by the ID, in octets.
 If the message has been deleted on the remote server, this will return
 C<undef>.
-
 =cut
 
 sub messageSize($)
@@ -212,15 +192,11 @@ sub messageSize($)
     $list->[$n];
 }
 
-#------------------------------------------
-
 =method deleted BOOLEAN, ID's
-
 Either mark the specified message(s) to be deleted on the remote server or
 unmark them for deletion (if the first parameter is false).  Deletion of
 messages will take place B<only> when the connection is specifically
 disconnected or the last reference to the object goes out of scope.
-
 =cut
 
 sub deleted($@)
@@ -228,14 +204,9 @@ sub deleted($@)
     (shift) ? @$dele{ @_ } = () : delete @$dele{ @_ };
 }
 
-
-#------------------------------------------
-
 =method deleteFetched
-
 Mark all messages that have been fetched with M<message()> for deletion.
 See M<fetched()>.
-
 =cut
 
 sub deleteFetched()
@@ -243,16 +214,12 @@ sub deleteFetched()
     $self->deleted(1, keys %{$self->{MTP_fetched}});
 }
 
-#------------------------------------------
-
 =method disconnect
-
 Break contact with the server, if that (still) exists.  Returns true if
 successful.  Please note that even if the disconnect was not successful,
 all knowledge of messages etc. will be removed from the object: the object
 basically has reverted to the state in which it was before anything was done
 with the mail box.
-
 =cut
 
 sub disconnect()
@@ -284,10 +251,7 @@ sub disconnect()
     OK($quit);
 }
 
-#------------------------------------------
-
 =method fetched
-
 Returns a reference to a list of ID's that have been fetched using
 M<message()>.  This can be used to update a database of messages that
 were fetched (but maybe not yet deleted) from the mailbox.
@@ -298,7 +262,6 @@ identify messages between sessions (other than looking at the contents of
 the messages themselves).
 
 See also M<deleteFetched()>.
-
 =cut
 
 sub fetched(;$)
@@ -307,15 +270,11 @@ sub fetched(;$)
     $self->{MTP_fetched};
 }
 
-#------------------------------------------
-
 =method id2n ID
-
 Translates the unique ID of a message into a sequence number which
 represents the message as long a this connection to the POP3 server
 exists.  When the message has been deleted for some reason, C<undef>
 is returned.
-
 =cut
 
 sub id2n($;$) { shift->{MTP_uidl2n}{shift()} }
@@ -327,12 +286,7 @@ sub id2n($;$) { shift->{MTP_uidl2n}{shift()} }
 The follow methods handle protocol internals, and should not be used
 by a normal user of this class.
 
-=cut
-
-#------------------------------------------
-
 =method socket
-
 Returns a connection to the POP3 server.  If there was no connection yet,
 it will be created transparently.  If the connection with the POP3 server
 was lost, it will be reconnected and the assures that internal
@@ -369,8 +323,6 @@ sub socket(;$)
     $self->{MTP_socket} = $socket;
 }
 
-#------------------------------------------
-
 =method send SOCKET, data
 
 Send data to the indicated socket and return the first line read from
@@ -380,12 +332,10 @@ This method does B<not> attempt to reconnect or anything: if reading or
 writing the socket fails, something is very definitely wrong.
 
 =error Cannot read POP3 from socket: $!
-
 It is not possible to read the success status of the previously given POP3
 command.  Connection lost?
 
 =error Cannot write POP3 to socket: $@
-
 It is not possible to send a protocol command to the POP3 server.  Connection
 lost?
 
@@ -407,16 +357,12 @@ sub send($$)
     $response;
 }
 
-#------------------------------------------
-
 =method sendList SOCKET, COMMAND
-
 Sends the indicated COMMAND to the specified socket, and retrieves the
 response.  It returns a reference to an array with all the lines that
 were reveived after the first C<+OK> line and before the end-of-message
 delimiter (a single dot on a line).  Returns C<undef>
 whenever something has gone wrong.
-
 =cut
 
 sub sendList($$)
@@ -437,19 +383,13 @@ sub sendList($$)
     \@list;
 }
 
-#------------------------------------------
-
 sub DESTROY()
 {   my $self = shift;
     $self->SUPER::DESTROY;
     $self->disconnect if $self->{MTP_socket}; # only do if not already done
 }
 
-#------------------------------------------
-
 sub OK($;$) { substr(shift || '', 0, 3) eq '+OK' }
-
-#------------------------------------------
 
 sub _connection(;$)
 {   my $self = shift;
@@ -467,29 +407,22 @@ sub _connection(;$)
     $socket;
 }
 
-#------------------------------------------
-
 =method login
-
 Establish a new connection to the POP3 server, using username and password.
  
 =error POP3 requires a username and password.
-
 No username and/or no password specified for this POP3 folder, although
 these are obligatory parts in the protocol.
 
 =error Cannot connect to $host:$port for POP3: $!
-
 Unsuccesful in connecting to the remote POP3 server.
 
 =error Server at $host:$port does not seem to be talking POP3.
-
 The remote server did not respond to an initial exchange of messages as is
 expected by the POP3 protocol.  The server has probably a different
 service on the specified port.
 
 =error Could not authenticate using any login method.
-
 No authentication method was explicitly prescribed, so both AUTH and APOP were
 tried.  However, both failed.  There are other authentication methods, which
 are not defined by the main POP3 RFC rfc1939.  These protocols are not
@@ -576,13 +509,10 @@ sub login(;$)
 #------------------------------------------
 
 =method status SOCKET
-
 Update the current status of folder on the remote POP3 server.
 
 =error POP3 Could not do a STAT
-
 For some weird reason, the server does not respond to the STAT call.
-
 =cut
 
 sub status($;$)
@@ -659,9 +589,7 @@ sub status($;$)
 =section Server connection
 
 =method url
-
 Represent this pop3 connection as URL.
-
 =cut
 
 sub url(;$)
@@ -672,7 +600,6 @@ sub url(;$)
 #------------------------------------------
 
 =section Error handling
-
 =cut
 
 1;

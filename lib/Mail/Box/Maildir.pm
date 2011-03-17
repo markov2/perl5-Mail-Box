@@ -75,12 +75,9 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =ci_method create FOLDERNAME, OPTIONS
 
 =error Cannot create Maildir folder $name.
-
 One or more of the directories required to administer a Maildir folder
 could not be created.
 
@@ -102,8 +99,6 @@ sub create($@)
     }
 }
 
-#-------------------------------------------
-
 sub foundIn($@)
 {   my $class = shift;
     my $name  = @_ % 2 ? shift : undef;
@@ -114,11 +109,7 @@ sub foundIn($@)
     -d "$directory/cur";
 }
 
-#-------------------------------------------
-
 sub type() {'maildir'}
-
-#-------------------------------------------
 
 sub listSubFolders(@)
 {   my ($class, %args) = @_;
@@ -166,26 +157,19 @@ sub listSubFolders(@)
     grep { $class->foundIn("$dir/$_") } @dirs;
 }
 
-#-------------------------------------------
-
 sub openSubFolder($@)
 {   my ($self, $name) = (shift, shift);
     $self->createDirs($self->nameOfSubFolder($name));
     $self->SUPER::openSubFolder($name, @_);
 }
 
-#-------------------------------------------
-
 sub topFolderWithMessages() { 1 }
-
-#-------------------------------------------
 
 my $uniq = rand 1000;
 
 =method coerce MESSAGE, OPTIONS
 
 =error Cannot create Maildir message file $new.
-
 A message is converted from some other message format into a Maildir format
 by writing it to a file with a name which contains the status flags of the
 message.  Apparently, creating this file failed.
@@ -226,12 +210,10 @@ method will ensure that all directories exist.
 Returns false on failure.
 
 =error Cannot create Maildir directory $dir: $!
-
 A Maildir folder is represented by a directory, with some sub-directories.  The
 top folder directory could not be created for the reason indicated.
 
 =error Cannot create Maildir subdir $dir: $!
-
 Each Maildir folder has three sub-directories for administration: C<new>,
 C<tmp>, and C<cur>.  The mentioned directory could not be created for
 the indicated reason.
@@ -259,17 +241,13 @@ sub createDirs($)
     $thing;
 }
 
-#-------------------------------------------
-
 =ci_method folderIsEmpty FOLDERDIR
-
 Checks whether the folder whose directory is specified as absolute FOLDERDIR
 is empty or not.  A folder is empty when the C<tmp>, C<new>, and C<cur>
 subdirectories are empty and some files which are left there by application
 programs.  The maildir spec explicitly states: C<.qmail>, C<bulletintime>,
 C<bulletinlock> and C<seriallock>.  If any other files are found, the
 directory is considered not-empty.
-
 =cut
 
 sub folderIsEmpty($)
@@ -300,16 +278,12 @@ sub folderIsEmpty($)
     1;
 }
 
-#-------------------------------------------
-
 sub delete(@)
 {   my $self = shift;
 
     # Subfolders are not nested in the directory structure
     remove \1, $self->directory;
 }
-
-#-------------------------------------------
 
 sub readMessageFilenames
 {   my ($self, $dirname) = @_;
@@ -333,8 +307,6 @@ sub readMessageFilenames
     map { "$dirname/$unified{$_}" }
         sort keys %unified;
 }
-
-#-------------------------------------------
 
 sub readMessages(@)
 {   my ($self, %args) = @_;
@@ -371,14 +343,10 @@ sub readMessages(@)
     $self;
 }
  
-#-------------------------------------------
-
 =method acceptMessages
-
 Accept all messages which are waiting in the C<new> directory to be
 moved to the C<cur> directory.  This will not rescan the directory
 for newly arrived messages, because that's a task for M<update()>.
-
 =cut
 
 sub acceptMessages($)
@@ -387,8 +355,6 @@ sub acceptMessages($)
     $_->accept foreach @accept;
     @accept;
 }
-
-#-------------------------------------------
 
 sub writeMessages($)
 {   my ($self, $args) = @_;
@@ -441,15 +407,10 @@ sub writeMessages($)
     $self;
 }
 
-#-------------------------------------------
-
 =c_method appendMessage OPTIONS
-
 =error Cannot append Maildir message in $new to folder $self.
-
 The message (or messages) could not be stored in the right directories
 for the Maildir folder.
-
 =cut
 
 sub appendMessages(@)

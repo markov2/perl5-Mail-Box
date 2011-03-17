@@ -555,7 +555,9 @@ sub _decoder($$$)
 
 sub decode($@)
 {   my $self    = shift;
-    my @encoded = split /(\=\?[^?]*\?[bqBQ]?\?[^?]*\?\=)/, shift;
+    my @encoded = split /(\=\?[^?\s]*\?[bqBQ]?\?[^?\s]*\?\=)/, shift;
+    @encoded or return '';
+
     my %args    = @_;
 
     my $is_text = defined $args{is_text} ? $args{is_text} : 1;

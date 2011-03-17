@@ -68,15 +68,11 @@ sub filename(;$)
     $self->SUPER::filename($newname);
 }
 
-#-------------------------------------------
-
 =method guessTimestamp
-
 The filename of a C<Mail::Box::Maildir::Message> contains a timestamp.  This
 is a wild guess about the actual time of sending of the message: it is the
 time of receipt which may be seconds to hours off.  But is still a good
 guess...  When the message header is not parsed, then this date is used.
-
 =cut
 
 sub guessTimestamp()
@@ -90,7 +86,6 @@ sub guessTimestamp()
 #-------------------------------------------
 
 =section Labels
-
 =cut
 
 sub label(@)
@@ -102,15 +97,11 @@ sub label(@)
     $return;
 }
 
-#-------------------------------------------
-
 =method labelsToFilename
-
 When the labels on a message change, this may implicate a change in
 the message's filename.  The change will take place immediately.  The
 new filename (which may be the same as the old filename) is returned.
 C<undef> is returned when the rename is required but fails.
-
 =cut
 
 sub labelsToFilename()
@@ -118,7 +109,7 @@ sub labelsToFilename()
     my $labels = $self->labels;
     my $old    = $self->filename;
 
-    my ($folderdir, $set, $oldname)
+    my ($folderdir, $set, $oldname, $oldflags)
       = $old =~ m!(.*)/(new|cur|tmp)/(.+?)(\:2,[^:]*)?$!;
 
     my $newflags    # alphabeticly ordered!
@@ -136,8 +127,9 @@ sub labelsToFilename()
         $folder->modified(1) if defined $folder;
     }
 
-    my $new = File::Spec->catfile($folderdir, $newset
-      , $oldname . ($newset eq 'new' && $newflags eq '' ? '' : ":2,$newflags"));
+    my $flags = $newset ne 'new' || $newflags ne '' ? ":2,$newflags"          
+              : length $oldflags ? ':2,' : '';                                
+    my $new   = File::Spec->catfile($folderdir, $newset, $oldname.$flags);
 
     if($new ne $old)
     {   unless(move $old, $new)
