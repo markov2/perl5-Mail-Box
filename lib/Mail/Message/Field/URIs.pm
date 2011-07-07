@@ -3,7 +3,6 @@ use strict;
 
 package Mail::Message::Field::URIs;
 use base 'Mail::Message::Field::Structured';
-use Carp 'confess';
 
 use URI;
 
@@ -71,16 +70,12 @@ sub init($)
     $self->SUPER::init($args);
 }
 
-#------------------------------------------
-
 sub parse($)
 {   my ($self, $string) = @_;
     my @raw = $string =~ m/\<([^>]+)\>/g;  # simply ignore all but <>
     $self->addURI($_) foreach @raw;
     $self;
 }
-
-#------------------------------------------
 
 sub produceBody()
 {  my @uris = sort map { $_->as_string } shift->URIs;
@@ -93,13 +88,11 @@ sub produceBody()
 =section Access to the content
 
 =method addURI URI
-
 Add an URI to the field.  The URI can be specified as M<URI> object
 or as string which will be turned into an URI object.  The added
 URI is returned.
 
 =examples adding an URI to an URI field
-
  my $f   = Mail::Message::Field::URI->new('List-Post');
 
  my $uri = URI->new("http://x.org");
@@ -107,7 +100,6 @@ URI is returned.
 
  $f->addURI("http://y.org");  # simpler
  $f->addURI("//y.org", "http");
-
 =cut
 
 sub addURI(@)
@@ -120,29 +112,21 @@ sub addURI(@)
 #------------------------------------------
 
 =method URIs
-
 Returns a list with all URIs defined by the field.  Mind the lower-case
 's' at the enc of the name.
 
 =example
-
  my @uris = $field->URIs;
-
 =cut
 
 sub URIs() { @{shift->{MMFU_uris}} }
 
-#------------------------------------------
-
 =method addAttribute ...
-
 Attributes are not supported for URI fields.
 
 =error No attributes for URI fields.
-
 Is is not possible to add attributes to URI fields: it is not permitted
 by the RFCs.
-
 =cut
 
 sub addAttribute($;@)
@@ -154,7 +138,6 @@ sub addAttribute($;@)
 #------------------------------------------
 
 =section Error handling
-
 =cut
 
 1;

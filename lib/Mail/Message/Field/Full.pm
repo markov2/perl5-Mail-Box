@@ -13,6 +13,7 @@ use Mail::Message::Field::Structured;
 use Mail::Message::Field::Unstructured;
 use Mail::Message::Field::Addresses;
 use Mail::Message::Field::URIs;
+use Mail::Message::Field::Date;
 
 my $atext = q[a-zA-Z0-9!#\$%&'*+\-\/=?^_`{|}~];  # from RFC
 my $atext_ill = q/\[\]/;     # illegal, but still used (esp spam)
@@ -86,12 +87,10 @@ parts:
 =over 4
 
 =item * B<new> LINE, OPTIONS
-
 Pass a LINE as it could be found in a file: a (possibly folded) line
 which is terminated by a new-line.
 
 =item * B<new> NAME, [BODY], OPTIONS
-
 A set of values which shape the line.
 
 =back
@@ -105,25 +104,21 @@ objects.  Finally, there are some OPTIONS.
 
 =option  charset STRING
 =default charset undef
-
 The body is specified in utf8, and must become 7-bits ascii to be
 transmited.  Specify a charset to which the multi-byte utf8 is converted
 before it gets encoded.  See M<encode()>, which does the job.
 
 =option  language STRING
 =default language undef
-
 The language used can be specified, however is rarely used my mail clients.
 
 =option  encoding 'q'|'Q'|'b'|'B'
 =default encoding C<'q'>
-
 Non-ascii characters are encoded using Quoted-Printable ('q' or 'Q') or
 Base64 ('b' or 'B') encoding.
 
 =option  force BOOLEAN
 =default force false
-
 Enforce encoding in the specified charset, even when it is not needed
 because the body does not contain any non-ascii characters.
 
@@ -141,19 +136,19 @@ because the body does not contain any non-ascii characters.
 my %implementation;
 
 BEGIN {
-   $implementation{$_} = 'Addresses' foreach
-      qw/from to sender cc bcc reply-to envelope-to
+   $implementation{$_} = 'Addresses'
+      for qw/from to sender cc bcc reply-to envelope-to
          resent-from resent-to resent-cc resent-bcc resent-reply-to
          resent-sender
          x-beenthere errors-to mail-follow-up x-loop delivered-to
          original-sender x-original-sender/;
-   $implementation{$_} = 'URIs' foreach
-      qw/list-help list-post list-subscribe list-unsubscribe list-archive
-         list-owner/;
-   $implementation{$_} = 'Structured' foreach
-      qw/content-disposition content-type/;
-#  $implementation{$_} = 'Date' foreach
-#     qw/date resent-date/;
+   $implementation{$_} = 'URIs'
+      for qw/list-help list-post list-subscribe list-unsubscribe
+         list-archive list-owner/;
+   $implementation{$_} = 'Structured'
+      for qw/content-disposition content-type/;
+   $implementation{$_} = 'Date'
+      for qw/date resent-date/;
 }
 
 sub new($;$$@)

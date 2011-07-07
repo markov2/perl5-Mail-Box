@@ -20,8 +20,6 @@ Maintain one message in an M<Mail::Box::Mbox> folder.
 
 =cut
 
-#-------------------------------------------
-
 sub head(;$$)
 {   my $self  = shift;
     return $self->SUPER::head unless @_;
@@ -33,8 +31,6 @@ sub head(;$$)
     $head;
 }
 
-#-------------------------------------------
-
 sub label(@)
 {   my $self   = shift;
     $self->loadHead;    # be sure the status fields have been read
@@ -42,14 +38,10 @@ sub label(@)
     $return;
 }
 
-#-------------------------------------------
-
 sub labels(@)
 {   my $self   = shift;
     $self->loadHead;    # be sure the status fields have been read
     $self->SUPER::labels(@_);
 }
-
-#------------------------------------------
 
 1;

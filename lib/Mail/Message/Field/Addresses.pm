@@ -50,9 +50,7 @@ kind of field, you will be warned.
 =chapter METHODS
 
 =c_method new
-
 =default attributes <ignored>
-
 =cut
 
 #------------------------------------------
@@ -63,12 +61,9 @@ my $mailbox_list = {multi => 1};
 my $mailbox      = {};
 
 my %accepted     =    # defaults to $address_list
- ( from       => $mailbox_list
- , sender     => $mailbox
- );
-
-
-#------------------------------------------
+  ( from       => $mailbox_list
+  , sender     => $mailbox
+  );
 
 sub init($)
 {   my ($self, $args) = @_;
@@ -98,7 +93,6 @@ sub init($)
 =section Access to the content
 
 =method addAddress [ADDRESS], OPTIONS
-
 Add an ADDRESS to the field.  The addresses are organized in groups.  If no
 group is specified, the default group is taken to store the address in.  If
 no ADDRESS is specified, the option must be sufficient to create a
@@ -124,10 +118,7 @@ sub addAddress(@)
     $email;
 }
 
-#------------------------------------------
-
 =method addGroup GROUP|OPTIONS
-
 Add a group of addresses to this field.  A GROUP can be specified, which
 is a M<Mail::Message::Field::AddrGroup> object, or one is created for you
 using the OPTIONS.  The group is returned.
@@ -146,14 +137,10 @@ sub addGroup(@)
     $group;
 }
 
-#------------------------------------------
-
 =method group NAME
-
 Returns the group of addresses with the specified NAME, or C<undef>
 if it does not exist.  If NAME is C<undef>, then the default groep
 is returned.
-
 =cut
 
 sub group($)
@@ -162,54 +149,37 @@ sub group($)
     first { lc($_->name) eq lc($name) } $self->groups;
 }
 
-#------------------------------------------
-
 =method groups
-
 Returns all address groups which are defined in this field.  Each
 element is a M<Mail::Message::Field::AddrGroup> object.
-
 =cut
 
 sub groups() { @{shift->{MMFF_groups}} }
 
-#------------------------------------------
-
 =method groupNames
-
 Returns a list with all group names which are defined.
-
 =cut
 
 sub groupNames() { map {$_->name} shift->groups }
 
-#------------------------------------------
-
 =method addresses
-
 Returns a list with all addresses defined in any group of addresses:
 all addresses which are specified on the line.  The addresses are
 M<Mail::Message::Field::Address> objects.
 
 =example
-
  my @addr = $field->addresses;
 
 =cut
 
 sub addresses() { map {$_->addresses} shift->groups }
 
-#------------------------------------------
-
 =method addAttribute ...
-
 Attributes are not supported for address fields.
 
 =error No attributes for address fields.
-
 Is is not possible to add attributes to address fields: it is not permitted
 by the RFCs.
-
 =cut
 
 sub addAttribute($;@)
@@ -221,7 +191,6 @@ sub addAttribute($;@)
 #------------------------------------------
 
 =section Parsing
-
 =cut
 
 sub parse($)
@@ -289,8 +258,6 @@ sub parse($)
    0;
 }
 
-#------------------------------------------
-
 sub produceBody()
 {  my @groups = sort {$a->name cmp $b->name} shift->groups;
 
@@ -305,14 +272,10 @@ sub produceBody()
    join ' ', $plain, map({$_->string} @groups);
 }
 
-#------------------------------------------
-
 =method consumeAddress STRING, OPTIONS
-
 Try to destilate address information from the STRING.   Returned are
 an address B<object> and the left-over string.  If no address was found,
 the first returned value is C<undef>.
-
 =cut
 
 sub consumeAddress($@)
@@ -334,13 +297,9 @@ sub consumeAddress($@)
     ($email, $shorter);
 }
 
-#------------------------------------------
-
 =method consumeDomain STRING
-
 Try to get a valid domain representation from STRING.  Returned are the
 domain string as found (or C<undef>) and the rest of the string.
-
 =cut
 
 sub consumeDomain($)
@@ -357,7 +316,6 @@ sub consumeDomain($)
 #------------------------------------------
 
 =section Error handling
-
 =cut
 
 1;

@@ -561,10 +561,10 @@ sub size() { sum map { $_->size } shift->messages('ACTIVE') }
 
 =method update OPTIONS
 Read new messages from the folder, which where received after opening
-it.  This is quite dangerous and shouldn't be possible: folders which
-are open are locked.  However, some applications do not use locks or
-the wrong kind of locks.  This method reads the changes (not always
-failsafe) and incorporates them in the open folder administration.
+it. This is quite dangerous and shouldn't be possible: folders which
+are open are locked. However, some applications do not use locks or the
+wrong kind of locks. This method reads the changes (not always failsafe)
+and incorporates them in the open folder administration.
 
 The OPTIONS are extra values which are passed to the
 M<updateMessages()> method which is doing the actual work here.

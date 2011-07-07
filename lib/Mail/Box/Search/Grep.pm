@@ -142,15 +142,11 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 sub search(@)
 {   my ($self, $object, %args) = @_;
     delete $self->{MBSG_last_printed};
     $self->SUPER::search($object, %args);
 }
-
-#-------------------------------------------
 
 sub inHead(@)
 {   my ($self, $part, $head, $args) = @_;
@@ -172,9 +168,6 @@ sub inHead(@)
 
     $matched;
 }
-
-
-#-------------------------------------------
 
 sub inBody(@)
 {   my ($self, $part, $body, $args) = @_;
@@ -203,9 +196,8 @@ sub inBody(@)
 
 =section The Results
 
+=method printMatch [FILEHANDLE], MATCH
 =cut
-
-#-------------------------------------------
 
 sub printMatch($;$)
 {   my $self = shift;
@@ -216,10 +208,7 @@ sub printMatch($;$)
     : $self->printMatchedBody($out, $match)
 }
 
-#-------------------------------------------
-
 =method printMatchedHead FILEHANDLE, MATCH
-
 =cut
 
 sub printMatchedHead($$)
@@ -241,10 +230,7 @@ sub printMatchedHead($$)
     $self;
 }
 
-#-------------------------------------------
-
 =method printMatchedBody FILEHANDLE, MATCH
-
 =cut
 
 sub printMatchedBody($$)
@@ -264,7 +250,5 @@ sub printMatchedBody($$)
     $out->print(sprintf "$inpart %2d: %s", $match->{linenr}, $match->{line});
     $self;
 }
-
-#-------------------------------------------
 
 1;

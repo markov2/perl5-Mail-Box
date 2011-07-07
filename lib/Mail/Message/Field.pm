@@ -73,21 +73,17 @@ The result is produced by M<toInt()>.  If the value is not correct,
 a C<0> is produced, to simplify calculations.
 
 =overload bool
-
 Always true, to make it possible to say C<if($field)>.
 
 =overload cmp
-
 (string comparison) Compare the unfolded body of a field with an other
 field or a string, using the buildin C<cmp>.
 
 =overload <=>
-
 (numeric comparison) Compare the integer field contents with something
 else.
 
 =example
-
  if($msg->get('Content-Length') > 10000) ...
  if($msg->size > 10000) ... ; # same, but better
 
@@ -127,11 +123,12 @@ sub new(@)
     $class->SUPER::new(@_);
 }
 
-#------------------------------------------
 
 =method clone
-
 Create a copy of this field object.
+=cut
+
+#------------------------------------------
 
 =section The field
 
@@ -143,17 +140,13 @@ field's name, body and folding characters.
 
 sub length { length shift->folded }
 
-#------------------------------------------
-
 =ci_method isStructured
-
 Some fields are described in the RFCs as being I<structured>: having a
 well described syntax.  These fields have common ideas about comments
 and the like, what they do not share with unstructured fields, like
 the C<Subject> field.
 
 =examples
-
  my $field = Mail::Message::Field->new(From => 'me');
  if($field->isStructured)
 
@@ -179,14 +172,10 @@ sub isStructured(;$)
     exists $_structured{lc $name};
 }
 
-#------------------------------------------
-
 =method print [FILEHANDLE]
-
 Print the whole header-line to the specified file-handle. One line may
 result in more than one printed line, because of the folding of long
 lines.  The FILEHANDLE defaults to the selected handle.
-
 =cut
 
 sub print(;$)
@@ -195,14 +184,10 @@ sub print(;$)
     $fh->print(scalar $self->folded);
 }
 
-#------------------------------------------
-
 =method string [WRAP]
-
 Returns the field as string.  By default, this returns the same as
 M<folded()>. However, the optional WRAP will cause to re-fold to take
 place (without changing the folding stored inside the field).
-
 =cut
 
 sub toString(;$) {shift->string(@_)}
@@ -217,15 +202,11 @@ sub string(;$)
     wantarray ? @lines : join('', @lines);
 }
 
-#------------------------------------------
-
 =method toDisclose
-
 Returns whether this field can be disclosed to other people, for instance
 when sending the message to an other party.  Returns a C<true> or C<false>
 condition.
 See also M<Mail::Message::Head::Complete::printUndisclosed()>.
-
 =cut
 
 sub toDisclose()
@@ -236,22 +217,15 @@ sub toDisclose()
                       ) $!x;
 }
 
-#------------------------------------------
-
 =method nrLines
-
 Returns the number of lines needed to display this header-line.
-
 =cut
 
 sub nrLines() { my @l = shift->foldedBody; scalar @l }
 
-#------------------------------------------
-
 =method size
 Returns the number of bytes needed to display this header-line, Same
 as M<length()>.
-
 =cut
 
 *size = \&length;
@@ -261,22 +235,18 @@ as M<length()>.
 =section Access to the name
 
 =method name
-
 Returns the name of this field, with all characters lower-cased for
 ease of comparison.  See M<Name()> as well.
 
 =method Name
-
 Returns the name of this field in original casing.  See M<name()> as well.
 
 =method wellformedName [STRING]
-
 (Instance method class method)
 As instance method, the current field's name is correctly formatted
 and returned.  When a STRING is used, that one is formatted.
 
 =examples
-
  print Mail::Message::Field->Name('content-type')
    # -->  Content-Type
 
@@ -311,7 +281,6 @@ sub wellformedName(;$)
 =section Access to the body
 
 =method folded
-
 Returns the folded version of the whole header.  When the header is
 shorter than the wrap length, a list of one line is returned.  Otherwise
 more lines will be returned, all but the first starting with at least
@@ -322,7 +291,6 @@ In scalar context, the lines are delived into one string, which is
 a little faster because that's the way they are stored internally...
 
 =examples
-
  my @lines = $field->folded;
  print $field->folded;
  print scalar $field->folded; # faster
@@ -331,10 +299,7 @@ a little faster because that's the way they are stored internally...
 
 sub folded { shift->notImplemented }
 
-#------------------------------------------
-
 =method body
-
 This method may be what you want, but usually, the M<foldedBody()> and
 M<unfoldedBody()> are what you are looking for.  This method is
 cultural heritage, and should be avoided.
@@ -343,7 +308,6 @@ Returns the body of the field.  When this field is structured, it will
 be B<stripped> from everything what is behind the first semi-color (C<;>).
 In any case, the string is unfolded.  
 Whether the field is structured is defined by M<isStructured()>.
-
 =cut
 
 sub body()
@@ -355,17 +319,13 @@ sub body()
     $body;
 }
 
-#------------------------------------------
-
 =method foldedBody [BODY]
-
 Returns the body as a set of lines. In scalar context, this will be one line
 containing newlines.  Be warned about the newlines when you do
 pattern-matching on the result of thie method.
 
 The optional BODY argument changes the field's body.  The folding of the
 argument must be correct.
-
 =cut
 
 sub foldedBody { shift->notImplemented }

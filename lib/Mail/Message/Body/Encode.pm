@@ -74,7 +74,6 @@ NOT IMPLEMENTED YET
 =section Constructing a body
 
 =method encode OPTIONS
-
 Encode (translate) a M<Mail::Message::Body> into a different format.
 See the DESCRIPTION above.  Options which are not specified will not trigger
 conversions.
@@ -89,14 +88,12 @@ not know).
 
 =option  mime_type STRING|FIELD
 =default mime_type undef
-
 Convert into the specified mime type, which can be specified as STRING
 or FIELD.  The FIELD is a M<Mail::Message::Field>, and the STRING is
 converted in such object before use.
 
 =option  result_type CLASS
 =default result_type <same as source>
-
 The type of body to be created when the body is changed to fulfill the request
 on re-coding.  Also the intermediate stages in the translation process (if
 needed) will use this type. CLASS must extend M<Mail::Message::Body>.
@@ -353,18 +350,12 @@ sub isBinary()
     $mime->isBinary;
 }
  
-#------------------------------------------
-
 =method isText
-
 Returns true when the un-encoded message contains printable
 text.
-
 =cut
 
 sub isText() { not shift->isBinary }
-
-#------------------------------------------
 
 =method dispositionFilename [DIRECTORY]
 Returns the name which can be used as filename to store the information

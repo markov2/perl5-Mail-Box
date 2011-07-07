@@ -31,12 +31,10 @@ Mail::Message::Field::Structured - one line of a structured message header
 =over 4
 
 =item * B<new> LINE
-
 Pass a LINE as it could be found in a file: a (possibly folded) line
 which is terminated by a new-line.
 
 =item * B<new> NAME, BODY, OPTIONS
-
 A set of values which shape the line.
 
 =back
@@ -51,7 +49,7 @@ objects.  Finally, there are some OPTIONS.
 =option  datum STRING
 =default datum C<undef>
 The method name I<body> is very confusing, even in the RFC.  In MailBox,
-for historical reasons, M<body()> returns the past of the field contents
+for historical reasons, M<body()> returns the part of the field contents
 before the first semi-colon.  M<foldedBody()> and M<unfoldedBody()>
 address the whole field.
 
@@ -77,11 +75,9 @@ M<Mail::Message::Field::Attribute> objects.
 sub init($)
 {   my ($self, $args) = @_;
     $self->{MMFS_attrs} = {};
+    $self->{MMFS_datum} = $args->{datum};
 
     $self->SUPER::init($args);
-
-    $self->datum($args->{datum})
-        if defined $args->{datum};
 
     my $attr = $args->{attributes} || [];
     $attr    = [ %$attr ] if ref $attr eq 'HASH';
@@ -154,20 +150,18 @@ sub attribute($;$)
 }
 
 =method attributes
-
 Returns a list with all attributes, which are all
 M<Mail::Message::Field::Attribute> objects.  The attributes are not
 ordered in any way.  The list may be empty.  Double attributes or
 continuations are folded into one.
-
 =cut
 
 sub attributes() { values %{shift->{MMFS_attrs}} }
-
 sub beautify() { delete shift->{MMFF_body} }
 
-=section Parsing
+#-------------------------
 
+=section Parsing
 =cut
 
 sub parse($)
@@ -177,7 +171,7 @@ sub parse($)
     {   (undef, $string)  = $self->consumeComment($string);
         $datum .= $1 if $string =~ s/^([^;(]+)//;
     }
-    $self->datum($datum);
+    $self->{MMFS_datum} = $datum;
 
     my $found = '';
     while($string =~ m/\S/)
@@ -211,7 +205,7 @@ sub parse($)
 sub produceBody()
 {   my $self  = shift;
     my $attrs = $self->{MMFS_attrs};
-    my $datum = $self->datum;
+    my $datum = $self->{MMFS_datum};
 
     join '; '
        , (defined $datum ? $datum : '')
@@ -219,13 +213,14 @@ sub produceBody()
 }
 
 =method datum [VALUE]
-Equivalent to M<body()>, but maybe less confusing.
+The part of the field before the semi-colon (C<;>).
 =cut
 
-sub datum(;$)
+sub datum(@)
 {   my $self = shift;
-    @_ ? ($self->{MMFS_datum} = shift) : $self->{MMFS_datum};
+    @_ or return $self->{MMFS_datum};
+    delete $self->{MMFF_body};
+    $self->{MMFS_datum} = shift;
 }
-*body = \&datum;
 
 1;

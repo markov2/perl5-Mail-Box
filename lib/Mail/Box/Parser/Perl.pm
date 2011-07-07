@@ -203,8 +203,6 @@ sub _read_stripped_lines(;$$)
                 $file->setpos($where);
                 $msgend = $file->tell;
                 last LINE;
-
-                last LINE;
             }
 
             push @$lines, $line;

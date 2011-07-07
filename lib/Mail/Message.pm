@@ -533,8 +533,8 @@ M<sender()>.
 =cut
 
 sub from()
-{  my $from = shift->head->get('From') or return ();
-   map {$_->addresses} $from;
+{  my @from = shift->head->get('From') or return ();
+   map {$_->addresses} @from;
 }
 
 =method sender

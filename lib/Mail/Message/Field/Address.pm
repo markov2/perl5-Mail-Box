@@ -43,11 +43,17 @@ representation of the e-mail address, just like M<string()> does.
 
 The object used as boolean will always return C<true>
 
+=overload string comparison
+
+Two address objects are the same when their email addresses are the
+same.
+
 =cut
 
 use overload
-    '""' => 'string'
+      '""' => 'string'
     , bool => sub {1}
+    , cmp  => sub { lc($_[0]->address) eq lc($_[1]) }
     ;
 
 #------------------------------------------

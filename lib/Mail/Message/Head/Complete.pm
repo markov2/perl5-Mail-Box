@@ -49,8 +49,6 @@ sub clone(;@)
     $copy;
 }
 
-#------------------------------------------
-
 =method build [PAIR|FIELD]-LIST
 Undefined values are interpreted as empty field values, and therefore skipped.
 =warning Field objects have an implied name ($name)
@@ -86,36 +84,25 @@ sub build(@)
 #------------------------------------------
 
 =section The header
-
 =cut
 
 sub isDelayed() {0}
 
-#------------------------------------------
-
 =method nrLines
-
 Return the number of lines needed to display this header (including
 the trailing newline)
-
 =cut
 
 sub nrLines() { sum 1, map { $_->nrLines } shift->orderedFields }
 
-#------------------------------------------
-
 =method size
-
 Return the number of bytes needed to display this header (including
 the trailing newline).  On systems which use CRLF as line separator,
 the number of lines in the header (see M<nrLines()>) must be added to
 find the actual size in the file.
-
 =cut
 
 sub size() { sum 1, map {$_->size} shift->orderedFields }
-
-#------------------------------------------
 
 =method wrap INTEGER
 Re-fold all fields from the header to contain at most INTEGER number of
@@ -195,14 +182,10 @@ sub add(@)
     $field;
 }
 
-#------------------------------------------
-
 =method count NAME
-
 Count the number of fields with this NAME.  Most fields will return 1:
 only one occurance in the header.  As example, the C<Received> fields
 are usually present more than once.
-
 =cut
 
 sub count($)
@@ -214,22 +197,15 @@ sub count($)
     :                    1;
 }
 
-#------------------------------------------
-
 =method names
-
 Returns a full ordered list of known field names, as defined in the
 header.  Fields which were reset() to be empty will still be
 listed here.
-
 =cut
 
 sub names() {shift->knownNames}
 
-#------------------------------------------
-
 =method grepNames [NAMES|ARRAY-OF-NAMES|REGEXS]
-
 Filter from all header fields those with names which start will any of the
 specified list.  When no names are specified, all fields will be returned.
 The list is ordered as they where read from file, or added later.
@@ -239,11 +215,9 @@ case insensitive and attached to the front of the string only.  You may
 also specify one or more prepared regexes.
 
 =examples
-
  my @f  = $head->grepNames();       # same as $head->orderedFields
  my @f  = $head->grepNames('X-', 'Subject', ');
  my @to = $head->grepNames('To\b'); # will only select To
-
 =cut
 
 sub grepNames(@)
@@ -266,10 +240,7 @@ sub grepNames(@)
     grep {$_->name =~ $take} $self->orderedFields;
 }
 
-#------------------------------------------
-
 =method set FIELD | LINE | (NAME, BODY [,ATTRS])
-
 The C<set> method is similar to the M<add()> method, and takes the same
 options. However, existing values for fields will be removed before a new
 value is added.  READ THE IMPORTANT WARNING IN M<removeField()>
@@ -306,10 +277,7 @@ sub set(@)
     $field;
 }
 
-#------------------------------------------
-
 =method reset NAME, FIELDS
-
 Replace the values in the header fields named by NAME with the values
 specified in the list of FIELDS. A single name can correspond to multiple
 repeated fields.  READ THE IMPORTANT WARNING IN M<removeField()>
@@ -364,23 +332,16 @@ sub reset($@)
     $self;
 }
 
-#------------------------------------------
-
 =method delete NAME
-
 Remove the field with the specified name.  If the header contained
 multiple lines with the same name, they will be replaced all together.
 This method simply calls M<reset()> without replacement fields.
 READ THE IMPORTANT WARNING IN M<removeField()>
-
 =cut
 
 sub delete($) { $_[0]->reset($_[1]) }
 
-#------------------------------------------
-
 =method removeField FIELD
-
 Remove the specified FIELD object from the header.  This is useful when
 there are possible more than one fields with the same name, and you
 need to remove exactly one of them.  Also have a look at M<delete()>,
@@ -450,14 +411,10 @@ sub removeField($)
     return;
 }
 
-#------------------------------------------
-
 =method removeFields STRING|REGEXP, [STRING|REGEXP, ...]
-
 The header object is turned into a M<Mail::Message::Head::Partial> object
 which has a set of fields removed.  Read about the implications and the
 possibilities in M<Mail::Message::Head::Partial::removeFields()>.
-
 =cut
 
 sub removeFields(@)
@@ -465,14 +422,10 @@ sub removeFields(@)
     (bless $self, 'Mail::Message::Head::Partial')->removeFields(@_);
 }
 
-#------------------------------------------
-
 =method removeFieldsExcept STRING|REGEXP, [STRING|REGEXP, ...]
-
 The header object is turned into a M<Mail::Message::Head::Partial> object
 which has a set of fields removed.  Read about the implications and the
 possibilities in M<Mail::Message::Head::Partial::removeFieldsExcept()>.
-
 =cut
 
 sub removeFieldsExcept(@)
@@ -480,24 +433,17 @@ sub removeFieldsExcept(@)
     (bless $self, 'Mail::Message::Head::Partial')->removeFieldsExcept(@_);
 }
 
-#------------------------------------------
-
 =method removeContentInfo
 Remove all body related fields from the header.  The header will become
 partial.
-
 =cut
 
 sub removeContentInfo() { shift->removeFields(qr/^Content-/, 'Lines') }
 
-#------------------------------------------
-
 =method removeResentGroups
-
 Removes all resent groups at once.  The header object is turned into
 a M<Mail::Message::Head::Partial> object.  Read about the implications and the
 possibilities in M<Mail::Message::Head::Partial::removeResentGroups()>.
-
 =cut
 
 sub removeResentGroups(@)
@@ -505,15 +451,11 @@ sub removeResentGroups(@)
     (bless $self, 'Mail::Message::Head::Partial')->removeResentGroups(@_);
 }
 
-#------------------------------------------
-
 =method removeListGroup
-
 Removes all fields related to mailing list administration at once.
 The header object is turned into a M<Mail::Message::Head::Partial>
 object.  Read about the implications and the possibilities in
 M<Mail::Message::Head::Partial::removeListGroup()>.
-
 =cut
 
 sub removeListGroup(@)
@@ -521,23 +463,17 @@ sub removeListGroup(@)
     (bless $self, 'Mail::Message::Head::Partial')->removeListGroup(@_);
 }
 
-#------------------------------------------
-
 =method removeSpamGroups
-
 Removes all fields which were added by various spam detection software
 at once.  The header object is turned into a M<Mail::Message::Head::Partial>
 object.  Read about the implications and the possibilities in
 M<Mail::Message::Head::Partial::removeSpamGroups()>.
-
 =cut
 
 sub removeSpamGroups(@)
 {   my $self = shift;
     (bless $self, 'Mail::Message::Head::Partial')->removeSpamGroups(@_);
 }
-
-#------------------------------------------
 
 =method spamDetected
 Returns whether one of the spam groups defines a report about spam.  If there
@@ -558,22 +494,17 @@ sub spamDetected()
     grep { $_->spamDetected } @sgs;
 }
 
-#------------------------------------------
-
 =method print [FILEHANDLE]
-
 Print all headers to the specified FILEHANDLE, by default the selected
 filehandle.  See M<printUndisclosed()> to limit the headers to include
 only the public headers.
 
 =examples
-
  $head->print(\*OUT);
  $head->print;
 
  my $fh = IO::File->new(...);
  $head->print($fh);
-
 =cut
 
 sub print(;$)
@@ -589,14 +520,10 @@ sub print(;$)
     $self;
 }
 
-#------------------------------------------
-
 =method printUndisclosed [FILEHANDLE]
-
 Like the usual M<print()>, the header lines are printed to the specified
 FILEHANDLE, by default the selected filehandle.  In this case, however,
 C<Bcc> and C<Resent-Bcc> lines are included.
-
 =cut
 
 sub printUndisclosed($)
@@ -611,10 +538,7 @@ sub printUndisclosed($)
     $self;
 }
 
-#------------------------------------------
-
 =method printSelected FILEHANDLE, (STRING|REGEXP)s
-
 Like the usual M<print()>, the header lines are printed to the specified
 FILEHANDLE.  In this case, however, only the fields with names as specified by
 STRING (case insensative) or REGEXP are printed.  They will stay the in-order
@@ -646,14 +570,9 @@ sub printSelected($@)
     $self;
 }
 
-
-#------------------------------------------
-
 =method string
-
 Returns the whole header as one scalar (in scalar context) or list
 of lines (list context).  Triggers completion.
-
 =cut
 
 sub toString() {shift->string}
@@ -666,10 +585,7 @@ sub string()
     wantarray ? @lines : join('', @lines);
 }
 
-#------------------------------------------
-
 =method resentGroups
-
 Returns a list of M<Mail::Message::Head::ResentGroup> objects which
 each represent one intermediate point in the message's transmission in
 the order as they appear in the header: the most recent one first.
@@ -679,7 +595,6 @@ A resent group contains a set of header fields whose names start
 with C<Resent-*>.  Before the first C<Resent> line is I<trace> information,
 which is composed of an optional C<Return-Path> field and an required
 C<Received> field.
-
 =cut
 
 sub resentGroups()
@@ -688,10 +603,7 @@ sub resentGroups()
     Mail::Message::Head::ResentGroup->from($self);
 }
 
-#------------------------------------------
-
 =method addResentGroup RESENT-GROUP|DATA
-
 Add a RESENT-GROUP (a M<Mail::Message::Head::ResentGroup> object) to
 the header.  If you specify DATA, that is used to create such group
 first.  If no C<Received> line is specified, it will be created
@@ -702,12 +614,10 @@ of C<reply> or C<forward> actions: these lines trace the e-mail
 transport mechanism.
 
 =examples
-
  my $rg = Mail::Message::Head::ResentGroup->new(head => $head, ...);
  $head->addResentGroup($rg);
 
  my $rg = $head->addResentGroup(From => 'me');
-
 =cut
 
 sub addResentGroup(@)
@@ -749,23 +659,18 @@ sub addResentGroup(@)
     $rg;
 }
 
-#------------------------------------------
-
 =method listGroup
-
 Returns a I<list group> description: the set of headers which form
 the information about mailing list software used to transport the
 message.  See also M<addListGroup()> and M<removeListGroup()>.
 
 =example use of listGroup()
-
  if(my $lg = $msg->head->listGroup)
  {  $lg->print(\*STDERR);
     $lg->delete;
  }
 
  $msg->head->removeListGroup;
-
 =cut
 
 sub listGroup()
@@ -774,10 +679,7 @@ sub listGroup()
     Mail::Message::Head::ListGroup->from($self);
 }
 
-#------------------------------------------
-
 =method addListGroup OBJECT
-
 A I<list group> is a set of header fields which contain data about a
 mailing list which was used to transmit the message.  See
 M<Mail::Message::Head::ListGroup> for details about the implementation
@@ -788,10 +690,8 @@ method.  You will get your private copy of the list group data in
 return, because the same group can be used for multiple messages.
 
 =example of adding a list group to a header
-
  my $lg = M<Mail::Message::Head::ListGroup>->new(...);
  my $own_lg = $msg->head->addListGroup($lg);
-
 =cut
 
 sub addListGroup($)
@@ -799,10 +699,7 @@ sub addListGroup($)
     $lg->attach($self);
 }
 
-#------------------------------------------
-
 =method spamGroups [NAMES]
-
 Returns a list of M<Mail::Message::Head::SpamGroup> objects, each collecting
 some lines which contain spam fighting information.  When any NAMES are
 given, then only these groups are returned.
@@ -813,13 +710,11 @@ returned.  With more NAMES or without NAMES, a list will be returned
 (which defaults to the length of the list in scalar context).
 
 =example use of listGroup()
-
  my @sg = $msg->head->spamGroups;
  $sg[0]->print(\*STDERR);
  $sg[-1]->delete;
 
  my $sg = $msg->head->spamGroups('SpamAssassin');
-
 =cut
 
 sub spamGroups(@)
@@ -830,10 +725,7 @@ sub spamGroups(@)
     wantarray || @_ != 1 ? @sgs : $sgs[0];
 }
 
-#------------------------------------------
-
 =method addSpamGroup OBJECT
-
 A I<spam fighting group> is a set of header fields which contains data
 which is used to fight spam.  See M<Mail::Message::Head::SpamGroup>
 for details about the implementation of the OBJECT.
@@ -843,10 +735,8 @@ method.  You will get your private copy of the spam group data in
 return, because the same group can be used for multiple messages.
 
 =example of adding a spam group to a header
-
  my $sg = M<Mail::Message::Head::SpamGroup>->new(...);
  my $own_sg = $msg->head->addSpamGroup($sg);
-
 =cut
 
 sub addSpamGroup($)
@@ -859,7 +749,6 @@ sub addSpamGroup($)
 =section About the body
 
 =method timestamp
-
 Returns an indication about when the message was sent, with as
 little guessing as possible.  In this case, the date as specified by the
 sender is trusted.  See M<recvstamp()> when you do not want to trust the
@@ -868,16 +757,11 @@ sender.
 The timestamp is encoded as C<time> is
 on your system (see perldoc -f time), and as such usable for the C<gmtime>
 and C<localtime> methods.
-
 =cut
-
 
 sub timestamp() {shift->guessTimestamp || time}
 
-#------------------------------------------
-
 =method recvstamp
-
 Returns an indication about when the message was sent, but only using the
 C<Date> field in the header as last resort: we do not trust the sender of
 the message to specify the correct date.  See M<timestamp()> when you do
@@ -922,10 +806,7 @@ sub recvstamp()
     $self->{MMH_recvstamp} = defined $stamp && $stamp > 0 ? $stamp : undef;
 }
 
-#------------------------------------------
-
 =method guessTimeStamp
-
 Make a guess about when the message was origanally posted, based on the
 information found in the header's C<Date> field.
 
@@ -933,7 +814,6 @@ For some kinds of folders, M<Mail::Message::guessTimestamp()> may produce
 a better result, for instance by looking at the modification time of the
 file in which the message is stored.  Also some protocols, like POP can
 supply that information.
-
 =cut
 
 sub guessTimestamp()
@@ -955,8 +835,6 @@ sub guessTimestamp()
     $self->{MMH_timestamp} = defined $stamp && $stamp > 0 ? $stamp : undef;
 }
 
-#------------------------------------------
-
 sub guessBodySize()
 {   my $self = shift;
 
@@ -974,12 +852,10 @@ sub guessBodySize()
 =section Internals
 
 =method createFromLine
-
 For some mail-folder types separate messages by a line starting with
 'C<From >'.  If a message is moved to such folder from a folder-type
 which does not support these separators, this method is called to produce
 one.
-
 =cut
 
 sub createFromLine()
@@ -990,15 +866,11 @@ sub createFromLine()
     "From $addr ".(gmtime $stamp)."\n"
 }
 
-#------------------------------------------
-
 =method createMessageId
-
 Creates a message-id for this message.  This method will be run when
 a new message is created, or a message is discovered without the
 message-id header field.  Message-ids are required for detection of
 message-threads.  See M<messageIdPrefix()>.
-
 =cut
 
 my $msgid_creator;
@@ -1007,8 +879,6 @@ sub createMessageId()
 {   $msgid_creator ||= $_[0]->messageIdPrefix;
     $msgid_creator->(@_);
 }
-
-#------------------------------------------
 
 =ci_method messageIdPrefix [PREFIX, [HOSTNAME]|CODE]
 

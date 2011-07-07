@@ -10,7 +10,7 @@ use Mail::Message::Body::File;
 
 use Carp;
 use Scalar::Util     qw/weaken refaddr/;
-use File::Basename   'basename';
+use File::Basename   qw/basename/;
 
 use MIME::Types;
 my $mime_types = MIME::Types->new;
