@@ -183,11 +183,12 @@ reused.  A message can therefore not be shared in storage unless
 explicitly stated.
 
 =example of moving a message
- my $t = $msg->moveTo('trash');
+ my $trash = Mail::Box::Mbox->new(folder => 'trash');
+ my $t = $msg->moveTo($trash);
 
 is equivalent to
 
- my $t = $msg->copyTo('trash', share => 1);
+ my $t = $msg->copyTo($trash, share => 1);
  $msg->delete;
 
 =cut

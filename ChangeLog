@@ -5,6 +5,25 @@ Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
+version 2.101: Thu Aug 25 10:16:03 CEST 2011
+
+	Fixes:
+
+	- multipart's-part content-type could remove some attributes
+	  rt.cpan.org#69516 [Yanyan Yang]
+
+	- filenames in content-disposition fields are sometimes charset
+	  encoded (not supported by the RFCs)  Decode them.
+	  [Thomas Karcher]
+
+	- example how to use $msg->moveTo() was wrong. [Flash]
+
+	Improvements:
+
+	- use the Net::Domain::hostfqdn() for the creation of unique
+	  message-ids if libnet is installed.
+	  rt.cpan.org#69803 [Christoph 'Mehdorn' Weber]
+
 version 2.099: Thu Jul  7 16:02:38 CEST 2011
 
 	Fixes:
@@ -126,6 +145,14 @@ version 2.094: Tue Apr  6 11:17:15 CEST 2010
 
 	- spelling fixes.
 	  rt.cpan.org#53127 [Salvatore Bonaccorso]
+
+version 2.093: Thu Dec 24 17:02:06 CET 2009
+
+	Fixes:
+
+version 2.093: Thu Dec 24 17:02:06 CET 2009
+
+	Fixes:
 
 version 2.093: Thu Dec 24 17:02:06 CET 2009
 
@@ -3421,11 +3448,3 @@ version 2.00_16:  Sat Dec  8 16:56:53 CET 2001
 	  returns all.
 
 	* Unfolding of headers considered stupid: headers which are
-	  structured (check Mail::Message::Field::isStructured) may always
-	  be multi-lined. Just specify the right options when you scan
-	  through the line with regular expressions.
-
-	* All packages is separate files.
-
-	* Many more test, a few example files, Mail::Box-Overview and
-	  Mail::Box-Cookbook.

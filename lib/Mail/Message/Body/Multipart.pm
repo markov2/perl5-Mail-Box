@@ -92,8 +92,7 @@ passed to the initiation.  The data is ignored.
 sub init($)
 {   my ($self, $args) = @_;
     my $based = $args->{based_on};
-    $args->{mime_type} ||=
-        defined $based ? $based->mimeType : 'multipart/mixed';
+    $args->{mime_type} ||= defined $based ? $based->type : 'multipart/mixed';
 
     $self->SUPER::init($args);
 

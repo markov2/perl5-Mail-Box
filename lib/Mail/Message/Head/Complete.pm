@@ -890,8 +890,9 @@ The CODE reference will be called with the header as first argument.
 You must ensure yourself that the returned value is RFC compliant.
 
 The PREFIX defaults to C<mailbox-$$>, the HOSTNAME defaults to the
-return of L<Sys::Hostname>'s method C<hostname()>.  Inbetween the
-two, a nano-second time provided by L<Time::Hires> is used.  If that
+return of L<Net::Domains>'s function C<hostfqdn()>, or when not installed,
+the L<Sys::Hostname>'s function C<hostname()>.  Inbetween the
+two, a nano-second time provided by L<Time::HiRes> is used.  If that
 module is not available, C<time> is called at the start of the program,
 and incremented for each newly created id.
 
@@ -925,12 +926,17 @@ sub messageIdPrefix(;$$)
     my $prefix   = shift || "mailbox-$$";
 
     my $hostname = shift;
-    unless(defined $hostname)
-    {   require Sys::Hostname;
-        $hostname = Sys::Hostname::hostname() || 'localhost';
+    if(!defined $hostname)
+    {   eval "require Net::Domain";
+        $@ or $hostname = Net::Domain::hostfqdn();
     }
+    if(!defined $hostname)
+    {   eval "require Sys::Hostname";
+        $@ or $hostname = Sys::Hostname::hostname();
+    }
+    $hostname ||= 'localhost';
 
-    eval {require Time::HiRes};
+    eval "require Time::HiRes";
     if(Time::HiRes->can('gettimeofday'))
     {
         return $msgid_creator

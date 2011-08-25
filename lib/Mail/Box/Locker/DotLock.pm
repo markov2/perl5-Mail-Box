@@ -31,8 +31,8 @@ same name as the folder, extended by C<.lock>.
 Name of the file to lock.  By default, the folder's name is extended
 with C<.lock>.
 
-=option dotlock_file FILENAME
-=option dotlock_file <undef>
+=option  dotlock_file FILENAME
+=default dotlock_file <undef>
 Alternative name for C<file>, especially useful to confusion when
 the multi locker is used.
 =cut

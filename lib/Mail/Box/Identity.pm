@@ -240,7 +240,7 @@ sub inferiors(;$)
                                                                                 
 =section Attributes
                                                                                 
-=method deleted {BOOLEAN]
+=method deleted [BOOLEAN]
 =cut
 
 sub deleted(;$)
