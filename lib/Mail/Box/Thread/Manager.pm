@@ -13,16 +13,18 @@ Mail::Box::Thread::Manager - maintain threads within a set of folders
 
 =chapter SYNOPSIS
 
- my $mgr     = Mail::Box::Thread::Manager->new;
+ my $mgr     = Mail::Box::Manager->new;
  my $folder  = $mgr->open(folder => '/tmp/inbox');
- my $threads = $mgr->threads(folder => $folder);
- my $threads = $mgr->threads($folder);   # same
+
+ my $threads = $mgr->threads();
+ $threads->includeFolder($folder);
+
+ my $threads = $msg->threads(folder => $folder);
 
  foreach my $thread ($threads->all) {
      $thread->print;
  }
 
- $threads->includeFolder($folder);
  $threads->removeFolder($folder);
 
 =chapter DESCRIPTION
@@ -105,7 +107,7 @@ will cause many messages to be parsed. NOT IMPLEMENTED YET.
 =examples
 
  use Mail::Box::Manager;
- my $mgr     = new Mail::Box::Manager;
+ my $mgr     = Mail::Box::Manager->new;
  my $inbox   = $mgr->open(folder => $ENV{MAIL});
  my $read    = $mgr->open(folder => 'Mail/read');
  my $threads = $mgr->threads(folders => [$inbox, $read]);
@@ -143,9 +145,7 @@ sub init($)
 =section Grouping Folders
 
 =method folders
-
 Returns the folders as managed by this threader.
-
 =cut
 
 sub folders() { values %{shift->{MBTM_folders}} }
@@ -153,7 +153,6 @@ sub folders() { values %{shift->{MBTM_folders}} }
 #-------------------------------------------
 
 =method includeFolder FOLDERS
-
 Add one or more folders to the list of folders whose messages are
 organized in the threads maintained by this object.  Duplicated
 inclusions will not cause any problems.
@@ -164,7 +163,6 @@ Messages of which the header is known only later will have to report this
 (see M<toBeThreaded()>).
 
 =example
-
  $threads->includeFolder($inbox, $draft);
 
 =cut
@@ -191,12 +189,10 @@ sub includeFolder(@)
 #-------------------------------------------
 
 =method removeFolder FOLDERS
-
 Remove one or more folders from the list of folders whose messages are
 organized in the threads maintained by this object.
 
 =example
-
  $threads->removeFolder($draft);
 
 =cut
@@ -227,7 +223,6 @@ sub removeFolder(@)
 =section The Threads
 
 =method thread MESSAGE
-
 Returns the thread where this MESSAGE is the start of.  However, there
 is a possibility that this message is a reply itself.
 
@@ -284,7 +279,6 @@ sub thread($)
 #-------------------------------------------
 
 =method threadStart MESSAGE
-
 Based on a message, and facts from previously detected threads, try
 to build solid knowledge about the thread where this message is in.
 

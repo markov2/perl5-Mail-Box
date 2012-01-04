@@ -89,15 +89,13 @@ else.
 
 =cut
 
-use overload qq("") => sub { $_[0]->unfoldedBody }
-           , '+0'   => sub { $_[0]->toInt || 0 }
-           , bool   => sub {1}
-           , cmp    => sub { $_[0]->unfoldedBody cmp "$_[1]" }
-           , '<=>'  => sub { $_[2]
-                           ? $_[1]        <=> $_[0]->toInt
-                           : $_[0]->toInt <=> $_[1]
-                           }
-           , fallback => 1;
+use overload
+    qq("") => sub { $_[0]->unfoldedBody }
+ , '+0'   => sub { $_[0]->toInt || 0 }
+ , bool   => sub {1}
+ , cmp    => sub { $_[0]->unfoldedBody cmp "$_[1]" }
+ , '<=>'  => sub { $_[2] ? $_[1] <=> $_[0]->toInt : $_[0]->toInt <=> $_[1] }
+ , fallback => 1;
 
 #------------------------------------------
 
@@ -491,7 +489,7 @@ sub attribute($;$)
     (my $quoted = $value) =~ s/(["\\])/\\$1/g;
 
     for($body)
-    {       s/\b$attr\s*=\s*"(?>[^\\"]|\\.)*"/$attr="$quoted"/i
+    {       s/\b$attr\s*=\s*"(?>[^\\"]|\\.){0,1000}"/$attr="$quoted"/i
          or s/\b$attr\s*=\s*[^;\s]*/$attr="$quoted"/i
          or do { $_ .= qq(; $attr="$quoted") }
     }

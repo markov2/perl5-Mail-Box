@@ -37,19 +37,16 @@ Either a C<message> or a C<messageId> must be supplied.
 
 =option  message MESSAGE
 =default message undef
-
 The MESSAGE which is stored in this node.  The message
 must be a Mail::Box::Message.
 
 =option  messageId MESSAGE-ID
 =default messageId undef
-
 The MESSAGE-ID for the message which is stored in this node.  Only
 specify it when you don't have the message yet.
 
 =option  dummy_type CLASS
 =default dummy_type undef
-
 Indicates the class name of dummy messages. Dummy messages are
 placeholders in a M<Mail::Box::Thread::Manager> data structure.
 
@@ -155,13 +152,9 @@ sub addMessage($)
     $message;
 }
 
-#-------------------------------------------
-
 =method isDummy
-
 Returns true if the message is a dummy. A dummy is a "hole" in a thread
 which has follow-ups but does not have a message.
-
 =cut
 
 sub isDummy()
@@ -169,25 +162,17 @@ sub isDummy()
     !defined $self->{MBTN_messages} || $self->{MBTN_messages}[0]->isDummy;
 }
 
-#-------------------------------------------
-
 =method messageId
-
 Return the message-id related to this thread node.  Each of the messages
 listed in this node will have the same ID.
-
 =cut
 
 sub messageId() { shift->{MBTN_msgid} }
 
-#-------------------------------------------
-
 =method expand [BOOLEAN]
-
 Returns whether this (part of the) folder has to be shown expanded or not.
 This is simply done by a label, which means that most folder types can
 store this.
-
 =cut
 
 sub expand(;$)
@@ -208,7 +193,6 @@ sub folded(;$)    # compatibility <2.0
 =section The thread order
 
 =method repliedTo
-
 Returns the message(s) to which the message in this node replies. In
 scalar context, this method will return the message to which the message
 in this node replies. This message object may be a dummy message.
@@ -318,7 +302,6 @@ sub follows($$)
 #-------------------------------------------
 
 =method followedBy THREADS
-
 Register that the THREADS are follow-ups to this message. These
 follow-ups need not be related to each other in any way other than
 sharing the same parent.
@@ -351,11 +334,9 @@ sub followUps()
 #-------------------------------------------
 
 =method sortedFollowUps [PREPARE [,COMPARE]]
-
 Returns the list of M<followUps()>, but sorted.  By default
 sorting is based on the estimated time of the reply. See
 startTimeEstimate().
-
 =cut
 
 sub sortedFollowUps()
@@ -384,7 +365,6 @@ Translate a thread into a string. The string will contain at least one
 line for each message which was found, but tries to fold dummies.  This
 is useful for debugging, but most message readers will prefer to
 implement their own thread printer.
-
 
 The optional CODE argument is a reference to a routine which will be called
 for each message in the thread.  The routine will be called with the
@@ -420,7 +400,7 @@ presents a folded thread with three messages.
 
 sub threadToString(;$$$)   # two undocumented parameters for layout args
 {   my $self    = shift;
-    my $code    = shift || sub {shift->head->get('subject')};
+    my $code    = shift || sub {shift->head->study('subject')};
     my ($first, $other) = (shift || '', shift || '');
     my $message = $self->message;
     my @follows = $self->sortedFollowUps;
@@ -458,7 +438,6 @@ sub threadToString(;$$$)   # two undocumented parameters for layout args
 #-------------------------------------------
 
 =method startTimeEstimate
-
 Returns a guess as to when the thread was started.  Each message contains
 various date specifications (each with various uncertainties resulting
 from timezones and out-of-sync clocks). One of these date specifications
@@ -488,10 +467,8 @@ sub startTimeEstimate()
 #-------------------------------------------
 
 =method endTimeEstimate
-
 Returns a guess as to when the thread has ended (although you never
 know for sure whether there fill follow messages in the future).
-
 =cut
 
 sub endTimeEstimate()
@@ -510,15 +487,11 @@ sub endTimeEstimate()
     $latest;
 }
 
-#-------------------------------------------
-
 =method recurse CODE-REF
-
 Execute a function for all sub-threads.  If the subroutine returns true,
 sub-threads are visited recursively. Otherwise, the current branch
 traversal is aborted. The routine is called with the thread-node as the
 only argument.
-
 =cut
 
 sub recurse($)
@@ -532,12 +505,8 @@ sub recurse($)
     $self;
 }
 
-#-------------------------------------------
-
 =method totalSize
-
 Returns the sum of the size of all the messages in the thread.
-
 =cut
 
 sub totalSize()
@@ -554,13 +523,9 @@ sub totalSize()
     $total;
 }
 
-#-------------------------------------------
-
 =method numberOfMessages
-
 Number of messages in the thread starting at the current thread node, but
 not counting the dummies.
-
 =cut
 
 sub numberOfMessages()
@@ -572,19 +537,14 @@ sub numberOfMessages()
 
 sub nrMessages() {shift->numberOfMessages}  # compatibility
 
-#-------------------------------------------
-
 =method threadMessages
-
 Returns all the messages in the thread starting at the current thread
 node.  This list will not include dummies.
 
 =example
-
  my @t = $folder->message(3)
                 ->threadStart
                 ->threadMessages;
-
 =cut
 
 sub threadMessages()
@@ -602,17 +562,12 @@ sub threadMessages()
 }
 
 
-#-------------------------------------------
-
 =method ids
-
 Returns all the ids in the thread starting at the current thread node.
 
 =examples
-
  $newfolder->addMessages($folder->ids($thread->ids));
  $folder->delete($thread->ids);
-
 =cut
 
 sub ids()

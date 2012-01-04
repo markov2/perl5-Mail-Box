@@ -138,7 +138,6 @@ sub encoding() {shift->{MMFA_encoding}}
 =section Access to the content
 
 =method string
-
 Returns an RFC compliant e-mail address, which will have character
 set encoding if needed.  The objects are also overloaded to call
 this method in string context.
