@@ -146,7 +146,7 @@ BEGIN {
       for qw/list-help list-post list-subscribe list-unsubscribe
          list-archive list-owner/;
    $implementation{$_} = 'Structured'
-      for qw/content-disposition content-type/;
+      for qw/content-disposition content-type content-id/;
    $implementation{$_} = 'Date'
       for qw/date resent-date/;
 }
@@ -507,7 +507,6 @@ a '?'.
 
 =option  is_text BOOLEAN
 =default is_text C<1>
-
 Encoding on text is slightly more complicated than encoding structured data,
 because it contains blanks.  Visible blanks have to be ignored between two
 encoded words in the text, but not when an encoded word follows or preceeds
@@ -549,8 +548,8 @@ sub _decoder($$$)
 }
 
 sub decode($@)
-{   my $self    = shift;
-    my @encoded = split /(\=\?[^?\s]*\?[bqBQ]?\?[^?\s]*\?\=)/, shift;
+{   my $thing   = shift;
+    my @encoded = split /(\=\?[^?\s]*\?[bqBQ]?\?[^?]*\?\=)/, shift;
     @encoded or return '';
 
     my %args    = @_;
@@ -559,7 +558,7 @@ sub decode($@)
     my @decoded = shift @encoded;
 
     while(@encoded)
-    {   shift(@encoded) =~ /\=\?([^?\s]*)\?([^?\s]*)\?([^?\s]*)\?\=/;
+    {   shift(@encoded) =~ /\=\?([^?\s]*)\?([^?\s]*)\?([^?]*)\?\=/;
         push @decoded, _decoder $1, $2, $3;
 
         @encoded or last;
@@ -604,17 +603,18 @@ quotes.  Be warned that C<""> will return an empty, valid phrase.
 sub consumePhrase($)
 {   my ($thing, $string) = @_;
 
+    my $phrase;
     if($string =~ s/^\s*\" ((?:[^"\r\n\\]*|\\.)*) (?:\"|\s*$)//x )
-    {   (my $phrase = $1) =~ s/\\\"/"/g;
-        return ($phrase, $string);
+    {   ($phrase = $1) =~ s/\\\"/"/g;
     }
-
-    if($string =~ s/^\s*([${atext}${atext_ill}\ \t.]+)//o )
-    {   (my $phrase = $1) =~ s/\s+$//;
-        return CORE::length($phrase) ? ($phrase, $string) : (undef, $_[1]);
+    elsif($string =~ s/^\s*([${atext}${atext_ill}\ \t.]+)//o )
+    {   ($phrase = $1) =~ s/\s+$//;
+        CORE::length($phrase) or undef $phrase;
     }
-
-    (undef, $string);
+        
+      defined $phrase
+    ? ($thing->decode($phrase), $string)
+    : (undef, $string);
 }
 
 =ci_method consumeComment STRING

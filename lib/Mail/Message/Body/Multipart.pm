@@ -123,9 +123,10 @@ sub init($)
             = defined $preamble ? $preamble : $based->preamble;
 
         $self->{MMBM_parts}
-            = @parts              ? \@parts
-            : $based->isMultipart ? [ $based->parts('ACTIVE') ]
-            : [];
+            = @parts ? \@parts
+            : !$args->{parts} && $based->isMultipart
+                     ? [ $based->parts('ACTIVE') ]
+            :          [];
 
         $self->{MMBM_epilogue}
             = defined $epilogue ? $epilogue : $based->epilogue;
@@ -347,7 +348,8 @@ sub read($$$$)
          );
 
         last unless $part->readFromParser($parser, $bodytype);
-        push @parts, $part;
+        push @parts, $part
+            if $part->head->names || $part->body->size;
     }
     $self->{MMBM_parts} = \@parts;
 

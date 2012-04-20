@@ -128,7 +128,7 @@ sub labelsToFilename()
     }
 
     my $flags = $newset ne 'new' || $newflags ne '' ? ":2,$newflags"          
-              : length $oldflags ? ':2,' : '';                                
+              : $oldflags ? ':2,' : '';                                
     my $new   = File::Spec->catfile($folderdir, $newset, $oldname.$flags);
 
     if($new ne $old)

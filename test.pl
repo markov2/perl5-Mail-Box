@@ -47,8 +47,11 @@ my @show_versions = defined $select_tests ? ()
       TAP::Harness Encode MIME::Entity Mail::Internet HTML::FormatText
      /;
 
-my $skip_tests = ($ENV{MAILBOX_RUN_TESTS} || 'no') eq 'no'
-              || -f 'skiptests' || -f '../skiptests';
+my $skip_tests = -f 'skiptests' || -f '../skiptests'
+  || ($ENV{MAILBOX_RUN_TESTS} || 'yes') eq 'no';
+
+warn "SKIP? ", (-f 'skiptests' ? 'Y' : 'N'), (-f '../skiptests' ? 'Y' : 'N'),
+  "#$ENV{MAILBOX_RUN_TESTS}#", `pwd`;
 
 sub package_of($);
 sub testnames($);

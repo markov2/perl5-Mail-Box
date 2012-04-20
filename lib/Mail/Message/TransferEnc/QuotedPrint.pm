@@ -33,23 +33,17 @@ digits.
 
 sub name() { 'quoted-printable' }
 
-#------------------------------------------
-
 sub check($@)
 {   my ($self, $body, %args) = @_;
     $body;
 }
 
-#------------------------------------------
-
 =method decode BODY, OPTIONS
-
 Decoding is tricky, and not without loss of information.  Lines will
 stay separate lines, although they might have been joined before the
 encoding split them up.  Characters which are not printable will be
 replaced by their octal value, and carriage returns (C<'=0D'>) at
 end of line are removed.
-
 =cut
 
 sub decode($@)
@@ -64,10 +58,7 @@ sub decode($@)
      );
 }
 
-#------------------------------------------
-
 =method encode BODY, OPTIONS
-
 Encoding is to quoted-printable is a careful process: All characters
 outside the normal printing range, and including C<'='> are encoded.
 They are translated into a C<'='> followed by a two digit hex of the
@@ -76,7 +67,6 @@ at the end of a line.
 
 The lines which are constructed which must be 76 characters max, not
 broken on encoded characters.
-
 =cut
 
 sub encode($@)
@@ -90,7 +80,5 @@ sub encode($@)
      , data              => encode_qp($body->string)
      );
 }
-
-#------------------------------------------
 
 1;

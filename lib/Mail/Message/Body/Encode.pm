@@ -216,6 +216,7 @@ sub encode(@)
     my $encoded = defined $trans
       ? $trans->encode($recoded, result_type => $bodytype)
       : $recoded;
+
     $encoded;
 }
 

@@ -247,7 +247,7 @@ value is added.  READ THE IMPORTANT WARNING IN M<removeField()>
 =cut
 
 my @skip_none = qw/content-transfer-encoding content-disposition
-                   content-description/;
+                   content-description content-id/;
 
 my %skip_none = map { ($_ => 1) } @skip_none;
 

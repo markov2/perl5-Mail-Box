@@ -608,10 +608,12 @@ sub destinations()
 }
 
 =method subject
-Returns the message's subject, or the empty string.
+Returns the message's subject, or the empty string.  The subject may
+have encoded characters in it; use M<study()> to get rit of that.
 
 =example using subject() to get the message's subject
  print $msg->subject;
+ print $msg->study('subject');
 =cut
 
 sub subject()
@@ -739,40 +741,13 @@ sub body(;$@)
 }
 
 =method decoded OPTIONS
-
 Decodes the body of this message, and returns it as a body object.
-If there was no encoding, the body object as read from file is passed
-on, however, some more work will be needed when a serious encoding
-is encountered.  The OPTIONS control how the conversion takes place.
-
-=option  charset CODESET|'PERL'
-=default charset C<PERL>
-Translate the bytes of the message into the CODESET.  When C<PERL> is
-given, the content will be translated into Perl strings.
-
-=option  result_type BODYTYPE
-=default result_type <type of body>
-Specifies which kind of body should be used for the final result, and
-eventual intermediate conversion stages.  It is not sure that this
-will be the type of the body returned.  BODYTYPE extends
-M<Mail::Message::Body>.
-
-=examples
- $message->decoded->print(\*OUT);
- $message->decoded->print;
-
+Short for C<<$msg->body->decoded>>  All OPTIONS are passed-on.
 =cut
 
 sub decoded(@)
-{   my ($self, %args) = @_;
-
-    my $body    = $self->body->load or return;
-    my $decoded = $body->decoded
-      ( result_type => $args{result_type}
-      , charset     => $args{charset}
-      );
-
-    $decoded;
+{   my $body = shift->body->load;
+    $body ? $body->decoded(@_) : undef;
 }
 
 =method encode OPTIONS

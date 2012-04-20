@@ -48,7 +48,7 @@ my @tests =
  , '"\\"b\\"" d'          => ['"b"', ' d' ]
  , '"a\\)b\\(c" d'        => ['a\\)b\\(c', ' d' ]
  , '<tux>'                => [ undef, '<tux>' ]
- , ' <tux>'               => [ undef, ' <tux>' ]
+ , ' <tux>'               => [ undef, '<tux>' ]
  , '" " <tux>'            => [ ' ', ' <tux>' ]
  );
 

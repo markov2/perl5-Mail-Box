@@ -134,7 +134,7 @@ sub rebuild(@)
         $rebuild = $clone;
     }
 
-    $rebuild->takeMessageId unless $args{keep_message_id};
+    $args{keep_message_id} or $rebuild->takeMessageId;
     $rebuild;
 }
 
@@ -143,7 +143,7 @@ sub rebuild(@)
 
 sub flattenNesting($@)
 {   my ($self, $part) = @_;
-    $part->isNested ?  $part->body->nested : $part;
+    $part->isNested ? $part->body->nested : $part;
 }
 
 sub flattenMultiparts($@)
@@ -201,8 +201,7 @@ sub descendMultiparts($@)
 	else               { push @newparts, $new; $changed++ }
     }
 
-    $changed
-        or return $part;
+    $changed  or return $part;
 
     my $newbody = ref($body)->new
       ( based_on  => $body
@@ -220,29 +219,22 @@ sub descendMultiparts($@)
 
 sub descendNested($@)
 {   my ($self, $part, %args) = @_;
-
-    return $part unless $part->isNested;
+    $part->isNested or return $part;
 
     my $body      = $part->body;
     my $srcnested = $body->nested;
     my $newnested = $self->recursiveRebuildPart($srcnested, %args);
 
-    return undef      unless defined $newnested;
+    defined $newnested or return undef;
     return $part if $newnested==$srcnested;
 
     # Changes in the encapsulated message
-    my $newbody   = ref($body)->new
-      ( based_on => $body
-      , nested   => $newnested
-      );
+    my $newbody = ref($body)->new(based_on => $body, nested => $newnested);
+    my $rebuild = ref($part)->new(head => $part->head->clone
+      , container => undef);
 
-   my $rebuild    = ref($part)->new
-    ( head       => $part->head->clone
-    , container => undef
-    );
-
-   $rebuild->body($newbody);
-   $rebuild;
+    $rebuild->body($newbody);
+    $rebuild;
 }
 
 sub removeDeletedParts($@)
@@ -276,8 +268,8 @@ sub removeHtmlAlternativeToText($@)
     my $container = $part->container;
 
     return $part
-       unless defined $container
-           && $container->mimeType eq 'multipart/alternative';
+        unless defined $container
+            && $container->mimeType eq 'multipart/alternative';
 
     foreach my $subpart ($container->parts)
     {   return undef if $subpart->body->mimeType eq 'text/plain';
@@ -419,53 +411,44 @@ are used by default.
 =over 4
 
 =item * descendMultiparts (*)
-
 Apply the rules to the parts of (possibly nested) multiparts, not only to
 the top-level message.
 
 =item * descendNested (*)
-
 Apply the rules to the C<message/rfc822> encapsulated message as well.
 
 =item * flattenEmptyMultiparts (*)
-
 Multipart messages which do not have any parts left are replaced by
 a single part which contains the preamble, epilogue and a brief
 explanation.
 
 =item * flattenMultiparts (*)
-
 When a multipart contains only one part, that part will take the place of
 the multipart: the removal of a level of nesting.  This way, the preamble
 and epilogue of the multipart (which do not have a meaning, officially)
 are lost.
 
 =item * flattenNesting
-
 Remove the C<message/rfc822> encapsulation.  Only the content related
 lines of the encapsulated body are preserved one level higher.  Other
 information will be lost, which is often not too bad.
 
 =item * removeDeletedParts
-
 All parts which are flagged for deletion are removed from the message
 without leaving a trace.  If a nested message is encountered which has
 its encapsulated content flagged for deletion, it will be removed as
 a whole.
 
 =item * removeEmptyMultiparts
-
 Multipart messages which do not have any parts left are removed.  The
 information in preamble and epiloge is lost.
 
 =item * removeEmptyBodies
-
 Simple message bodies which do not contain any lines of content are
 removed.  This will loose the information which is stored in the
 headers of these bodies.
 
 =item * replaceDeletedParts (*)
-
 All parts of the message which are flagged for deletion are replace
 by a message which says that the part is deleted.
 
@@ -482,14 +465,12 @@ content.  Please contribute with ideas and implementations.
 =over 4
 
 =item * removeHtmlAlternativeToText
-
 When a multipart alternative is encountered, which contains both a
 plain text and an html part, then the html part is flagged for
 deletion.  Especially useful in combination with the C<removeDeletedParts>
 and C<flattenMultiparts> rules.
 
 =item * textAlternativeForHtml
-
 Any C<text/html> part which is not accompanied by an alternative
 plain text part will have one added.  You must have a working
 M<Mail::Message::Convert::HtmlFormatText>, which means that

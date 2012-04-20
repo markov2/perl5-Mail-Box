@@ -177,6 +177,22 @@ upon some further action of the user.
 The C<filename> attribute specifies a name to which is suggested to the
 reader of the message when it is extracted.
 
+=option content_id STRING
+=default content_id undef
+
+In multipart/related MIME content, the content_id is required to
+allow access to the related content via a cid:<...> descriptor of
+an inline disposition.
+
+A C<Content-ID> is supposed to be globally unique.  As such, it
+is common to append '@computer.domain' to the end of some unique
+string.  As other content in the multipart/related container also
+needs to know what this C<Content-ID> is, this should be left to
+the imagination of the person making the content (for now).
+
+As a MIME header field, the C<Content-ID> string is expected to
+be inside angle brackets
+
 =option  eol 'CR'|'LF'|'CRLF'|'NATIVE'
 =default eol C<'NATIVE'>
 Convert the message into having the specified string as line terminator
@@ -233,7 +249,8 @@ Whether the body is flagged modified, directly from its creation.
     transfer_encoding => 'base64');
 
  my $body = Mail::Message::Body::Lines->new(file => 'picture.gif',
-    mime_type => 'image/gif');
+    mime_type => 'image/gif', content_id => '<12345@example.com>',
+    disposition => 'inline');
 
 =cut
 
@@ -299,8 +316,9 @@ sub init($)
 
     # Set the content info
 
-    my ($mime, $transfer, $disp, $charset, $descr) = @$args{
-       qw/mime_type transfer_encoding disposition charset description/ }; 
+    my ($mime, $transfer, $disp, $charset, $descr, $cid) = @$args{
+       qw/mime_type transfer_encoding disposition charset
+          description content_id/ }; 
 
     if(defined $filename)
     {   $disp = Mail::Message::Field->new
@@ -324,6 +342,7 @@ sub init($)
         $transfer = $based->transferEncoding unless defined $transfer;
         $disp     = $based->disposition      unless defined $disp;
         $descr    = $based->description      unless defined $descr;
+        $cid      = $based->contentId        unless defined $cid;
 
         $self->{MMB_checked}
                = defined $args->{checked} ? $args->{checked} : $based->checked;
@@ -341,6 +360,7 @@ sub init($)
     $self->transferEncoding($transfer) if defined $transfer;
     $self->disposition($disp)          if defined $disp;
     $self->description($descr)         if defined $descr;
+    $self->contentId($cid)             if defined $cid;
     $self->type($mime);
 
     $self->{MMB_eol}   = $args->{eol} || 'NATIVE';
@@ -636,6 +656,27 @@ sub disposition(;$)
        : Mail::Message::Field->new('Content-Disposition' => $disp);
 }
 
+=method contentId [STRING|FIELD]
+
+Returns (optionally after setting) the id (unique reference) of a
+message part.  The related header field is C<Content-ID>.
+A M<Mail::Message::Field> object is returned (which stringifies into
+the field content).  The field content will be C<none> if no disposition
+was specified.
+
+The argument can be a STRING (which is converted into a field), or a
+fully prepared header FIELD.
+=cut
+
+sub contentId(;$)
+{   my $self = shift;
+    return $self->{MMB_id} if !@_ && $self->{MMB_id};
+
+    my $cid = defined $_[0] ? shift : 'none';
+    $self->{MMB_id} = ref $cid ? $cid->clone
+       : Mail::Message::Field->new('Content-ID' => $cid);
+}
+
 =method checked [BOOLEAN]
 Returns whether the body encoding has been checked or not (optionally
 after setting the flag to a new value).
@@ -831,6 +872,7 @@ sub contentInfoTo($)
     $head->set($self->transferEncoding);
     $head->set($self->disposition);
     $head->set($self->description);
+    $head->set($self->contentId);
     $self;
 }
 
@@ -845,6 +887,7 @@ sub contentInfoFrom($)
     $self->transferEncoding($head->get('Content-Transfer-Encoding'));
     $self->disposition($head->get('Content-Disposition'));
     $self->description($head->get('Content-Description'));
+    $self->contentId($head->get('Content-ID'));
 
     delete $self->{MMB_mime};
     $self;
@@ -977,30 +1020,25 @@ handle complex multiparts and lazy extraction.
 =over 4
 
 =item * M<Mail::Message::Body::String>
-
 The whole message body is stored in one scalar.  Small messages can be
 contained this way without performance penalties.
 
 =item * M<Mail::Message::Body::Lines>
-
 Each line of the message body is stored as single scalar.  This is a
 useful representation for a detailed look in the message body, which is
 usually line-organized.
 
 =item * M<Mail::Message::Body::File>
-
 The message body is stored in an external temporary file.  This type of
 storage is especially useful when the body is large, the total folder is
 large, or memory is limited.
 
 =item * Mail::Message::Body::InFolder
-
 NOT IMPLEMENTED YET.
 The message is kept in the folder, and is only taken out when the
 content is changed.
 
 =item * Mail::Message::Body::External
-
 NOT IMPLEMENTED YET.
 The message is kept in a separate file, usually because the message body
 is large.  The difference with the C<::External> object is that this external
@@ -1014,20 +1052,17 @@ C<::External> object only uses a file when the folder is open.
 =over 4
 
 =item * M<Mail::Message::Body::Delayed>
-
 The message-body is not yet read, but the exact location of the
 body is known so the message can be read when needed.  This is part of
 the lazy extraction mechanism.  Once extracted, the object can become
 any simple or complex body.
 
 =item * M<Mail::Message::Body::Multipart>
-
 The message body contains a set of sub-messages (which can contain
 multipart bodies themselves).  Each sub-message is an instance
 of M<Mail::Message::Part>, which is an extension of M<Mail::Message>.
 
 =item * M<Mail::Message::Body::Nested>
-
 Nested messages, like C<message/rfc822>: they contain a message in
 the body.  For most code, they simply behave like multiparts.
 

@@ -20,14 +20,16 @@ BEGIN {
        exit 0;
    }
 
-   eval 'require Mail::Message::Field::Addresses';
-   if($@)
-   {   plan skip_all => 'Extended attributes not available (install Encode?)';
-       exit 0;
-   }
-   else
-   {   plan tests => 96;
-   }
+   eval "use Encode";
+   plan skip_all => 'Extended attributes not available (install Encode?)'
+      if $@;
+   Encode->import('is_utf8');
+
+   eval 'use Mail::Message::Field::Addresses';
+   plan skip_all => "Mail::Message::Field::Addresses broken: $@"
+       if $@;
+
+   plan tests => 100;
 }
 
 my $mmfa  = 'Mail::Message::Field::Address';
@@ -231,7 +233,19 @@ Cc: Pete <pete@silly.test>, A Group: "Chris Jones" <c@public.example>,
  John <jdoe@one.test> (my dear friend), joe@example.org;
 REFOLDED
 
-__END__
-Cc:(Empty list)(start)Undisclosed recipients  :(nobody(that I know))  ;
-From  : John Doe <jdoe@machine(comment).  example>
-Mary Smith <@machine.tld:mary@example.net>, , jdoe@test   . example
+#Cc:(Empty list)(start)Undisclosed recipients  :(nobody(that I know))  ;
+#From  : John Doe <jdoe@machine(comment).  example>
+#Mary Smith <@machine.tld:mary@example.net>, , jdoe@test   . example
+
+
+# test =???= encoding in the phrase
+
+my $encd = '"=?GB2312?B?yOe6zrncwO1tbTS6w7T9tqjO78a3us2yu8Tc08PO78a3?=" <aap@noot.mies>';
+my $e = $mmfas->new(From => $encd);
+isa_ok($e, $mmfas, 'read encoded');
+@a = $e->addresses;
+cmp_ok(scalar @a, '==', 1);
+my $a    = $a[0];
+my $name = $a->name;
+cmp_ok(length $name, '==', 18, $name);
+ok(is_utf8($name), 'is utf8');

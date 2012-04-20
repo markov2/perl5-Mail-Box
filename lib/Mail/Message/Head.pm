@@ -336,6 +336,7 @@ sub isMultipart()
     $type && scalar $type->body =~ m[^multipart/]i;
 }
 
+#------------------------------
 =section Internals
 
 =method read PARSER
@@ -353,7 +354,7 @@ sub read($)
     my $type   = $self->{MMH_field_type} || 'Mail::Message::Field::Fast';
 
     $self->addNoRealize($type->new( @$_ ))
-        foreach @fields;
+        for @fields;
 
     $self;
 }
