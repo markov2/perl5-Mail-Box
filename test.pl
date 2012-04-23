@@ -50,8 +50,8 @@ my @show_versions = defined $select_tests ? ()
 my $skip_tests = -f 'skiptests' || -f '../skiptests'
   || ($ENV{MAILBOX_RUN_TESTS} || 'yes') eq 'no';
 
-warn "SKIP? ", (-f 'skiptests' ? 'Y' : 'N'), (-f '../skiptests' ? 'Y' : 'N'),
-  "#$ENV{MAILBOX_RUN_TESTS}#", `pwd`;
+#warn "SKIP? ", (-f 'skiptests' ? 'Y' : 'N'), (-f '../skiptests' ? 'Y' : 'N'),
+#  "#$ENV{MAILBOX_RUN_TESTS}#", `pwd`;
 
 sub package_of($);
 sub testnames($);

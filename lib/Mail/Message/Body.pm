@@ -413,8 +413,7 @@ what is produced.  This C<$dec> body is B<not related to a header>.
 sub decoded(@)
 {   my $self = shift;
     $self->encode
-     ( mime_type         => 'text/plain'
-     , charset           => 'PERL'
+     ( charset           => 'PERL'
      , transfer_encoding => 'none'
      , @_
      );
