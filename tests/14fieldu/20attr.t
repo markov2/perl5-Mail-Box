@@ -26,7 +26,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 91;
+   {   plan tests => 98;
    }
 }
 
@@ -48,6 +48,7 @@ is($b->name, 'b');
 ok(defined $a,                           "object b creation");
 is($b->charset, 'iso-8859-15',           "charset pre-set");
 is($b->language, 'nl-BE',                "language pre-set");
+is($b->string, "; b*=iso-8859-15'nl-BE'");
 
 #
 # Test situations without encoding or continuations
@@ -105,7 +106,7 @@ is($c->value, 'abc');
 #
 
 my $d = $mmfa->new('d', charset => 'iso-8859-1', use_continuations => 0);
-ok($d,                                     "Created d");
+ok(defined $d, "Created d");
 is($d->value, '');
 is($d->value('abc'), 'abc');
 is($d->value, 'abc');
@@ -147,7 +148,7 @@ is($d->value, $m);
 #
 
 my $e = $mmfa->new('e', charset => 'iso-8859-1', use_continuations => 1);
-ok($e,                                     "Created e");
+ok(defined $e, "Created e");
 is($e->value, '');
 is($e->value('abc'), 'abc');
 is($e->value, 'abc');
@@ -177,7 +178,7 @@ is($s[0], "e*=iso-8859-1''abc");
 #
 
 my $f = $mmfa->new('f', use_continuations => 1);
-ok($f,                                     "Created f");
+ok(defined $f,                              "Created f");
 is($f->value, '');
 is($f->value('abc'), 'abc');
 is($f->value, 'abc');
@@ -202,14 +203,37 @@ is($s[0], 'f="abc"');
 #
 
 my $g = $mmfa->new('g', use_continuations => 1);
-ok($g,                                     "Created g");
+ok(defined $g,                             "Created g");
 my $h = $mmfa->new('h', use_continuations => 1);
-ok($h,                                     "Created h");
+ok(defined $h,                             "Created h");
 
 $g->addComponent('g*1*=b');
 is($g->value, '[continuation missing]b',   "Merge no continuation");
 $h->addComponent('g*0*=a');
 is($h->value, 'a');
 
-ok($g->mergeComponent($h),                 "Merge with continuation");
+ok(defined $g->mergeComponent($h),         "Merge with continuation");
 is($g->value, 'ab');
+
+#
+# Test overloading
+#
+
+my $m1 = $mmfa->new(m => 'one');
+my $m2 = $mmfa->new(m => 'two');
+my $m3 = $mmfa->new(M => 'one');
+my $m4 = $mmfa->new(M => 'ONE');
+
+# stringification
+cmp_ok($m1->value, 'eq', 'one');
+cmp_ok("$m1", 'eq', 'one');
+
+# comparison
+# overloading at work, so we cannot use cmp_ok
+ok($m1 ne $m2, "$m1 ne $m2");
+ok($m1 eq $m3, "$m1 eq $m3");
+ok($m1 ne $m4, "$m1 ne $m4");
+
+# fallback
+my $m5 = $mmfa->new(M => 42);
+cmp_ok($m5 +1, '==', 43, 'fallback');

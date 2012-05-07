@@ -36,6 +36,28 @@ becomes more and more in demand.
 A C<Mail::Message::Field::Attribute> can be found in any structured
 M<Mail::Message::Field::Full> header field.
 
+=chapter OVERLOADED
+
+=overload stringification
+Returns the decoded content of the attribute.
+
+=overload comparison
+When the second argument is a field, then both attribute name (case-sensitive)
+and the decoded value must be the same.  Otherwise, the value is compared.
+
+=cut
+
+use Carp 'cluck';
+use overload
+    '""' => sub {shift->value}
+  , cmp  => sub { my ($self, $other) = @_;
+      UNIVERSAL::isa($other, 'Mail::Message::Field')
+        ? (lc($_[0])->name cmp lc($_[1]->name) || $_[0]->value cmp $_[1]->value)
+        : $_[0]->value cmp $_[1]
+        }
+  , fallback => 1;
+
+
 =chapter METHODS
 
 =section Constructors
@@ -120,7 +142,7 @@ sub init($$)
     $self->{MMFF_charset}  = $args->{charset}  if defined $args->{charset};
     $self->{MMFF_language} = $args->{language} if defined $args->{language};
 
-    $self->value($value)       if defined $value;
+    $self->value(defined $value ? $value : '');
     $self->addComponent($attr) unless $attr eq $name;
 
     $self;
@@ -148,7 +170,6 @@ sub value(;$)
     {   delete $self->{MMFF_cont};
         return $self->{MMFF_value} = shift;
     }
-      
     exists $self->{MMFF_value} ? $self->{MMFF_value} : $self->decode;
 }
 
@@ -318,9 +339,9 @@ sub decode()
 =section Internals
 
 =method mergeComponent ATTRIBUTE
-Merge the components from the specified attribute in this attribute.  This is
-needed when components of the same attribute are created separately.  Merging
-is required by the field parsing.
+Merge the components from the specified attribute into this attribute.  This
+is needed when components of the same attribute are created separately.
+Merging is required by the field parsing.
 
 =error Too late to merge: value already changed.
 =cut
@@ -328,7 +349,7 @@ is required by the field parsing.
 sub mergeComponent($)
 {   my ($self, $comp) = @_;
     my $cont  = $self->{MMFF_cont}
-       or croak "ERROR: Too late to merge: value already changed.";
+        or croak "ERROR: Too late to merge: value already changed.";
 
     defined $_ && $self->addComponent($_)
         foreach @{$comp->{MMFF_cont}};

@@ -6,10 +6,12 @@ package Mail::Message::Body;
 use base 'Mail::Reporter';
 
 use Carp;
-
-use MIME::Types;
+use MIME::Types    ();
 use File::Basename 'basename';
 use Encode         'find_encoding';
+
+use Mail::Message::Field        ();
+use Mail::Message::Field::Full  ();
 
 # http://www.iana.org/assignments/character-sets
 use Encode::Alias;
@@ -83,7 +85,7 @@ conversions.
 If the CODESET is explicitly specified (for instance C<iso-8859-10>, then
 the data is interpreted as raw bytes (blob), not as text.  However, in
 case of C<PERL>, it is considered to be an internal representation of
-characters (either latin1 or utf8 (not the same as utf-8), you should
+characters (either latin1 or Perl's utf8 --not the same as utf-8--, you should
 not know).
 
 =option  mime_type STRING|FIELD
@@ -119,46 +121,68 @@ sub encode(@)
 {   my ($self, %args) = @_;
 
     # simplify the arguments
-
     my $type_from = $self->type;
-    my $type_to   = $args{mime_type} || $type_from->clone;
-    $type_to = Mail::Message::Field->new('Content-Type' => $type_to)
+    my $type_to   = $args{mime_type} || $type_from->clone->study;
+    $type_to = Mail::Message::Field::Full->new('Content-Type' => $type_to)
         unless ref $type_to;
 
     my $transfer = $args{transfer_encoding} || $self->transferEncoding->clone;
     $transfer    = Mail::Message::Field->new('Content-Transfer-Encoding'
         => $transfer) unless ref $transfer;
 
-    my ($char_was, $char_to) = ('', '');
+    my $trans_was = lc $self->transferEncoding;
+    my $trans_to  = lc $transfer;
+
+    my ($char_was, $char_to, $from, $to);
     if($type_from =~ m!^text/!i)
     {   $char_was = $type_from->attribute('charset') || 'us-ascii';
         $char_to  = $type_to->attribute('charset');
 
-        my $charset = delete $args{charset};
+        if(my $charset = delete $args{charset})
+        {   if(!$char_to || $char_to ne $charset)
+            {   $char_to = $charset;
+                $type_to->attribute(charset => $char_to);
+            }
+        }
+        elsif(!$char_to)
+        {   $char_to = 'utf8';
+            $type_to->attribute(charset => $char_to);
+        }
 
-        if(!$char_to || $char_to eq 'PERL')
-        {    $char_to = $charset || ($char_was eq 'PERL' ? 'utf-8' : $char_was);
-             $type_to->attribute(charset => $char_to);
+        if($char_was ne 'PERL')
+        {   $from = find_encoding $char_was
+                or $self->log(WARNING => "Charset `$char_was' is not known.");
+        }
+        if($char_to ne 'PERL')
+        {   $to = find_encoding $char_to
+                or $self->log(WARNING => "Charset `$char_to' is not known.");
+        }
+
+        if($trans_to ne 'none' && $char_to eq 'PERL')
+        {   # We cannot leave the body into the 'PERL' charset when transfer-
+            # encoding is applied.
+            $self->log(WARNING => "Transfer-Encoding `$trans_to' requires "
+              . "explicit charset, defaulted to utf8");
+            $char_to = 'utf8';
         }
     }
 
-    my $trans_was = lc $self->transferEncoding;
-    my $trans_to  = lc $transfer;
 
-    #
-    # The only translations implemented now is content transfer encoding.
-    #
-
-    return $self
-        if   $trans_was eq   $trans_to
-        && lc $char_was eq lc $char_to;
+    # Any changes to be made?
+    if($trans_was eq $trans_to)
+    {   return $self if !$from && !$to;
+        if($from && $to && $from->name eq $to->name)
+        {   # modify charset into an alias, if requested
+            $self->charset($char_to) if $char_was ne $char_to;
+            return $self;
+        }
+    }
 
     my $bodytype  = $args{result_type} || ref $self;
 
     my $decoded;
     if($trans_was eq 'none')
-    {   $decoded = $self;
-    }
+    {   $decoded = $self }
     elsif(my $decoder = $self->getTransferEncHandler($trans_was))
     {   $decoded = $decoder->decode($self, result_type => $bodytype) }
     else
@@ -167,44 +191,15 @@ sub encode(@)
         return $self;
     }
 
-    my $recoded = $decoded;
-    if(lc($char_was) eq lc($char_to)) { ; }
-    elsif($char_was eq 'PERL')   
-    {   if(my $recoder = find_encoding $char_to)
-        {   $recoded = $bodytype->new
-              ( based_on  => $decoded
-              , data      => $recoder->encode($decoded->string)
-              , mime_type => $type_to);
-        }
-        else
-        {   $self->log(WARNING => "Charset `$char_to' is not known.") }
-    }
-    elsif($char_to eq 'PERL')
-    {   if(my $recoder = find_encoding $char_was)
-        {   $recoded = $bodytype->new
-              ( based_on  => $decoded
-              , data      => $recoder->decode($decoded->string)
-              , mime_type => $type_to);
-        }
-        else
-        {   $self->log(WARNING => "Charset `$char_was' is not known.") }
-    }
-    else
-    {   my $from = find_encoding $char_was;
-        my $to   = find_encoding $char_to;
-        if(!$from)
-        {   $self->log(WARNING => "Charset `$char_was' is not known.");
-        }
-        elsif(!$to)
-        {   $self->log(WARNING => "Charset `$char_to' is not known.");
-        }
-        else
-        {   $recoded = $bodytype->new
-              ( based_on  => $decoded
-              , data      => $to->encode($from->decode($decoded))
-              , mime_type => $type_to);
-        }
-    }
+    my $new_data
+      = $to   && $char_was eq 'PERL' ? $to->encode($decoded->string)
+      : $from && $char_to  eq 'PERL' ? $from->decode($decoded->string)
+      : $to && $from && $from->name ne $to->name
+      ?    $to->encode($from->decode($decoded->string))
+      : undef;
+
+    my $recoded = $new_data ? $bodytype->new(based_on => $decoded
+      , data => $new_data, mime_type => $type_to, checked => 1) : $decoded;
 
     my $trans;
     if($trans_to ne 'none')
@@ -284,13 +279,9 @@ sub encoded()
        : (!$charset || $charset eq 'PERL') ? 'utf-8'
        :                                     $charset;
 
-    return $self->check
-        if $enc_was ne 'none' && $charset eq $new_charset;
-
-    $self->encode
-      ( transfer_encoding => $enc
-      , charset           => $new_charset
-      );
+      ($enc_was ne 'none' && $charset eq $new_charset)
+    ? $self->check
+    : $self->encode(transfer_encoding => $enc, charset => $new_charset);
 }
 
 #------------------------------------------

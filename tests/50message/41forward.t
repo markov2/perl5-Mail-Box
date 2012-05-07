@@ -199,11 +199,11 @@ Content-Type: message/rfc822
 
 To: you
 X-Loop: yes
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 Message-Id: <removed>
 Date: <removed>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
 
 greetings!
 

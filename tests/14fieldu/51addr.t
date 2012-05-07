@@ -32,6 +32,11 @@ BEGIN {
    plan tests => 100;
 }
 
+# avoid "print of Wide characters" warning
+# http://code.google.com/p/test-more/issues/detail?id=46
+binmode Test::More->builder->output, ":utf8";
+binmode Test::More->builder->failure_output, ":utf8";
+
 my $mmfa  = 'Mail::Message::Field::Address';
 my $mmfag = 'Mail::Message::Field::AddrGroup';
 my $mmfas = 'Mail::Message::Field::Addresses';

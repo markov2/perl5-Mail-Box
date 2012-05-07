@@ -27,7 +27,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 73;
+   {   plan tests => 74;
        Encode->import('encode', 'decode');
    }
 }
@@ -49,6 +49,8 @@ isa_ok($a2, $mmfs);
 is($a2->string, "a2: 0\n");
 
 is($a2->unfoldedBody, '0');
+
+is($a->study, $a, 'is studied');
 
 #
 # Test adding comments

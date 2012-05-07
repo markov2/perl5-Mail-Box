@@ -721,8 +721,8 @@ sub body(;$@)
         return $body;
     }
 
-    $self->log(INTERNAL => "wrong type of body for message $rawbody")
-        unless ref $rawbody && $rawbody->isa('Mail::Message::Body');
+    ref $rawbody && $rawbody->isa('Mail::Message::Body')
+        or $self->log(INTERNAL => "wrong type of body for message $rawbody");
 
     # Bodies of real messages must be encoded for safe transmission.
     # Message parts will get encoded on the moment the whole multipart

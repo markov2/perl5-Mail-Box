@@ -412,11 +412,7 @@ what is produced.  This C<$dec> body is B<not related to a header>.
 
 sub decoded(@)
 {   my $self = shift;
-    $self->encode
-     ( charset           => 'PERL'
-     , transfer_encoding => 'none'
-     , @_
-     );
+    $self->encode(charset => 'PERL', transfer_encoding => 'none', @_);
 }
 
 =method eol ['CR'|'LF'|'CRLF'|'NATIVE']
@@ -458,11 +454,7 @@ sub eol(;$)
         }
     }
 
-    (ref $self)->new
-      ( based_on => $self
-      , eol      => $eol
-      , data     => $lines
-      );
+    (ref $self)->new(based_on => $self, eol => $eol, data => $lines);
 }
 
 #------------------------------------------

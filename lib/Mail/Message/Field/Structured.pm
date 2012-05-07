@@ -5,6 +5,7 @@ package Mail::Message::Field::Structured;
 use base 'Mail::Message::Field::Full';
 
 use Mail::Message::Field::Attribute;
+use Storable 'dclone';
 
 =chapter NAME
 
@@ -139,14 +140,7 @@ sub attribute($;$)
     }
 
     delete $self->{MMFF_body};
-    if(my $old =  $self->{MMFS_attrs}{$name})
-    {   $old->mergeComponent($attr);
-        return $old;
-    }
-    else
-    {   $self->{MMFS_attrs}{$name} = $attr;
-        return $attr;
-    }
+    $self->{MMFS_attrs}{$name} = $attr;
 }
 
 =method attributes
@@ -158,6 +152,12 @@ continuations are folded into one.
 
 sub attributes() { values %{shift->{MMFS_attrs}} }
 sub beautify() { delete shift->{MMFF_body} }
+
+=method attrPairs
+Returns a list with attribute name and value pairs.
+=cut
+
+sub attrPairs() { map { $_->name, $_->value } shift->attributes }
 
 #-------------------------
 

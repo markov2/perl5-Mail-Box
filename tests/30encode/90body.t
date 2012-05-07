@@ -44,8 +44,8 @@ isa_ok($enc, 'Mail::Message::Body');
 ok(!$enc->checked);
 is($enc->string, $decoded);
 
-my $msg = Mail::Message->buildFromBody($enc, From => 'me', To => 'you',
-   Date => 'now', 'Message-Id' => '<simple>');
+my $msg = Mail::Message->buildFromBody($enc, From => 'me', To => 'you'
+  , Date => 'now', 'Message-Id' => '<simple>');
 ok($msg);
 ok($msg->body->checked);
 
