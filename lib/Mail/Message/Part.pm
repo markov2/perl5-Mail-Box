@@ -5,7 +5,6 @@ package Mail::Message::Part;
 use base 'Mail::Message';
 
 use Scalar::Util    'weaken';
-
 use Carp;
 
 =chapter NAME
@@ -137,6 +136,12 @@ sub toplevel()
 }
 
 sub isPart() { 1 }
+
+sub partNumber()
+{   my $self = shift;
+    my $body = $self->container or confess 'no container';
+    $body->partNumberOf($self);
+}
 
 sub readFromParser($;$)
 {   my ($self, $parser, $bodytype) = @_;

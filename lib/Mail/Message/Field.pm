@@ -66,7 +66,7 @@ to be a simple string. The string is produced by M<unfoldedBody()>.
  my $subject = $msg->get('subject') || 'your mail';
  print "Re: $subject\n";
 
-=overload +0
+=overload 0+
 
 (numification) When the field is numeric, the value will be returned.
 The result is produced by M<toInt()>.  If the value is not correct,
@@ -91,10 +91,10 @@ else.
 
 use overload
     qq("") => sub { $_[0]->unfoldedBody }
- , '+0'   => sub { $_[0]->toInt || 0 }
- , bool   => sub {1}
- , cmp    => sub { $_[0]->unfoldedBody cmp "$_[1]" }
- , '<=>'  => sub { $_[2] ? $_[1] <=> $_[0]->toInt : $_[0]->toInt <=> $_[1] }
+ , '0+'    => sub { $_[0]->toInt || 0 }
+ , bool    => sub {1}
+ , cmp     => sub { $_[0]->unfoldedBody cmp "$_[1]" }
+ , '<=>'   => sub { $_[2] ? $_[1] <=> $_[0]->toInt : $_[0]->toInt <=> $_[1] }
  , fallback => 1;
 
 #------------------------------------------
@@ -328,10 +328,7 @@ argument must be correct.
 
 sub foldedBody { shift->notImplemented }
 
-#------------------------------------------
-
 =method unfoldedBody [BODY, [WRAP]]
-
 Returns the body as one single line, where all folding information (if
 available) is removed.  This line will also NOT end on a new-line.
 
@@ -348,10 +345,7 @@ folding size.
 
 sub unfoldedBody { shift->notImplemented }
 
-#------------------------------------------
-
 =ci_method stripCFWS [STRING]
-
 Remove the I<comments> and I<folding white spaces> from the STRING.  Without
 string and only as instance method, the M<unfoldedBody()> is being stripped
 and returned.
@@ -429,14 +423,9 @@ sub comment(;$)
     $body =~ s/.*?\;\s*// ? $body : '';
 }
 
-#------------------------------------------
-
 sub content() { shift->unfoldedBody }  # Compatibility
 
-#------------------------------------------
-
 =method attribute NAME [, VALUE]
-
 Get the value of an attribute, optionally after setting it to a new value.
 Attributes are part of some header lines, and hide themselves in the
 comment field.  If the attribute does not exist, then C<undef> is

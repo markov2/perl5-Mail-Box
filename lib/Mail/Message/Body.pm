@@ -177,7 +177,7 @@ upon some further action of the user.
 The C<filename> attribute specifies a name to which is suggested to the
 reader of the message when it is extracted.
 
-=option content_id STRING
+=option  content_id STRING
 =default content_id undef
 
 In multipart/related MIME content, the content_id is required to
@@ -287,15 +287,15 @@ sub init($)
     if(defined(my $file = $args->{file}))
     {
         if(!ref $file)
-        {    $self->_data_from_filename($file) or return;
-             $filename = $file;
+        {   $self->_data_from_filename($file) or return;
+            $filename = $file;
         }
         elsif(ref $file eq 'GLOB')
-        {    $self->_data_from_glob($file) or return }
+        {   $self->_data_from_glob($file) or return }
         elsif($file->isa('IO::Handle'))
-        {    $self->_data_from_filehandle($file) or return }
+        {   $self->_data_from_filehandle($file) or return }
         else
-        {    croak "message body: illegal datatype `".ref($file)."' for file option" }
+        {   croak "message body: illegal datatype `".ref($file)."' for file option" }
     }
     elsif(defined(my $data = $args->{data}))
     {
@@ -462,10 +462,9 @@ sub eol(;$)
 =section The body
 
 =method message [MESSAGE]
-
-Returns the message where this body belongs to, optionally setting it
-to a new MESSAGE first.  If C<undef> is passed, the body will be
-disconnected from the message.
+Returns the message (or message part) where this body belongs to,
+optionally setting it to a new MESSAGE first.  If C<undef> is passed,
+the body will be disconnected from the message.
 
 =cut
 
@@ -500,12 +499,21 @@ the C<Mail::Message::Body::Nested> body type.
 
 sub isNested() {0}
 
+=method partNumberOf PART
+Returns a string for multiparts and nested, otherwise an error.  It is
+used in M<Mail::Message::partNumber()>.
+=cut
+
+sub partNumberOf($)
+{   shift->log(ERROR => 'part number needs multi-part or nested');
+    'ERROR';
+}
+
 #------------------------------------------
 
 =section About the payload
 
 =method type [STRING|FIELD]
-
 Returns the type of information the body contains as
 M<Mail::Message::Field> object.  The type is taken from the header
 field C<Content-Type>. If the header did not contain that field,
@@ -541,12 +549,9 @@ sub type(;$)
     delete $self->{MMB_mime};
     my $type = defined $_[0] ? shift : 'text/plain';
 
-    $self->{MMB_type}
-      = ref $type ? $type->clone
+    $self->{MMB_type} = ref $type ? $type->clone
       : Mail::Message::Field->new('Content-Type' => $type);
 }
-
-#------------------------------------------
 
 =method mimeType
 Returns a M<MIME::Type> object which is related to this body's type.  This
@@ -648,7 +653,6 @@ sub disposition(;$)
 }
 
 =method contentId [STRING|FIELD]
-
 Returns (optionally after setting) the id (unique reference) of a
 message part.  The related header field is C<Content-ID>.
 A M<Mail::Message::Field> object is returned (which stringifies into

@@ -9,7 +9,7 @@ use warnings;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 5;
+use Test::More tests => 10;
 use IO::Scalar;
 use Mail::Address;
 
@@ -47,6 +47,14 @@ my $msg = Mail::Message->buildFromBody
  , To   => 'you@home.com'
  , From => 'me@perl.org'
  );
+
+#$msg->printStructure(\*STDERR);
+ok(!defined $msg->partNumber, 'part number');
+my @parts = $msg->parts;
+cmp_ok($parts[0]->partNumber, 'eq', 1);
+cmp_ok($parts[1]->partNumber, 'eq', 2);
+cmp_ok($parts[2]->partNumber, 'eq', 3);
+cmp_ok($parts[2]->body->nested->partNumber, 'eq', 3);
 
 my $msg2 = $msg->clone;
 ok($msg2);

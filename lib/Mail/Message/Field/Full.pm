@@ -164,7 +164,7 @@ sub new($;$$@)
     }
    
     return $class->SUPER::new(%args, name => $name, body => $body)
-       if $class ne __PACKAGE__;
+        if $class ne __PACKAGE__;
 
     # Look for best class to suit this field
     my $myclass = 'Mail::Message::Field::'
@@ -177,9 +177,8 @@ sub init($)
 {   my ($self, $args) = @_;
 
     $self->SUPER::init($args);
-    $self->{MMFF_name}       = $args->{name};
-
-    my $body = $args->{body};
+    $self->{MMFF_name} = $args->{name};
+    my $body           = $args->{body};
 
        if(!defined $body || !length $body || ref $body) { ; } # no body yet
     elsif(index($body, "\n") >= 0)
@@ -222,7 +221,7 @@ sub foldedBody($)
 
     if(@_==2)
     {    $self->parse($body);
-         $body =~ s/^\s*/ /;
+         $body =~ s/^\s*/ /m;
          $self->{MMFF_body} = $body;
     }
     elsif(defined($body = $self->{MMFF_body})) { ; }

@@ -284,6 +284,22 @@ the case for M<Mail::Message::Part> extensions of C<Mail::Message>.
 
 sub isPart() { 0 } # overridden by Mail::Message::Part
 
+=method partNumber
+Returns a string representing the location of this part.  In case the
+top message is a single message, 'undef' is returned.  When it is a
+multipart, '1' upto the number of multiparts is returned.  A multi-level
+nested part may for instance return '2.5.1'.
+
+Usually, this string is very short.  Numbering follows the IMAP4 design,
+see RFC2060 secion 6.4.5.
+=cut
+
+sub partNumber()
+{   my $self = shift;
+    my $cont = $self->container;
+    $cont ? $cont->partNumber : undef;
+}
+
 =method toplevel
 Returns a reference to the main message, which will be the current
 message if the message is not part of another message.

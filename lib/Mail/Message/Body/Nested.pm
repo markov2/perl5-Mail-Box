@@ -113,6 +113,11 @@ sub print(;$)
     $self->nested->print(shift || select);
 }
 
+sub partNumberOf($)
+{   my ($self, $part) = @_;
+    $self->message->partNumber;
+}
+
 =method foreachLine(CODE)
 It is NOT possible to call some code for each line of a nested
 because that would damage the header of the encapsulated message

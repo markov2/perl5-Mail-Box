@@ -552,6 +552,23 @@ flagged to be deleted are included in the count.
 
 sub part($) { shift->{MMBM_parts}[shift] }
 
+sub partNumberOf($)
+{   my ($self, $part) = @_;
+    my @parts = $self->parts('ACTIVE');
+    my $msg   = $self->message;
+    unless($msg)
+    {   $self->log(ERROR => 'multipart is not connected');
+        return 'ERROR';
+    }
+    my $base  = $msg->isa('Mail::Message::Part') ? $msg->partNumber.'.' : '';
+    foreach my $partnr (0..@parts)
+    {   return $base.($partnr+1)
+            if $parts[$partnr] == $part;
+    }
+    $self->log(ERROR => 'multipart is not found or not active');
+    'ERROR';
+}
+
 =method boundary [STRING]
 Returns the boundary which is used to separate the parts in this
 body.  If none was read from file, then one will be assigned.  With

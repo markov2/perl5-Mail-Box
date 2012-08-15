@@ -34,14 +34,14 @@ ok(defined $body);
 my $dec = $body->encode(transfer_encoding => 'none');
 ok(defined $dec);
 isa_ok($dec, 'Mail::Message::Body');
-ok(!$dec->checked);
+ok(!$dec->checked, 'checked?');
 is($dec->string, $decoded);
 is($dec->transferEncoding, 'none');
 
-my $enc = $dec->encode(transfer_encoding => '7bit');
+my $enc = $dec->encode(transfer_encoding => '7bit', charset => 'utf-8');
 ok(defined $enc);
 isa_ok($enc, 'Mail::Message::Body');
-ok(!$enc->checked);
+ok($enc->checked, 'checked?');
 is($enc->string, $decoded);
 
 my $msg = Mail::Message->buildFromBody($enc, From => 'me', To => 'you'

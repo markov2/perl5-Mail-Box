@@ -127,10 +127,7 @@ sub addAddress(@)
     $addr;
 }
 
-#------------------------------------------
-
 =method addresses
-
 Returns all addresses defined in this group.  The addresses will be
 ordered alphabetically to make automated testing possible: roles are
 stored in a hash, so have an unpredictable order by default.
