@@ -110,7 +110,7 @@ sub write(@)
     }
 
     local *INDEX;
-    open INDEX, '>', $index
+    open INDEX, '>:raw', $index
         or return $self;
 
     my $fieldtype = 'Mail::Message::Field';
@@ -146,7 +146,7 @@ sub append(@)
     my $index     = $self->filename or return $self;
 
     local *INDEX;
-    open INDEX, '>>', $index
+    open INDEX, '>>:raw', $index
         or return $self;
 
     my $fieldtype = 'Mail::Message::Field';

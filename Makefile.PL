@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.106';
+my $VERSION = '2.107';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -39,12 +39,12 @@ my @optional =
 #This module contains XS code, so you need a C compiler.
 #WARN
 
-  [ Mail::Transport::Dbx => '0.04', reason  => <<'REASON' ]
-The wrapper to the Outlook's dbx files consists of a c-library
-named libdbx (website http://sourceforge.net/project/ol2mbox/),
-and a wrapper which is distributed separately from Mail::Box.
-You get read-only access to the dbx folders.
-REASON
+# [ Mail::Transport::Dbx => '0.04', reason  => <<'REASON' ]
+# The wrapper to the Outlook's dbx files consists of a c-library
+# named libdbx (website http://sourceforge.net/project/ol2mbox/),
+# and a wrapper which is distributed separately from Mail::Box.
+# You get read-only access to the dbx folders.
+# REASON
 
 #, [ Mail::SpamAssassin => '2.00', reason  => <<'REASON', warning => <<'WARN' ]
 #Searching for spam in a mail folder needs the popular spam killer.
@@ -54,7 +54,7 @@ REASON
 #break your Mail::Box installing process.
 #WARN
 
-, [ Mail::IMAPClient => '3.00', reason => <<'REASON' ]
+  [ Mail::IMAPClient => '3.00', reason => <<'REASON' ]
 Required for IMAP4 support.
 REASON
 

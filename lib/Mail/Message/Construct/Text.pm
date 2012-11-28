@@ -116,7 +116,7 @@ sub printStructure(;$$)
     my $fh      = @_ ? shift : select;
 
     my $buffer;   # only filled if filehandle==undef
-    open $fh, '>', \$buffer unless defined $fh;
+    open $fh, '>:raw', \$buffer unless defined $fh;
 
     my $subject = $self->get('Subject') || '';
     $subject    = ": $subject" if length $subject;

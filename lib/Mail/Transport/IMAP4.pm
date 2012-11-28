@@ -665,17 +665,22 @@ sub fetch($@)
     values %msgs;
 }
 
-=method appendMessage MESSAGE, FOLDERNAME
+=method appendMessage MESSAGE, FOLDERNAME, [DATE]
 Write the message to the server.
+The optional DATA can be a RFC-822 date or a timestamp.
 =cut
 
 sub appendMessage($$)
-{   my ($self, $message, $foldername) = @_;
-    my $imap   = $self->imapClient or return ();
+{   my ($self, $message, $foldername, $date) = @_;
+    my $imap = $self->imapClient or return ();
+
+    $date    = $imap->Rfc_822($date)
+        if $date && $date !~ m/\D/;
 
     $imap->append_string
      ( $foldername, $message->string
      , $self->labelsToFlags($message->labels)
+     , $date
      );
 }
 

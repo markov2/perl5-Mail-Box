@@ -1,17 +1,15 @@
 #!/usr/bin/env perl
-#
 # Test processing of addresses
-#
 
 use strict;
 use warnings;
-use Mail::Message;
 
 package Mail::Message::Field::Addresses;   # define package name
 package main;
 
 use lib qw(. .. tests);
 use Tools;
+use Mail::Message;
 
 use Test::More;
 

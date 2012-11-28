@@ -365,10 +365,11 @@ A reference to the object which manages this folder -- typically an
 M<Mail::Box::Manager> instance.
 
 =option  message_type CLASS
-=default message_type M<Mail::Box::Message>
+=default message_type <folder-class>::Message
 What kind of message objects are stored in this type of folder.  The
-default is M<Mail::Box::Message> (which is a sub-class of M<Mail::Message>).
-The class you offer must be an extension of M<Mail::Box::Message>.
+default is constructed from the folder class followed by C<::Message>.
+For instance, the message type for C<Mail::Box::POP3> is
+C<Mail::Box::POP3::Message>
 
 =option  fix_headers BOOLEAN
 =default fix_headers <false>

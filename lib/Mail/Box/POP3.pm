@@ -20,7 +20,7 @@ Mail::Box::POP3 - handle POP3 folders as client
 =chapter SYNOPSIS
 
  use Mail::Box::POP3;
- my $folder = new Mail::Box::POP3 folder => $ENV{MAIL}, ...;
+ my $folder = Mail::Box::POP3->new(folder => $ENV{MAIL}, ...);
 
 =chapter DESCRIPTION
 

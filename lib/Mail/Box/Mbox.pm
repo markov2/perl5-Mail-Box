@@ -112,7 +112,7 @@ sub foundIn($@)
     return 0 unless -f $filename;
     return 1 if -z $filename;               # empty folder is ok
 
-    open my $file, '<', $filename or return 0;
+    open my $file, '<:raw', $filename or return 0;
     local $_;
     while(<$file>)
     {   next if /^\s*$/;                    # skip empty lines

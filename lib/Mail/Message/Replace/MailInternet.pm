@@ -281,7 +281,7 @@ sub reply(@)
     my $home       = $ENV{HOME} || File::Spec->curdir;
     my $headtemp   = File::Spec->catfile($home, '.mailhdr');
 
-    if(open HEAD, '<', $headtemp)
+    if(open HEAD, '<:raw', $headtemp)
     {    my $parser = Mail::Box::Parser::Perl->new
            ( filename  => $headtemp
            , file      => \*HEAD

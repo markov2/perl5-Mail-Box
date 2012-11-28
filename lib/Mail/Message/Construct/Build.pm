@@ -82,7 +82,7 @@ to create a M<Mail::Message::Body>.
  file => \*MYINPUTFILE                   # file handle
  file => $in                             # any IO::Handle
 
- open my $in, '<', '/etc/passwd';        # alternative for IO::File
+ open my $in, '<:raw', '/etc/passwd';    # alternative for IO::File
 
 =option  files ARRAY-OF-FILE
 =default files C<[ ]>

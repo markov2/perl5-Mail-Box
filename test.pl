@@ -10,6 +10,7 @@ use lib qw(tests lib);
 
 # test env at home
 $ENV{PERL5LIB} .= qw(:/home/markov/shared/perl/IMAPClient/lib);
+delete $ENV{PERLIO};
 
 use Config;
 use Tools;             # test tools

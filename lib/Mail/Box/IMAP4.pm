@@ -22,7 +22,7 @@ Mail::Box::IMAP4 - handle IMAP4 folders as client
 =chapter SYNOPSIS
 
  use Mail::Box::IMAP4;
- my $folder = new Mail::Box::IMAP4 folder => $ENV{MAIL}, ...;
+ my $folder = Mail::Box::IMAP4->new(folder => $ENV{MAIL}, ...);
 
 =chapter DESCRIPTION
 

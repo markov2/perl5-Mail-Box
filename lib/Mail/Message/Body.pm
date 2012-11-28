@@ -804,7 +804,7 @@ sub write(@)
     my $filename = $args{filename};
     die "No filename for write() body" unless defined $filename;
 
-    open OUT, '>:raw', $filename or return;
+    open OUT, '>', $filename or return;
     $self->print(\*OUT);
     close OUT or return undef;
     $self;

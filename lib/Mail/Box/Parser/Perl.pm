@@ -311,7 +311,7 @@ sub openFile($)
     $self->{MBPP_file}       = $fh;
 
     $fh->binmode(':raw')
-       if ref($fh) eq 'GLOB' || $fh->can('BINMODE');
+        if ref($fh) eq 'GLOB' || $fh->can('BINMODE');
 
     $self->{MBPP_separators} = [];
 

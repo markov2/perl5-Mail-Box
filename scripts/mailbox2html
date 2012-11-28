@@ -1,10 +1,9 @@
 #!/usr/bin/perl -w
-
 use strict;
-use lib '/home/markov/fake';
+
 use Mail::Box::Manager;
 
-my $VERSION = '2.019';
+my $VERSION = '2.107';
 
 Mail::Box->VERSION($VERSION);
 
@@ -23,7 +22,7 @@ mailbox2html - EXPERIMENTAL: convert mail folders into an HTML structure
 
 =head1 SYNOPSIS
 
-mail2html [-src folder] [-dest directory] [-norecurse]
+mailbox2html [-src folder] [-dest directory] [-norecurse]
 
 =cut
 
@@ -50,7 +49,7 @@ USAGE
 
 my %option =
   ( cleanup     => 0
-  , dest        => exists $ENV{TMPDIR} ? '$ENV{TMPDIR}/mail2html'
+  , dest        => exists $ENV{TMPDIR} ? "$ENV{TMPDIR}/mail2html"
                  : -d '/var/tmp'       ? '/var/tmp/mail2html'
                  : -d '/tmp'           ? '/tmp/mail2html'
                  :                       '.'
@@ -61,8 +60,8 @@ my %option =
   , recurse     => 1
   , src         => exists $ENV{MAIL}   ? $ENV{MAIL}
                  : exists $ENV{mail}   ? $ENV{mail}
-                 : exists $ENV{HOME} && -d '$ENV{HOME}/Mail' ? '$ENV{HOME}/Mail'
-                 : exists $ENV{home} && -d '$ENV{home}/Mail' ? '$ENV{home}/Mail'
+                 : exists $ENV{HOME} && -d "$ENV{HOME}/Mail" ? "$ENV{HOME}/Mail"
+                 : exists $ENV{home} && -d "$ENV{home}/Mail" ? "$ENV{home}/Mail"
                  : '.'
 
   , verbose     => 0
@@ -70,18 +69,16 @@ my %option =
 
 sub get_options()
 {   use Getopt::Long;
-
-    GetOptions(\%option
-, 'src=s'
-, 'dest=s'
-, 'folderpage=s'
-, 'index=s'
-, 'messagepage=s'
-, 'recurse!'
-, 'verbose!'
-, 'cleanup!'
-, 'help|?!'
-              );
+    GetOptions \%option
+      , 'src=s'
+      , 'dest=s'
+      , 'folderpage=s'
+      , 'index=s'
+      , 'messagepage=s'
+      , 'recurse!'
+      , 'verbose!'
+      , 'cleanup!'
+      , 'help|?!';
 }
 
 sub trace(@) { warn @_,"\n" if $option{verbose} }
@@ -101,8 +98,8 @@ sub clean_dir($)
 
     closedir DIR;
 
-    unlink "$dir/$_"    foreach @files;
-    clean_dir "$dir/$_" foreach @directories;
+    unlink "$dir/$_"    for @files;
+    clean_dir "$dir/$_" for @directories;
     unlink $dir;
 }
 
@@ -134,7 +131,7 @@ sub create_folder(@)
     unless(-d $dirname)
     {   trace "Create directory $dirname.";
         mkdir $dirname, 0700
-           or die "Cannot create directory $dirname: $!\n";
+            or die "Cannot create directory $dirname: $!\n";
     }
     my $filename   = "$dirname/$option{index}";
 
@@ -187,8 +184,8 @@ sub create_folder(@)
     foreach my $message (@messages)
     {   $sum{deleted}++       if $message->deleted;
         $sum{seen_messages}++ if $message->label('seen');
-        $sum{foldersize}    += $message->size;
-        if(my $timestamp = $message->timestamp)
+        $sum{foldersize} += $message->size;
+        if(my $timestamp  = $message->timestamp)
         {   $sum{newest_message} = $timestamp if $timestamp > $sum{newest};
             $sum{oldest_message} = $timestamp if $timestamp < $sum{oldest};
         }
@@ -207,6 +204,7 @@ sub create_folder(@)
     # Page output.
     #
 
+    local *HTML;
     open HTML, '>', $filename
         or die "Cannot create $filename: $!\n";
 
@@ -228,25 +226,26 @@ sub create_folder(@)
 }
 
 sub create_message(@)
-{   my %args         = @_;
-    my $message      = $args{message};
+{   my %args     = @_;
+    my $message  = $args{message};
 
     # f.i. usable for constructing links, because all specials are stripped.
-    my $clean_id     = $message->messageID;
+    my $clean_id = $message->messageID;
     for($clean_id)
     {   s/^\s*\<(.*?)\>\s*$/$1/g;
         tr/a-zA-Z0-9_/-/cs;
     }
-    my $filename     = "$args{dirname}/${clean_id}.html";
-    my $subject      = $message->head->get('subject') || '&lt;no subject&gt;';
+    my $filename = "$args{dirname}/${clean_id}.html";
+    my $subject  = $message->head->get('subject') || '&lt;no subject&gt;';
     chomp $subject;
 
     $message->label
-     ( clean_id => $clean_id
-     , filename => $filename
-     , subject  => $subject
-     );
+      ( clean_id => $clean_id
+      , filename => $filename
+      , subject  => $subject
+      );
 
+    local *HTML;
     open HTML, '>', $filename
         or die "Cannot create $filename: $!\n";
 
@@ -268,17 +267,16 @@ sub create_message(@)
 
 sub parse_template($@)
 {   my $name = shift;
-    my @parts;
-    my $rest;
+    my (@parts, $rest);
     while(@_)
     {   $rest .= shift;
         while($rest =~ m/\<\#perl\b/)
         {   push @parts, $`;
-            $rest     = $';
-            $rest    .= shift while @_ && $rest !~ m/\#\>/;
+            $rest  = $';
+            $rest .= shift while @_ && $rest !~ m/\#\>/;
 
-            die "Perl part not closed in $name.\n"
-                unless $rest =~ m/\#\>/;
+            $rest  =~ m/\#\>/
+                or die "Perl part not closed in $name.\n";
 
             (my $code, $rest) = split /\s*\#\>\s*/, $rest, 2;
             if($code =~ s/^\s*BEGIN\s+//)
@@ -291,7 +289,6 @@ sub parse_template($@)
         }
     }
     push @parts, $rest;
-
     @parts;
 }
 
@@ -541,7 +538,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-This code is beta, version 2.019
+This code is beta, version 2.107
 
 =cut
 

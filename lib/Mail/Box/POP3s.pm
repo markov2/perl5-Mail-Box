@@ -12,7 +12,7 @@ Mail::Box::POP3s - handle secure POP3 folders as client
 =chapter SYNOPSIS
 
  use Mail::Box::POP3s;
- my $folder = new Mail::Box::POP3s folder => $ENV{MAIL}, ...;
+ my $folder = Mail::Box::POP3s->new(folder => $ENV{MAIL}, ...);
 
 =chapter DESCRIPTION
 
@@ -23,11 +23,13 @@ This module mainly extends M<Mail::Box::POP3>.
 =c_method new OPTIONS
 
 =default server_port  995
+=default message_type M<Mail::Box::POP3::Message>
 =cut
 
 sub init($)
 {   my ($self, $args) = @_;
     $args->{server_port} ||= 995;
+    $args->{message_type} = 'Mail::Box::POP3::Message';
     $self->SUPER::init($args);
     $self;
 }

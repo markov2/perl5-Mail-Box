@@ -127,8 +127,6 @@ sub init($$)
     $self;
 }
 
-#------------------------------------------
-
 =method from [HEAD|MESSAGE, OPTIONS]
 WARNING: this method has two very different purposes.  For backward
 compatibility reasons, without arguments M<resentFrom()> is called to
@@ -188,15 +186,11 @@ sub messageHead(;$)
     @_ ? $self->{MMHR_real} = shift : $self->{MMHR_real};
 }
 
-#------------------------------------------
-
 =method orderedFields
-
 Returns the fields in the order as should appear in header according
 to rfc2822.  For the C<Resent-*> fields of the group, the order is
 not that important, but the C<Return-Path>, C<Delivered-To>, and C<Received>
 must come first.  Only fields mentioned in the RFC are returned.
-
 =cut
 
 sub orderedFields()
@@ -204,10 +198,7 @@ sub orderedFields()
     map { $head->get($_) || () } @ordered_field_names;
 }
 
-#------------------------------------------
-
 =method set (FIELD =E<gt> VALUE) | OBJECT
-
 Set a FIELD to a (new) VALUE.  The FIELD names which do not start with
 'Resent-*' but need it will have that added.  It is also an option to
 specify a fully prepared message field OBJECT.  In any case, a field
@@ -242,15 +233,8 @@ sub set($;$)
     $field;
 }
 
-#-------------------------------------------
-
-sub fields() { shift->orderedFields }
-
-#-------------------------------------------
-
+sub fields()     { shift->orderedFields }
 sub fieldNames() { map { $_->Name } shift->orderedFields }
-
-#-------------------------------------------
 
 sub delete()
 {   my $self   = shift;
@@ -259,15 +243,11 @@ sub delete()
     $self;
 }
 
-#------------------------------------------
-
 =method add (FIELD =E<gt> VALUE) | OBJECT
 All fields appear only once, so C<add()> behaves as M<set()>.
 =cut
 
 sub add(@) { shift->set(@_) }
-
-#-------------------------------------------
 
 =method addFields [FIELDNAMES]
 Not applicable to resent-groups: the same name can appear in more than
@@ -282,32 +262,22 @@ sub addFields(@) { shift->notImplemented }
 =section Access to the header
 
 =method returnPath
-
 The field which describes the C<Return-Path> of this resent group.
-
 =cut
 
 sub returnPath() { shift->{MMHR_return_path} }
 
-#------------------------------------------
-
 =method deliveredTo
 The field which describes the C<Delivered-To> of this resent group.
-
 =cut
 
 sub deliveredTo() { shift->head->get('Delivered-To') }
 
-#------------------------------------------
-
 =method received
 The field which describes the C<Received> data of this resent group.
-
 =cut
 
 sub received() { shift->head->get('Received') }
-
-#------------------------------------------
 
 =method receivedTimestamp
 The timestamp as stored within the C<Received> field converted to
@@ -321,21 +291,15 @@ sub receivedTimestamp()
     Mail::Message::Field->dateToTimestamp($comment);
 }
 
-#------------------------------------------
-
 =method date
 Returns the C<Resent-Date> field, or C<undef> if it was not defined.
-
 =cut
 
 sub date($) { shift->head->get('resent-date') }
 
-#------------------------------------------
-
 =method dateTimestamp
 The timestamp as stored within the C<Resent-Date> field converted to
 local system time.
-
 =cut
 
 sub dateTimestamp()
@@ -343,17 +307,13 @@ sub dateTimestamp()
     Mail::Message::Field->dateToTimestamp($date->unfoldedBody);
 }
 
-#------------------------------------------
-
 =method resentFrom
-
 In scalar context, the C<Resent-From> field is returned.  In list
 context, the addresses as specified within the from field are
 returned as M<Mail::Address> objects.
 
 For reasons of backward compatibility and consistency, the M<from()>
 method will return the same as this method.
-
 =cut
 
 sub resentFrom()
@@ -361,14 +321,10 @@ sub resentFrom()
     wantarray ? $from->addresses : $from;
 }
 
-#------------------------------------------
-
 =method sender
-
 In scalar context, the C<Resent-Sender> field is returned.  In list
 context, the addresses as specified within the from field are
 returned as M<Mail::Address> objects.
-
 =cut
 
 sub sender()
@@ -376,14 +332,10 @@ sub sender()
     wantarray ? $sender->addresses : $sender;
 }
 
-#------------------------------------------
-
 =method to
-
 In scalar context, the C<Resent-To> field is returned.  In list context,
 the addresses as specified within the to field are returned as
 M<Mail::Address> objects.
-
 =cut
 
 sub to()
@@ -391,14 +343,10 @@ sub to()
     wantarray ? $to->addresses : $to;
 }
 
-#------------------------------------------
-
 =method cc
-
 In scalar context, the C<Resent-Cc> field is returned.  In list context,
 the addresses as specified within the cc field are returned as
 M<Mail::Address> objects.
-
 =cut
 
 sub cc()
@@ -406,15 +354,11 @@ sub cc()
     wantarray ? $cc->addresses : $cc;
 }
 
-#------------------------------------------
-
 =method bcc
-
 In scalar context, the C<Resent-Bcc> field is returned.  In list context,
 the addresses as specified within the bcc field are returned as
 M<Mail::Address> objects.  Bcc fields are not transmitted (hidden for
 external parties).
-
 =cut
 
 sub bcc()
@@ -422,13 +366,9 @@ sub bcc()
     wantarray ? $bcc->addresses : $bcc;
 }
 
-#------------------------------------------
-
 =method destinations
-
 Returns a list of all addresses specified in the C<Resent-To>, C<-Cc>, and
 C<-Bcc> fields of this resent group.
-
 =cut
 
 sub destinations()
@@ -436,17 +376,11 @@ sub destinations()
     ($self->to, $self->cc, $self->bcc);
 }
 
-#------------------------------------------
-
 =method messageId
-
 Returns the message-ID used for this group of resent lines.
-
 =cut
 
 sub messageId() { shift->head->get('resent-message-id') }
-
-#------------------------------------------
 
 =ci_method isResentGroupFieldName NAME
 =cut

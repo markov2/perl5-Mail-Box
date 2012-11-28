@@ -90,7 +90,7 @@ sub print(;$)
 
     my $filename = $self->filename;
     if($filename && -r $filename)
-    {   if(open my $in, '<', $filename)
+    {   if(open my $in, '<:raw', $filename)
         {    local $_;
              print $out $_ while <$in>;
              close $in;
