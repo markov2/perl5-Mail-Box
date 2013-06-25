@@ -12,6 +12,7 @@ use File::Spec;
 use Carp;
 use Scalar::Util 'weaken';
 use List::Util   qw/sum first/;
+use Devel::GlobalDestruction 'in_global_destruction';
 
 =chapter NAME
 
@@ -1932,9 +1933,8 @@ by the rest of the program.
 
 sub DESTROY
 {   my $self = shift;
-    $self->close unless $self->inGlobalDestruction || $self->{MB_is_closed};
+    $self->close unless in_global_destruction || $self->{MB_is_closed};
 }
-
 
 #-------------------------------------------
 # Instance variables

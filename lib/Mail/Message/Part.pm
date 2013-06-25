@@ -103,19 +103,19 @@ No extra headers are fabricated automatically.
 
 sub buildFromBody($$;@)
 {   my ($class, $body, $container) = (shift, shift, shift);
-    my @log     = $body->logSettings;
+    my @log  = $body->logSettings;
 
-    my $head    = Mail::Message::Head::Complete->new(@log);
+    my $head = Mail::Message::Head::Complete->new(@log);
     while(@_)
     {   if(ref $_[0]) {$head->add(shift)}
         else          {$head->add(shift, shift)}
     }
 
     my $part = $class->new
-     ( head      => $head
-     , container => $container
-     , @log
-     );
+      ( head      => $head
+      , container => $container
+      , @log
+      );
 
     $part->body($body);
     $part;

@@ -74,6 +74,9 @@ When a CLASS is given, an object of that type is created for you.  The created
 object can be retreived via M<imapClient()>, and than configured as
 defined by L<Mail::IMAPClient|Mail::IMAPClient>.
 
+=option  starttls BOOLEAN
+=default starttls C<false>
+tart Transport Security Layer (TLS).
 =cut
 
 sub init($)
@@ -98,7 +101,8 @@ sub init($)
     $self->{MTI_domain} = $args->{domain};
 
     unless(ref $imap)
-    {   $imap = $self->createImapClient($imap) or return undef;
+    {   $imap = $self->createImapClient($imap, Starttls => $args->{starttls})
+             or return undef;
     }
  
     $self->imapClient($imap) or return undef;
@@ -228,29 +232,31 @@ sub imapClient(;$)
     @_ ? ($self->{MTI_client} = shift) : $self->{MTI_client};
 }
 
-=method createImapClient CLASS
+=method createImapClient CLASS, OPTIONS
 Create an object of CLASS, which extends L<Mail::IMAPClient>.
+
+All OPTIONS will be passed to the constructor (new) of CLASS.
+
 =cut
 
-sub createImapClient($)
-{   my ($self, $class) = @_;
+sub createImapClient($@)
+{   my ($self, $class, @args) = @_;
 
     my ($host, $port) = $self->remoteHost;
 
     my $debug_level = $self->logPriority('DEBUG')+0;
-    my @debug;
     if($self->log <= $debug_level || $self->trace <= $debug_level)
     {   tie *dh, 'Mail::IMAPClient::Debug', $self;
-        @debug = (Debug => 1, Debug_fh => \*dh);
+        push @args, Debug => 1, Debug_fh => \*dh;
     }
 
     my $client = $class->new
-     ( Server => $host, Port => $port
-     , User   => undef, Password => undef   # disable auto-login
-     , Uid    => 1                          # Safer
-     , Peek   => 1                          # Don't set \Seen automaticly
-     , @debug
-     );
+      ( Server => $host, Port => $port
+      , User   => undef, Password => undef   # disable auto-login
+      , Uid    => 1                          # Safer
+      , Peek   => 1                          # Don't set \Seen automaticly
+      , @args
+      );
 
     $self->log(ERROR => $@), return undef if $@;
     $client;

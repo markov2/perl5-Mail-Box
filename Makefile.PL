@@ -4,7 +4,7 @@ require 5.006_001;
 
 use IO::Handle;
 
-my $VERSION = '2.107';
+my $VERSION = '2.108';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -54,7 +54,7 @@ my @optional =
 #break your Mail::Box installing process.
 #WARN
 
-  [ Mail::IMAPClient => '3.00', reason => <<'REASON' ]
+  [ Mail::IMAPClient => '3.22', reason => <<'REASON' ]
 Required for IMAP4 support.
 REASON
 
@@ -107,6 +107,7 @@ my %prereq =
  , Time::Zone     => 0
  , URI            => 1.23
  , User::Identity => '0.93'
+ , Devel::GlobalDestruction => 0.09
  );
 
 my $default_install_answer
@@ -267,7 +268,7 @@ RAWDIR          = ../public_html/mailbox/raw
 DISTDIR         = ../public_html/mailbox/source
 
 LICENSE         = artistic
-EXTENDS		= ../UserIdentity:../MimeTypes:../ORL:../MailTools2
+EXTENDS		= ../UserIdentity:../MimeTypes:../ORL:../MailTools2:../MailBoxC
 
 # for POD
 FIRST_YEAR      = 2001
@@ -277,7 +278,7 @@ WEBSITE         = http://perl.overmeer.net/mailbox/
 # for HTML
 HTML_OUTPUT     = ../public_html/mailbox/html
 HTML_DOCROOT    = /mailbox/html
-HTML_PACKAGE	= ../public_html/mailbox/htmlpkg
+HTML_PACKAGE    = ../public_html/mailbox/htmlpkg
 
 __POSTAMBLE
 

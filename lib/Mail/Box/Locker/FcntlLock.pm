@@ -46,7 +46,6 @@ sub name() {'FcntlLock'}
 sub _try_lock($)
 {   my ($self, $file) = @_;
     my $fl = File::FcntlLock->new;
-    $fl->l_pid($!+0);
     $fl->l_type(F_WRLCK);
     $? = $fl->lock($file, F_SETLK);
     $?==0;

@@ -481,17 +481,7 @@ sub AUTOLOAD(@)
 #-------------------------------------------
 
 =section Cleanup
-
-=method inGlobalDestruction
-
-Returns whether the program is breaking down.  This is used in M<DESTROY()>,
-where during global destructions references cannot be used.
-
 =cut
-
-my $global_destruction;
-END {$global_destruction++}
-sub inGlobalDestruction() {$global_destruction}
 
 #-------------------------------------------
 

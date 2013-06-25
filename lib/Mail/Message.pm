@@ -14,6 +14,7 @@ use Mail::Message::Body::Nested;
 
 use Carp;
 use Scalar::Util   'weaken';
+use Devel::GlobalDestruction 'in_global_destruction';
 
 =chapter NAME
 
@@ -1394,7 +1395,7 @@ this yourself!
 
 sub DESTROY()
 {   my $self = shift;
-    return if $self->inGlobalDestruction;
+    return if in_global_destruction;
 
     $self->SUPER::DESTROY;
     $self->head(undef);

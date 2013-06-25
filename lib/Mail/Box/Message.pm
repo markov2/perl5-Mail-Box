@@ -44,14 +44,12 @@ an instance of (a sub-class of) a M<Mail::Box>.
 
 =option  body_type CODE|CLASS
 =default body_type <from folder>
-
 If the body of a message is used delay-loaded, the message must what type
 of message to become when it finally gets parsed.  The folder which is
 delaying the load must specify the algorithm to determine that type.
 
 =option  size INTEGER
 =default size undef
-
 The size of the message, which includes head and body, but without the
 message separators which may be used by the folder type.
 
@@ -68,8 +66,6 @@ sub init($)
     return $self if $self->isDummy;
     $self;
 }
-
-#-------------------------------------------
 
 sub head(;$)
 {   my $self  = shift;
@@ -101,7 +97,6 @@ sub head(;$)
 =section The message
 
 =method folder [FOLDER]
-
 In with folder did we detect this message/dummy?  This is a reference
 to the folder-object.
 
@@ -259,7 +254,5 @@ sub destruct()
 {   require Mail::Box::Message::Destructed;
     Mail::Box::Message::Destructed->coerce(shift);
 }
-
-#-------------------------------------------
 
 1;
