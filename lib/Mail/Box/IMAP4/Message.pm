@@ -199,7 +199,7 @@ sub loadBody()
 =method fetch [INFO, ...]
 Use the IMAP's C<UID FETCH IMAP> command to get some data about this
 message.  The INFO request is passed to M<Mail::Box::IMAP4::fetch()>.
-Without INFO, C<ALL> information is retreived and returned as a HASH.
+Without INFO, C<ALL> information is retrieved and returned as a HASH.
 =cut
 
 sub fetch(@)

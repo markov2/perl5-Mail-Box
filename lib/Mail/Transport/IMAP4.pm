@@ -71,7 +71,7 @@ the OBJECT to have the accessors to produce correct results. The OBJECT
 shall be a L<Mail::IMAPClient|Mail::IMAPClient>.
 
 When a CLASS is given, an object of that type is created for you.  The created
-object can be retreived via M<imapClient()>, and than configured as
+object can be retrieved via M<imapClient()>, and than configured as
 defined by L<Mail::IMAPClient|Mail::IMAPClient>.
 
 =option  starttls BOOLEAN

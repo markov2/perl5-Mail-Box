@@ -119,7 +119,7 @@ Body objects are immutable, but may still cached or not.  In common
 case, the body of a message is requested via M<Mail::Message::body()>
 or M<Mail::Message::decoded()>.  This returns a handle to a body object.
 You may decide wether that body object can be reused or not.  C<NO>
-means: retreive the data each time again, C<YES> will cache the body data,
+means: retrieve the data each time again, C<YES> will cache the body data,
 C<DELAY> will send the whole message when the folder is closed.
 
         [local cache]  [write]
@@ -341,7 +341,7 @@ The header was read before, but now seems empty: the IMAP4 server does
 not produce the header lines anymore.
 
 =warning Cannot read body for $uidl in $folder.
-The header of the message was retreived from the IMAP4 server, but the
+The header of the message was retrieved from the IMAP4 server, but the
 body is not read, for an unknown reason.
 
 =cut

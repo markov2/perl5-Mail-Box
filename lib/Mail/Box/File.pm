@@ -63,7 +63,7 @@ examples are:
  my_own_lockfile.test   # full filename, same dir
  /etc/passwd            # somewhere else
 
-When the program runs with less priviledges (as normal user), often the
+When the program runs with less privileges (as normal user), often the
 default inbox folder can not be locked with the lockfile name which is
 produced by default.
 
@@ -113,18 +113,19 @@ sub init($)
     $args->{body_type} ||= \&_default_body_type;
     $args->{lock_file} ||= '--';   # to be resolved later
 
-    return unless defined $self->SUPER::init($args);
+    defined $self->SUPER::init($args)
+        or return;
 
     my $class    = ref $self;
 
     my $filename = $self->{MBF_filename}
-       = $class->folderToFilename
+       = $self->folderToFilename
            ( $self->name
            , $self->folderdir
            );
 
        if(-e $filename) {;}    # Folder already exists
-    elsif(   $args->{create} && $class->create($args->{folder}, %$args)) {;}
+    elsif($args->{create} && $class->create($args->{folder}, %$args)) {;}
     else
     {   $self->log(PROGRESS =>
                       "File $filename for folder $self does not exist.");
@@ -506,7 +507,7 @@ error messages to indicate the real problem.
 Mail::Box is lazy: it tries to leave messages in the folders until they
 are used, which saves time and memory usage.  When this message appears,
 something is terribly wrong: some lazy message are needed for updating the
-folder, but they cannot be retreived from the original file anymore.  In
+folder, but they cannot be retrieved from the original file anymore.  In
 this case, messages can be lost.
 
 This message does appear regularly on Windows systems when using the

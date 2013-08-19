@@ -187,7 +187,7 @@ sub listSubFolders(@)
     # Some files have to be removed because they are created by all
     # kinds of programs, but are no folders.
 
-    my @entries = grep { ! m/\.lo?ck$/ && ! m/^\./ } readdir DIR;
+    my @entries = grep !m/\.lo?ck$|^\./, readdir DIR;
     closedir DIR;
 
     # Look for files in the folderdir.  They should be readable to
@@ -218,7 +218,13 @@ sub listSubFolders(@)
         }
     }
 
-    map { m/(.*)/ && $1 } keys %folders;   # untained names
+    map +(m/(.*)/ && $1), keys %folders;   # untained names
+}
+
+sub openRelatedFolder(@)
+{   my $self = shift;
+    $self->SUPER::openRelatedFolder(subfolder_extension => $self->{MBM_sub_ext}
+      , @_);
 }
 
 #-------------------------------------------

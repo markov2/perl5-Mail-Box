@@ -275,7 +275,7 @@ sub software() { shift->{MMHF_software} }
 Returns an abstract name for the field group; which software is
 controling it.  C<undef> is returned in case the type is not known.
 Valid names are group type dependent: see the applicable manual
-pages.  A list of all types can be retreived with M<implementedTypes()>.
+pages.  A list of all types can be retrieved with M<implementedTypes()>.
 
 =cut
 

@@ -1446,7 +1446,7 @@ M<Mail::Message::Field> objects.
 
 =subsection The body
 
-The body contains the "payload": the data to be transfered.
+The body contains the "payload": the data to be transferred.
 The data can be encoded, only accessible with a specific application,
 and may use some weird character-set, like Vietnamese; the MailBox
 distribution tries to assist you with handling these e-mails without

@@ -30,7 +30,7 @@ Mail::Box::Dbx::Message - one message in a Dbx folder
 =option  account_name STRING
 =default account_name <from dbx_record>
 
-The string representation of the account which was used to retreive the
+The string representation of the account which was used to retrieve the
 message.
 
 =option  account_nr INTEGER
@@ -163,7 +163,7 @@ sub dbxRecord() { shift->{MBDM_dbx} }
 
 =method accountName
 
-Returns the Outlook Express account name which was used to retreive
+Returns the Outlook Express account name which was used to retrieve
 this message, represented as a string.  The M<accountNr()> returns
 a numerical representation of the same fact.
 
@@ -175,7 +175,7 @@ sub accountName() { shift->{MBDM_account_name} }
 
 =method accountNr
 
-Returns the Outlook Express account name which was used to retreive
+Returns the Outlook Express account name which was used to retrieve
 this message, represented as a number.  The M<accountName()> returns
 a string representation of the same fact.
 

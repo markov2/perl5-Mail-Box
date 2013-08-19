@@ -15,7 +15,7 @@ Mail::Box::IMAP4::Head - header fields related IMAP interface
 =chapter DESCRIPTION
 
 This class implements a pure IMAP4 protocol interface, where as little
-data is retreived from the header as possible.  This may look nice
+data is retrieved from the header as possible.  This may look nice
 to you, but is not sufficient for many tasks.  For instance, you cannot
 removed or modify fields this way.
 

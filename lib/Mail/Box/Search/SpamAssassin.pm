@@ -80,7 +80,7 @@ scan. See M<Mail::SpamAssassin::PerMsgStatus::rewrite_mail()>.
 
 Provide a Mail::SpamAssassin object to be used for searching spam.  If
 none is specified, one is created internally.  The object can be
-retreived with assassinator().
+retrieved with assassinator().
 
 =option  sa_options     HASH
 =default sa_options     C<{ }>

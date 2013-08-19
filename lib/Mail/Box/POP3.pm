@@ -301,7 +301,7 @@ The server told to have this message, but when asked for its headers, no
 single line was returned.  Did the message get destroyed?
 
 =error Cannot read body for $uidl on POP3 server $name.
-The message's headers are retreived from the server, but the body seems
+The message's headers are retrieved from the server, but the body seems
 to be lost.  Did the message get destroyed between reading the header
 and reading the body?
 

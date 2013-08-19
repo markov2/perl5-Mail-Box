@@ -17,13 +17,13 @@ use Mail::Box::Manager;
 use Mail::Box::Search::Grep;
 
 copy $src, $cpy
-    or die "Cannot create test folder: $!\n";
+    or die "Cannot create test folder $cpy: $!\n";
 
 my $mgr    = Mail::Box::Manager->new;
 
 my $folder = $mgr->open($cpy, lock_type => 'NONE');
-ok(defined $folder,                             'open folder');
-cmp_ok($folder->messages , "==",  45,           'folder full of messages');
+ok(defined $folder,                   'open folder');
+cmp_ok($folder->messages , "==",  45, 'folder full of messages');
 
 #
 # Simple search in body
@@ -122,6 +122,7 @@ my $grep3  = Mail::Box::Search::Grep->new
  );
 
 my @m3 = $grep3->search($folder);
+#warn $_.": ".$_->subject, "\n" for @m3;
 cmp_ok(@m3, "==", 24,                           'messages with ImageMagick');
 cmp_ok(@hits, "==", 60,                         'hits on ImageMagick');
 

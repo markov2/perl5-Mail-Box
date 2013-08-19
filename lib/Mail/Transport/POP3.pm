@@ -91,7 +91,7 @@ Returns (in scalar context only) the number of messages that are known
 to exist in the mailbox.
 
 =error Cannot get the messages of pop3 via messages()
-It is not possible to retreive all messages on a remote POP3 folder
+It is not possible to retrieve all messages on a remote POP3 folder
 at once: each shall be taken separately.  The POP3 folder will hide this
 for you.
 

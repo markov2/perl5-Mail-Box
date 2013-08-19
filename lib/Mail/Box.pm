@@ -2068,7 +2068,7 @@ on order of arrival.  A special C<.mh_sequences> file maintains flags
 about the messages.
 
 =item * M<Mail::Box::POP3> (read/delete only)
-POP3 is a protocol which can be used to retreive messages from a
+POP3 is a protocol which can be used to retrieve messages from a
 remote system.  After the connection to a POP server is made, the
 messages can be looked at and removed as if they are on the local
 system.
