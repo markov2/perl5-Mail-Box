@@ -666,7 +666,6 @@ program. The details about converting the OBJECTS to a field content
 are explained in L</Specifying field data>.
 
 =warning Illegal character in field name $name
-
 A new field is being created which does contain characters not permitted
 by the RFCs.  Using this field in messages may break other e-mail clients
 or transfer agents, and therefore mutulate or extinguish your message.

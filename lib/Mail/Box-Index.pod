@@ -14,7 +14,7 @@ about the module.
 
 Only the HTML version of this manual page will list the sections.
 
-=begin :html
+=begin html
 
 <ol>
 <li><strong><a name="general">General</a> sources of information</strong>
@@ -251,4 +251,4 @@ Only the HTML version of this manual page will list the sections.
   </ul>
 </ol>
 
-=end :html
+=end html

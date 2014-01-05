@@ -133,7 +133,7 @@ sub init($$)
 
     my ($attr, $value, $cont) = @$args{ qw/attr value use_continuations/ };
 
-    my $name  = ($attr =~ m/^(.*?)(?:\*\d+)?\*?\=/ ? $1 : $attr);
+    my $name  = ($attr =~ m/^(.*?)(?:\*\d+)?\*?\s*\=\s*/ ? $1 : $attr);
     $self->log(WARNING => "Illegal character in parameter name '$name'.")
         if $name !~ m/^[!#-'*+\-.0-9A-Z^-~]+$/;
 

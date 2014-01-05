@@ -4,7 +4,7 @@ use strict;
 package Mail::Message::Field::Date;
 use base 'Mail::Message::Field::Structured';
 
-use POSIX qw/mktime/;
+use POSIX qw/mktime tzset/;
 
 =chapter NAME
 
@@ -104,9 +104,15 @@ sub time()
     my ($d, $mon, $y, $h, $min, $s, $z)
       = $date =~ m/^ (?:\w\w\w\,\s+)? (\d\d)\s+(\w+)\s+(\d\d\d\d)
                      \s+ (\d\d)\:(\d\d)\:(\d\d) \s+ ([+-]\d\d\d\d)? \s*$ /x;
-    my $timestamp = mktime $s, $min, $h, $d, $monthnr{$mon}-1, $y-1900
-      , 0, 0, -1;
-    $timestamp += ($1 eq '-' ? -1 : 1) * ($2*3600 + $3*60)
+
+    my $oldtz = $ENV{TZ};
+    $ENV{TZ}  = 'UTC';
+    tzset;
+    my $timestamp = mktime $s, $min, $h, $d, $monthnr{$mon}-1, $y-1900;
+    $ENV{TZ}  = $oldtz;
+    tzset;
+
+    $timestamp += ($1 eq '-' ? 1 : -1) * ($2*3600 + $3*60)
         if $z =~ m/^([+-])(\d\d)(\d\d)$/;
     $timestamp;
 }

@@ -263,7 +263,8 @@ sub replaceDeletedParts($@)
 
 sub removeHtmlAlternativeToText($@)
 {   my ($self, $part, %args) = @_;
-    return $part unless $part->body->mimeType eq 'text/html';
+    $part->body->mimeType eq 'text/html'
+        or return $part;
 
     my $container = $part->container;
 
@@ -271,6 +272,7 @@ sub removeHtmlAlternativeToText($@)
         unless defined $container
             && $container->mimeType eq 'multipart/alternative';
 
+    # The HTML $part will be nulled when a plain text part is found
     foreach my $subpart ($container->parts)
     {   return undef if $subpart->body->mimeType eq 'text/plain';
     }
@@ -278,8 +280,19 @@ sub removeHtmlAlternativeToText($@)
     $part;
 }
 
-my $has_hft;
+sub removeExtraAlternativeText($@)
+{   my ($self, $part, %args) = @_;
 
+    my $container = $part->container;
+    $container && $container->mimeType eq 'multipart/alternative'
+        or return $part;
+
+    # The last part is the preferred part (as per RFC2046)
+    my $last = ($container->parts)[-1];
+    $last && $part==$last ? $part : undef;
+}
+
+my $has_hft;
 sub textAlternativeForHtml($@)
 {   my ($self, $part, %args) = @_;
 
@@ -466,9 +479,8 @@ content.  Please contribute with ideas and implementations.
 
 =item * removeHtmlAlternativeToText
 When a multipart alternative is encountered, which contains both a
-plain text and an html part, then the html part is flagged for
-deletion.  Especially useful in combination with the C<removeDeletedParts>
-and C<flattenMultiparts> rules.
+plain text and an html part, then the html part is deleted.
+Especially useful in combination with the C<flattenMultiparts> rule.
 
 =item * textAlternativeForHtml
 Any C<text/html> part which is not accompanied by an alternative
@@ -477,6 +489,12 @@ M<Mail::Message::Convert::HtmlFormatText>, which means that
 M<HTML::TreeBuilder> and M<HTML::FormatText>  must be installed on
 your system.
 
+=item * removeExtraAlternativeText
+[2.110] When a multipart alternative is encountered, deletes all its parts
+except for the last part (the preferred part in accordance
+with RFC2046). In practice, this normally results in the alternative
+plain text part being deleted of an html message. Useful in combination
+with the C<flattenMultiparts> rule.
 =back
 
 =subsection Adding your own rules

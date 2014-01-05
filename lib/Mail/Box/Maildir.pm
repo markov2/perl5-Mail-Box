@@ -291,7 +291,7 @@ sub readMessageFilenames
     opendir DIR, $dirname or return ();
 
     # unsorted list of untainted filenames.
-    my @files = map { /^(\d[\w.:,=\-]+)$/
+    my @files = map { /^([0-9][\w.:,=\-]+)$/
                       && -f "$dirname/$1" ? $1 : () }
                    readdir DIR;
     closedir DIR;
@@ -304,8 +304,8 @@ sub readMessageFilenames
     my %unified;
     m/^(\d+)/ and $unified{ ('0' x (9-length($1))).$_ } = $_ foreach @files;
 
-    map { "$dirname/$unified{$_}" }
-        sort keys %unified;
+    map "$dirname/$unified{$_}"
+      , sort keys %unified;
 }
 
 sub readMessages(@)
@@ -319,10 +319,10 @@ sub readMessages(@)
     #
 
     my $curdir  = "$directory/cur";
-    my @cur     = map { [$_, 1] } $self->readMessageFilenames($curdir);
+    my @cur     = map +[$_, 1], $self->readMessageFilenames($curdir);
 
     my $newdir  = "$directory/new";
-    my @new     = map { [$_, 0] } $self->readMessageFilenames($newdir);
+    my @new     = map +[$_, 0], $self->readMessageFilenames($newdir);
     my @log     = $self->logSettings;
 
     foreach (@cur, @new)

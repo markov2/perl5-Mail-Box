@@ -368,15 +368,17 @@ sub dispositionFilename(;$)
 
     my $field;
     if($field = $self->disposition)
-    {   $raw  = $field->attribute('filename')
-             || $field->attribute('file')
-             || $field->attribute('name');
+    {   $field = $field->study if $field->can('study');
+        $raw   = $field->attribute('filename')
+              || $field->attribute('file')
+              || $field->attribute('name');
     }
 
     if(!defined $raw && ($field = $self->type))
-    {   $raw  = $field->attribute('filename')
-             || $field->attribute('file')
-             || $field->attribute('name');
+    {   $field = $field->study if $field->can('study');
+        $raw   = $field->attribute('filename')
+              || $field->attribute('file')
+              || $field->attribute('name');
     }
 
     my $base;
