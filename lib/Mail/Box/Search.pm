@@ -49,7 +49,7 @@ UNDER CONSTRUCTION till M<Mail::Transport::IMAP4> is complete.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a filter.
 
@@ -201,12 +201,12 @@ sub init($)
 
 =section Searching
 
-=method search FOLDER|THREAD|MESSAGE|ARRAY-OF-MESSAGES
+=method search $folder|$thread|$message|ARRAY
 
-Check which messages from the FOLDER (Mail::Box) match the
+Check which messages from the $folder (Mail::Box) match the
 search parameters.  The matched messages are returned as list.  You
-can also specify a THREAD (a M<Mail::Box::Thread::Node>), one single
-MESSAGE (a M<Mail::Message>), or an array of messages.
+can also specify a $thread (a M<Mail::Box::Thread::Node>), one single
+$message (a M<Mail::Message>), or an ARRAY of messages.
 
 Sometimes we know how only one match is needed.  In this case, this
 searching will stop at the first match.  For instance, when C<limit> is C<-1>
@@ -277,9 +277,9 @@ sub search(@)
 
 #-------------------------------------------
 
-=method searchPart PART
+=method searchPart $part
 
-Search this message PART for matches.
+Search this message $part for matches.
 
 =cut
 
@@ -334,7 +334,7 @@ sub searchPart($)
 
 #-------------------------------------------
 
-=method inHead PART, HEAD
+=method inHead $part, $head
 
 Tests whether header contains the requesting information.  See the
 specific search module for its parameters.
@@ -345,7 +345,7 @@ sub inHead(@) {shift->notImplemented}
 
 #-------------------------------------------
 
-=method inBody PART, BODY
+=method inBody $part, $body
 
 Tests whether body contains the requesting information.  See the
 specific search module for its parameters.
@@ -358,7 +358,7 @@ sub inBody(@) {shift->notImplemented}
 
 =section The Results
 
-=method printMatch [FILEHANDLE], HASH
+=method printMatch [$fh], HASH
 
 Print the information about the match (see M<new(deliver)>) in
 some understandable way.  If no file handle

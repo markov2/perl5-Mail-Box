@@ -34,7 +34,7 @@ mechanism.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default via   C<'mailx'>
 
@@ -75,7 +75,7 @@ sub init($)
 
 #------------------------------------------
 
-=method trySend MESSAGE, OPTIONS
+=method trySend $message, %options
 
 =error Sending via mailx mailer $program failed: $! ($?)
 

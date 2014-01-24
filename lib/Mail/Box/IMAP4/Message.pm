@@ -25,7 +25,7 @@ as well.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default body_type M<Mail::Message::Body::Lines>
 
@@ -87,8 +87,8 @@ sub recvstamp()
     defined $date ? str2time($date) : undef;
 }
 
-=method label LABEL|PAIRS
-With only one argument, the value related to LABEL is returned.  With
+=method label $label|PAIRS
+With only one argument, the value related to $label is returned.  With
 more that one argument, the list is interpreted a label-value PAIRS
 to be set.
 
@@ -196,10 +196,10 @@ sub loadBody()
     $body;
 }
 
-=method fetch [INFO, ...]
+=method fetch [$info, ...]
 Use the IMAP's C<UID FETCH IMAP> command to get some data about this
-message.  The INFO request is passed to M<Mail::Box::IMAP4::fetch()>.
-Without INFO, C<ALL> information is retrieved and returned as a HASH.
+message.  The $info request is passed to M<Mail::Box::IMAP4::fetch()>.
+Without $info, C<ALL> information is retrieved and returned as a HASH.
 =cut
 
 sub fetch(@)
@@ -210,13 +210,13 @@ sub fetch(@)
     @info==1 ? $answer->{$info[0]} : @{$answer}{@info};
 }
 
-=method writeDelayed IMAP
+=method writeDelayed $imap
 Write all delayed information, like label changes, to the server.  This
 is done under force, so should even be done for folders opened without
 write-access. This method is called indirectly by a M<Mail::Box::write()>
 or M<Mail::Box::close()>.
 
-The IMAP argument is a M<Mail::IMAPClient> which has the right folder
+The $imap argument is a M<Mail::IMAPClient> which has the right folder
 already selected.
 
 Writing changes to the remote folder is not without hassle: IMAP4

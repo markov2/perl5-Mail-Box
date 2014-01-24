@@ -27,7 +27,7 @@ for NFS --and for local disks as well.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default method C<'NFS'>
 

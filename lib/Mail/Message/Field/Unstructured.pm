@@ -21,9 +21,9 @@ comments have no meaning for unstructured fields, but encoding does.
 
 =chapter METHODS
 
-=c_method new DATA
+=c_method new $data
 
-When the DATA is specified as single line, the content part is considered to
+When the $data is specified as single line, the content part is considered to
 be correcly (character) encoded and escaped.  Typically, it is a line as
 read from file.  The folding of the line is kept as is.
 

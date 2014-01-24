@@ -1,4 +1,3 @@
-
 use strict;
 
 package Mail::Box::IMAP4::Head;
@@ -26,7 +25,7 @@ games with headers.  On the other hand: the other settings are not
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  cache_fields BOOLEAN
 =default cache_fields C<false>
@@ -44,8 +43,8 @@ sub init($$)
     $self;
 }
 
-=method get NAME [,INDEX]
-Get the information about the header line NAME.  Realization will
+=method get $name, [$index]
+Get the information about the header line $name.  Realization will
 take place.
 =cut
 

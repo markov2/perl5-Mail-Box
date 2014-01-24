@@ -20,7 +20,7 @@ This module mainly extends M<Mail::Box::POP3>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default server_port  995
 =default message_type M<Mail::Box::POP3::Message>

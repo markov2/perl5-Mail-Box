@@ -73,7 +73,7 @@ use overload '""' => sub { shift->decodedBody };
 
 =chapter METHODS
 
-=c_method new DATA
+=c_method new $data
 
 Creating a new field object the correct way is a lot of work, because
 there is so much freedom in the RFCs, but at the same time so many
@@ -238,15 +238,15 @@ sub foldedBody($)
 
 =section Constructors
 
-=c_method from FIELD, OPTIONS
-Convert any FIELD (a M<Mail::Message::Field> object) into a new
+=c_method from $field, %options
+Convert any $field (a M<Mail::Message::Field> object) into a new
 M<Mail::Message::Field::Full> object.  This conversion is done the hard
 way: the string which is produced by the original object is parsed
 again.  Usually, the string which is parsed is exactly the line (or lines)
 as found in the original input source, which is a good thing because Full
 fields are much more carefull with the actual content.
 
-OPTIONS are passed to the constructor (see M<new()>).  In any case, some
+%options are passed to the constructor (see M<new()>).  In any case, some
 extensions of this Full field class is returned.  It depends on which
 field is created what kind of class we get.
 
@@ -269,10 +269,10 @@ sub from($@)
 
 =section Access to the body
 
-=method decodedBody OPTIONS
+=method decodedBody %options
 
 Returns the unfolded body of the field, where encodings are resolved.  The
-returned line will still contain comments and such.  The OPTIONS are passed
+returned line will still contain comments and such.  The %options are passed
 to the decoder, see M<decode()>.
 
 BE WARNED: if the field is a structured field, the content may change syntax,
@@ -291,7 +291,7 @@ sub decodedBody()
 
 =section Access to the content
 
-=ci_method createComment STRING, OPTIONS
+=ci_method createComment STRING, %options
 
 Create a comment to become part in a field.  Comments are automatically
 included within parenthesis.  Matching pairs of parenthesis are
@@ -300,7 +300,7 @@ it is only permitted with an escape (a backslash) in front of them.
 These backslashes will be added automatically if needed (don't worry!).
 Backslashes will stay, except at the end, where it will be doubled.
 
-The OPTIONS are C<charset>, C<language>, and C<encoding> as always.
+The %options are C<charset>, C<language>, and C<encoding> as always.
 The created comment is returned.
 
 =cut
@@ -324,14 +324,14 @@ sub createComment($@)
     "($comment)";
 }
 
-=ci_method createPhrase STRING, OPTIONS
+=ci_method createPhrase STRING, %options
 
 A phrase is a text which plays a well defined role.  This is the main
 difference with comments, which have do specified meaning.  Some special
 characters in the phrase will cause it to be surrounded with double
 quotes: do not specify them yourself.
 
-The OPTIONS are C<charset>, C<language>, and C<encoding>, as always.
+The %options are C<charset>, C<language>, and C<encoding>, as always.
 
 =cut
 
@@ -363,7 +363,7 @@ sub beautify() { shift }
 
 =section Internals
 
-=method encode STRING, OPTIONS
+=method encode STRING, %options
 
 Encode the (possibly utf8 encoded) STRING to a string which is acceptable
 to the RFC2047 definition of a header: only containing us-ascii characters.
@@ -487,7 +487,7 @@ sub encode($@)
     join ' ', @result;
 }
 
-=ci_method decode STRING, OPTIONS
+=ci_method decode STRING, %options
 
 Decode field encoded STRING to an utf8 string.  The input STRING is part of
 a header field, and as such, may contain encoded words in C<=?...?.?...?=>

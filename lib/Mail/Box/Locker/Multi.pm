@@ -26,8 +26,8 @@ safer, so that version is preferred.
 
 =chapter METHODS
 
-=c_method new OPTIONS
-You may also pass all OPTIONS understood by the initiated lockers
+=c_method new %options
+You may also pass all %options understood by the initiated lockers
 used by the multi locker.
 
 =default method C<'MULTI'>

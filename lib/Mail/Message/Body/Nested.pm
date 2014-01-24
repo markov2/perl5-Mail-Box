@@ -36,7 +36,7 @@ presented, a C<Mail::Message::Part> is used anyway.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default mime_type C<'message/rfc822'>
 

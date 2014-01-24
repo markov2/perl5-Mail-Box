@@ -23,7 +23,7 @@ compiler is available.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  trusted BOOLEAN
 =default trusted <false>

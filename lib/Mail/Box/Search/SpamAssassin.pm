@@ -53,7 +53,7 @@ spam-detection already is.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a spam filter.  Internally, a M<Mail::SpamAssassin> object is
 maintained.

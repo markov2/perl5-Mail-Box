@@ -46,7 +46,7 @@ result.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a UNIX-grep like search filter.
 
@@ -196,7 +196,7 @@ sub inBody(@)
 
 =section The Results
 
-=method printMatch [FILEHANDLE], MATCH
+=method printMatch [$fh], $match
 =cut
 
 sub printMatch($;$)
@@ -208,7 +208,7 @@ sub printMatch($;$)
     : $self->printMatchedBody($out, $match)
 }
 
-=method printMatchedHead FILEHANDLE, MATCH
+=method printMatchedHead $fh, $match
 =cut
 
 sub printMatchedHead($$)
@@ -230,7 +230,7 @@ sub printMatchedHead($$)
     $self;
 }
 
-=method printMatchedBody FILEHANDLE, MATCH
+=method printMatchedBody $fh, $match
 =cut
 
 sub printMatchedBody($$)

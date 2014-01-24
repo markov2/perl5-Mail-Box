@@ -38,7 +38,7 @@ used automatically.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a parser object which can handle one file.  For
 mbox-like mailboxes, this object can be used to read a whole folder.  In
@@ -94,7 +94,7 @@ sub init(@)
 
 =section The parser
 
-=method start OPTIONS
+=method start %options
 Start the parser by opening a file.
 
 =option  file FILEHANDLE|undef
@@ -187,24 +187,24 @@ sub filename() {shift->{MBP_filename}}
 
 =section Parsing
 
-=method filePosition [POSITION]
+=method filePosition [$position]
 
 Returns the location of the next byte to be used in the file which is
-parsed.  When a POSITION is specified, the location in the file is
+parsed.  When a $position is specified, the location in the file is
 moved to the indicated spot first.
 
 =cut
 
 sub filePosition(;$) {shift->NotImplemented}
 
-=method pushSeparator STRING|REGEXP
+=method pushSeparator STRING|Regexp
 Add a boundary line.  Separators tell the parser where to stop reading.
 A famous separator is the C<From>-line, which is used in Mbox-like
 folders to separate messages.  But also parts (I<attachments>) is a
 message are divided by separators.
 
 The specified STRING describes the start of the separator-line.  The
-REGEXP can specify a more complicated format.
+Regexp can specify a more complicated format.
 =cut
 
 sub pushSeparator($) {shift->notImplemented}
@@ -216,7 +216,7 @@ parser.  This will return C<undef> when there is none left.
 
 sub popSeparator($) {shift->notImplemented}
 
-=method readSeparator OPTIONS
+=method readSeparator %options
 Read the currently active separator (the last one which was pushed).  The
 line (or C<undef>) is returned.  Blank-lines before the separator lines
 are ignored.
@@ -242,9 +242,9 @@ header starts.  The follows the list of header field names and bodies.
 
 sub readHeader()    {shift->notImplemented}
 
-=method bodyAsString [,CHARS [,LINES]]
+=method bodyAsString [$chars, [$lines]]
 Try to read one message-body from the file.  Optionally, the predicted number
-of CHARacterS and/or LINES to be read can be supplied.  These values may be
+of CHARacterS and/or $lines to be read can be supplied.  These values may be
 C<undef> and may be wrong.
 
 The return is a list of three scalars, the location in the file
@@ -254,9 +254,9 @@ whole body.
 
 sub bodyAsString() {shift->notImplemented}
 
-=method bodyAsList [,CHARS [,LINES]]
+=method bodyAsList [$chars, [$lines]]
 Try to read one message-body from the file.  Optionally, the predicted number
-of CHARacterS and/or LINES to be read can be supplied.  These values may be
+of CHARacterS and/or $lines to be read can be supplied.  These values may be
 C<undef> and may be wrong.
 
 The return is a list of scalars, each containing one line (including
@@ -266,10 +266,10 @@ in the file where this body started and ended.
 
 sub bodyAsList() {shift->notImplemented}
 
-=method bodyAsFile FILEHANDLE [,CHARS [,LINES]]
+=method bodyAsFile $fh [$chars, [$lines]]
 Try to read one message-body from the file, and immediately write
 it to the specified file-handle.  Optionally, the predicted number
-of CHARacterS and/or LINES to be read can be supplied.  These values may be
+of CHARacterS and/or $lines to be read can be supplied.  These values may be
 C<undef> and may be wrong.
 
 The return is a list of three scalars: the location of the body (begin
@@ -278,9 +278,9 @@ and end) and the number of lines in the body.
 
 sub bodyAsFile() {shift->notImplemented}
 
-=method bodyDelayed [,CHARS [,LINES]]
+=method bodyDelayed [$chars, [$lines]]
 Try to read one message-body from the file, but the data is skipped.
-Optionally, the predicted number of CHARacterS and/or LINES to be skipped
+Optionally, the predicted number of CHARacterS and/or $lines to be skipped
 can be supplied.  These values may be C<undef> and may be wrong.
 
 The return is a list of four scalars: the location of the body (begin and
@@ -303,8 +303,8 @@ sub lineSeparator() {shift->{MBP_linesep}}
 
 =section Internals
 
-=method openFile ARGS
-Open the file to be parsed.  ARGS is a ref-hash of options.
+=method openFile $args
+Open the file to be parsed.  $args is a ref-hash of options.
 
 =requires filename FILENAME
 =requires mode STRING
@@ -327,13 +327,13 @@ sub takeFileInfo()
     @$self{ qw/MBP_size MBP_mtime/ } = (stat $self->filename)[7,9];
 }
 
-=ci_method defaultParserType [CLASS]
+=ci_method defaultParserType [$class]
 Returns the parser to be used to parse all subsequent
 messages, possibly first setting the parser using the optional argument.
 Usually, the parser is autodetected; the C<C>-based parser will be used
 when it can be, and the Perl-based parser will be used otherwise.
 
-The CLASS argument allows you to specify a package name to force a
+The $class argument allows you to specify a package name to force a
 particular parser to be used (such as your own custom parser). You have
 to C<use> or C<require> the package yourself before calling this method
 with an argument. The parser must be a sub-class of C<Mail::Box::Parser>.

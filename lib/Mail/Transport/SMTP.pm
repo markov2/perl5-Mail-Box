@@ -25,7 +25,7 @@ C<sendmail>, C<mail>, or other programs on the local host.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default hostname <from Net::Config>
 =default proxy    <from Net::Config>
@@ -100,9 +100,9 @@ sub init($)
 
 #------------------------------------------
 
-=method trySend MESSAGE, OPTIONS
+=method trySend $message, %options
 
-Try to send the MESSAGE once.   This may fail, in which case this
+Try to send the $message once.   This may fail, in which case this
 method will return C<false>.  In list context, the reason for failure
 can be caught: in list context C<trySend> will return a list of
 five values:
@@ -269,10 +269,10 @@ sub contactAnyServer()
 
 #------------------------------------------
 
-=method tryConnectTo HOST, OPTIONS
+=method tryConnectTo $host, %options
 
-Try to establish a connection to deliver SMTP to the specified HOST.  The
-OPTIONS are passed to the C<new> method of M<Net::SMTP>.
+Try to establish a connection to deliver SMTP to the specified $host.  The
+%options are passed to the C<new> method of M<Net::SMTP>.
 
 =cut
 

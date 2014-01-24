@@ -38,7 +38,7 @@ sub check($@)
     $body;
 }
 
-=method decode BODY, OPTIONS
+=method decode $body, %options
 Decoding is tricky, and not without loss of information.  Lines will
 stay separate lines, although they might have been joined before the
 encoding split them up.  Characters which are not printable will be
@@ -58,7 +58,7 @@ sub decode($@)
      );
 }
 
-=method encode BODY, OPTIONS
+=method encode $body, %options
 Encoding is to quoted-printable is a careful process: All characters
 outside the normal printing range, and including C<'='> are encoded.
 They are translated into a C<'='> followed by a two digit hex of the

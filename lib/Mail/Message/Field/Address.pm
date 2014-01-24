@@ -43,7 +43,7 @@ representation of the e-mail address, just like M<string()> does.
 
 The object used as boolean will always return C<true>
 
-=overload string comparison
+=overload string $comparison
 
 Two address objects are the same when their email addresses are the
 same.
@@ -62,17 +62,17 @@ use overload
 
 =section Constructors
 
-=method coerce STRING|OBJECT, OPTIONS
+=method coerce <STRING|$object>, %options
 
-Try to coerce the OBJECT into a C<Mail::Message::Field::Address>.
+Try to coerce the $object into a C<Mail::Message::Field::Address>.
 In case of a STRING, it is interpreted as an email address.
 
-The OPTIONS are passed to the object creation, and overrule the values
-found in the OBJECT.  The result may be C<undef> or a newly created
-object.  If the OBJECT is already of the correct type, it is returned
+The %options are passed to the object creation, and overrule the values
+found in the $object.  The result may be C<undef> or a newly created
+object.  If the $object is already of the correct type, it is returned
 unmodified.
 
-The OBJECT may currently be a M<Mail::Address>, a M<Mail::Identity>, or
+The $object may currently be a M<Mail::Address>, a M<Mail::Identity>, or
 a M<User::Identity>.  In case of the latter, one of the user's addresses
 is chosen at random.
 

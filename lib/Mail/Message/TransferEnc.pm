@@ -63,8 +63,7 @@ my %encoder =
 
 =section The Encoder
 
-=method create TYPE, OPTIONS
-
+=method create $type, %options
 Create a new coder/decoder based on the required type.
 
 =warning No decoder for transfer encoding $type.
@@ -95,12 +94,9 @@ sub create($@)
     $encoder->new(@_);
 }
 
-#------------------------------------------
-
-=c_method addTransferEncoder TYPE, CLASS
-
+=c_method addTransferEncoder $type, $class
 Adds one new encoder to the list known by the Mail::Box suite.  The
-TYPE is found in the message's header in the C<Content-Transfer-Encoding>
+$type is found in the message's header in the C<Content-Transfer-Encoding>
 field.
 
 =cut
@@ -111,22 +107,16 @@ sub addTransferEncoder($$)
     $class;
 }
 
-#------------------------------------------
-
 =method name
-
 The name of the encoder.  Case is not significant.
-
 =cut
 
 sub name {shift->notImplemented}
 
 #------------------------------------------
-
 =section Encoding
 
-=method check BODY, OPTIONS
-
+=method check $body, %options
 Check whether the body is correctly encoded.  If so, the body reference is
 returned with the C<checked> flag set.  Otherwise, a new object is created
 and returned.
@@ -141,11 +131,8 @@ modified data.
 
 sub check($@) {shift->notImplemented}
 
-#------------------------------------------
-
-=method decode BODY [, OPTIONS]
-
-Use the encoder to decode the content of BODY.  A new body is returned.
+=method decode $body, %options
+Use the encoder to decode the content of $body.  A new body is returned.
 
 =option  result_type  CLASS
 =default result_type  <type of source body>
@@ -158,11 +145,8 @@ modified data.
 
 sub decode($@) {shift->notImplemented}
 
-#------------------------------------------
-
-=method encode BODY, OPTIONS
-
-Use the encoder to encode the content of BODY.
+=method encode $body, %options
+Use the encoder to encode the content of $body.
 
 =option  result_type  CLASS
 =default result_type  <type of source body>
@@ -175,7 +159,6 @@ modified data.
 sub encode($) {shift->notImplemented}
 
 #------------------------------------------
-
 =section Error handling
 
 =cut

@@ -27,9 +27,9 @@ using M<HTML::FormatPS>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
-OPTIONS which start with capitals are blindly passed to M<HTML::FormatPS>.
+%options which start with capitals are blindly passed to M<HTML::FormatPS>.
 As of this writing, that package
 defines BottomMargin, FontFamily, FontScale, HorizontalMargin, Leading,
 LeftMargin, PageNo, PaperHeight, PaperSize, PaperWidth, RightMargin,
@@ -55,7 +55,7 @@ sub init($)
 
 =section Converting
 
-=method format BODY
+=method format $body
 
 Pass an html/xhtml encoded body, and a plain text body is returned.
 Characters are translated into Latin1.

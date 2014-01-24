@@ -14,7 +14,6 @@ use Mail::Message::Body::Nested;
 
 use Carp;
 use Scalar::Util   'weaken';
-use Devel::GlobalDestruction 'in_global_destruction';
 
 =chapter NAME
 
@@ -66,7 +65,7 @@ BEGIN { $crlf_platform = $^O =~ m/win32|cygwin/i }
 
 #------------------------------------------
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  body OBJECT
 =default body undef
@@ -168,7 +167,7 @@ sub init($)
     $self;
 }
 
-=method clone OPTIONS
+=method clone %options
 
 Create a copy of this message.  Returned is a C<Mail::Message> object.
 The head and body, the log and trace levels are taken.  Labels are
@@ -319,7 +318,7 @@ this will return C<false>.
 
 sub isDummy() { 0 }
 
-=method print [FILEHANDLE]
+=method print [$fh]
 Print the message to the FILE-HANDLE, which defaults to the selected
 filehandle, without the encapsulation sometimes required by a folder
 type, like M<write()> does.
@@ -343,9 +342,9 @@ sub print(;$)
     $self;
 }
 
-=method write [FILEHANDLE]
+=method write [$fh]
 Write the message to the FILE-HANDLE, which defaults to the selected
-FILEHANDLE, with all surrounding information which is needed to put
+$fh, with all surrounding information which is needed to put
 it correctly in a folder file.
 
 In most cases, the result of C<write> will be the same as with M<print()>.
@@ -363,12 +362,12 @@ sub write(;$)
     $self;
 }
 
-=method send [MAILER], OPTIONS
-Transmit the message to anything outside this Perl program.  MAILER
-is a M<Mail::Transport::Send> object.  When the MAILER is not specified, one
+=method send [$mailer], %options
+Transmit the message to anything outside this Perl program.  $mailer
+is a M<Mail::Transport::Send> object.  When the $mailer is not specified, one
 will be created, and kept as default for the next messages as well.
 
-The OPTIONS are mailer specific, and a mixture of what is usable for
+The %options are mailer specific, and a mixture of what is usable for
 the creation of the mailer object and the sending itself.  Therefore, see
 for possible options M<Mail::Transport::Send::new()> and
 M<Mail::Transport::Send::send()>.
@@ -442,8 +441,8 @@ sub size()
 
 =section The header
 
-=method head [HEAD]
-Return (optionally after setting) the HEAD of this message.
+=method head [$head]
+Return (optionally after setting) the $head of this message.
 The head must be an (sub-)class of M<Mail::Message::Head>.
 When the head is added, status information is taken from it
 and transformed into labels.  More labels can be added by the
@@ -481,10 +480,10 @@ sub head(;$)
     $head;
 }
 
-=method get FIELDNAME
+=method get $fieldname
 
 Returns the value which is stored in the header field with the specified
-name.  The FIELDNAME is case insensitive.  The I<unfolded body> of the
+name.  The $fieldname is case insensitive.  The I<unfolded body> of the
 field is returned, stripped from any attributes.
 See M<Mail::Message::Field::body()>.
 
@@ -509,7 +508,7 @@ sub get($)
     $field->body;
 }
 
-=method study FIELDNAME
+=method study $fieldname
 Study the content of a field, like M<get()> does, with as main difference
 that a M<Mail::Message::Field::Full> object is returned.  These objects
 stringify to an utf8 decoded representation of the data contained in
@@ -689,12 +688,12 @@ sub nrLines()
 
 =section The body
 
-=method body [BODY]
+=method body [$body]
 Return the body of this message.  BE WARNED that this returns
 you an object which may be encoded: use decoded() to get a body
 with usable data.
 
-With options, a new BODY is set for this message.  This is B<not>
+With options, a new $body is set for this message.  This is B<not>
 for normal use unless you understand the consequences: you change
 the message content without changing the message-ID.  The right
 way to go is via
@@ -703,13 +702,13 @@ way to go is via
  $message = M<Mail::Message>->build($body);          # or
  $message = $origmsg->forward(body => $body);
 
-The BODY must be an (sub-)class of M<Mail::Message::Body>.  In this case,
+The $body must be an (sub-)class of M<Mail::Message::Body>.  In this case,
 information from the specified body will be copied into the header.  The
 body object will be encoded if needed, because messages written to file
 or transmitted shall not contain binary data.  The converted body
 is returned.
 
-When BODY is C<undef>, the current message body will be dissected from
+When $body is C<undef>, the current message body will be dissected from
 the message.  All relation will be cut.  The body is returned, and
 can be connected to a different message.
 
@@ -757,9 +756,9 @@ sub body(;$@)
     $self->{MM_body} = $body;
 }
 
-=method decoded OPTIONS
+=method decoded %options
 Decodes the body of this message, and returns it as a body object.
-Short for C<<$msg->body->decoded>>  All OPTIONS are passed-on.
+Short for C<<$msg->body->decoded>>  All %options are passed-on.
 =cut
 
 sub decoded(@)
@@ -767,9 +766,9 @@ sub decoded(@)
     $body ? $body->decoded(@_) : undef;
 }
 
-=method encode OPTIONS
+=method encode %options
 Encode the message to a certain format.  Read the details in the
-dedicated manual page M<Mail::Message::Body::Encode>.  The OPTIONS which
+dedicated manual page M<Mail::Message::Body::Encode>.  The %options which
 can be specified here are those of the M<Mail::Message::Body::encode()>
 method.  
 =cut
@@ -805,7 +804,7 @@ sub contentType()
     length $ct ? $ct : 'text/plain';
 }
 
-=method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
+=method parts [<'ALL'|'ACTIVE'|'DELETED'|'RECURSE'|$filter>]
 Returns the I<parts> of this message. Usually, the term I<part> is used
 with I<multipart> messages: messages which are encapsulated in the body
 of a message.  To abstract this concept: this method will return you
@@ -821,7 +820,7 @@ be combined with the other options, which you may want: it that case
 you have to test yourself.
 
 'ACTIVE' and 'DELETED' check for the deleted flag on messages and
-message parts.  The FILTER is a code reference, which is called for
+message parts.  The $filter is a code reference, which is called for
 each part of the message; each part as C<RECURSE> would return.
 
 =examples
@@ -903,8 +902,8 @@ sub isModified()
     0;
 }
 
-=method label LABEL|PAIRS
-Return the value of the LABEL, optionally after setting some values.  In
+=method label $label|PAIRS
+Return the value of the $label, optionally after setting some values.  In
 case of setting values, you specify key-value PAIRS.
 
 Labels are used to store knowledge about handling of the message within
@@ -1082,8 +1081,8 @@ sub statusToLabels()
 
 =section Internals
 
-=c_method coerce MESSAGE, OPTIONS
-Coerce a MESSAGE into a Mail::Message.  In some occasions, for instance
+=c_method coerce $message, %options
+Coerce a $message into a Mail::Message.  In some occasions, for instance
 where you add a message to a folder, this coercion is automatically
 called to ensure that the correct message type is stored.
 
@@ -1183,7 +1182,7 @@ sub coerce($@)
 }
 
 =method clonedFrom
-Returns the MESSAGE which is the source of this message, which was
+Returns the $message which is the source of this message, which was
 created by a M<clone()> operation.
 =cut
 
@@ -1194,13 +1193,13 @@ sub clonedFrom() { shift->{MM_cloned} }
 sub isParsed()   { not shift->isDelayed }
 sub headIsRead() { not shift->head->isa('Mail::Message::Delayed') }
 
-=method readFromParser PARSER, [BODYTYPE]
-Read one message from file.  The PARSER is opened on the file.  First
+=method readFromParser $parser, [$bodytype]
+Read one message from file.  The $parser is opened on the file.  First
 M<readHead()> is called, and the head is stored in the message.  Then
 M<readBody()> is called, to produce a body.  Also the body is added to
 the message without decodings being done.
 
-The optional BODYTYPE may be a body class or a reference to a code
+The optional $bodytype may be a body class or a reference to a code
 which returns a body-class based on the header.
 =cut
 
@@ -1222,9 +1221,9 @@ sub readFromParser($;$)
     $self;
 }
 
-=method readHead PARSER [,CLASS]
-Read a head into an object of the specified CLASS.  The CLASS defaults to
-M<new(head_type)>.  The PARSER is the access to the folder's file.
+=method readHead $parser, [$class]
+Read a head into an object of the specified $class.  The $class defaults to
+M<new(head_type)>.  The $parser is the access to the folder's file.
 =cut
 
 sub readHead($;$)
@@ -1240,16 +1239,16 @@ sub readHead($;$)
       )->read($parser);
 }
 
-=method readBody PARSER, HEAD [, BODYTYPE]
-Read a body of a message.  The PARSER is the access to the folder's
-file, and the HEAD is already read.  Information from the HEAD is used
+=method readBody $parser, $head, [$bodytype]
+Read a body of a message.  The $parser is the access to the folder's
+file, and the $head is already read.  Information from the $head is used
 to create expectations about the message's length, but also to determine
 the mime-type and encodings of the body data.
 
-The BODYTYPE determines which kind of body will be made and defaults to
+The $bodytype determines which kind of body will be made and defaults to
 the value specified by new(body_type).
-BODYTYPE may be the name of a body class, or a reference
-to a routine which returns the body's class when passed the HEAD as only
+$bodytype may be the name of a body class, or a reference
+to a routine which returns the body's class when passed the $head as only
 argument.
 =cut
 
@@ -1302,7 +1301,7 @@ sub readBody($$;$$)
       );
 }
 
-=method storeBody BODY
+=method storeBody $body
 Where the M<body()> method can be used to set and get a body, with all
 the necessary checks, this method is bluntly adding the specified body
 to the message.  No conversions, not checking.
@@ -1352,10 +1351,10 @@ sub takeMessageId(;$)
 
 =section Error handling
 
-=ci_method shortSize [VALUE]
-Represent an integer VALUE representing the size of file or memory,
+=ci_method shortSize [$value]
+Represent an integer $value representing the size of file or memory,
 (which can be large) into a short string using M and K (Megabytes
-and Kilobytes).  Without VALUE, the size of the message head is used.
+and Kilobytes).  Without $value, the size of the message head is used.
 =cut
 
 sub shortSize(;$)
@@ -1386,28 +1385,12 @@ sub shortString()
 
 =section Cleanup
 
-=method DESTROY
-When a message is to accessible anymore by any user's reference, Perl
-will call DESTROY for final clean-up.  In this case, the head and
-body are released, and de-registered for the folder.  You shall not call
-this yourself!
-=cut
-
-sub DESTROY()
-{   my $self = shift;
-    return if in_global_destruction;
-
-    $self->SUPER::DESTROY;
-    $self->head(undef);
-    $self->body(undef);
-}
-
 =method destruct
 Remove the information contained in the message object.  This will be
 ignored when more than one reference to the same message object exists,
 because the method has the same effect as assigning C<undef> to the
 variable which contains the reference.  Normal garbage collection will
-call M<DESTROY()> when possible.
+call C<DESTROY()> when possible.
 
 This method is only provided to hide differences with messages which are
 located in folders: their M<Mail::Box::Message::destruct()> works quite

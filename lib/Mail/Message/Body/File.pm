@@ -30,7 +30,7 @@ access through a file is slower, it is saving a lot of memory.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =error Unable to read file $filename for message body file: $!
 A M<Mail::Message::Body::File> object is to be created from a named file, but
@@ -49,14 +49,14 @@ sub _data_from_filename(@)
     local $_;
     local (*IN, *OUT);
 
-    unless(open IN, '<', $filename)
+    unless(open IN, '<:raw', $filename)
     {   $self->log(ERROR =>
             "Unable to read file $filename for message body file: $!");
         return;
     }
 
     my $file   = $self->tempFilename;
-    unless(open OUT, '>', $file)
+    unless(open OUT, '>:raw', $file)
     {   $self->log(ERROR => "Cannot write to temporary body file $file: $!");
         return;
     }
@@ -78,7 +78,7 @@ sub _data_from_filehandle(@)
 
     local *OUT;
 
-    unless(open OUT, '>', $file)
+    unless(open OUT, '>:raw', $file)
     {   $self->log(ERROR => "Cannot write to temporary body file $file: $!");
         return;
     }
@@ -101,7 +101,7 @@ sub _data_from_glob(@)
     local $_;
     local *OUT;
 
-    unless(open OUT, '>', $file)
+    unless(open OUT, '>:raw', $file)
     {   $self->log(ERROR => "Cannot write to temporary body file $file: $!");
         return;
     }
@@ -122,7 +122,7 @@ sub _data_from_lines(@)
 
     local *OUT;
 
-    unless(open OUT, '>', $file)
+    unless(open OUT, '>:raw', $file)
     {   $self->log(ERROR => "Cannot write to $file: $!");
         return;
     }
@@ -158,7 +158,7 @@ sub nrLines()
     local $_;
     local *IN;
 
-    open IN, '<', $file
+    open IN, '<:raw', $file
         or die "Cannot read from $file: $!\n";
 
     $nrlines++ while <IN>;
@@ -190,7 +190,7 @@ sub string()
 
     local *IN;
 
-    open IN, '<', $file
+    open IN, '<:raw', $file
         or die "Cannot read from $file: $!\n";
 
     my $return = join '', <IN>;
@@ -205,7 +205,7 @@ sub lines()
     my $file = $self->tempFilename;
 
     local *IN;
-    open IN, '<', $file
+    open IN, '<:raw', $file
         or die "Cannot read from $file: $!\n";
 
     my @r = <IN>;
@@ -216,7 +216,7 @@ sub lines()
 }
 
 sub file()
-{   open my $tmp, '<', shift->tempFilename;
+{   open my $tmp, '<:raw', shift->tempFilename;
     $tmp;
 }
 
@@ -228,7 +228,7 @@ sub print(;$)
     local $_;
     local *IN;
 
-    open IN, '<', $file
+    open IN, '<:raw', $file
         or croak "Cannot read from $file: $!\n";
 
     if(ref $fh eq 'GLOB') {print $fh $_ while <IN>}
@@ -244,7 +244,7 @@ sub read($$;$@)
 
     local *OUT;
 
-    open OUT, '>', $file
+    open OUT, '>:raw', $file
         or die "Cannot write to $file: $!.\n";
 
     (my $begin, my $end, $self->{MMBF_nrlines}) = $parser->bodyAsFile(\*OUT,@_);
@@ -262,7 +262,7 @@ sub endsOnNewline() { shift->size==0 }
 
 =section Internals
 
-=method tempFilename [FILENAME]
+=method tempFilename [$filename]
 Returns the name of the temporary file which is used to store this body.
 =cut
 

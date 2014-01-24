@@ -24,11 +24,11 @@ handle.
 
 =section Constructing a message
 
-=c_method read FILEHANDLE|SCALAR|REF-SCALAR|ARRAY-OF-LINES, OPTIONS
+=c_method read $fh|STRING|SCALAR|ARRAY, %options
 
-Read a message from a FILEHANDLE, SCALAR, a reference to a SCALAR, or
-a reference to an array of LINES.  Most OPTIONS are passed to the M<new()>
-of the message which is created, but a few extra are defined.
+Read a message from a $fh, STRING, SCALAR, or a reference to an
+ARRAY of lines.  Most %options are passed to the M<new()> of the message
+which is created, but a few extra are defined.
 
 Please have a look at M<build()> and M<buildFromBody()> before thinking about
 this C<read> method.  Use this C<read> only when you have a file-handle

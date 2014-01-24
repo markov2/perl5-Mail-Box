@@ -30,8 +30,7 @@ be deleted.
 
 =chapter METHODS
 
-=c_method new MESSAGE-ID, OPTIONS
-
+=c_method new $message_id, %options
 You cannot instantiate a destructed message object.  Destruction is
 done by calling M<Mail::Box::Message::destruct()>.
 
@@ -48,15 +47,10 @@ sub new(@)
     undef;
 }
  
-#-------------------------------------------
-
 sub isDummy()    { 1 }
 
-#-------------------------------------------
-
-=method head [HEAD]
-
-When C<undef> is specified for HEAD, no change has to take place and
+=method head [$head]
+When C<undef> is specified for $head, no change has to take place and
 the method returns silently.  In all other cases, this method will
 complain that the header has been removed.
 
@@ -76,14 +70,10 @@ sub head(;$)
      undef;
 }
 
-#-------------------------------------------
-
-=method body [BODY]
-
-When C<undef> is specified for BODY, no change has to take place and
+=method body [$body]
+When C<undef> is specified for $body, no change has to take place and
 the method returns silently.  In all other cases, this method will
 complain that the body data has been removed.
-
 =cut
 
 sub body(;$)
@@ -94,10 +84,7 @@ sub body(;$)
      undef;
 }
 
-#-------------------------------------------
-
-=c_method coerce MESSAGE
-
+=c_method coerce $message
 Coerce a M<Mail::Box::Message> into destruction.
 
 =examples of coercion to death
@@ -131,8 +118,6 @@ sub coerce($)
    bless $message, $class;
 }
 
-#-------------------------------------------
-
 sub modified(;$)
 {  my $self = shift;
 
@@ -144,10 +129,7 @@ sub modified(;$)
 
 sub isModified() { 0 }
 
-#-------------------------------------------
-
-=method label LABEL|PAIRS
-
+=method label $label|PAIRS
 It is possible to delete a destructed message, but not to undelete it.
 
 =error Destructed message has no labels except 'deleted'
@@ -181,8 +163,6 @@ sub label($;@)
    1;
 }
 
-#-------------------------------------------
-
-sub labels() { wantarray ? ('deleted') : { deleted => 1 } }
+sub labels() { wantarray ? ('deleted') : +{deleted => 1} }
 
 1;

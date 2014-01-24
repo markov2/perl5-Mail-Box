@@ -1,4 +1,3 @@
-
 use strict;
 
 package Mail::Message::Head::Delayed;
@@ -31,7 +30,7 @@ by a M<Mail::Message::Head> when someone accesses the header of a message.
 
 =section Constructors
 
-=method build FIELDS
+=method build $fields
 
 You cannot create a delayed header with fields.
 
@@ -81,11 +80,9 @@ sub isEmpty() { 0 }
 
 =section Access to the header
 
-=method get NAME [,INDEX]
-
-Get the information about the header line NAME.  Realization will
+=method get $name, [$index]
+Get the information about the header line $name.  Realization will
 take place.
-
 =cut
 
 sub get($;$)
@@ -98,7 +95,6 @@ sub get($;$)
 =section About the body
 
 =method guessBodySize
-
 On a delayed head, this retuns C<undef>, because when there is no header
 there is also no body.
 
@@ -106,28 +102,21 @@ For messages in directory or network organized folders,
 M<Mail::Message::size()> usually will give a figure for the whole message
 without much cost.  Subtract a few hundred bytes for the header, and
 you will get a good estimate.
-
 =cut
 
 sub guessBodySize() {undef}
 
-#-------------------------------------------
-
 =method guessTimeStamp
-
 Make a guess about when the message was originally posted.
 On a delayed head, this returns C<undef>.
 For messages in directory or network organized folders,
 M<Mail::Message::timestamp()> usually will give a figure without much cost.
-
 =cut
 
 sub guessTimestamp() {undef}
 
 #------------------------------------------
-
 =section Internals
-
 =cut
 
 sub read($)
@@ -138,14 +127,7 @@ sub read($)
     $self;
 }
 
-#------------------------------------------
-
 sub load() {$_[0] = $_[0]->message->loadHead}
-
-#------------------------------------------
-
 sub setNoRealize($) { shift->log(INTERNAL => "Setting field on a delayed?") }
-
-#-------------------------------------------
 
 1;

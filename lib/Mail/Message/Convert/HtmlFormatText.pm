@@ -30,7 +30,7 @@ C<text_alternative_for_html>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  leftmargin INTEGER
 =default leftmargin C<3>
@@ -61,7 +61,7 @@ sub init($)
 
 =section Converting
 
-=method format BODY
+=method format $body
 
 Pass an html/xhtml encoded body, and a plain text body is returned.
 Characters are translated into Latin1.

@@ -27,7 +27,7 @@ this module supports postfix as well.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default via C<'sendmail'>
 
@@ -59,7 +59,7 @@ sub init($)
 
 =section Sending mail
 
-=method trySend MESSAGE, OPTIONS
+=method trySend $message, %options
 
 =option  sendmail_options ARRAY
 =default sendmail_options undef

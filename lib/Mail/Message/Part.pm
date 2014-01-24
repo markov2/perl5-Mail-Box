@@ -36,7 +36,7 @@ into mail folder specific variants.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 Create a message part.
 
 =default  head     <empty header>
@@ -62,13 +62,13 @@ sub init($)
     $self;
 }
 
-=c_method coerce BODY|MESSAGE, MULTIPART, HEADERS
-Transforms a BODY or MESSAGE to a real message part.  The MULTIPART
+=c_method coerce <$body|$message>, $multipart, @headers
+Transforms a $body or $message to a real message part.  The $multipart
 refers to the parental body.
 
-When ta BODY is specified, extra HEADERS can be supplied as well.
+When ta $body is specified, extra @headers can be supplied as well.
 Bodies are coerced into message parts by calling M<buildFromBody()>.
-If you specify a MESSAGE residing in a folder, this message will
+If you specify a $message residing in a folder, this message will
 automatically be cloned.
 =cut
 
@@ -91,10 +91,10 @@ sub coerce($@)
     $part;
 }
 
-=c_method buildFromBody BODY, CONTAINER, HEADERS
-Shape a message part around a BODY.  Bodies have information about their
+=c_method buildFromBody $body, $container, $headers
+Shape a message part around a $body.  Bodies have information about their
 content in them, which is used to construct a header for the message.
-Next to that, more HEADERS can be specified.  No headers are obligatory.
+Next to that, more $headers can be specified.  No headers are obligatory.
 No extra headers are fabricated automatically.
 =example
  my $multi = Mail::Message::Body::Multipart->new;
@@ -164,7 +164,7 @@ sub readFromParser($;$)
 #-----------------
 =section The message
 
-=method printEscapedFrom FILEHANDLE
+=method printEscapedFrom $fh
 Prints the message part, but all lines which start with 'From ' will get
 a leading E<gt>.  See M<Mail::Message::Body::printEscapedFrom()>.
 =cut

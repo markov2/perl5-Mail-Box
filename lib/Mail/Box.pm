@@ -123,8 +123,8 @@ use overload '@{}' => sub { shift->{MB_messages} }
 
 =section Constructors
 
-=c_method new OPTIONS
-Open a new folder. A list of labeled OPTIONS for the mailbox can be
+=c_method new %options
+Open a new folder. A list of labeled %options for the mailbox can be
 supplied. Some options pertain to Mail::Box, and others are added by
 sub-classes.
 
@@ -500,8 +500,8 @@ sub init($)
 
 =section The folder
 
-=method folderdir [DIRECTORY]
-Get or set the DIRECTORY which is used to store mail-folders by default.
+=method folderdir [$directory]
+Get or set the $directory which is used to store mail-folders by default.
 
 =examples
  print $folder->folderdir;
@@ -561,14 +561,14 @@ same as the size when they are written.
 
 sub size() { sum map { $_->size } shift->messages('ACTIVE') }
 
-=method update OPTIONS
+=method update %options
 Read new messages from the folder, which where received after opening
 it. This is quite dangerous and shouldn't be possible: folders which
 are open are locked. However, some applications do not use locks or the
 wrong kind of locks. This method reads the changes (not always failsafe)
 and incorporates them in the open folder administration.
 
-The OPTIONS are extra values which are passed to the
+The %options are extra values which are passed to the
 M<updateMessages()> method which is doing the actual work here.
 =cut
 
@@ -595,7 +595,7 @@ a C<DIRECTORY> with one message per file, or by a C<REMOTE> server.
 
 sub organization() { shift->notImplemented }
 
-=method addMessage MESSAGE, OPTIONS
+=method addMessage $message, %options
 Add a message to the folder.  A message is usually a
 M<Mail::Box::Message> object or a sub-class thereof.  The message
 shall not be in an other folder, when you use this method.
@@ -660,8 +660,8 @@ ERROR
     $coerced;
 }
 
-=method addMessages MESSAGE [, MESSAGE, ...]
-Adds a set of MESSAGE objects to the open folder at once.  For some folder
+=method addMessages @messages
+Adds a set of message objects to the open folder at once.  For some folder
 types this may be faster than adding them one at a time.
 
 =examples
@@ -670,10 +670,10 @@ types this may be faster than adding them one at a time.
 
 sub addMessages(@)
 {   my $self = shift;
-    map {$self->addMessage($_)} @_;
+    map $self->addMessage($_), @_;
 }
 
-=method copyTo FOLDER, OPTIONS
+=method copyTo $folder, %options
 Copy the folder's messages to a new folder.  The new folder may be of
 a different type.
 
@@ -808,7 +808,7 @@ sub _copy_to($@)
     $self;
 }
 
-=method close OPTIONS
+=method close %options
 
 Close the folder, which usually implies writing the changes.  This will
 return C<false> when writing is required but fails.  Please do check this
@@ -901,7 +901,7 @@ Suggestion: \$folder->close(write => 'NEVER')");
     $rc;
 }
 
-=method delete OPTIONS
+=method delete %options
 Remove the specified folder file or folder directory (depending on
 the type of folder) from disk.  Of course, THIS IS DANGEROUS: you "may"
 lose data.  Returns a C<true> value on success.
@@ -956,7 +956,7 @@ sub delete(@)
 
 #-------------------------------------------
 
-=c_method appendMessages OPTIONS
+=c_method appendMessages %options
 
 Append one or more messages to an unopened folder.
 Usually, this method is called by the M<Mail::Box::Manager::appendMessage()>,
@@ -964,7 +964,7 @@ in which case the correctness of the folder type is checked.
 
 For some folder types it is required to open the folder before it can
 be used for appending.  This can be fast, but this can also be very
-slow (depends on the implementation).  All OPTIONS passed will also be
+slow (depends on the implementation).  All %options passed will also be
 used to open the folder, if needed.
 
 =requires folder FOLDERNAME
@@ -1070,7 +1070,7 @@ sub isModified()
 
 =section The messages
 
-=method message INDEX [,MESSAGE]
+=method message $index, [$message]
 Get or set a message with on a certain index.  Messages which are flagged
 for deletion are counted.  Negative indexes start at the end of the folder.
 
@@ -1087,13 +1087,13 @@ sub message(;$$)
     @_ ?  $self->{MB_messages}[$index] = shift : $self->{MB_messages}[$index];
 }
 
-=method messageId MESSAGE-ID [,MESSAGE]
+=method messageId $message_id, [$message]
 
 With one argument, returns the message in the folder with the specified
-MESSAGE-ID. If a reference to a message object is passed as the optional
+$message_id. If a reference to a message object is passed as the optional
 second argument, the message is first stored in the folder, replacing any
-existing message whose message ID is MESSAGE-ID. (The message ID of MESSAGE
-need not match MESSAGE-ID.)
+existing message whose message ID is $message_id. (The message ID of $message
+need not match $message_id.)
 
 !!WARNING!!: when the message headers are delay-parsed, the message
 might be in the folder but not yet parsed into memory. In this case, use
@@ -1101,7 +1101,7 @@ M<find()> instead of C<messageId()> if you really need a thorough search.
 This is especially the case for directory organized folders without
 special indexi, like M<Mail::Box::MH>.
 
-The MESSAGE-ID may still be in angles, which will be stripped.  In that
+The $message_id may still be in angles, which will be stripped.  In that
 case blanks (which origin from header line folding) are removed too.  Other
 info around the angles will be removed too.
 
@@ -1172,9 +1172,9 @@ sub messageId($;$)
 
 sub messageID(@) {shift->messageId(@_)} # compatibility
 
-=method find MESSAGE-ID
+=method find $message_id
 Like M<messageId()>, this method searches for a message with the
-MESSAGE-ID, returning the corresponding message object.  However, C<find>
+$message_id, returning the corresponding message object.  However, C<find>
 will cause unparsed message in the folder to be parsed until the message-id
 is found.  The folder will be scanned back to front.
 =cut
@@ -1198,7 +1198,7 @@ sub find($)
     $msgids->{$msgid};
 }
 
-=method messages ['ALL',RANGE,'ACTIVE','DELETED',LABEL,!LABEL,FILTER]
+=method messages <'ALL'|$range|'ACTIVE'|'DELETED'|$label| !$label|$filter>
 
 Returns multiple messages from the folder.  The default is C<ALL>
 which will return (as expected maybe) all the messages in the
@@ -1207,7 +1207,7 @@ deletion.  This is the opposite of C<DELETED>, which returns all
 messages from the folder which will be deleted when the folder is
 closed.
 
-You may also specify a RANGE: two numbers specifying begin and end
+You may also specify a $range: two numbers specifying begin and end
 index in the array of messages.  Negative indexes count from the
 end of the folder.  When an index is out-of-range, the returned
 list will be shorter without complaints.
@@ -1216,7 +1216,7 @@ Everything else than the predefined names is seen as labels.  The messages
 which have that label set will be returned.  When the sequence starts
 with an exclamation mark (!), the search result is reversed.
 
-For more complex searches, you can specify a FILTER, which is
+For more complex searches, you can specify a $filter, which is
 simply a code reference.  The message is passed as only argument.
 
 =examples
@@ -1279,13 +1279,13 @@ sub messages($;$)
     grep {$action->($_)} @{$self->{MB_messages}};
 }
 
-=method nrMessages OPTIONS
+=method nrMessages %options
 Simply calls M<messages()> in scalar context to return a count instead
 of the messages itself.  Some people seem to understand this better.
 Note that nrMessages() will default to returning a count of
 C<ALL> messages in the folder, including both C<ACTIVE> and C<DELETED>.
 
-The OPTIONS are passed to (and explained in) M<messages()>.
+The %options are passed to (and explained in) M<messages()>.
 =cut
 
 sub nrMessages(@) { scalar shift->messages(@_) }
@@ -1308,11 +1308,11 @@ sub messageIds()    { map {$_->messageId} shift->messages }
 sub allMessageIds() {shift->messageIds}  # compatibility
 sub allMessageIDs() {shift->messageIds}  # compatibility
 
-=method current [NUMBER|MESSAGE|MESSAGE-ID]
+=method current [$number|$message|$message_id]
 Some mail-readers keep the I<current> message, which represents the last
 used message.  This method returns [after setting] the current message.
-You may specify a NUMBER, to specify that that message number is to be
-selected as current, or a MESSAGE/MESSAGE-ID (as long as you are sure
+You may specify a $number, to specify that that message number is to be
+selected as current, or a $message/$message_id (as long as you are sure
 that the header is already loaded, otherwise they are not recognized).
 
 =examples
@@ -1348,12 +1348,12 @@ sub current(;$)
     $next;
 }
 
-=method scanForMessages MESSAGE, MESSAGE-IDS, TIMESPAN, WINDOW
+=method scanForMessages $message, $message_ids, $timespan, $window
 
-You start with a MESSAGE, and are looking for a set of messages
+You start with a $message, and are looking for a set of messages
 which are related to it.  For instance, messages which appear in
 the 'In-Reply-To' and 'Reference' header fields of that message.
-These messages are known by their MESSAGE-IDS and you want to find
+These messages are known by their $message_ids and you want to find
 them in the folder.
 
 When all message-ids are known, then looking-up messages is simple:
@@ -1365,18 +1365,18 @@ time and memory.
 It is not smart to search for the messages from front to back in
 the folder: the chances are much higher that related message
 reside closely to each other.  Therefore, this method starts
-scanning the folder from the specified MESSAGE, back to the front
+scanning the folder from the specified $message, back to the front
 of the folder.
 
-The TIMESPAN can be used to terminate the search based on the time
+The $timespan can be used to terminate the search based on the time
 enclosed in the message.  When the constant string C<EVER> is used as
-TIMESPAN, then the search is not limited by that.  When an integer
+$timespan, then the search is not limited by that.  When an integer
 is specified, it will be used as absolute time in time-ticks as
 provided by your platform dependent C<time> function.  In other cases,
 it is passed to M<timespan2seconds()> to determine the threshold
 as time relative to the message's time.
 
-The WINDOW is used to limit the search in number of messages to be
+The $window is used to limit the search in number of messages to be
 scanned as integer or constant string C<ALL>.
 
 Returned are the message-ids which were not found during the scan.
@@ -1393,7 +1393,7 @@ sub scanForMessages($$$$)
 {   my ($self, $startid, $msgids, $moment, $window) = @_;
 
     # Set-up msgid-list
-    my %search = map {($_ => 1)} ref $msgids ? @$msgids : $msgids;
+    my %search = map +($_ => 1), ref $msgids ? @$msgids : $msgids;
     return () unless keys %search;
 
     # do not run on empty folder
@@ -1434,11 +1434,11 @@ sub scanForMessages($$$$)
     keys %search;
 }
 
-=method findFirstLabeled LABEL, [BOOLEAN, [ARRAY-OF-MSGS]]
-Find the first message which has this LABEL with the correct setting. The
-BOOLEAN indicates whether any true value or any false value is to
-be found.  By default, a true value is searched for.  When a message
-does not have the requested label, it is taken as false.
+=method findFirstLabeled $label, [BOOLEAN, [$msgs]]
+Find the first message which has this $label with the correct setting. The
+BOOLEAN indicates whether any true value or any false value is to be
+found in the ARRAY of $msgs.  By default, a true value is searched for.
+When a message does not have the requested label, it is taken as false.
 
 =examples looking for a labeled message
  my $current = $folder->findFirstLabeled('current');
@@ -1467,8 +1467,7 @@ sub findFirstLabeled($;$$)
 
 =section Sub-folders
 
-=ci_method listSubFolders OPTIONS
-
+=ci_method listSubFolders %options
 List the names of all sub-folders to this folder, not recursively
 decending.  Use these names as argument to M<openSubFolder()>, to get
 access to that folder.
@@ -1484,14 +1483,12 @@ The folder whose sub-folders should be listed.
 
 =option  check BOOLEAN
 =default check <false>
-
 Should all returned foldernames be checked to be sure that they are of
 the right type?  Each sub-folder may need to be opened to check this,
 with a folder type dependent penalty (in some cases very expensive).
 
 =option  skip_empty BOOL
 =default skip_empty <false>
-
 Shall empty folders (folders which currently do not contain any messages)
 be included?  Empty folders are not useful to open, but may be useful
 to save to.
@@ -1508,10 +1505,10 @@ to save to.
 
 sub listSubFolders(@) { () }   # by default no sub-folders
 
-=method openRelatedFolder OPTIONS
+=method openRelatedFolder %options
 Open a folder (usually a sub-folder) with the same options as this one.
 If there is a folder manager in use, it will be informed about this new
-folder.  OPTIONS overrule the options which where used for the folder
+folder.  %options overrule the options which where used for the folder
 this method is called upon.
 =cut
 
@@ -1524,7 +1521,7 @@ sub openRelatedFolder(@)
     : (ref $self)->new(@options);
 }
 
-=method openSubFolder SUBNAME, OPTIONS
+=method openSubFolder $subname, %options
 Open (or create, if it does not exist yet) a new subfolder in an
 existing folder.
 
@@ -1540,10 +1537,10 @@ sub openSubFolder($@)
     $self->openRelatedFolder(@_, folder => $name);
 }
 
-=ci_method nameOfSubFolder SUBNAME, [PARENTNAME]
+=ci_method nameOfSubFolder $subname, [$parentname]
 Returns the constructed name of the folder with NAME, which is a
 sub-folder of this current one.  You have either to call this method
-as instance method, or specify a PARENTNAME.
+as instance method, or specify a $parentname.
 
 =examples how to get the name of a subfolder
  my $sub = Mail::Box::Mbox->nameOfSubfolder('xyz', 'abc');
@@ -1574,8 +1571,8 @@ sub topFolderWithMessages() { 1 }
 
 =section Internals
 
-=method read OPTIONS
-Read messages from the folder into memory.  The OPTIONS are folder
+=method read %options
+Read messages from the folder into memory.  The %options are folder
 specific.  Do not call C<read()> yourself: it will be called for you
 when you open the folder via the manager or instantiate a folder
 object directly.
@@ -1617,7 +1614,7 @@ sub read(@)
 
 #-------------------------------------------
 
-=method write OPTIONS
+=method write %options
 
 Write the data to disk.  The folder (a C<true> value) is returned if
 successful.  Deleted messages are transformed into destroyed messages:
@@ -1696,7 +1693,7 @@ sub write(@)
     $self;
 }
 
-=method determineBodyType MESSAGE, HEAD
+=method determineBodyType $message, $head
 Determine which kind of body will be created for this message when
 reading the folder initially.
 =cut
@@ -1724,7 +1721,7 @@ sub lazyPermitted($)
     $self->{MB_lazy_permitted} = shift;
 }
 
-=method storeMessage MESSAGE
+=method storeMessage $message
 Store the message in the folder without the checks as performed by
 M<addMessage()>.
 =cut
@@ -1737,7 +1734,7 @@ sub storeMessage($)
     $message;
 }
 
-=method lineSeparator [STRING|'CR'|'LF'|'CRLF']
+=method lineSeparator [<STRING|'CR'|'LF'|'CRLF'>]
 Returns the character or characters used to separate lines in the folder
 file, optionally after setting it to STRING, or one of the constants.
 The first line of the folder sets the default.
@@ -1765,7 +1762,7 @@ sub lineSeparator(;$)
    $sep;
 }
 
-=ci_method create FOLDERNAME, OPTIONS
+=ci_method create $foldername, %options
 Create a folder.  If the folder already exists, it will be left unchanged.
 The folder is created, but not opened!  If you want to open a file which
 may need to be created, then use M<Mail::Box::Manager::open()> with the
@@ -1779,15 +1776,15 @@ will be searched for the named folder.
 
 sub create($@) {shift->notImplemented}
 
-=c_method foundIn [FOLDERNAME], OPTIONS
+=c_method foundIn [$foldername], %options
 Determine if the specified folder is of the type handled by the
 folder class. This method is extended by each folder sub-type.
 
-The FOLDERNAME specifies the name of the folder, as is specified by the
+The $foldername specifies the name of the folder, as is specified by the
 application.  You need to specified the C<folder> option when you skip
 this first argument.
 
-OPTIONS is a list of extra information for the request.  Read
+%options is a list of extra information for the request.  Read
 the documentation for each type of folder for type specific options, but
 each folder class will at least support the C<folderdir> option:
 
@@ -1803,8 +1800,8 @@ to be found in this default DIRECTORY.
  Mail::Box::MH->foundIn(folder => '=markov');
 =cut
 
-=method coerce MESSAGE, OPTIONS
-Coerce the MESSAGE to be of the correct type to be placed in the
+=method coerce $message, %options
+Coerce the $message to be of the correct type to be placed in the
 folder.  You can specify M<Mail::Internet> and M<MIME::Entity> objects
 here: they will be translated into Mail::Message messages first.
 =cut
@@ -1815,11 +1812,11 @@ sub coerce($@)
     $message->isa($mmtype) ? $message : $mmtype->coerce($message, @_);
 }
 
-=method readMessages OPTIONS
+=method readMessages %options
 Called by M<read()> to actually read the messages from one specific
 folder type.  The M<read()> organizes the general activities.
 
-The OPTIONS are C<trusted>, C<head_type>, C<field_type>,
+The %options are C<trusted>, C<head_type>, C<field_type>,
 C<message_type>, C<body_delayed_type>, and C<head_delayed_type> as
 defined by the folder at hand.  The defaults are the constructor
 defaults (see M<new()>).
@@ -1827,7 +1824,7 @@ defaults (see M<new()>).
 
 sub readMessages(@) {shift->notImplemented}
 
-=method updateMessages OPTIONS
+=method updateMessages %options
 Called by M<update()> to read messages which arrived in the folder
 after it was opened.  Sometimes, external applications dump messages
 in a folder without locking (or using a different lock than your
@@ -1842,7 +1839,7 @@ The options are the same as for M<readMessages()>.
 
 sub updateMessages(@) { shift }
 
-=method writeMessages OPTIONS
+=method writeMessages %options
 Called by M<write()> to actually write the messages from one specific
 folder type.  The C<write> organizes the general activities.  All options
 to M<write()> are passed to C<writeMessages> as well.  Besides, a few extra
@@ -1861,7 +1858,7 @@ Returns the locking object.
 
 sub locker() { shift->{MB_locker} }
 
-=method toBeThreaded MESSAGES
+=method toBeThreaded $messages
 The specified message is ready to be removed from a thread.
 This will be passed on to the mail-manager, which keeps an overview on
 which thread-detection objects are floating around.
@@ -1877,7 +1874,7 @@ sub toBeThreaded(@)
     $self;
 }
 
-=method toBeUnthreaded MESSAGES
+=method toBeUnthreaded $messages
 The specified message is ready to be included in a thread.
 This will be passed on to the mail-manager, which keeps an overview on
 which thread-detection objects are floating around.
@@ -1897,8 +1894,8 @@ sub toBeUnthreaded(@)
 
 =section Other methods
 
-=ci_method timespan2seconds TIME
-TIME is a string, which starts with a float, and then one of the
+=ci_method timespan2seconds $time
+$time is a string, which starts with a float, and then one of the
 words 'hour', 'hours', 'day', 'days', 'week', or 'weeks'.  For instance:
 '1 hour' or '4 weeks'.
 

@@ -33,11 +33,11 @@ constructor M<new()>.
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 This error container is also the base constructor for all modules, (as long
 as there is no need for another base object)  The constructor always accepts
-the following OPTIONS related to error reports.
+the following %options related to error reports.
 
 =option  log LEVEL
 =default log C<'WARNINGS'>
@@ -88,18 +88,18 @@ sub init($)
 
 =section Error handling
 
-=ci_method defaultTrace [LEVEL]|[LOGLEVEL, TRACELEVEL]|[LEVEL, CALLBACK]
+=ci_method defaultTrace [$level]|[$loglevel, $tracelevel]|[$level, $callback]
 
 Reports the default log and trace level which is used for object as list
 of two elements.  When not explicitly set, both are set to C<WARNINGS>.
 
 This method has three different uses. When one argument is specified, that
-LEVEL is set for both loglevel as tracelevel.
+$level is set for both loglevel as tracelevel.
 
 With two arguments, the second determines which configuration you like.  If
-the second argument is a CODE reference, you install a CALLBACK.  The loglevel
+the second argument is a CODE reference, you install a $callback.  The loglevel
 will be set to NONE, and all warnings produced in your program will get
-passed to the CALLBACK function.  That function will get the problem level,
+passed to the $callback function.  That function will get the problem level,
 the object or class which reports the problem, and the problem text passed
 as arguments.
 
@@ -165,9 +165,9 @@ __PACKAGE__->defaultTrace('WARNINGS');
 
 #------------------------------------------
 
-=method trace [LEVEL]
+=method trace [$level]
 
-Change the trace LEVEL of the object. When no arguments are specified, the
+Change the trace $level of the object. When no arguments are specified, the
 current level is returned only.  It will be returned in one scalar which
 contains both the number which is internally used to represent the level,
 and the string which represents it.  See M<logPriority()>.
@@ -189,7 +189,7 @@ sub trace(;$$)
 
 #------------------------------------------
 
-=ci_method log [LEVEL [,STRINGS]]
+=ci_method log [$level, [$strings]]
 
 As instance method this function has three different purposes.  Without
 any argument, it returns one scalar containing the number which is internally
@@ -205,8 +205,8 @@ As class method, only a message can be passed.  The global configuration
 value set with M<defaultTrace()> is used to decide whether the message is
 shown or ignored.
 
-Each log-entry has a LEVEL and a text string which will
-be constructed by joining the STRINGS.  If there is no newline, it will
+Each log-entry has a $level and a text string which will
+be constructed by joining the $strings.  If there is no newline, it will
 be added.
 
 =examples
@@ -264,12 +264,12 @@ sub log(;$@)
 
 #------------------------------------------
 
-=method report [LEVEL]
+=method report [$level]
 
-Get logged reports, as list of strings.  If a LEVEL is specified, the log
+Get logged reports, as list of strings.  If a $level is specified, the log
 for that level is returned.
 
-In case no LEVEL is specified, you get all messages each as reference
+In case no $level is specified, you get all messages each as reference
 to a tuple with level and message.
 
 =examples
@@ -314,8 +314,8 @@ sub report(;$)
 
 #-------------------------------------------
 
-=method addReport OBJECT
-Add the report from other OBJECT to the report of this object. This is
+=method addReport $object
+Add the report from other $object to the report of this object. This is
 useful when complex actions use temporary objects which are not returned
 to the main application but where the main application would like to know
 about any problems.
@@ -334,7 +334,7 @@ sub addReport($)
     
 #-------------------------------------------
 
-=method reportAll [LEVEL]
+=method reportAll [$level]
 
 Report all messages which were produced by this object and all the objects
 which are maintained by this object.  This will return a list of triplets,
@@ -414,7 +414,7 @@ sub notImplemented(@)
 
 #------------------------------------------
 
-=ci_method logPriority LEVEL
+=ci_method logPriority $level
 
 One error level (log or trace) has more than one representation: a
 numeric value and one or more strings.  For instance, C<4>, C<'WARNING'>,

@@ -56,11 +56,9 @@ sub TIEHASH(@)
 }
 
 #-------------------------------------------
-
 =section Tied Interface
 
-=method FETCH MESSAGEID
-
+=method FETCH $message_id
 Get the message with the specified id.  The returned message may be
 a dummy if message thread detection is used.  Returns C<undef> when
 there is no message with the specified id.
@@ -74,10 +72,7 @@ there is no message with the specified id.
 
 sub FETCH($) { shift->{MBT_folder}->messageId(shift) }
 
-#-------------------------------------------
-
-=method STORE undef, MESSAGE
-
+=method STORE undef, $message
 Store a message in the folder.  The key must be C<undef>, because the
 message-id of the specified message is taken.  This is shown in the
 first example.  However, as you see, it is a bit complicated to specify
@@ -102,12 +97,8 @@ sub STORE($$)
     $self->{MBT_folder}->addMessages($basicmsg);
 }
 
-#-------------------------------------------
-
 =method FIRSTKEY
-
 See M<NEXTKEY()>.
-
 =cut
 
 sub FIRSTKEY()
@@ -120,7 +111,7 @@ sub FIRSTKEY()
 
 #-------------------------------------------
 
-=method NEXTKEY PREVIOUS
+=method NEXTKEY $previous
 
 M<FIRSTKEY()> returns the first message-id/message pair from the folder,
 and NEXTKEY returns the message-id/message pair for the next message,
@@ -158,12 +149,8 @@ sub NEXTKEY($)
     $msg->messageId;
 }
 
-#-------------------------------------------
-
-=method EXISTS MESSAGE-ID
-
-Check whether a message with a certain MESSAGE-ID exists.
-
+=method EXISTS $message_id
+Check whether a message with a certain $message_id exists.
 =example
 
  if(exists $inbox{$msgid}) ...
@@ -177,11 +164,8 @@ sub EXISTS($)
     defined $msg && ! $msg->isDeleted;
 }
 
-#-------------------------------------------
-
-=method DELETE MESSAGE-ID
-
-Remove the message with the specified MESSAGE-ID.
+=method DELETE $message_id
+Remove the message with the specified $message_id.
 
 =example
 

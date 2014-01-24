@@ -5,7 +5,22 @@ Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
+version 2.111: Fri Jan 24 11:21:30 CET 2014
+
+	Fixes:
+	- do not explicitly clean-up head and body during DESTROY of a
+	  message, because those may be reused in other messages.
+	  Fix for rebuild bug, reported by [Andrew Beverley]
+	- open files in ::Body::File with :raw, not to corrupt line-
+	  endings on Windows. rt.cpan.org#92374 [Joseph Strom]
+
+	Improvements:
+	- add dispositionFilename to replacement text of deleted parts
+	  [Mark Nienberg]
+	- change documentation syntax
+
 version 2.110: Sun Jan  5 18:50:59 CET 2014
+
 	Fixes:
 	- ::Field::Date must compute in UTC [Andrew Beverley]
 	- ::Field::Date negated -0600 timestamp [Andrew Beverley]

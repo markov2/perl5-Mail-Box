@@ -52,49 +52,40 @@ my %mailers =
  , smtp     => '::SMTP'
  );
 
-#------------------------------------------
+=c_method new %options
 
-=c_method new OPTIONS
-
-=option  hostname HOSTNAME|ARRAY-OF-HOSTNAMES
+=option  hostname HOSTNAME|ARRAY
 =default hostname C<'localhost'>
-
-The host on which the server runs.  Some protocols accept an array
+The host on which the server runs.  Some protocols accept an ARRAY
 of alternatives for this option.
 
 =option  interval SECONDS
 =default interval C<30>
-
 The time between tries to contact the remote server for sending or
 receiving a message in SECONDS.  This number must be larger than 0.
 
 =option  password STRING
 =default password undef
-
 Some protocols require a password to be given, usually in combination
 with a password.
 
 =option  proxy PATH
 =default proxy undef
-
 The name of the proxy software (the protocol handler).  This must be
 the name (preferable the absolute path) of your mail delivery
 software.
 
 =option  port INTEGER
 =default port undef
-
 The port number behind which the service is hiding on the remote server.
 
 =option  retry NUMBER|undef
 =default retry <false>
-
 The number of retries before the sending will fail.  If C<undef>, the
 number of retries is unlimited.
 
 =option  timeout SECONDS
 =default timeout C<120>
-
 SECONDS till time-out while establishing the connection to a remote server.
 
 =option  username STRING
@@ -104,7 +95,6 @@ Some protocols require a user to login.
 
 =option  via CLASS|NAME
 =default via C<'sendmail'>
-
 Which CLASS (extending C<Mail::Transport>) will transport the data.
 Some predefined NAMEs avoid long class names: C<mail> and C<mailx>
 are handled by the M<Mail::Transport::Mailx> module, C<sendmail>
@@ -114,7 +104,6 @@ protocol implementation can be found in M<Mail::Transport::POP3>.
 
 =option  executable FILENAME
 =default executable C<undef>
-
 If you specify an executable, the module does not need to search the
 system directories to figure-out where the client lives.  Using this
 decreases the flexible usage of your program: moving your program
@@ -122,13 +111,11 @@ to other systems may involve changing the path to the executable,
 which otherwise would work auto-detect and unmodified.
 
 =warning Avoid program abuse: specify an absolute path for $exec.
-
 Specifying explicit locations for executables of email transfer agents
 should only be done with absolute file names, to avoid various pontential
 security problems.
 
 =warning Executable $exec does not exist.
-
 The explicitly indicated mail transfer agent does not exists. The normal
 settings are used to find the correct location.
 
@@ -189,14 +176,11 @@ sub init($)
 }
 
 #------------------------------------------
-
 =section Server connection
 
 =method remoteHost
-
 Returns the hostname, port number, username and password to be used to
 establish the connection to the server for sending or receiving mail.
-
 =cut
 
 sub remoteHost()
@@ -204,12 +188,8 @@ sub remoteHost()
     @$self{ qw/MT_hostname MT_port MT_username MT_password/ };
 }
 
-#------------------------------------------
-
 =method retry
-
 Returns the retry interval, retry count, and timeout for the connection.
-
 =cut
 
 sub retry()
@@ -217,13 +197,10 @@ sub retry()
     @$self{ qw/MT_interval MT_retry MT_timeout/ };
 }
 
-#------------------------------------------
-
-=method findBinary NAME [, DIRECTORIES]
-
-Look for a binary with the specified NAME in the directories which
+=method findBinary $name, [@directories]
+Look for a binary with the specified $name in the directories which
 are defined to be safe.  The list of standard directories is followed
-by the optional DIRECTORIES.  The full pathname is returned.
+by the optional @directories.  The full pathname is returned.
 
 You may specify M<new(proxy)>, which specifies the absolute name
 of the binary to be used.
@@ -248,9 +225,7 @@ sub findBinary($@)
 }
 
 #------------------------------------------
-
 =section Error handling
-
 =cut
 
 1;

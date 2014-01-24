@@ -34,7 +34,7 @@ add flexibility and use the powerful MailBox features.
 
 =section Constructors
 
-=c_method new FIELDS, OPTIONS
+=c_method new $fields, %options
 
 Construct an object which maintains one set of mailing list headers
 
@@ -85,10 +85,10 @@ sub init($$)
 
 #------------------------------------------
 
-=method from HEAD|MESSAGE
+=method from $head|$message
 
-Create a C<Mail::Message::Head::ListGroup> based in the specified MESSAGE
-or message HEAD.
+Create a C<Mail::Message::Head::ListGroup> based in the specified $message
+or message $head.
 
 =cut
 
@@ -266,7 +266,7 @@ sub listname()
 
 =section Access to the header
 
-=ci_method isListGroupFieldName NAME
+=ci_method isListGroupFieldName $name
 =cut
 
 my $list_field_names

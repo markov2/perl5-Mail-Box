@@ -92,11 +92,11 @@ sub init($)
 
 =section Access to the content
 
-=method addAddress [ADDRESS], OPTIONS
-Add an ADDRESS to the field.  The addresses are organized in groups.  If no
+=method addAddress [$address], %options
+Add an $address to the field.  The addresses are organized in groups.  If no
 group is specified, the default group is taken to store the address in.  If
-no ADDRESS is specified, the option must be sufficient to create a
-M<Mail::Message::Field::Address> from.  See the OPTIONS of
+no $address is specified, the option must be sufficient to create a
+M<Mail::Message::Field::Address> from.  See the %options of
 M<Mail::Message::Field::Address::new()>.
 
 =option  group STRING
@@ -118,10 +118,10 @@ sub addAddress(@)
     $email;
 }
 
-=method addGroup GROUP|OPTIONS
-Add a group of addresses to this field.  A GROUP can be specified, which
+=method addGroup $group|%options
+Add a group of addresses to this field.  A $group can be specified, which
 is a M<Mail::Message::Field::AddrGroup> object, or one is created for you
-using the OPTIONS.  The group is returned.
+using the %options.  The group is returned.
 
 =option  name STRING
 =default name C<''>
@@ -137,9 +137,9 @@ sub addGroup(@)
     $group;
 }
 
-=method group NAME
-Returns the group of addresses with the specified NAME, or C<undef>
-if it does not exist.  If NAME is C<undef>, then the default groep
+=method group $name
+Returns the group of addresses with the specified $name, or C<undef>
+if it does not exist.  If $name is C<undef>, then the default groep
 is returned.
 =cut
 
@@ -272,7 +272,7 @@ sub produceBody()
    join ' ', $plain, map({$_->string} @groups);
 }
 
-=method consumeAddress STRING, OPTIONS
+=method consumeAddress STRING, %options
 Try to destilate address information from the STRING.   Returned are
 an address B<object> and the left-over string.  If no address was found,
 the first returned value is C<undef>.

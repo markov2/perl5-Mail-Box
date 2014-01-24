@@ -25,7 +25,7 @@ a POP3 client is available.  IMAP, DBI, and NNTP are other candidates.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  unique STRING
 =default unique <unique string>

@@ -62,9 +62,9 @@ sub string()
 
 =section Constructors
 
-=method coerce OBJECT
+=method coerce $object
 
-Coerce an OBJECT into a M<Mail::Message::Field::AddrGroup>.  Currently,
+Coerce an $object into a M<Mail::Message::Field::AddrGroup>.  Currently,
 you can only coerce M<User::Identity::Collection::Emails> (which is
 the base class for this one) into this one.
 
@@ -94,11 +94,11 @@ sub coerce($@)
 
 =section Addresses
 
-=method addAddress STRING|ADDRESS|OPTIONS
+=method addAddress STRING|$address|%options
 
 Add one e-mail address to the list which is maintained in the group. This
 is a wrapper around M<addRole()> adding flexibility on how addresses
-are specified.  An ADDRESS can be anything which is acceptable for
+are specified.  An $address can be anything which is acceptable for
 M<Mail::Message::Field::Address::coerce()> or a list of options which
 will create such an object.
 

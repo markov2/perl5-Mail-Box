@@ -22,7 +22,7 @@ name predicts).
 
 =chapter METHODS
 
-=c_method new DATA
+=c_method new $data
 
 If you stick to this flexible class of header fields, you have a bit
 more facilities than with M<Mail::Message::Field::Fast>.  Amongst it, you

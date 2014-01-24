@@ -23,7 +23,7 @@ as well.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default body_type M<Mail::Message::Body::Lines>
 

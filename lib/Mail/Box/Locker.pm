@@ -35,7 +35,7 @@ from the folder, as shown in the examples below.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a new lock. You may do this directly. However, in most cases the
 lock will not be separately instantiated but will be the second class in
@@ -208,7 +208,7 @@ sub lockMethod($$$$)
 {   confess "Method removed: use inheritance to implement own method."
 }
 
-=method folder [FOLDER]
+=method folder [$folder]
 Returns the folder object which is locker.
 =cut
 
@@ -220,9 +220,9 @@ sub folder(;$)
     weaken $self->{MBL_folder};
 }
 
-=method filename [FILENAME]
+=method filename [$filename]
 Returns the filename which is used to lock the folder, optionally after
-setting it to the specified FILENAME.
+setting it to the specified $filename.
 
 =example
  print $locker->filename;
@@ -239,7 +239,7 @@ sub filename(;$)
 
 =section Locking
 
-=method lock FOLDER
+=method lock $folder
 Get a lock on a folder.  This will return false if the lock fails.
 
 =examples

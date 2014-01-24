@@ -12,6 +12,8 @@ use IO::Handle;
 our %_structured;  # not to be used directly: call isStructured!
 my $default_wrap_length = 78;
 
+=encoding utf8
+
 =chapter NAME
 
 Mail::Message::Field - one line of a message header
@@ -103,7 +105,7 @@ use overload
 
 =section Constructors
 
-=c_method new DATA
+=c_method new $data
 
 See M<Mail::Message::Field::Fast::new()>,
 M<Mail::Message::Field::Flex::new()>,
@@ -170,10 +172,10 @@ sub isStructured(;$)
     exists $_structured{lc $name};
 }
 
-=method print [FILEHANDLE]
+=method print [$fh]
 Print the whole header-line to the specified file-handle. One line may
 result in more than one printed line, because of the folding of long
-lines.  The FILEHANDLE defaults to the selected handle.
+lines.  The $fh defaults to the selected handle.
 =cut
 
 sub print(;$)
@@ -182,9 +184,9 @@ sub print(;$)
     $fh->print(scalar $self->folded);
 }
 
-=method string [WRAP]
+=method string [$wrap]
 Returns the field as string.  By default, this returns the same as
-M<folded()>. However, the optional WRAP will cause to re-fold to take
+M<folded()>. However, the optional $wrap will cause to re-fold to take
 place (without changing the folding stored inside the field).
 =cut
 
@@ -317,23 +319,23 @@ sub body()
     $body;
 }
 
-=method foldedBody [BODY]
+=method foldedBody [$body]
 Returns the body as a set of lines. In scalar context, this will be one line
 containing newlines.  Be warned about the newlines when you do
 pattern-matching on the result of thie method.
 
-The optional BODY argument changes the field's body.  The folding of the
+The optional $body argument changes the field's body.  The folding of the
 argument must be correct.
 =cut
 
 sub foldedBody { shift->notImplemented }
 
-=method unfoldedBody [BODY, [WRAP]]
+=method unfoldedBody [$body, [$wrap]]
 Returns the body as one single line, where all folding information (if
 available) is removed.  This line will also NOT end on a new-line.
 
-The optional BODY argument changes the field's body.  The right folding is
-performed before assignment.  The WRAP may be specified to enforce a
+The optional $body argument changes the field's body.  The right folding is
+performed before assignment.  The $wrap may be specified to enforce a
 folding size.
 
 =examples
@@ -425,7 +427,7 @@ sub comment(;$)
 
 sub content() { shift->unfoldedBody }  # Compatibility
 
-=method attribute NAME [, VALUE]
+=method attribute $name, [$value]
 Get the value of an attribute, optionally after setting it to a new value.
 Attributes are part of some header lines, and hide themselves in the
 comment field.  If the attribute does not exist, then C<undef> is
@@ -538,11 +540,11 @@ sub toInt()
 
 #------------------------------------------
 
-=ci_method toDate [TIME]
+=ci_method toDate [$time]
 
 Convert a timestamp into an rfc2822 compliant date format.  This differs
 from the default output of C<localtime> in scalar context.  Without
-argument, the C<localtime> is used to get the current time. TIME can
+argument, the C<localtime> is used to get the current time. $time can
 be specified as one numeric (like the result of C<time()>) and as list
 (like produced by c<localtime()> in list context).
 
@@ -654,15 +656,15 @@ sub dateToTimestamp($)
 
 =section Internals
 
-=method consume LINE | (NAME,BODY|OBJECTS)
+=method consume $line | <$name,<$body|$objects>>
 
-Accepts a whole field LINE, or a pair with the field's NAME and BODY. In
-the latter case, the BODY data may be specified as array of OBJECTS which
+Accepts a whole field $line, or a pair with the field's $name and $body. In
+the latter case, the $body data may be specified as array of $objects which
 are stringified.  Returned is a nicely formatted pair of two strings: the
 field's name and a folded body.
 
 This method is called by M<new()>, and usually not by an application
-program. The details about converting the OBJECTS to a field content
+program. The details about converting the $objects to a field content
 are explained in L</Specifying field data>.
 
 =warning Illegal character in field name $name
@@ -709,7 +711,7 @@ sub consume($;$)
 
 #------------------------------------------
 
-=method stringifyData STRING|ARRAY|OBJECTS
+=method stringifyData STRING|ARRAY|$objects
 
 This method implements the translation of user supplied objects into
 ascii fields.  The process is explained in L</Specifying field data>.
@@ -746,9 +748,9 @@ sub stringifyData($)
 
 #------------------------------------------
 
-=method setWrapLength [LENGTH]
+=method setWrapLength [$length]
 
-Force the wrapping of this field to the specified LENGTH characters. The
+Force the wrapping of this field to the specified $length characters. The
 wrapping is performed with M<fold()> and the results stored within
 the field object.
 
@@ -768,10 +770,10 @@ sub setWrapLength(;$)
 
 #------------------------------------------
 
-=method defaultWrapLength [LENGTH]
+=method defaultWrapLength [$length]
 
 Any field from any header for any message will have this default wrapping.
-This is maintained in one global variable.  Without a specified LENGTH,
+This is maintained in one global variable.  Without a specified $length,
 the current value is returned.  The default is 78.
 
 =cut
@@ -783,11 +785,11 @@ sub defaultWrapLength(;$)
 
 #------------------------------------------
 
-=ci_method fold NAME, BODY, [MAXCHARS]
+=ci_method fold $name, $body, [$maxchars]
 
-Make the header field with NAME fold into multiple lines.
+Make the header field with $name fold into multiple lines.
 Wrapping is performed by inserting newlines before a blanks in the
-BODY, such that no line exceeds the MAXCHARS and each line is as long
+$body, such that no line exceeds the $maxchars and each line is as long
 as possible.
 
 The RFC requests for folding on nice spots, but this request is
@@ -830,10 +832,7 @@ sub fold($$;$)
     wantarray ? @folded : join('', @folded);
 }
 
-#------------------------------------------
-
 =method unfold STRING
-
 The reverse action of M<fold()>: all lines which form the body of a field
 are joined into one by removing all line terminators (even the last).
 Possible leading blanks on the first line are removed as well.
@@ -1168,7 +1167,7 @@ comma's inbetween, you will have to process the array yourself.
  use User::Identity;
  my $patrik = User::Identity->new
   ( name      => 'patrik'
-  , full_name => "Patrik Fältström"  # from rfc
+  , full_name => "Patrik FÃ¤ltstrÃ¶m"  # from rfc
   , charset   => "ISO-8859-1"
   );
  $patrik->add

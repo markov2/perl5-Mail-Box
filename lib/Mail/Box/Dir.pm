@@ -54,7 +54,7 @@ available (yet).
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default body_type M<Mail::Message::Body::Lines>
 =default lock_file <folder>C</.lock>
@@ -148,10 +148,10 @@ sub nameOfSubFolder($;$)
 
 =section Internals
 
-=method folderToDirectory FOLDERNAME, FOLDERDIR
+=method folderToDirectory $foldername, $folderdir
 
 (class method)  Translate a foldername into a filename, with use of the
-FOLDERDIR to replace a leading C<=>.
+$folderdir to replace a leading C<=>.
 
 =cut
 
@@ -164,7 +164,7 @@ sub folderToDirectory($$)
 
 #-------------------------------------------
 
-=method readMessageFilenames DIRECTORY
+=method readMessageFilenames $directory
 
 Returns a list of all filenames which are found in this folder
 directory and represent a message.  The filenames are returned as

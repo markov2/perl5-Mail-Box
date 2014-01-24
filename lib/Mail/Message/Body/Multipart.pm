@@ -34,7 +34,7 @@ when a message contains attachments (parts).
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default mime_type  C<'multipart/mixed'>
 
@@ -445,9 +445,9 @@ sub foreachComponent($)
     $constructed;
 }
 
-=method attach MESSAGES|BODIES
-Attach a list of MESSAGES to this multipart.  A new body is returned.
-When you specify BODIES, they will first be translated into
+=method attach $messages|$bodies
+Attach a list of $messages to this multipart.  A new body is returned.
+When you specify $bodies, they will first be translated into
 real messages.  M<MIME::Entity> and M<Mail::Internet> objects may be
 specified too.  In any case, the parts will be coerced into
 M<Mail::Message::Part>'s.
@@ -461,10 +461,10 @@ sub attach(@)
       );
 }
 
-=method stripSignature OPTIONS
+=method stripSignature %options
 Removes all parts which contains data usually defined as being signature.
 The M<MIME::Type> module provides this knowledge.  A new multipart is
-returned, containing the remaining parts.  No OPTIONS are defined yet,
+returned, containing the remaining parts.  No %options are defined yet,
 although some may be specified, because this method overrules the
 C<stripSignature> method for normal bodies.
 =cut
@@ -501,7 +501,7 @@ from the general multipart header.
 
 sub epilogue() {shift->{MMBM_epilogue}}
 
-=method parts ['ALL'|'ACTIVE'|'DELETED'|'RECURSE'|FILTER]
+=method parts [<'ALL'|'ACTIVE'|'DELETED'|'RECURSE'|$filter>]
 Return all parts by default, or when ALL is specified.  C<ACTIVE> returns
 the parts which are not flagged for deletion, as opposite to C<DELETED>.
 C<RECURSE> descents into all nested multiparts to collect all parts.
@@ -539,8 +539,8 @@ sub parts(;$)
     : ($self->log(ERROR => "Unknown criterium $what to select parts."), return ());
 }
 
-=method part INDEX
-Returns only the part with the specified INDEX.  You may use a negative
+=method part $index
+Returns only the part with the specified $index.  You may use a negative
 value here, which counts from the back in the list.  Parts which are
 flagged to be deleted are included in the count.
 

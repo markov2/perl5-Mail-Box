@@ -82,7 +82,7 @@ sub string_unless_carp()
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a new message header object.  The object will store all the
 fields of a header.  When you get information from the header, it
@@ -136,7 +136,7 @@ sub init($)
     $self;
 }
 
-=c_method build [PAIR|FIELD]-LIST
+=c_method build [PAIR|$field]-LIST
 A fast way to construct a header with many lines.
 The PAIRs are C<(name, content)> pairs of the header, but it is also possible
 to pass M<Mail::Message::Field> objects.   A
@@ -211,7 +211,7 @@ true in any case.
 
 sub isEmpty { scalar keys %{shift->{MMH_fields}} }
 
-=method message [MESSAGE]
+=method message [$message]
 Get (after setting) the message where this header belongs to.
 This does not trigger completion.
 =cut
@@ -244,14 +244,13 @@ sub knownNames() { keys %{shift->{MMH_fields}} }
 
 =section Access to the header
 
-=method get NAME [,INDEX]
+=method get $name, [$index]
+Get the data which is related to the field with the $name.  The case of the
+characters in $name does not matter.
 
-Get the data which is related to the field with the NAME.  The case of the
-characters in NAME does not matter.
-
-If there is only one data element defined for the NAME, or if there is an
-INDEX specified as the second argument, only the specified element will be
-returned. If the field NAME matches more than one header the return value
+If there is only one data element defined for the $name, or if there is an
+$index specified as the second argument, only the specified element will be
+returned. If the field $name matches more than one header the return value
 depends on the context. In LIST context, all values will be returned in
 the order they are read. In SCALAR context, only the last value will be
 returned.
@@ -298,12 +297,12 @@ sub get($;$)
 sub get_all(@) { my @all = shift->get(@_) }   # compatibility, force list
 sub setField($$) {shift->add(@_)} # compatibility
 
-=method study NAME [,INDEX]
+=method study $name, [$index]
 Like M<get()>, but puts more effort in understanding the contents of the
 field.  M<Mail::Message::Field::study()> will be called for the field
 with the specified FIELDNAME, which returns M<Mail::Message::Field::Full>
 objects. In scalar context only the last field with that name is returned.
-When an INDEX is specified, that element is returned.
+When an $index is specified, that element is returned.
 =cut
 
 sub study($;$)
@@ -339,10 +338,10 @@ sub isMultipart()
 #------------------------------
 =section Internals
 
-=method read PARSER
+=method read $parser
 Read the header information of one message into this header structure.  This
 method is called by the folder object (some M<Mail::Box> sub-class), which
-passes the PARSER as an argument.
+passes the $parser as an argument.
 =cut
 
 sub read($)
@@ -359,7 +358,7 @@ sub read($)
     $self;
 }
 
-=method addOrderedFields FIELDS
+=method addOrderedFields $fields
 =cut
 
 #  Warning: fields are added in addResentGroup() as well!
@@ -390,7 +389,7 @@ sub fileLocation()
     @$self{ qw/MMH_begin MMH_end/ };
 }
 
-=method moveLocation DISTANCE
+=method moveLocation $distance
 Move the registration of the header in the file.
 =cut
 
@@ -401,7 +400,7 @@ sub moveLocation($)
     $self;
 }
 
-=method setNoRealize FIELD
+=method setNoRealize $field
 Set a field, but avoid the loading of a possibly partial header as set()
 does.  This method does not test the validity of the argument, nor flag the
 header as changed.  This does not trigger completion.
@@ -418,7 +417,7 @@ sub setNoRealize($)
     $field;
 }
 
-=method addNoRealize FIELD
+=method addNoRealize $field
 Add a field, like M<Mail::Message::Head::Complete::add()> does, but
 avoid the loading of a possibly partial header.  This method does not
 test the validity of the argument, nor flag the header as changed.

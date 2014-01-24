@@ -23,7 +23,7 @@ what you can do with the Mbox folder object Mail::Box::Mbox.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default message_type M<Mail::Box::Mbox::Message>
 
@@ -49,7 +49,7 @@ sub init($)
     $self->SUPER::init($args);
 }
 
-=ci_method create FOLDERNAME, OPTIONS
+=ci_method create $foldername, %options
 
 =option  subfolder_extension STRING
 =default subfolder_extension undef
@@ -70,8 +70,8 @@ sub create($@)
     $class->SUPER::create($name, %args);
 }
 
-=c_method foundIn [FOLDERNAME], [OPTIONS]
-If no FOLDERNAME is specified, then the value of the C<folder> option
+=c_method foundIn [$foldername], %options
+If no $foldername is specified, then the value of the C<folder> option
 is taken.  A mbox folder is a file which starts with a separator
 line: a line with C<'From '> as first characters.  Blank lines which
 start the file are ignored, which is not for all MUA's acceptable.
@@ -148,7 +148,7 @@ sub writeMessages($)
 
 sub type() {'mbox'}
 
-=ci_method listSubFolders OPTIONS
+=ci_method listSubFolders %options
 =option  subfolder_extension STRING
 =default subfolder_extension <from object>
 When the method is called on an open folder, the extension defined by it is
@@ -231,9 +231,9 @@ sub openRelatedFolder(@)
 
 =section Internals
 
-=ci_method folderToFilename FOLDERNAME, FOLDERDIR, [EXTENSION]
+=ci_method folderToFilename $foldername, $folderdir, [$extension]
 Translate a folder name into a filename, using the
-FOLDERDIR value to replace a leading C<=>.  If no EXTENSION is specified and
+$folderdir value to replace a leading C<=>.  If no $extension is specified and
 this method is called as instance method, new(subfolder_extension) is used.
 Otherwise, the extension default to C<'.d'>.
 =cut

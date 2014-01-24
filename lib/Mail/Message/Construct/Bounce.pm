@@ -25,14 +25,14 @@ functionality related to bouncing messages off to other destinations.
 
 =section Constructing a message
 
-=method bounce [RG-OBJECT|OPTIONS]
+=method bounce [<$rg_object|%options>]
 
 The program calling this method considers itself as an intermediate step
 in the message delivery process; it therefore leaves a resent group
 of header fields as trace.
 
 When a message is received, the Mail Transfer Agent (MTA) adds a
-C<Received> field to the header.  As OPTIONS, you may specify lines
+C<Received> field to the header.  As %options, you may specify lines
 which are added to the resent group of that received field.  C<Resent-*>
 is prepended before the field-names automatically, unless already present.
 

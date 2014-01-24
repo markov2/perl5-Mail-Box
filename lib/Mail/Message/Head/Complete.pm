@@ -29,10 +29,9 @@ known for sure.
 
 =section Constructors
 
-=method clone [NAMES|ARRAY-OF-NAMES|REGEXS]
-
+=method clone [@names|ARRAY|Regexps]
 Make a copy of the header, optionally limited only to the header lines
-specified by NAMES.  See M<grepNames()> on the way these fields can be
+specified by @names.  See M<grepNames()> on the way these fields can be
 used.
 
 =example
@@ -49,7 +48,7 @@ sub clone(;@)
     $copy;
 }
 
-=method build [PAIR|FIELD]-LIST
+=method build [PAIR|$field], ...
 Undefined values are interpreted as empty field values, and therefore skipped.
 =warning Field objects have an implied name ($name)
 =cut
@@ -91,9 +90,6 @@ sub isDelayed() {0}
 =method nrLines
 Return the number of lines needed to display this header (including
 the trailing newline)
-=cut
-
-sub nrLines() { sum 1, map { $_->nrLines } shift->orderedFields }
 
 =method size
 Return the number of bytes needed to display this header (including
@@ -102,10 +98,11 @@ the number of lines in the header (see M<nrLines()>) must be added to
 find the actual size in the file.
 =cut
 
-sub size() { sum 1, map {$_->size} shift->orderedFields }
+sub nrLines() { sum 1, map $_->nrLines, shift->orderedFields }
+sub size() { sum 1, map $_->size, shift->orderedFields }
 
-=method wrap INTEGER
-Re-fold all fields from the header to contain at most INTEGER number of
+=method wrap $integer
+Re-fold all fields from the header to contain at most $integer number of
 characters per line.
 
 =example re-folding a header
@@ -114,24 +111,24 @@ characters per line.
 
 sub wrap($)
 {   my ($self, $length) = @_;
-    $_->setWrapLength($length) foreach $self->orderedFields;
+    $_->setWrapLength($length) for $self->orderedFields;
 }
 
 #------------------------------------------
 
 =section Access to the header
 
-=method add FIELD | LINE | (NAME,BODY[,ATTRS])
+=method add $field | $line | <$name, $body, [$attrs]>
 
 Add a field to the header.  If a field is added more than once, all values
 are stored in the header, in the order they are added.
 
-When a FIELD object is specified (some M<Mail::Message::Field> instance), that
-will be added.  Another possibility is to specify a raw header LINE, or a
-header line nicely split-up in NAME and BODY, in which case the
+When a $field object is specified (some M<Mail::Message::Field> instance), that
+will be added.  Another possibility is to specify a raw header $line, or a
+header line nicely split-up in $name and $body, in which case the
 field constructor is called for you.
 
-LINE or BODY specifications which are terminated by a new-line are considered
+$line or $body specifications which are terminated by a new-line are considered
 to be correctly folded.  Lines which are not terminated by a new-line will
 be folded when needed: new-lines will be added where required.  It is strongly
 advised to let MailBox do the folding for you.
@@ -182,8 +179,8 @@ sub add(@)
     $field;
 }
 
-=method count NAME
-Count the number of fields with this NAME.  Most fields will return 1:
+=method count $name
+Count the number of fields with this $name.  Most fields will return 1:
 only one occurance in the header.  As example, the C<Received> fields
 are usually present more than once.
 =cut
@@ -205,12 +202,12 @@ listed here.
 
 sub names() {shift->knownNames}
 
-=method grepNames [NAMES|ARRAY-OF-NAMES|REGEXS]
+=method grepNames [@names|ARRAY|Regexps]
 Filter from all header fields those with names which start will any of the
 specified list.  When no names are specified, all fields will be returned.
 The list is ordered as they where read from file, or added later.
 
-The NAMES are considered regular expressions, and will all be matched
+The @names are considered regular expressions, and will all be matched
 case insensitive and attached to the front of the string only.  You may
 also specify one or more prepared regexes.
 
@@ -240,7 +237,7 @@ sub grepNames(@)
     grep {$_->name =~ $take} $self->orderedFields;
 }
 
-=method set FIELD | LINE | (NAME, BODY [,ATTRS])
+=method set $field | $line | <$name, $body, [$attrs]>
 The C<set> method is similar to the M<add()> method, and takes the same
 options. However, existing values for fields will be removed before a new
 value is added.  READ THE IMPORTANT WARNING IN M<removeField()>
@@ -277,9 +274,9 @@ sub set(@)
     $field;
 }
 
-=method reset NAME, FIELDS
-Replace the values in the header fields named by NAME with the values
-specified in the list of FIELDS. A single name can correspond to multiple
+=method reset $name, @fields
+Replace the values in the header fields named by $name with the values
+specified in the list of @fields. A single name can correspond to multiple
 repeated fields.  READ THE IMPORTANT WARNING IN M<removeField()>
 
 Removing fields which are part of one of the predefined field groups is
@@ -290,7 +287,7 @@ to a list group.  You can delete a whole group with
 M<Mail::Message::Head::FieldGroup::delete()>, or with methods which
 are provided by M<Mail::Message::Head::Partial>.
 
-If FIELDS is empty, the corresponding NAME fields will
+If FIELDS is empty, the corresponding $name fields will
 be removed. The location of removed fields in the header order will be
 remembered. Fields with the same name which are added later will appear at
 the remembered position.  This is equivalent to the M<delete()> method.
@@ -323,7 +320,7 @@ sub reset($@)
     # Cloning required, otherwise double registrations will not be
     # removed from the ordered list: that's controled by 'weaken'
 
-    my @fields = map {$_->clone} @_;
+    my @fields = map $_->clone, @_;
 
     if(@_==1) { $known->{$name} = $fields[0] }
     else      { $known->{$name} = [@fields]  }
@@ -332,7 +329,7 @@ sub reset($@)
     $self;
 }
 
-=method delete NAME
+=method delete $name
 Remove the field with the specified name.  If the header contained
 multiple lines with the same name, they will be replaced all together.
 This method simply calls M<reset()> without replacement fields.
@@ -341,8 +338,8 @@ READ THE IMPORTANT WARNING IN M<removeField()>
 
 sub delete($) { $_[0]->reset($_[1]) }
 
-=method removeField FIELD
-Remove the specified FIELD object from the header.  This is useful when
+=method removeField $field
+Remove the specified $field object from the header.  This is useful when
 there are possible more than one fields with the same name, and you
 need to remove exactly one of them.  Also have a look at M<delete()>,
 M<reset()>, and M<set()>.
@@ -411,7 +408,7 @@ sub removeField($)
     return;
 }
 
-=method removeFields STRING|REGEXP, [STRING|REGEXP, ...]
+=method removeFields <STRING|Regexp>, ...
 The header object is turned into a M<Mail::Message::Head::Partial> object
 which has a set of fields removed.  Read about the implications and the
 possibilities in M<Mail::Message::Head::Partial::removeFields()>.
@@ -422,7 +419,7 @@ sub removeFields(@)
     (bless $self, 'Mail::Message::Head::Partial')->removeFields(@_);
 }
 
-=method removeFieldsExcept STRING|REGEXP, [STRING|REGEXP, ...]
+=method removeFieldsExcept <STRING|Regexp>, ...
 The header object is turned into a M<Mail::Message::Head::Partial> object
 which has a set of fields removed.  Read about the implications and the
 possibilities in M<Mail::Message::Head::Partial::removeFieldsExcept()>.
@@ -494,8 +491,8 @@ sub spamDetected()
     grep { $_->spamDetected } @sgs;
 }
 
-=method print [FILEHANDLE]
-Print all headers to the specified FILEHANDLE, by default the selected
+=method print [$fh]
+Print all headers to the specified $fh, by default the selected
 filehandle.  See M<printUndisclosed()> to limit the headers to include
 only the public headers.
 
@@ -520,9 +517,9 @@ sub print(;$)
     $self;
 }
 
-=method printUndisclosed [FILEHANDLE]
+=method printUndisclosed [$fh]
 Like the usual M<print()>, the header lines are printed to the specified
-FILEHANDLE, by default the selected filehandle.  In this case, however,
+$fh, by default the selected filehandle.  In this case, however,
 C<Bcc> and C<Resent-Bcc> lines are included.
 =cut
 
@@ -538,10 +535,10 @@ sub printUndisclosed($)
     $self;
 }
 
-=method printSelected FILEHANDLE, (STRING|REGEXP)s
+=method printSelected $fh, <STRING|Regexp>, ...
 Like the usual M<print()>, the header lines are printed to the specified
-FILEHANDLE.  In this case, however, only the fields with names as specified by
-STRING (case insensative) or REGEXP are printed.  They will stay the in-order
+$fh.  In this case, however, only the fields with names as specified by
+STRING (case insensative) or Regexp are printed.  They will stay the in-order
 of the source header.
 
 =example printing only a subset of the fields
@@ -603,9 +600,9 @@ sub resentGroups()
     Mail::Message::Head::ResentGroup->from($self);
 }
 
-=method addResentGroup RESENT-GROUP|DATA
-Add a RESENT-GROUP (a M<Mail::Message::Head::ResentGroup> object) to
-the header.  If you specify DATA, that is used to create such group
+=method addResentGroup $resent_group|$data
+Add a $resent_group (a M<Mail::Message::Head::ResentGroup> object) to
+the header.  If you specify $data, that is used to create such group
 first.  If no C<Received> line is specified, it will be created
 for you.
 
@@ -679,11 +676,11 @@ sub listGroup()
     Mail::Message::Head::ListGroup->from($self);
 }
 
-=method addListGroup OBJECT
+=method addListGroup $object
 A I<list group> is a set of header fields which contain data about a
 mailing list which was used to transmit the message.  See
 M<Mail::Message::Head::ListGroup> for details about the implementation
-of the OBJECT.
+of the $object.
 
 When you have a list group prepared, you can add it later using this
 method.  You will get your private copy of the list group data in
@@ -699,14 +696,14 @@ sub addListGroup($)
     $lg->attach($self);
 }
 
-=method spamGroups [NAMES]
+=method spamGroups [$names]
 Returns a list of M<Mail::Message::Head::SpamGroup> objects, each collecting
-some lines which contain spam fighting information.  When any NAMES are
+some lines which contain spam fighting information.  When any $names are
 given, then only these groups are returned.
 See also M<addSpamGroup()> and M<removeSpamGroups()>.
 
 In scalar context, with exactly one NAME specified, that group will be
-returned.  With more NAMES or without NAMES, a list will be returned
+returned.  With more $names or without $names, a list will be returned
 (which defaults to the length of the list in scalar context).
 
 =example use of listGroup()
@@ -725,10 +722,10 @@ sub spamGroups(@)
     wantarray || @_ != 1 ? @sgs : $sgs[0];
 }
 
-=method addSpamGroup OBJECT
+=method addSpamGroup $object
 A I<spam fighting group> is a set of header fields which contains data
 which is used to fight spam.  See M<Mail::Message::Head::SpamGroup>
-for details about the implementation of the OBJECT.
+for details about the implementation of the $object.
 
 When you have a spam group prepared, you can add it later using this
 method.  You will get your private copy of the spam group data in
@@ -880,16 +877,16 @@ sub createMessageId()
     $msgid_creator->(@_);
 }
 
-=ci_method messageIdPrefix [PREFIX, [HOSTNAME]|CODE]
+=ci_method messageIdPrefix [$prefix, [$hostname]|CODE]
 
 When options are provided, it sets a new way to create message-ids,
 as used by M<createMessageId()>.  You have two choices: either by
-providing a PREFIX and optionally a HOSTNAME, or a CODE reference.
+providing a $prefix and optionally a $hostname, or a CODE reference.
 
 The CODE reference will be called with the header as first argument.
 You must ensure yourself that the returned value is RFC compliant.
 
-The PREFIX defaults to C<mailbox-$$>, the HOSTNAME defaults to the
+The $prefix defaults to C<mailbox-$$>, the $hostname defaults to the
 return of L<Net::Domains>'s function C<hostfqdn()>, or when not installed,
 the L<Sys::Hostname>'s function C<hostname()>.  Inbetween the
 two, a nano-second time provided by L<Time::HiRes> is used.  If that

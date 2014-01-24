@@ -26,7 +26,7 @@ functionality related to creating message replies.
 
 =section Constructing a message
 
-=method reply OPTIONS
+=method reply %options
 
 Start a reply to this message. Some of the header-lines of the original
 message will be taken. A message-id will be assigned. Some header lines
@@ -40,7 +40,7 @@ or you may do that later with C<set> on the header.
 ADDRESSES may be specified as string, or
 a M<Mail::Address> object, or as array of M<Mail::Address> objects.
 
-All OPTIONS which are not listed below AND start with a capital, will
+All %options which are not listed below AND start with a capital, will
 be added as additional headers to the reply message.
 
 =option  body BODY
@@ -408,12 +408,12 @@ sub replySubject($)
 
 #------------------------------------------
 
-=method replyPrelude [STRING|FIELD|ADDRESS|ARRAY-OF-THINGS]
+=method replyPrelude [STRING|$field|$address|ARRAY-$of-$things]
 
 Produces a list of lines (usually only one), which will preceded the
 quoted body of the message.  STRING must comply to the RFC822 email
 address specification, and is usually the content of a C<To> or C<From>
-header line.  If a FIELD is specified, the field's body must be
+header line.  If a $field is specified, the field's body must be
 compliant.  Without argument -or when the argument is C<undef>- a
 slightly different line is produced.
 

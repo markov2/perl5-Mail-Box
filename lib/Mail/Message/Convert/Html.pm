@@ -28,7 +28,7 @@ which do require extra packages to be installed.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  head_mailto BOOLEAN
 =default head_mailto <true>
@@ -62,9 +62,9 @@ sub init($)
 
 =section Converting
 
-=method textToHtml LINES
+=method textToHtml $lines
 
-Translate one or more LINES from text into HTML.  Each line is taken one
+Translate one or more $lines from text into HTML.  Each line is taken one
 after the other, and only simple things are translated.  C<textToHtml>
 is able to convert large plain texts in a descent fashion.  In scalar
 context, the resulting lines are returned as one.
@@ -84,9 +84,9 @@ sub textToHtml(@)
 
 #------------------------------------------
 
-=method fieldToHtml FIELD, [SUBJECT]
+=method fieldToHtml $field, [$subject]
 
-Reformat one header line field to HTML.  The FIELD's name
+Reformat one header line field to HTML.  The $field's name
 is printed in bold, followed by the formatted field content,
 which is produced by M<fieldContentsToHtml()>.
 
@@ -100,10 +100,10 @@ sub fieldToHtml($;$)
 
 #------------------------------------------
 
-=method headToHtmlTable HEAD, [TABLE-PARAMS]
+=method headToHtmlTable $head, [$table_params]
 
 Produce a display of the M<selectedFields()> of the header in a
-table shape.  The optional TABLE-PARAMS are added as parameters to the
+table shape.  The optional $table_params are added as parameters to the
 produced TABLE tag.  In list context, the separate lines are returned.
 In scalar context, everything is returned as one.
 
@@ -140,7 +140,7 @@ sub headToHtmlTable($;$)
 
 #------------------------------------------
 
-=method headToHtmlHead HEAD, META
+=method headToHtmlHead $head, $meta
 
 Translate the selected header lines (fields) to an html page header.  Each
 selected field will get its own meta line with the same name as the line.
@@ -211,11 +211,11 @@ sub headToHtmlHead($@)
     
 #------------------------------------------
 
-=method fieldContentsToHtml FIELD, [SUBJECT]
+=method fieldContentsToHtml $field, [$subject]
 
 Format one field from the header to HTML.  When the header line usually
 contains e-mail addresses, the line is scanned and valid addresses
-are linked with an C<mailto:> anchor.  The SUBJECT can be specified to
+are linked with an C<mailto:> anchor.  The $subject can be specified to
 be included in that link.
 
 =cut

@@ -28,7 +28,7 @@ THIS PACKAGES IS NOT IMPLEMENTED YET...  (it's waiting for a volunteer)
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =cut
 

@@ -21,7 +21,7 @@ extension.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 Messages in file-based folders use the following options for creation:
 
 =option  from_line STRING
@@ -47,7 +47,7 @@ sub coerce($)
     $self->SUPER::coerce($message)->labelsToStatus;
 }
 
-=method write [FILEHANDLE]
+=method write [$fh]
 Write one message to a file handle.  It is the message including the
 leading 'From ' line and trailing blank.  The From-line may interfere
 with lines in the body: those lines are escaped with an extra '>'.
@@ -88,14 +88,14 @@ sub clone()
 
 =section The message
 
-=method fromLine [LINE]
+=method fromLine [$line]
 Many people detest file-style folders because they store messages all in
 one file, where a line starting with C<From > leads the header.  If we
 receive a message from a file-based folder, we store that line.  If we write
 to such a file, but there is no such line stored, then we try to generate
 one.
 
-If LINE is provided, then the starting line is set to this value.
+If $line is provided, then the starting line is set to this value.
 =cut
 
 sub fromLine(;$)
@@ -124,7 +124,7 @@ sub escapedBody()
 
 =section Internals
 
-=method readFromParser PARSER
+=method readFromParser $parser
 Read one message from a M<Mail::Box::File> based folder, including the
 leading message separator.
 =cut
@@ -184,8 +184,8 @@ sub fileLocation()
      : $self->{MBMM_begin};
 }
 
-=method moveLocation DISTANCE
-The message is relocated in the file, being moved over DISTANCE bytes.
+=method moveLocation $distance
+The message is relocated in the file, being moved over $distance bytes.
 Setting a new location will update the according information in the header
 and body.
 =cut

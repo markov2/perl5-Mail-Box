@@ -35,7 +35,7 @@ from stage, the message's body and head objects may change.
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 =requires folder FOLDER
 
@@ -96,7 +96,7 @@ sub head(;$)
 
 =section The message
 
-=method folder [FOLDER]
+=method folder [$folder]
 In with folder did we detect this message/dummy?  This is a reference
 to the folder-object.
 
@@ -112,7 +112,7 @@ sub folder(;$)
     $self->{MBM_folder};
 }
 
-=method seqnr [INTEGER]
+=method seqnr [$integer]
 Get the number of this message is the current folder.  It starts counting
 from zero.  Do not change the number.
 =cut
@@ -122,8 +122,8 @@ sub seqnr(;$)
     @_ ? $self->{MBM_seqnr} = shift : $self->{MBM_seqnr};
 }
 
-=method copyTo FOLDER, OPTIONS
-Copy the message to the indicated opened FOLDER, without deleting the
+=method copyTo $folder, %options
+Copy the message to the indicated opened $folder, without deleting the
 original.  The coerced message (the clone in the destination folder)
 is returned.
 
@@ -156,14 +156,14 @@ sub copyTo($@)
     $folder->addMessage($self->clone(@_));
 }
 
-=method moveTo FOLDER, OPTIONS
-Move the message from this folder to the FOLDER specified.  This will
+=method moveTo $folder, %options
+Move the message from this folder to the $folder specified.  This will
 create a copy using M<clone()> first.  Then, this original message is
 flagged to get deleted.  So until the source folder is closed, two copies
 of the message may stay in memory.
 
 The newly created message clone (part of the destination folder)
-is returned.  All OPTIONS are passed to M<copyTo()>
+is returned.  All %options are passed to M<copyTo()>
 
 =option  share  BOOLEAN
 =default share  <true unless shallow_body exists>
@@ -203,14 +203,14 @@ sub moveTo($@)
 
 =section Internals
 
-=method readBody PARSER, HEAD [, BODYTYPE]
-Read the body of one message.  The PARSER gives access to the folder file.
-The HEAD has been read with M<readHead()>.  The optional BODYTYPE supplies
+=method readBody $parser, $head, [$bodytype]
+Read the body of one message.  The $parser gives access to the folder file.
+The $head has been read with M<readHead()>.  The optional $bodytype supplies
 the class name of the body to be created, or a code reference to a
 routine which can produce a body type based on the head (passed as
 first argument).
 
-By default, the BODYTYPE will call M<Mail::Box::determineBodyType()>
+By default, the $bodytype will call M<Mail::Box::determineBodyType()>
 where the message will be added to.
 =cut
 

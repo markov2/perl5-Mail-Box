@@ -29,7 +29,7 @@ as for all M<Mail::Box::Dir> folder types.
 
 #-------------------------------------------
 
-=method seqnr [INTEGER]
+=method seqnr [$integer]
 
 The order of this message in the folder, counted from zero.  Do not
 change the number (unless you understand the implications).

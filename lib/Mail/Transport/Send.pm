@@ -67,7 +67,7 @@ known to have exploitable security breaches.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default via C<'sendmail'>
 
@@ -86,9 +86,9 @@ sub new(@)
 
 =section Sending mail
 
-=method send MESSAGE, OPTIONS
+=method send $message, %options
 
-Transmit the MESSAGE, which may be anything what can be coerced into a
+Transmit the $message, which may be anything what can be coerced into a
 M<Mail::Message>, so including M<Mail::Internet> and M<MIME::Entity>
 messages.  It returns true when the transmission was successfully completed.
 
@@ -133,7 +133,7 @@ sub send($@)
 
 #------------------------------------------
 
-=method trySend MESSAGE, OPTIONS
+=method trySend $message, %options
 
 Try to send the message. This will return true if successful, and
 false in case some problems where detected.  The C<$?> contains
@@ -153,9 +153,9 @@ sub trySend($@)
 
 #------------------------------------------
 
-=method putContent MESSAGE, FILEHANDLE, OPTIONS
+=method putContent $message, $fh, %options
 
-Print the content of the MESSAGE to the FILEHANDLE.
+Print the content of the $message to the $fh.
 
 =option  body_only BOOLEAN
 =default body_only <false>
@@ -185,13 +185,13 @@ sub putContent($$@)
 
 #------------------------------------------
 
-=method destinations MESSAGE, [ADDRESS|ARRAY-OF-ADDRESSES]
+=method destinations $message, [$address|ARRAY]
 
-Determine the destination for this message.  If a valid ADDRESS is defined,
-this is used to overrule the addresses within the message.  If the ADDRESS
-is C<undef> it is ignored.
+Determine the destination for this message.  If a valid $address is defined,
+this is used to overrule the addresses within the message.  If the $address
+is C<undef> it is ignored.  It may also be an ARRAY of addresses.
 
-If no ADDRESS is specified, the message is scanned for resent groups
+If no $address is specified, the message is scanned for resent groups
 (see M<Mail::Message::Head::Complete::resentGroups()>).  The addresses
 found in the first (is latest added) group are used.  If no resent groups
 are found, the normal C<To>, C<Cc>, and C<Bcc> lines are taken.

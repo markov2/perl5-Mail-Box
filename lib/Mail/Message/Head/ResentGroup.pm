@@ -36,12 +36,12 @@ reply, forward, or bounce messages at all!
 
 =chapter METHODS
 
-=c_method new [FIELDS], OPTIONS
+=c_method new [$fields], %options
 
 Create an object which maintains one set of resent headers.  The
-FIELDS are M<Mail::Message::Field> objects from the same header.
+$fields are M<Mail::Message::Field> objects from the same header.
 
-OPTIONS which start with capitals will be used to construct additional
+%options which start with capitals will be used to construct additional
 fields.  These option names are prepended with C<Resent-*>, keeping the
 capitization of what is specified.
 
@@ -127,13 +127,13 @@ sub init($$)
     $self;
 }
 
-=method from [HEAD|MESSAGE, OPTIONS]
+=method from [<$head|$message>, %options]
 WARNING: this method has two very different purposes.  For backward
 compatibility reasons, without arguments M<resentFrom()> is called to
 return the C<From> field of this resent group.
 
 With any arguments, a list of C<Mail::Message::Head::ResentGroup> objects
-is returned, taken from the specified MESSAGE or message HEAD.
+is returned, taken from the specified $message or message $head.
 
 =cut
 
@@ -174,7 +174,7 @@ sub from($@)
 
 =section The header
 
-=method messageHead [HEAD]
+=method messageHead [$head]
 Returns (optionally after setting) the real header where this resent group
 belongs to.  This may be undef at creation, and then later filled in
 when M<Mail::Message::Head::Complete::addResentGroup()> is called.
@@ -198,11 +198,11 @@ sub orderedFields()
     map { $head->get($_) || () } @ordered_field_names;
 }
 
-=method set (FIELD =E<gt> VALUE) | OBJECT
-Set a FIELD to a (new) VALUE.  The FIELD names which do not start with
+=method set <$field, $value> | $object
+Set a $field to a (new) $value.  The $field names which do not start with
 'Resent-*' but need it will have that added.  It is also an option to
-specify a fully prepared message field OBJECT.  In any case, a field
-OBJECT is returned.
+specify a fully prepared message field $object.  In any case, a field
+$object is returned.
 
 =examples
 
@@ -243,13 +243,13 @@ sub delete()
     $self;
 }
 
-=method add (FIELD =E<gt> VALUE) | OBJECT
+=method add <$field, $value> | $object
 All fields appear only once, so C<add()> behaves as M<set()>.
 =cut
 
 sub add(@) { shift->set(@_) }
 
-=method addFields [FIELDNAMES]
+=method addFields [$fieldnames]
 Not applicable to resent-groups: the same name can appear in more than
 one group.  Therefore, a FIELDNAME is sufficiently distinctive.
 
@@ -382,7 +382,7 @@ Returns the message-ID used for this group of resent lines.
 
 sub messageId() { shift->head->get('resent-message-id') }
 
-=ci_method isResentGroupFieldName NAME
+=ci_method isResentGroupFieldName $name
 =cut
 
 sub isResentGroupFieldName($) { $resent_field_names{lc $_[1]} }
@@ -391,7 +391,7 @@ sub isResentGroupFieldName($) { $resent_field_names{lc $_[1]} }
 
 =section Internals
 
-=method createReceived [DOMAIN]
+=method createReceived [$domain]
 
 Create a received field for this resent group.  This is automatically
 called if none was specified during creation of this resent group object.

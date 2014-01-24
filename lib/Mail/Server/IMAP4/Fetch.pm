@@ -34,10 +34,9 @@ Therefore, this object can be frozen by L<Storable> if you want to.
 
 =section Constructors
 
-=c_method new MESSAGE|PART, OPTIONS
+=c_method new <$message|$part>, %options
 =option  md5checksums BOOLEAN
 =default md5checksums 0
-
 =cut
 
 sub new($)
@@ -125,9 +124,7 @@ sub new($)
 }
 
 #------------------------------------------
-
 =section Attributes
-
 =method headLocation
 =method bodyLocation
 =method partLocation
@@ -138,13 +135,12 @@ sub bodyLocation() { @{ (shift) }{ qw/bodybegin bodyend/ } }
 sub partLocation() { @{ (shift) }{ qw/headbegin bodyend/ } }
 
 #------------------------------------------
-
 =section IMAP Commands
 
-=method fetchBody EXTENDED
+=method fetchBody $extended
 Returns one string, representing the message's structure as defined by
 the IMAP protocol.  The boolean argument indicates whether you like to
-have the EXTENDED information, as the imap command 'FETCH BODYSTRUCTURE'
+have the $extended information, as the imap command 'FETCH BODYSTRUCTURE'
 defines or the limited information of 'FETCH BODY'.
 =cut
 
@@ -157,7 +153,7 @@ sub fetchBody($)
     if($self->{parts})
     {   # Multipart message
         # WARNING: no blanks between part descriptions
-        my $parts  = join '', map {$_->fetchBody($extended)} @{$self->{parts}};
+        my $parts  = join '', map $_->fetchBody($extended), @{$self->{parts}};
         my @fields = (\$parts, $subtype || 'MIXED');
 
         if($extended)     # only included when any valid info
@@ -175,33 +171,30 @@ sub fetchBody($)
     # Simple message
     #
 
-    my @fields = ( ($mediatype || 'TEXT')
-                 , ($subtype   || 'PLAIN')
-                 , $self->{typeattr}
-                 , $self->{messageid}
-                 , $self->{description}
-                 , uc($self->{transferenc} || '8BIT')
-                 , \($self->{bodysize})
-                 );
+    my @fields = 
+      ( ($mediatype || 'TEXT')
+      , ($subtype   || 'PLAIN')
+      , $self->{typeattr}
+      , $self->{messageid}
+      , $self->{description}
+      , uc($self->{transferenc} || '8BIT')
+      , \($self->{bodysize})
+      );
 
     if(my $nest = $self->{nest})
     {   # type MESSAGE (message/rfc822 encapsulated)
-        push @fields, \$nest->fetchEnvelope,
-                    , \$nest->fetchBody($extended);
+        push @fields
+         , \$nest->fetchEnvelope,
+         , \$nest->fetchBody($extended);
     }
-
     push @fields, \$self->{bodylines};
 
-    if(   $extended
-       && ($self->{bodyMD5} || $self->{disposition} || $self->{language})
-      )
-    {   push @fields, @{$self}{ qw/bodyMD5 disposition language/ };
-    }
+    push @fields, @{$self}{ qw/bodyMD5 disposition language/ }
+        if $extended
+        && ($self->{bodyMD5} || $self->{disposition} || $self->{language});
 
     $self->_imapList(@fields);
 }
-
-#------------------------------------------
 
 =method fetchEnvelope
 Returns a string representation of some header information.
@@ -236,17 +229,13 @@ sub fetchEnvelope()
     $self->_imapList(@fields);
 }
 
-#------------------------------------------
-
 =method fetchSize
 Returns the size of the message body.
 =cut
 
 sub fetchSize() { shift->{bodysize} }
 
-#------------------------------------------
-
-=method part [PARTNR]
+=method part [$partnr]
 The partnummer is a list of dot-separated positive integers, numbering
 (nested) parts in multi-part message bodies.  By default, the info of
 the main message is returned.
@@ -273,11 +262,8 @@ sub part(;$)
     $self;
 }
 
-#------------------------------------------
-
-=method printStructure [FILEHANDLE|undef, [NUMBER]]
-
-Print the structure of the fetch data to the specified FILEHANDLE or the
+=method printStructure [<$fh|undef>, [$number]]
+Print the structure of the fetch data to the specified $fh or the
 selected filehandle.  When explicitly C<undef> is specified as handle,
 then the output will be returned as string.  
 Only a limited set of the information is displayed.
@@ -330,7 +316,6 @@ sub printStructure(;$$)
 #------------------------------------------
 
 =section Internals
-
 =cut
 
 # Concatenate the elements of a list, as the IMAP protocol does.

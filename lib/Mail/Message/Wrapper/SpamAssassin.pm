@@ -45,8 +45,8 @@ is an interface to the spam checking software of M<Mail::SpamAssassin>.
 
 =chapter METHODS
 
-=c_method new MESSAGE, OPTIONS
-Creates a wrapper around the MESSAGE.  The already present fields
+=c_method new $message, %options
+Creates a wrapper around the $message.  The already present fields
 from a previous run of Spam::Assassin (or probably fake lines) are
 removed first.
 

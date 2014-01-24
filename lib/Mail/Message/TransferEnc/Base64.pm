@@ -46,7 +46,7 @@ sub check($@)
 
 #------------------------------------------
 
-=method decode BODY, OPTIONS
+=method decode $body, %options
 
 =warning Base64 line length not padded on 4.
 

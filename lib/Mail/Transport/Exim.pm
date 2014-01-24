@@ -23,7 +23,7 @@ directories, and the first version found is taken.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 If you have Exim installed in a non-standard location, you will need to 
 specify the path, using M<new(proxy)>.
@@ -50,7 +50,7 @@ sub init($)
 
 #------------------------------------------
 
-=method trySend MESSAGE, OPTIONS
+=method trySend $message, %options
 
 =error Errors when closing Exim mailer $program: $!
 

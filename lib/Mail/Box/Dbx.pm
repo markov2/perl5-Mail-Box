@@ -35,7 +35,7 @@ of this package.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default message_type M<Mail::Box::Dbx::Message>
 =default access       always C<'r'>
@@ -67,14 +67,14 @@ sub init($)
     $self;
 }
 
-=ci_method create FOLDERNAME, OPTIONS
+=ci_method create $foldername, %options
 Creation is not supported for dbx folders.
 =cut
 
 sub create($@) {  shift->notImplemented }
 
-=c_method foundIn [FOLDERNAME], [OPTIONS]
-If no FOLDERNAME is specified, then the value of the C<folder> option
+=c_method foundIn [$foldername], %options
+If no $foldername is specified, then the value of the C<folder> option
 is taken.  A dbx folder is a file which name ends on C<.dbx> (case
 insensitive).
 
@@ -138,7 +138,7 @@ sub nameOfSubFolder($;$)
     defined $parent ?  File::Spec->catfile(dirname($parent), $name) : $name;
 }
 
-=ci_method listSubFolders OPTIONS
+=ci_method listSubFolders %options
 It is advised to set the C<check> flag, because dbx folder often list
 large amounts of folder names which do not really exist.  However, checking
 does consume some time.
@@ -174,9 +174,9 @@ sub listSubFolders(@)
 
 =section Internals
 
-=ci_method folderToFilename FOLDERNAME, FOLDERDIR
+=ci_method folderToFilename $foldername, $folderdir
 Translate a folder name into a filename, using the
-FOLDERDIR value to replace a leading C<=>.
+$folderdir value to replace a leading C<=>.
 =cut
 
 sub folderToFilename($$)

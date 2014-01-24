@@ -31,7 +31,7 @@ that software.
 
 =section Constructors
 
-=c_method new FIELDS, OPTIONS
+=c_method new $fields, %options
 
 Construct an object which maintains one set of fields which were added
 by spam fighting software.
@@ -53,8 +53,8 @@ sub knownFighters() { keys %fighters }
 
 #------------------------------------------
 
-=ci_method fighter NAME, [SETTINGS]
-Get the SETTINGS of a certain spam-fighter, optionally after setting them.
+=ci_method fighter $name, [$settings]
+Get the $settings of a certain spam-fighter, optionally after setting them.
 The L<knownFighters()> method returns the defined names.  The names
 are case-sensitive.
 
@@ -138,10 +138,10 @@ BEGIN
 
 #------------------------------------------
 
-=method from HEAD|MESSAGE, OPTIONS
+=method from $head|$message, %options
 
 Returns a list of C<Mail::Message::Head::SpamGroup> objects, based on the
-specified MESSAGE or message HEAD.
+specified $message or message $head.
 
 =option  types ARRAY-OF-NAMES
 =default types C<undef>
@@ -191,15 +191,15 @@ sub collectFields($)
 
 #------------------------------------------
 
-=ci_method isSpamGroupFieldName NAME
+=ci_method isSpamGroupFieldName $name
 =cut
 
 sub isSpamGroupFieldName($) { $_[1] =~ $fighterfields }
 
 #------------------------------------------
 
-=ci_method habeasSweFieldsCorrect [MESSAGE|HEAD]
-Returns a true value if the MESSAGE or HEAD contains C<Habeas-SWE> fields
+=ci_method habeasSweFieldsCorrect [$message|$head]
+Returns a true value if the $message or $head contains C<Habeas-SWE> fields
 which are correct.  Without argument, this is used as instance method on
 an existing Spam-Group.
 

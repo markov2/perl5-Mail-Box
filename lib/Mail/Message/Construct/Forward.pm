@@ -26,7 +26,7 @@ functionality related to creating forwarded messages.
 
 =section Constructing a message
 
-=method forward OPTIONS
+=method forward %options
 
 Forward the content of this message.  The body of the message to be forwarded
 is encapsulated in some accompanying text (if you have no wish for that, than
@@ -150,12 +150,12 @@ sub forward(@)
 
 #------------------------------------------
 
-=method forwardNo OPTIONS
+=method forwardNo %options
 Construct a forward, where the whole body of the message is already
 constructed.  That complex body is usually produced in M<forwardInline()>,
 M<forwardAttach()>, or M<forwardEncapsulate()>.
 
-The OPTIONS are the same as for C<forward()> except that C<body> is
+The %options are the same as for C<forward()> except that C<body> is
 required.  Some other options, like C<preamble>, are ignored.
 =requires body BODY
 
@@ -223,7 +223,7 @@ sub forwardNo(@)
 
 #------------------------------------------
 
-=method forwardInline OPTIONS
+=method forwardInline %options
 
 This method is equivalent in behavior to M<forward()> with the
 option C<include> set to C<'INLINE'>.  You can specify most of
@@ -343,7 +343,7 @@ sub forwardInline(@)
 
 #------------------------------------------
 
-=method forwardAttach OPTIONS
+=method forwardAttach %options
 Forward the message as I<flat> attachment to the specified C<preamble>.  You
 can specify all options available to C<forward()>, although a C<preamble>
 which is provided as body object is required, and any specified C<body>
@@ -378,7 +378,7 @@ sub forwardAttach(@)
 
 #------------------------------------------
 
-=method forwardEncapsulate OPTIONS
+=method forwardEncapsulate %options
 Like M<forwardAttach()>, but in this case the original message is first
 encapsulated as nested message in a M<Mail::Message::Body::Nested>, and
 then joint into a multipart.

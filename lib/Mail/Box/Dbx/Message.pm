@@ -24,7 +24,7 @@ Mail::Box::Dbx::Message - one message in a Dbx folder
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 =requires dbx_record C<Mail::Transport::Dbx::Email>
 
 =option  account_name STRING

@@ -110,7 +110,7 @@ use overload
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 BE WARNED that, what you specify here are encodings and such which are
 already in place.  The options will not trigger conversions.  When you
@@ -385,7 +385,7 @@ sub clone() {shift->notImplemented}
 
 =section Constructing a body
 
-=method decoded OPTIONS
+=method decoded %options
 
 Returns a body, an object which is (a sub-)class of a M<Mail::Message::Body>,
 which contains a simplified representation of textual data.  The returned
@@ -461,9 +461,9 @@ sub eol(;$)
 
 =section The body
 
-=method message [MESSAGE]
+=method message [$message]
 Returns the message (or message part) where this body belongs to,
-optionally setting it to a new MESSAGE first.  If C<undef> is passed,
+optionally setting it to a new $message first.  If C<undef> is passed,
 the body will be disconnected from the message.
 
 =cut
@@ -471,8 +471,9 @@ the body will be disconnected from the message.
 sub message(;$)
 {   my $self = shift;
     if(@_)
-    {   $self->{MMB_message} = shift;
-        weaken($self->{MMB_message});
+    {   if($self->{MMB_message} = shift)
+        {   weaken $self->{MMB_message};
+        }
     }
     $self->{MMB_message};
 }
@@ -499,7 +500,7 @@ the C<Mail::Message::Body::Nested> body type.
 
 sub isNested() {0}
 
-=method partNumberOf PART
+=method partNumberOf $part
 Returns a string for multiparts and nested, otherwise an error.  It is
 used in M<Mail::Message::partNumber()>.
 =cut
@@ -513,7 +514,7 @@ sub partNumberOf($)
 
 =section About the payload
 
-=method type [STRING|FIELD]
+=method type [STRING|$field]
 Returns the type of information the body contains as
 M<Mail::Message::Field> object.  The type is taken from the header
 field C<Content-Type>. If the header did not contain that field,
@@ -583,13 +584,13 @@ is part of the result of what the C<type> method returns.
 
 sub charset() { shift->type->attribute('charset') }
 
-=method transferEncoding [STRING|FIELD]
+=method transferEncoding [STRING|$field]
 Returns the transfer-encoding of the data within this body as
 M<Mail::Message::Field> (which stringifies to its content).  If it
 needs to be changed, call the M<encode()> or M<decoded()> method.
 When no encoding is present, the field contains the text C<none>.
 
-The optional STRING or FIELD enforces a new encoding to be set, without the
+The optional STRING or $field enforces a new encoding to be set, without the
 actual required translations.
 
 =examples
@@ -611,7 +612,7 @@ sub transferEncoding(;$)
        : Mail::Message::Field->new('Content-Transfer-Encoding' => $set);
 }
 
-=method description [STRING|FIELD]
+=method description [STRING|$field]
 Returns (optionally after setting) the informal description of the body
 content.  The related header field is C<Content-Description>.
 A M<Mail::Message::Field> object is returned (which stringifies into
@@ -631,7 +632,7 @@ sub description(;$)
        : Mail::Message::Field->new('Content-Description' => $disp);
 }
 
-=method disposition [STRING|FIELD]
+=method disposition [STRING|$field]
 Returns (optionally after setting) how the message can be disposed
 (unpacked).  The related header field is C<Content-Disposition>.
 A M<Mail::Message::Field> object is returned (which stringifies into
@@ -652,7 +653,7 @@ sub disposition(;$)
        : Mail::Message::Field->new('Content-Disposition' => $disp);
 }
 
-=method contentId [STRING|FIELD]
+=method contentId [STRING|$field]
 Returns (optionally after setting) the id (unique reference) of a
 message part.  The related header field is C<Content-ID>.
 A M<Mail::Message::Field> object is returned (which stringifies into
@@ -660,7 +661,7 @@ the field content).  The field content will be C<none> if no disposition
 was specified.
 
 The argument can be a STRING (which is converted into a field), or a
-fully prepared header FIELD.
+fully prepared header $field.
 =cut
 
 sub contentId(;$)
@@ -762,23 +763,23 @@ M<Mail::Message::Body> may not be updated.
 
 sub file(;$) {shift->notImplemented}
 
-=method print [FILEHANDLE]
-Print the body to the specified FILEHANDLE (defaults to the selected handle).
+=method print [$fh]
+Print the body to the specified $fh (defaults to the selected handle).
 The handle may be a GLOB, an M<IO::File> object, or... any object with a
 C<print()> method will do.  Nothing useful is returned.
 =cut
 
 sub print(;$) {shift->notImplemented}
 
-=method printEscapedFrom FILEHANDLE
-Print the body to the specified FILEHANDLE but all lines which start
+=method printEscapedFrom $fh
+Print the body to the specified $fh but all lines which start
 with 'From ' (optionally already preceded by E<gt>'s) will habe an E<gt>
 added in front.  Nothing useful is returned.
 =cut
 
 sub printEscapedFrom($) {shift->notImplemented}
 
-=method write OPTIONS
+=method write %options
 Write the content of the body to a file.  Be warned that you may want to
 decode the body before writing it!
 
@@ -829,19 +830,19 @@ sub stripTrailingNewline() {shift->notImplemented}
 
 =section Internals
 
-=method read PARSER, HEAD, BODYTYPE [,CHARS [,LINES]]
+=method read $parser, $head, $bodytype, [$chars, [$lines]]
 
-Read the body with the PARSER from file. The implementation of this method
-will differ between types of bodies.  The BODYTYPE argument is a class name
+Read the body with the $parser from file. The implementation of this method
+will differ between types of bodies.  The $bodytype argument is a class name
 or a code reference of a routine which can produce a class name, and is
 used in multipart bodies to determine the type of the body for each part.
 
-The CHARS argument is the estimated number of bytes in the body, or
+The $chars argument is the estimated number of bytes in the body, or
 C<undef> when this is not known.  This data can sometimes be derived from
 the header (the C<Content-Length> line) or file-size.
 
-The second argument is the estimated number of LINES of the body.  It is less
-useful than the CHARS but may be of help determining whether the message
+The second argument is the estimated number of $lines of the body.  It is less
+useful than the $chars but may be of help determining whether the message
 separator is trustworthy.  This value may be found in the C<Lines> field
 of the header.
 
@@ -849,9 +850,9 @@ of the header.
 
 sub read(@) {shift->notImplemented}
 
-=method contentInfoTo HEAD
+=method contentInfoTo $head
 Copy the content information (the C<Content-*> fields) into the specified
-HEAD.  The body was created from raw data without the required information,
+$head.  The body was created from raw data without the required information,
 which must be added.  See also M<contentInfoFrom()>.
 =cut
 
@@ -871,7 +872,7 @@ sub contentInfoTo($)
     $self;
 }
 
-=method contentInfoFrom HEAD
+=method contentInfoFrom $head
 Transfer the body related info from the header into this body.
 =cut
 
@@ -913,7 +914,7 @@ Returns whether the body has changed.
 
 sub isModified() { shift->{MMB_modified} }
 
-=method fileLocation [BEGIN,END]
+=method fileLocation [$begin, $end]
 The location of the body in the file.  Returned a list containing begin and
 end.  The begin is the offsets of the first byte if the folder used for
 this body.  The end is the offset of the first byte of the next message.
@@ -925,8 +926,8 @@ sub fileLocation(;@)
     @$self{ qw/MMB_begin MMB_end/ } = @_;
 }
 
-=method moveLocation [DISTANCE]
-Move the registration of the message to a new location over DISTANCE.  This
+=method moveLocation [$distance]
+Move the registration of the message to a new location over $distance.  This
 is called when the message is written to a new version of the same
 folder-file.
 =cut

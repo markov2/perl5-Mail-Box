@@ -24,7 +24,7 @@ same name as the folder, extended by C<.lock>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default file <folderfile>C<.lock>
 

@@ -76,16 +76,16 @@ sub file()
     $file;
 }
 
-=method printStructure [FILEHANDLE|undef],[INDENT]
-Print the structure of a message to the specified FILEHANDLE or the
+=method printStructure [$fh|undef],[$indent]
+Print the structure of a message to the specified $fh or the
 selected filehandle.  When explicitly C<undef> is specified as handle,
 then the output will be returned as string.
 
 The message's subject and the types of all composing parts are
 displayed.
 
-INDENT specifies the initial indentation string: it is added in front
-of each line. The INDENT must contain at least one white-space.
+$indent specifies the initial indentation string: it is added in front
+of each line. The $indent must contain at least one white-space.
 
 =examples
  my $msg = ...;

@@ -29,7 +29,7 @@ dependency to it by the MailBox distribution.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default method C<FcntlLock>
 

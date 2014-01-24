@@ -23,7 +23,7 @@ the folders of a single user, even if those folders are closed.
 
 =chapter METHODS
 
-=c_method new [NAME], OPTIONS
+=c_method new [$name], %options
 
 =default  name      C<'folders'>
 =default  item_type M<Mail::Box::Identity>
@@ -79,9 +79,9 @@ sub manager()
 
 #------------------------------------------
 
-=method folderType [FOLDERCLASS]
+=method folderType [$folderclass]
 Returns the type of folder (on this location).  When specified, then
-FOLDERCLASS must be a M<Mail::Box> extension.
+$folderclass must be a M<Mail::Box> extension.
 =cut
 
 sub folderType()

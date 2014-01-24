@@ -27,7 +27,7 @@ Mail::Message::Field::Structured - one line of a structured message header
 
 =chapter METHODS
 
-=c_method new DATA
+=c_method new $data
 
 =over 4
 
@@ -98,22 +98,22 @@ sub clone() { dclone(shift) }
 
 =section Access to the content
 
-=method attribute OBJECT|(STRING, OPTIONS)|(NAME,VALUE,OPTIONS)
+=method attribute $object|<STRING, %options>|<$name,$value,%options>
 
 Add an attribute to the field.  The attributes are added left-to-right into
 the string representation of the field, although the order of the attributes
 is un-important, according to the RFCs.
 
-You may pass a fully prepared M<Mail::Message::Field::Attribute> OBJECT,
+You may pass a fully prepared M<Mail::Message::Field::Attribute> $object,
 if you like to do all preparations for correct representation of the
 data yourself.  You may also pass one STRING, which is a fully prepared
 attribute.  This STRING will not be changed, so be careful about quoting
 and encodings.
 
-As third possibility, you can specify an attribute NAME and its VALUE.
+As third possibility, you can specify an attribute $name and its $value.
 An attribute object will be created for you implicitly in both
-cases where such object is not supplied, passing the OPTIONS.  See
-M<Mail::Message::Field::Attribute::new()> about the available OPTIONS.
+cases where such object is not supplied, passing the %options.  See
+M<Mail::Message::Field::Attribute::new()> about the available %options.
 
 The attribute object is returned, however, when continuations are used this
 may be an object you already know about.  C<undef> is returned when
@@ -213,7 +213,7 @@ sub produceBody()
        , map {$_->string} @{$attrs}{sort keys %$attrs};
 }
 
-=method datum [VALUE]
+=method datum [$value]
 The part of the field before the semi-colon (C<;>).
 =cut
 

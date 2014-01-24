@@ -40,7 +40,7 @@ Nearly all methods can return undef.
 
 sub type { "mailbox" }
 
-=c_method new [NAME], OPTIONS
+=c_method new [$name], %options
 
 =option  folder_type CLASS
 =default folder_type C<from parent>
@@ -109,9 +109,9 @@ sub init($)
 
 =section Attributes
 
-=method fullname [DELIMETER]
+=method fullname [$delimeter]
 Returns the name of the folder, from the toplevel until this one, with
-the DELIMETER string between each level.  DELIMETER default to a forward
+the $delimeter string between each level.  $delimeter default to a forward
 slash (a C</>).
 =cut
 
@@ -125,7 +125,7 @@ sub fullname(;$)
 
 #-------------------------------------------
 
-=method location [FILENAME|DIRECTORY|undef]
+=method location [$filename|$directory|undef]
 Returns the directory or filename of the folder.  If this is not pre-defined,
 it is computed based on the knowledge about the folder type.  Be sure to set
 the location of the toplevel folder to the folderdir of the user to get
@@ -302,10 +302,10 @@ sub subfolderNames() { map {$_->name} shift->subfolders }
 
 #-------------------------------------------
 
-=method folder [[NAME, ...], NAME]
-Returns the subfolder's object with NAME or C<undef> if it does not
+=method folder [..., $name]
+Returns the subfolder's object with $name or C<undef> if it does not
 exist.  When multiple NAMEs are added, those super folders are traverst
-first.  Without any NAME, the current object is returned
+first.  Without any $name, the current object is returned
 
 =examples get some folder
  my $a = $user->folders->folder('b', 'a');
@@ -327,20 +327,14 @@ sub folder(@)
 
 #-------------------------------------------
 
-=method open OPTIONS
+=method open %options
 Open the folder which is described by this identity.  Returned is some
 M<Mail::Box>.  The options are passed to M<Mail::Box::Manager::open()>.
 =cut
 
 sub open(@)
 {   my $self = shift;
-    my $mgr  = $self->manager;
-
-    $mgr->open
-      ( $self->fullname
-      , type => $self->folderType
-      , @_
-      );
+    $self->manager->open($self->fullname, type => $self->folderType, @_);
 }
 
 #-------------------------------------------
@@ -362,12 +356,12 @@ sub foreach($)
 
 #-------------------------------------------
 
-=method addSubfolder M<Mail::Box::Identity>|DATA
-Add a new folder into the administration.  With DATA, a new object
+=method addSubfolder $m<Mail::Box::Identity>|$data
+Add a new folder into the administration.  With $data, a new object
 will be instantiated first.  The identity is returned on success.
 
 =error It is not permitted to add subfolders to $name
-The M<inferiors()> flag prohibits the creation of subfolders to this
+The $m<inferiors()> flag prohibits the creation of subfolders to this
 folder.
 =cut
 
@@ -391,8 +385,8 @@ sub addSubfolder(@)
 
 #-------------------------------------------
 
-=method remove [NAME]
-Remove the folder (plus subfolders) with the NAME.  Without NAME, this
+=method remove [$name]
+Remove the folder (plus subfolders) with the $name.  Without $name, this
 C<Mail::Box::Identity> itself is removed.
 
 The removed structure is returned, which is C<undef> if not
@@ -425,8 +419,8 @@ sub remove(;$)
 
 #-------------------------------------------
 
-=method rename FOLDER, [NEWSUBNAME]
-Move the folder to a different super-FOLDER, under a NEW SUBfolder NAME.
+=method rename $folder, [$newsubname]
+Move the folder to a different super-$folder, under a NEW SUBfolder NAME.
 
 =example renaming a folder
  my $top = $user->topfolder;

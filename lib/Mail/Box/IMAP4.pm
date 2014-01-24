@@ -37,9 +37,9 @@ one single IMAP4 connection.
 
 =chapter METHODS
 
-=c_method new OPTIONS
-The C<new> can have many OPTIONS.  Not only the ones listed here below,
-but also all the OPTIONS for M<Mail::Transport::IMAP4::new()> can be
+=c_method new %options
+The C<new> can have many %options.  Not only the ones listed here below,
+but also all the %options for M<Mail::Transport::IMAP4::new()> can be
 passed.
 
 =default access 'r'
@@ -217,7 +217,7 @@ sub foundIn(@)
 
 sub type() {'imap4'}
 
-=method close OPTIONS
+=method close %options
 Close the folder.  In the case of IMAP, more than one folder can use
 the same connection, therefore, closing a folder does not always close
 the connection to the server.  Only when no folder is using the
@@ -298,7 +298,7 @@ sub readMessages(@)
     $self;
 }
  
-=method getHead MESSAGE
+=method getHead $message
 Read the header for the specified message from the remote server.
 C<undef> is returned in case the message disappeared.
 
@@ -327,10 +327,10 @@ sub getHead($)
     $head;
 }
 
-=method getHeadAndBody MESSAGE
+=method getHeadAndBody $message
 Read all data for the specified message from the remote server.
 Return head and body of the mesasge as list, or an empty list
-if the MESSAGE disappeared from the server.
+if the $message disappeared from the server.
 
 =warning Message $uidl disappeared from $folder.
 Trying to get the specific message from the server, but it appears to be
@@ -382,7 +382,7 @@ sub getHeadAndBody($)
     ($head, $body->contentInfoFrom($head));
 }
 
-=method body [BODY]
+=method body [$body]
 =cut
 
 sub body(;$)
@@ -395,7 +395,7 @@ sub body(;$)
     $self->SUPER::body(@_);
 }
 
-=method write OPTIONS
+=method write %options
 The IMAP protocol usually writes the data immediately to the remote server,
 because that's what the protocol wants.  However, some options to M<new()>
 may delay that to boost performance.  This method will, when the folder is
@@ -433,7 +433,7 @@ sub delete(@)
     $transp->deleteFolder($self->name);
 }
 
-=method writeMessages OPTIONS
+=method writeMessages %options
 =requires transporter OBJECT
 =cut
 
@@ -448,9 +448,9 @@ sub writeMessages($@)
     $self;
 }
 
-=method createTransporter CLASS, OPTIONS
+=method createTransporter $class, %options
 Create a transporter object (an instance of M<Mail::Transport::IMAP4>), where
-CLASS defines the exact object type.  As OPTIONS, everything which is
+$class defines the exact object type.  As %options, everything which is
 acceptable to a transporter initiation can be used (see
 M<Mail::Transport::IMAP4::new()>.
 
@@ -492,11 +492,11 @@ sub createTransporter($@)
     $transporter;
 }
 
-=method transporter [OBJECT]
+=method transporter [$object]
 Returns the object which is the interface to the IMAP4 protocol handler.
 The IMAP4 handler has the current folder selected.
-When an OBJECT is specified, it is set to be the transporter from
-that moment on.  The OBJECT must extend M<Mail::Transport::IMAP4>.
+When an $object is specified, it is set to be the transporter from
+that moment on.  The $object must extend M<Mail::Transport::IMAP4>.
 
 =error No IMAP4 transporter configured
 =error Couldn't select IMAP4 folder $name
@@ -529,7 +529,7 @@ sub transporter(;$)
     undef;
 }
 
-=method fetch ARRAY-OF-MESSAGES|MESSAGE-SELECTION, INFO
+=method fetch <$messages|$selection>, $info
 Low-level data retreival about one or more messages via IMAP4 from
 the remote server. Some of this data may differ from the information
 which is stored in the message objects which are created by MailBox,
@@ -537,11 +537,11 @@ so you should avoid the use of this method for your own purposes.
 The IMAP implementation provides some wrappers around this, providing
 the correct behavior.
 
-An array of MESSAGES may be specified or some MESSAGE SELECTION,
+An ARRAY of $messages may be specified or some message $selection,
 acceptable to M<Mail::Box::messages()>.  Examples of the latter are
 C<'ALL'>, C<'DELETED'>, or C<spam> (messages labelled to contain spam).
 
-The INFO contains one or more attributes as defined by the IMAP protocol.
+The $info contains one or more attributes as defined by the IMAP protocol.
 You have to read the full specs of the related RFCs to see these.
 
 =cut
@@ -554,7 +554,6 @@ sub fetch($@)
 }
 
 #-------------------------------------------
-
 =section Error handling
 
 =chapter DETAILS

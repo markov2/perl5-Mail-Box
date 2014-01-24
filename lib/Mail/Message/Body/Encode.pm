@@ -75,7 +75,7 @@ NOT IMPLEMENTED YET
 
 =section Constructing a body
 
-=method encode OPTIONS
+=method encode %options
 Encode (translate) a M<Mail::Message::Body> into a different format.
 See the DESCRIPTION above.  Options which are not specified will not trigger
 conversions.
@@ -286,11 +286,11 @@ sub encoded()
 
 #------------------------------------------
 
-=method unify BODY
+=method unify $body
 
-Unify the type of the given BODY objects with the type of the called
+Unify the type of the given $body objects with the type of the called
 body.  C<undef> is returned when unification is impossible.  If the
-bodies have the same settings, the BODY object is returned unchanged.
+bodies have the same settings, the $body object is returned unchanged.
 
 Examples:
 
@@ -349,10 +349,10 @@ text.
 
 sub isText() { not shift->isBinary }
 
-=method dispositionFilename [DIRECTORY]
+=method dispositionFilename [$directory]
 Returns the name which can be used as filename to store the information
-in the indicated DIRECTORY. To get a filename, various fields are searched
-for C<filename> and C<name> attributes.  Without DIRECTORY, the name found
+in the indicated $directory. To get a filename, various fields are searched
+for C<filename> and C<name> attributes.  Without $directory, the name found
 will be returned.
 
 Only the basename of the found name will be used, for security reasons:
@@ -419,11 +419,9 @@ sub dispositionFilename(;$)
 
 =section Internals
 
-=method getTransferEncHandler TYPE
-
-Get the transfer encoder/decoder which is able to handle TYPE, or return
+=method getTransferEncHandler $type
+Get the transfer encoder/decoder which is able to handle $type, or return
 undef if there is no such handler.
-
 =cut
 
 my %transfer_encoder_classes =
@@ -451,16 +449,13 @@ sub getTransferEncHandler($)
     $transfer_encoders{$type} = $class->new;
 }
 
-#------------------------------------------
-
-=ci_method addTransferEncHandler NAME, CLASS|OBJECT
-
+=ci_method addTransferEncHandler $name, <$class|$object>
 Relate the NAMEd transfer encoding to an OBJECTs or object of the specified
-CLASS.  In the latter case, an object of that CLASS will be created on the
+$class.  In the latter case, an object of that $class will be created on the
 moment that one is needed to do encoding or decoding.
 
-The CLASS or OBJECT must extend M<Mail::Message::TransferEnc>.  It will
-replace existing class and object for this NAME.
+The $class or $object must extend M<Mail::Message::TransferEnc>.  It will
+replace existing class and object for this $name.
 
 Why aren't you contributing this class to MailBox?
 

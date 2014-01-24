@@ -41,7 +41,7 @@ for all the reported bugs.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create the IMAP connection to the server.  IMAP servers can handle
 multiple folders for a single user, which means that connections
@@ -53,11 +53,11 @@ C<port>, C<username>, and C<password> are extracted from it.
 =default port 143
 =default via  C<'imap'>
 
-=option  authenticate TYPE|ARRAY-OF-TYPES
+=option  authenticate TYPE|ARRAY
 =default authenticate C<'AUTO'>
 Authenthication method to M<login()>, which will be passed to
-L<Mail::IMAPClient> method authenticate().  See the latter method for
-the available types.
+M<Mail::IMAPClient::authenticate()>.  See the latter method for
+the available types.  You may provide an ARRAY of types.
 
 =option  domain WINDOWS_DOMAIN
 =default domain <server_name>
@@ -124,15 +124,15 @@ sub url()
 
 =section Attributes
 
-=method authentication ['AUTO'|TYPE|LIST-OF-TYPES]
-Returned is a list of pairs (ref arrays) each describing one possible
-way to contact the server. Each pair contains a mechanism name and
-a challenge callback (which may be C<undef>).
+=method authentication ['AUTO'|$type|$types]
+Returns a LIST of ARRAYS, each describing one possible way to contact
+the server. Each pair contains a mechanism name and a challenge callback
+(which may be C<undef>).
 
 The settings are used by M<login()> to get server access.  The initial
 value origins from M<new(authenticate)>, but may be changed later.
 
-Available basic TYPES are C<CRAM-MD5>, C<NTLM>, and C<PLAIN>.  With
+Available basic $types are C<CRAM-MD5>, C<NTLM>, and C<PLAIN>.  With
 C<AUTO>, all available types will be tried.  When the M<Authen::NTLM>
 is not installed, the C<NTLM> option will silently be skipped.  Be warned
 that, because of C<PLAIN>, erroneous username/password combinations will
@@ -142,7 +142,7 @@ The C<NTLM> authentication requires M<Authen::NTLM> to be installed.  Other
 methods may be added later.  Besides, you may also specify a CODE
 reference which implements some authentication.
 
-An ARRAY as TYPE can be used to specify both mechanism as callback.  When
+An ARRAY as $type can be used to specify both mechanism as callback.  When
 no array is used, callback of the pair is set to C<undef>.  See
 L<Mail::IMAPClient/authenticate> for the gory details.
 
@@ -197,7 +197,7 @@ sub authentication(@)
     @auth;
 }
 
-=method domain [DOMAIN]
+=method domain [$domain]
 Used in NTLM authentication to define the Windows domain which is
 accessed.  Initially set by M<new(domain)> and defaults to the
 server's name.
@@ -232,10 +232,10 @@ sub imapClient(;$)
     @_ ? ($self->{MTI_client} = shift) : $self->{MTI_client};
 }
 
-=method createImapClient CLASS, OPTIONS
-Create an object of CLASS, which extends L<Mail::IMAPClient>.
+=method createImapClient $class, %options
+Create an object of $class, which extends L<Mail::IMAPClient>.
 
-All OPTIONS will be passed to the constructor (new) of CLASS.
+All %options will be passed to the constructor (new) of $class.
 
 =cut
 
@@ -329,7 +329,7 @@ sub login(;$)
     undef;
 }
 
-=method currentFolder [FOLDERNAME]
+=method currentFolder [$foldername]
 Be sure that the specific FOLDER is the current one selected.  If the
 folder is already selected, no IMAP traffic will be produced.
 
@@ -378,9 +378,9 @@ sub currentFolder(;$)
     undef;
 }
 
-=method folders [FOLDERNAME]
+=method folders [$foldername]
 Returns a list of folder names which are sub-folders of the specified
-FOLDERNAME.  Without FOLDERNAME, the top-level foldernames are returned.
+$foldername.  Without $foldername, the top-level foldernames are returned.
 =cut
 
 sub folders(;$)
@@ -421,9 +421,9 @@ sub ids($)
     $imap->messages;
 }
 
-=method getFlags FOLDER, ID
+=method getFlags $folder, $id
 Returns the values of all flags which are related to the message with the
-specified ID.  These flags are translated into the names which are
+specified $id.  These flags are translated into the names which are
 standard for the MailBox suite.
 
 A HASH is returned.  Names which do not appear will also provide
@@ -474,12 +474,12 @@ Returns all predefined flags as list.
 
 sub listFlags() { keys %flags2labels }
 
-=method setFlags ID, LABEL, VALUE, [LABEL, VALUE], ...
+=method setFlags $id, $label, $value, [$label, $value], ...
 Change the flags on the message which are represented by the label.  The
 value which can be related to the label will be lost, because IMAP only
 defines a boolean value, where MailBox labels can contain strings.
 
-Returned is a list of LABEL=>VALUE pairs which could not be send to
+Returned is a list of $label=>$value pairs which could not be send to
 the IMAP server.  These values may be cached in a different way.
 =cut
 
@@ -537,11 +537,11 @@ sub labelsToFlags(@)
     join " ", sort @set;
 }
 
-=ci_method flagsToLabels WHAT|FLAGS
+=ci_method flagsToLabels $what|$flags
 In SCALAR context, a hash with labels is returned.  In LIST context, pairs
 are returned.
 
-The WHAT parameter can be C<'SET'>, C<'CLEAR'>, or C<'REPLACE'>.  With the
+The $what parameter can be C<'SET'>, C<'CLEAR'>, or C<'REPLACE'>.  With the
 latter, all standard imap flags do not appear in the list will be ignored:
 their value may either by set or cleared.  See M<getFlags()>
 
@@ -582,7 +582,7 @@ sub flagsToLabels($@)
     wantarray ? %labels : \%labels;
 }
 
-=method getFields UID, NAME, [NAME, ...]
+=method getFields $uid, $name, [$name, ...]
 Get the records with the specified NAMES from the header.  The header
 fields are returned as list of M<Mail::Message::Field::Fast> objects.
 When the name is C<ALL>, the whole header is returned.
@@ -601,7 +601,7 @@ sub getFields($@)
     @fields;
 }
 
-=method getMessageAsString MESSAGE|UID
+=method getMessageAsString $message|$uid
 Returns the whole text of the specified message: the head and the body.
 =cut
 
@@ -611,11 +611,11 @@ sub getMessageAsString($)
     $imap->message_string($uid);
 }
 
-=method fetch ARRAY-OF-MESSAGES, INFO
-Get some INFO about the MESSAGES from the server.  The specified messages
+=method fetch ARRAY-$of-$messages, $info
+Get some $info about the $messages from the server.  The specified messages
 shall extend M<Mail::Box::Net::Message>, Returned is a list
 of hashes, each info about one result.  The contents of the hash
-differs per INFO, but at least a C<message> field will be present, to
+differs per $info, but at least a C<message> field will be present, to
 relate to the message in question.
 
 The right folder should be selected before this method is called. When
@@ -671,7 +671,7 @@ sub fetch($@)
     values %msgs;
 }
 
-=method appendMessage MESSAGE, FOLDERNAME, [DATE]
+=method appendMessage $message, $foldername, [$date]
 Write the message to the server.
 The optional DATA can be a RFC-822 date or a timestamp.
 =cut
@@ -690,7 +690,7 @@ sub appendMessage($$)
      );
 }
 
-=method destroyDeleted FOLDER
+=method destroyDeleted $folder
 Command the server to delete for real all messages which are flagged to
 be deleted.
 =cut
@@ -703,7 +703,7 @@ sub destroyDeleted($)
     $imap->expunge($folder);
 }
 
-=method createFolder NAME
+=method createFolder $name
 Add a folder.
 =cut
 
@@ -712,7 +712,7 @@ sub createFolder($)
     $imap->create(shift);
 }
 
-=method deleteFolder NAME
+=method deleteFolder $name
 Remove one folder.
 =cut
 

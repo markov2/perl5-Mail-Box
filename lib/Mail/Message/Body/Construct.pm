@@ -76,11 +76,11 @@ sub foreachLine($)
 
 #------------------------------------------
 
-=method concatenate COMPONENTS
+=method concatenate $components
 
 Concatenate a list of elements into one new body.
 
-Specify a list of text COMPONENTS.  Each component can be
+Specify a list of text $components.  Each component can be
 a message (M<Mail::Message>, the body of the message is used),
 a plain body (M<Mail::Message::Body>), 
 C<undef> (which will be skipped),
@@ -120,9 +120,9 @@ sub concatenate(@)
 
 #------------------------------------------
 
-=method attach MESSAGES, OPTIONS
+=method attach $messages, %options
 
-Make a multipart containing this body and the specified MESSAGES. The
+Make a multipart containing this body and the specified $messages. The
 options are passed to the constructor of the multi-part body.  If you
 need more control, create the multi-part body yourself.  At least
 take a look at M<Mail::Message::Body::Multipart>.
@@ -166,7 +166,7 @@ sub attach(@)
 
 #------------------------------------------
 
-=method stripSignature OPTIONS
+=method stripSignature %options
 
 Strip the signature from the body.  The body must already be decoded
 otherwise the wrong lines may get stripped.  Returned is the stripped

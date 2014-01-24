@@ -32,14 +32,14 @@ functionality related to building of messages from various components.
 
 =section Constructing a message
 
-=c_method build [MESSAGE|PART|BODY], CONTENT
+=c_method build [$message|$part|$body], $content
 
-Simplified message object builder.  In case a MESSAGE or message PART is
+Simplified message object builder.  In case a $message or message $part is
 specified, a new message is created with the same body to start with, but
-new headers.  A BODY may be specified as well.  However, there are more
+new headers.  A $body may be specified as well.  However, there are more
 ways to add data simply.
 
-The CONTENT is a list of key-value pairs and header field objects.
+The $content is a list of key-value pairs and header field objects.
 The keys which start with a capital are used as header-lines.  Lower-cased
 fields are used for other purposes as listed below.  Each field may be used
 more than once.  Pairs where the value is C<undef> are ignored.
@@ -92,9 +92,9 @@ See option file, but then an array reference collection more of them.
 =option  attach BODY|PART|MESSAGE|ARRAY
 =default attach undef
 
-One attachment to the message.  Each attachment can be full MESSAGE, a
-PART, or a BODY.
-Any MESSAGE will get encapsulated into a C<message/rfc822> body.
+One attachment to the message.  Each attachment can be full $message, a
+$part, or a $body.
+Any $message will get encapsulated into a C<message/rfc822> body.
 You can specify many items (may be of different types) at once.
 
  attach => $folder->message(3)->decoded  # body
@@ -222,13 +222,13 @@ sub build(@)
 
 #------------------------------------------
 
-=c_method buildFromBody BODY, [HEAD], HEADERS
+=c_method buildFromBody $body, [$head], $headers
 
-Shape a message around a BODY.  Bodies have information about their
+Shape a message around a $body.  Bodies have information about their
 content in them, which is used to construct a header for the message.
-You may specify a HEAD object which is pre-initialized, or one is
-created for you (also when HEAD is C<undef>).
-Next to that, more HEADERS can be specified which are stored in that
+You may specify a $head object which is pre-initialized, or one is
+created for you (also when $head is C<undef>).
+Next to that, more $headers can be specified which are stored in that
 header.
 
 Header fields are added in order, and before the header lines as

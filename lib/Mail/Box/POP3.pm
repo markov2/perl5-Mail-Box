@@ -32,7 +32,7 @@ handling of messages within a POP3 folder.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 For authentications, you have three choices: specify a foldername which
 resembles an URL, or specify a pop-client object, or separate options
@@ -82,7 +82,7 @@ sub init($)
     $self;
 }
 
-=ci_method create FOLDER, OPTIONS
+=ci_method create $folder, %options
 It is not possible to create a new folder on a POP3 server.  This method
 will always return C<false>.
 =cut
@@ -98,13 +98,13 @@ sub foundIn(@)
     || (exists $options{folder} && $options{folder} =~ m/^pop/);
 }
 
-=method addMessage MESSAGE
+=method addMessage $message
 It is impossible to write messages to the average POP3 server.  There are
 extensions to the protocol which do permit it, however these are not
 implemented (yet, patches welcome).
 
 C<undef> is returned, and an error displayed.  However, no complaint is
-given when the MESSAGE is C<undef> itself.
+given when the $message is C<undef> itself.
 
 =error You cannot write a message to a pop server (yet)
 Some extensions to the POP3 protocol do permit writing messages to the server,
@@ -122,7 +122,7 @@ sub addMessage($)
     undef;
 }
 
-=method addMessages MESSAGES
+=method addMessages $messages
 As useless as M<addMessage()>.  The only acceptable call to this method
 is without any message.
 =cut
@@ -150,7 +150,7 @@ sub close(@)
     $self;
 }
 
-=method delete OPTIONS
+=method delete %options
 It is not possible to delete a POP3 folder remotely: the best we can do
 is remove all the messages in it... which is the action implemented here.
 A notice is logged about this.
@@ -169,14 +169,14 @@ sub delete(@)
     undef;
 }
 
-=ci_method listSubFolders OPTIONS
+=ci_method listSubFolders %options
 The standard POP3 protocol does not support sub-folders, so an
 empty list will be returned in any case.
 =cut
 
 sub listSubFolders(@) { () }     # no
 
-=method openSubFolder OPTIONS
+=method openSubFolder %options
 It is not possible to open a sub-folder for a POP3 folder, because that
 is not supported by the official POP3 protocol. In any case, C<undef>
 is returned to indicate a failure.
@@ -196,7 +196,7 @@ sub update() {shift->notImplemented}
 
 =section Internals
 
-=method popClient OPTIONS
+=method popClient %options
 Returns the pop client object.  This does not establish the connection.
 
 =option  use_ssl BOOLEAN
@@ -255,7 +255,7 @@ sub readMessages(@)
     $self;
 }
  
-=method getHead MESSAGE
+=method getHead $message
 Read the header for the specified message from the remote server.
 =cut
 
@@ -289,7 +289,7 @@ sub getHead($)
     $head;
 }
 
-=method getHeadAndBody MESSAGE
+=method getHeadAndBody $message
 Read all data for the specified message from the remote server.
 
 =warning Message $uidl on POP3 server $name disappeared.
@@ -344,7 +344,7 @@ sub getHeadAndBody($)
     ($head, $body);
 }
 
-=method writeMessages OPTIONS
+=method writeMessages %options
 
 =error Update of $nr messages ignored for POP3 folder $name.
 The standard POP3 implementation does not support writing from client back

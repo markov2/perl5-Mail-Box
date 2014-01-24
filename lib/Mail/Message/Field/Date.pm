@@ -26,7 +26,7 @@ form.
 
 =section Constructors
 
-=c_method new DATA
+=c_method new $data
 =default attributes <ignored>
 
 =examples

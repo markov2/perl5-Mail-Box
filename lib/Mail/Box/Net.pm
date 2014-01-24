@@ -45,7 +45,7 @@ Implements the IMAP4 protocol.  B<UNDER DEVELOPMENT>
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default body_type M<Mail::Message::Body::Lines>
 =default folderdir <not used>
@@ -99,7 +99,7 @@ sub init($)
 
 #-------------------------------------------
 
-=ci_method create FOLDER, OPTIONS
+=ci_method create $folder, %options
 
 Create a new folder on the remote server.
 
@@ -111,7 +111,7 @@ sub create(@) {shift->notImplemented}
 
 #-------------------------------------------
 
-=method folderdir [DIRECTORY]
+=method folderdir [$directory]
 
 Not applicatable for folders on a remote server, so will always return
 the C<undef>.

@@ -35,8 +35,8 @@ M<header_hashref()>.
 
 =chapter METHODS
 
-=c_method new [ARG], OPTIONS
-The ARG is an array with header lines.
+=c_method new [$arg], %options
+The $arg is an array with header lines.
 
 =option  Modify BOOLEAN
 =default Modify <false>
@@ -68,8 +68,8 @@ sub init($)
 
 =section Access to the header
 
-=method delete TAG, [INDEX]
-Delete the fields with the specified TAG.  The deleted fields are
+=method delete $tag, [$index]
+Delete the fields with the specified $tag.  The deleted fields are
 returned.  If no index is given, then all are removed.
 
 =cut
@@ -85,9 +85,9 @@ sub delete($;$)
     $field;
 }
 
-=method add LINE, [INDEX]
+=method add $line, [$index]
 Add a header line, which simply calls C<Mail::Message::Head::add()> on
-the header for the specified LINE.  The INDEX is ignored, the unfolded
+the header for the specified $line.  The $index is ignored, the unfolded
 body of the field is returned.
 =cut
 
@@ -97,10 +97,10 @@ sub add($$)
     $field->unfoldedBody;
 }
 
-=method replace TAG, LINE, [INDEX]
+=method replace $tag, $line, [$index]
 
-Replace the field named TAG. from place INDEX (by default the first) by
-the LINE.  When TAG is C<undef>, it will be extracted from the LINE first.
+Replace the field named $tag. from place $index (by default the first) by
+the $line.  When $tag is C<undef>, it will be extracted from the $line first.
 This calls M<Mail::Message::Head::Complete::reset()> on the message's head.
 
 =cut
@@ -119,9 +119,9 @@ sub replace($$;$)
 
 =section Access to the header
 
-=method get NAME, [INDEX]
-Get all the header fields with the specified NAME.  In scalar context,
-only the first fitting NAME is returned.  Even when only one NAME is
+=method get $name, [$index]
+Get all the header fields with the specified $name.  In scalar context,
+only the first fitting $name is returned.  Even when only one $name is
 specified, multiple lines may be returned in list context: some fields
 appear more than once in a header.
 =cut
@@ -164,8 +164,8 @@ sub mail_from(;$)
     $self->{MH_mail_from} = $choice;
 }
 
-=method fold [LENGTH]
-Refold all fields in the header, to LENGTH or whatever M<fold_length()>
+=method fold [$length]
+Refold all fields in the header, to $length or whatever M<fold_length()>
 returns.
 =cut
 
@@ -176,8 +176,8 @@ sub fold(;$)
     $self;
 }
 
-=method unfold [TAG]
-Remove the folding for all instances of TAG, or all fields at once.
+=method unfold [$tag]
+Remove the folding for all instances of $tag, or all fields at once.
 =cut
 
 sub unfold(;$)
@@ -209,8 +209,8 @@ sub extract($)
     $self;
 }
 
-=method read FILE
-Read the header from the FILE.
+=method read $file
+Read the header from the $file.
 =cut
 
 sub read($)
@@ -251,7 +251,7 @@ support it for now: use M<add()> and friends.
 
 sub header_hashref($) { die "Don't use header_hashref!!!" }
 
-=method combine TAG, [WITH]
+=method combine $tag, [$with]
 I do not see any valid reason for this command, so did not implement it.
 =cut
 
@@ -270,9 +270,9 @@ Calls M<Mail::Message::Head::Complete::string()>.
 
 sub as_string() { shift->string }
 
-=method fold_length [[TAG], LENGTH]
-Returns the line wrap, optionally after setting it to LENGTH.  The
-old value is returned.  The TAG argument is ignored, because it is
+=method fold_length [[$tag], $length]
+Returns the line wrap, optionally after setting it to $length.  The
+old value is returned.  The $tag argument is ignored, because it is
 silly to have different lines fold in different ways.  This method
 cannot be called statically anymore.
 =cut
@@ -319,7 +319,7 @@ BEGIN
 }
 
 
-=ci_method isa CLASS
+=ci_method isa $class
 Of course, the C<isa()> class inheritance check should not see our
 nasty trick.
 =cut

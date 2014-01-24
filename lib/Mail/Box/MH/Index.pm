@@ -44,7 +44,7 @@ of the folder).
 
 #-------------------------------------------
 
-=c_method new OPTIONS
+=c_method new %options
 
 =requires filename FILENAME
 
@@ -94,8 +94,8 @@ sub filename() {shift->{MBMI_filename}}
 
 #-------------------------------------------
 
-=method write MESSAGES
-Write an index file containing the headers specified MESSAGES
+=method write $messages
+Write an index file containing the headers specified $messages
 (M<Mail::Message> objects).
 =cut
 
@@ -137,8 +137,8 @@ sub write(@)
 
 #-------------------------------------------
 
-=method append MESSAGES
-Append MESSAGES to the index file.
+=method append $messages
+Append $messages to the index file.
 =cut
 
 sub append(@)
@@ -209,9 +209,9 @@ sub read(;$)
 
 #-------------------------------------------
 
-=method get MSGFILE
+=method get $msgfile
 
-Look if there is header info for the specified MSGFILE.  The filename
+Look if there is header info for the specified $msgfile.  The filename
 represents one message in folder type which are organized as directory.
 This method will return an object of the M<new(head_type)> as specified
 during creation of the index object, or C<undef> if the information

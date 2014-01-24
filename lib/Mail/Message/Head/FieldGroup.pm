@@ -28,13 +28,13 @@ which are based on the implementation in this class.
 
 =section Constructors
 
-=c_method new FIELDS, OPTIONS
+=c_method new $fields, %options
 
-Construct an object which maintains one set of header FIELDS.  The
-FIELDS may be specified as C<Mail::Message::Field> objects or as key-value
-pairs.  The OPTIONS and FIELDS (as key-value pair) can be mixed: they are
+Construct an object which maintains one set of header $fields.  The
+$fields may be specified as C<Mail::Message::Field> objects or as key-value
+pairs.  The %options and $fields (as key-value pair) can be mixed: they are
 distinguished by their name, where the fields always start with a capital.
-The field objects must aways lead the OPTIONS.
+The field objects must aways lead the %options.
 
 =option  head HEAD
 =default head C<undef>
@@ -101,9 +101,9 @@ sub implementedTypes() { shift->notImplemented }
 
 #------------------------------------------
 
-=method from HEAD|MESSAGE
+=method from $head|$message
 
-Create a group of fields based on the specified MESSAGE or message HEAD.
+Create a group of fields based on the specified $message or message $head.
 This may return one or more of the objects, which depends on the
 type of group.  Mailing list fields are all stored in one object,
 where resent and spam groups can appear more than once.
@@ -143,8 +143,8 @@ sub head() { shift->{MMHF_head} }
 
 #------------------------------------------
 
-=method attach HEAD
-Add a group of fields to a message HEAD.  The fields will be cloned(!)
+=method attach $head
+Add a group of fields to a message $head.  The fields will be cloned(!)
 into the header, so that the field group object can be used again.
 
 =example attaching a list group to a message
@@ -180,7 +180,7 @@ sub delete()
 
 #------------------------------------------
 
-=method add (FIELD, VALUE) | OBJECT
+=method add <$field, $value> | $object
 
 Add a field to the header, using the field group.  When the field group
 is already attached to a real message header, it will appear in that
@@ -232,8 +232,8 @@ sub fieldNames() { @{shift->{MMHF_fns}} }
 
 #------------------------------------------
 
-=method addFields [FIELDNAMES]
-Add some FIELDNAMES to the set.
+=method addFields [$fieldnames]
+Add some $fieldnames to the set.
 
 =cut
 
@@ -285,7 +285,7 @@ sub type() { shift->{MMHF_type} }
 
 =section Internals
 
-=method detected TYPE, SOFTWARE, VERSION
+=method detected $type, $software, $version
 Sets the values for the field group type, software, and version,
 prossibly to C<undef>.
 
@@ -298,11 +298,11 @@ sub detected($$$)
 
 #------------------------------------------
 
-=method collectFields [NAME]
+=method collectFields [$name]
 
 Scan the header for fields which are usually contained in field group
-with the specified NAME.  For mailinglist groups, you can not specify
-a NAME: only one set of headers will be found (all headers are considered
+with the specified $name.  For mailinglist groups, you can not specify
+a $name: only one set of headers will be found (all headers are considered
 to be produced by exactly one package of mailinglist software).
 
 This method is automatically called when a field group is
@@ -323,9 +323,9 @@ sub collectFields(;$) { shift->notImplemented }
 
 =section Error handling
 
-=method print [FILEHANDLE]
+=method print [$fh]
 
-Print the group to the specified FILEHANDLE or GLOB.  This is probably only
+Print the group to the specified $fh or GLOB.  This is probably only
 useful for debugging purposed.  The output defaults to the selected file
 handle.
 

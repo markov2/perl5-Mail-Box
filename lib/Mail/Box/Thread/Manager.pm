@@ -42,8 +42,7 @@ creates flexible trees with M<Mail::Box::Thread::Node> objects.
 
 =chapter METHODS
 
-=c_method new OPTIONS
-
+=c_method new %options
 A C<Mail::Box::Thread::Manager> object is usually created by a
 M<Mail::Box::Manager>.  One manager can produce more than one of these
 objects.  One thread manager can combine messages from a set of folders,
@@ -141,7 +140,6 @@ sub init($)
 }
 
 #-------------------------------------------
-
 =section Grouping Folders
 
 =method folders
@@ -150,9 +148,7 @@ Returns the folders as managed by this threader.
 
 sub folders() { values %{shift->{MBTM_folders}} }
 
-#-------------------------------------------
-
-=method includeFolder FOLDERS
+=method includeFolder $folders
 Add one or more folders to the list of folders whose messages are
 organized in the threads maintained by this object.  Duplicated
 inclusions will not cause any problems.
@@ -186,9 +182,7 @@ sub includeFolder(@)
     $self;
 }
 
-#-------------------------------------------
-
-=method removeFolder FOLDERS
+=method removeFolder $folders
 Remove one or more folders from the list of folders whose messages are
 organized in the threads maintained by this object.
 
@@ -219,11 +213,10 @@ sub removeFolder(@)
 }
 
 #-------------------------------------------
-
 =section The Threads
 
-=method thread MESSAGE
-Returns the thread where this MESSAGE is the start of.  However, there
+=method thread $message
+Returns the thread where this $message is the start of.  However, there
 is a possibility that this message is a reply itself.
 
 Usually, all messages which are in reply of this message are dated later
@@ -276,12 +269,9 @@ sub thread($)
     $thread;
 }
 
-#-------------------------------------------
-
-=method threadStart MESSAGE
+=method threadStart $message
 Based on a message, and facts from previously detected threads, try
 to build solid knowledge about the thread where this message is in.
-
 =cut
 
 sub threadStart($)
@@ -314,17 +304,13 @@ sub threadStart($)
     $thread;
 }
 
-#-------------------------------------------
-
 =method all
-
 Returns all messages which start a thread.  The list may contain dummy
 messages and messages which are scheduled for deletion.
 
 To be able to return all threads, thread construction on each
 message is performed first, which may be slow for some folder-types
 because is will enforce parsing of message-bodies.
-
 =cut
 
 sub all()
@@ -333,12 +319,8 @@ sub all()
     $self->known;
 }
 
-#-------------------------------------------
-
-=method sortedAll [PREPARE [COMPARE]]
-
+=method sortedAll [$prepare, [$compare]]
 Returns M<all()> the threads by default, but sorted on timestamp.
-
 =cut
 
 sub sortedAll(@)
@@ -347,10 +329,7 @@ sub sortedAll(@)
     $self->sortedKnown(@_);
 }
 
-#-------------------------------------------
-
 =method known
-
 Returns the list of all messages which are known to be the start of
 a thread.  Threads containing messages which where not read from their
 folder (like often happens MH-folder messages) are not yet known, and
@@ -370,14 +349,10 @@ sub known()
     grep {!defined $_->repliedTo} values %{$self->{MBTM_ids}};
 }
 
-#-------------------------------------------
-
-=method sortedKnown [PREPARE [,COMPARE]]
-
+=method sortedKnown [$prepare, [$compare]]
 Returns all M<known()> threads, in sorted order.  By default, the threads
-will be sorted on timestamp, But a different COMPARE method can be
+will be sorted on timestamp, But a different $compare method can be
 specified.
-
 =cut
 
 sub sortedKnown(;$$)
@@ -387,8 +362,8 @@ sub sortedKnown(;$$)
  
     # Special care for double keys.
     my %value;
-    push @{$value{$prepare->($_)}}, $_  foreach $self->known; 
-    map { @{$value{$_}} } sort {$compare->($a, $b)} keys %value;
+    push @{$value{$prepare->($_)}}, $_ for $self->known; 
+    map @{$value{$_}}, sort {$compare->($a, $b)} keys %value;
 }
 
 # When a whole folder is removed, many threads can become existing
@@ -427,11 +402,9 @@ sub _cleanup()
 }
 
 #-------------------------------------------
-
 =section Internals
 
-=method toBeThreaded FOLDER, MESSAGES
-
+=method toBeThreaded $folder, @messages
 Include the specified messages in/from the threads managed by
 this object, if this folder is maintained by this thread-manager.
 
@@ -444,11 +417,8 @@ sub toBeThreaded($@)
     $self;
 }
 
-#-------------------------------------------
-
-=method toBeUnthreaded FOLDER, MESSAGES
-
-Remove the specified messages in/from the threads managed by
+=method toBeUnthreaded $folder, @messages
+Remove the specified @messages in/from the threads managed by
 this object, if this folder is maintained by this thread-manager.
 
 =cut
@@ -460,10 +430,7 @@ sub toBeUnthreaded($@)
     $self;
 }
 
-#-------------------------------------------
-
-=method inThread MESSAGE
-
+=method inThread $message
 Collect the thread-information of one message.  The `In-Reply-To' and
 `Reference' header-fields are processed.  If this method is called on
 a message whose header was not read yet (as usual for MH-folders,
@@ -558,7 +525,7 @@ sub _process_delayed_message($$)
 
 #-------------------------------------------
 
-=method outThread MESSAGE
+=method outThread $message
 
 Remove the message from the thread-infrastructure.  A message is
 replaced by a dummy.
@@ -578,7 +545,7 @@ sub outThread($)
 
 #-------------------------------------------
 
-=method createDummy MESSAGE-ID
+=method createDummy $message_id
 
 Get a replacement message to be used in threads.  Be warned that a
 dummy is not a member of any folder, so the program working with

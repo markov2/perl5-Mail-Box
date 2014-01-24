@@ -34,8 +34,7 @@ Implements the POP3 protocol.  See also M<Mail::Box::POP3>.
 
 =section Receiving mail
 
-=method receive [UNIQUE-MESSAGE-ID]
-
+=method receive [$unique_message_id]
 Receive one message from the remote server.  Some receivers will provide
 the next message automatically, other are random access and use the
 specified ID.

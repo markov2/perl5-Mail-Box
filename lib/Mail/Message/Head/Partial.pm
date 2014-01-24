@@ -35,11 +35,10 @@ permanently: the header (and therefore the message) gets mutulated!
 
 =section Access to the header
 
-=method removeFields STRING|REGEXP, [STRING|REGEXP, ...]
-
+=method removeFields <STRING|Regexp>, ...
 Remove the fields from the header which are exactly named 'STRING' (case
 insensitive) or match the REGular EXPresssion.  Do not forget to add the
-'i' modifier to the REGEXP, because fields are case insensitive.
+'i' modifier to the Regexp, because fields are case insensitive.
 
 See also M<removeField()> which is used to remove one field object from
 the header.  The reverse specification can be made with
@@ -59,22 +58,18 @@ sub removeFields(@)
     foreach my $match (@_)
     {
         if(ref $match)
-        {   $_ =~ $match && delete $known->{$_} foreach keys %$known;
-        }
+             { $_ =~ $match && delete $known->{$_} foreach keys %$known }
         else { delete $known->{lc $match} }
     }
 
     $self->cleanupOrderedFields;
 }
 
-#------------------------------------------
-
-=method removeFieldsExcept STRING|REGEXP, [STRING|REGEXP, ...]
-
+=method removeFieldsExcept STRING|Regexp, ...
 Remove all fields from the header which are not equivalent to one of the
 specified STRINGs (case-insensitive) and which are not matching one of
 the REGular EXPressions.  Do not forget to add the 'i' modifier to the
-REGEXP, because fields are case insensitive.
+Regexp, because fields are case insensitive.
 
 See also M<removeField()> which is used to remove one field object from
 the header.  The reverse specification can be made with C<removeFields()>.

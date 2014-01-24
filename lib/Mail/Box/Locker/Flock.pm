@@ -28,7 +28,7 @@ operating systems do not support C<flock>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 =default method C<'FLOCK'>
 
 =cut

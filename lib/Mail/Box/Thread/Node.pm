@@ -29,7 +29,7 @@ are stored in the same node.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 You will not call this method yourself. The M<Mail::Box::Thread::Manager>
 object will call it to construct C<Mail::Box::Thread::Node> objects.
@@ -80,7 +80,6 @@ sub init($)
 =section The thread node
 
 =method message
-
 Get the message which is stored in this thread node.  NOTE: the same
 message may be located in many folders at the same time, and these
 folders may be controlled by the same thread manager.
@@ -132,14 +131,10 @@ sub message()
     $messages[0];
 }
 
-#-------------------------------------------
-
-=method addMessage MESSAGE
-
+=method addMessage $message
 Add one message to the thread node.  If the node contains a dummy, then
 the dummy is replaced. Otherwise, the messages is added to the end of the
 list.
-
 =cut
 
 sub addMessage($)
@@ -189,7 +184,6 @@ sub folded(;$)    # compatibility <2.0
 {  @_ == 1 ? shift->expand : shift->expand(not shift) }
 
 #-------------------------------------------
-
 =section The thread order
 
 =method repliedTo
@@ -248,21 +242,17 @@ sub repliedTo()
          : $self->{MBTN_parent};
 }
 
-#-------------------------------------------
-
-=method follows THREAD, QUALITY
-
-Register that the current thread is a reply to the specified THREAD. The
-QUALITY of the relation is specified by the second argument.  The method
+=method follows $thread, $quality
+Register that the current thread is a reply to the specified $thread. The
+$quality of the relation is specified by the second argument.  The method
 returns C<undef> if the link is not accepted in order to avoid circular
 references.
 
 The relation may be specified more than once, but only the most confident
-relation is used. For example, if a reply (QUALITY equals C<REPLY>) is
+relation is used. For example, if a reply ($quality equals C<REPLY>) is
 specified, later calls to the follow method will have no effect. If
-C<follows> is called with a QUALITY that matches the current quality, the
+C<follows> is called with a $quality that matches the current quality, the
 new thread overrides the previous.
-
 =cut
 
 sub follows($$)
@@ -299,10 +289,8 @@ sub follows($$)
     $self;
 }
 
-#-------------------------------------------
-
-=method followedBy THREADS
-Register that the THREADS are follow-ups to this message. These
+=method followedBy $threads
+Register that the $threads are follow-ups to this message. These
 follow-ups need not be related to each other in any way other than
 sharing the same parent.
 
@@ -317,13 +305,9 @@ sub followedBy(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method followUps
-
 Returns the list of follow-ups to this thread node.  This list
 may contain parsed, not-parsed, and dummy messages.
-
 =cut
 
 sub followUps()
@@ -331,9 +315,7 @@ sub followUps()
     $self->{MBTN_followUps} ? values %{$self->{MBTN_followUps}} : ();
 }
 
-#-------------------------------------------
-
-=method sortedFollowUps [PREPARE [,COMPARE]]
+=method sortedFollowUps [$prepare, [$compare]]
 Returns the list of M<followUps()>, but sorted.  By default
 sorting is based on the estimated time of the reply. See
 startTimeEstimate().
@@ -349,15 +331,10 @@ sub sortedFollowUps()
 }
 
 #-------------------------------------------
-
 =section On the whole thread
 
 Some convenience methods are added to threads, to simplify retrieving
 information from it.
-
-=cut
-
-#-------------------------------------------
 
 =method threadToString [CODE]
 
@@ -435,8 +412,6 @@ sub threadToString(;$$$)   # two undocumented parameters for layout args
     join '', @out;
 }
 
-#-------------------------------------------
-
 =method startTimeEstimate
 Returns a guess as to when the thread was started.  Each message contains
 various date specifications (each with various uncertainties resulting
@@ -444,7 +419,6 @@ from timezones and out-of-sync clocks). One of these date specifications
 is used as the timestamp for the message. If the node contains a dummy
 message the lowest timestamp of the replies is returned. Otherwise the
 estimated timestamp of the node's message is returned.
-
 =cut
 
 sub startTimeEstimate()
@@ -463,8 +437,6 @@ sub startTimeEstimate()
 
     $earliest;
 }
-
-#-------------------------------------------
 
 =method endTimeEstimate
 Returns a guess as to when the thread has ended (although you never
@@ -487,7 +459,7 @@ sub endTimeEstimate()
     $latest;
 }
 
-=method recurse CODE-REF
+=method recurse CODE
 Execute a function for all sub-threads.  If the subroutine returns true,
 sub-threads are visited recursively. Otherwise, the current branch
 traversal is aborted. The routine is called with the thread-node as the

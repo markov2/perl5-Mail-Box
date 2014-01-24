@@ -7,7 +7,6 @@ use base 'Mail::Transport::Receive';
 
 use IO::Socket  ();
 use Socket      qw/$CRLF/;
-
 use Digest::MD5 ();
 
 =chapter NAME
@@ -32,7 +31,7 @@ protocol weirdness and works as any other mail folder.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a new pop3 server connection.  One object can only handle one
 connection: for a single user to one single server.  If the server
@@ -75,7 +74,7 @@ sub init($)
 
 =method ids
 Returns a list (in list context) or a reference to a list (in scalar context)
-of all ID's which are known by the server on this moment.
+of all IDs which are known by the server on this moment.
 =cut
 
 sub ids(;@)
@@ -112,11 +111,11 @@ Returns the total number of octets used by the mailbox on the remote server.
 
 sub folderSize() { shift->{MTP_total} }
 
-=method header ID, [BODYLINES]
+=method header $id, [$bodylines]
 Returns a reference to an array which contains the header of the message
-with the specified ID.  C<undef> is returned if something has gone wrong.
+with the specified $id.  C<undef> is returned if something has gone wrong.
 
-The optional integer BODYLINES specifies the number of lines from the body
+The optional integer $bodylines specifies the number of lines from the body
 which should be added, by default none.
 
 =example
@@ -136,9 +135,9 @@ sub header($;$)
     $self->sendList($socket, "TOP $n $bodylines$CRLF");
 }
 
-=method message ID
+=method message $id
 Returns a reference to an array which contains the lines of the
-message with the specified ID.  Returns C<undef> if something has gone
+message with the specified $id.  Returns C<undef> if something has gone
 wrong.
 
 =example
@@ -166,8 +165,8 @@ sub message($;$)
     $message;
 }
 
-=method messageSize ID
-Returns the size of the message which is indicated by the ID, in octets.
+=method messageSize $id
+Returns the size of the message which is indicated by the $id, in octets.
 If the message has been deleted on the remote server, this will return
 C<undef>.
 =cut
@@ -192,7 +191,7 @@ sub messageSize($)
     $list->[$n];
 }
 
-=method deleted BOOLEAN, ID's
+=method deleted BOOLEAN, @ids
 Either mark the specified message(s) to be deleted on the remote server or
 unmark them for deletion (if the first parameter is false).  Deletion of
 messages will take place B<only> when the connection is specifically
@@ -270,8 +269,8 @@ sub fetched(;$)
     $self->{MTP_fetched};
 }
 
-=method id2n ID
-Translates the unique ID of a message into a sequence number which
+=method id2n $id
+Translates the unique $id of a message into a sequence number which
 represents the message as long a this connection to the POP3 server
 exists.  When the message has been deleted for some reason, C<undef>
 is returned.
@@ -323,9 +322,9 @@ sub socket(;$)
     $self->{MTP_socket} = $socket;
 }
 
-=method send SOCKET, data
+=method send $socket, $data
 
-Send data to the indicated socket and return the first line read from
+Send $data to the indicated socket and return the first line read from
 that socket.  Logs an error if either writing to or reading from socket failed.
 
 This method does B<not> attempt to reconnect or anything: if reading or
@@ -357,8 +356,8 @@ sub send($$)
     $response;
 }
 
-=method sendList SOCKET, COMMAND
-Sends the indicated COMMAND to the specified socket, and retrieves the
+=method sendList $socket, $command
+Sends the indicated $command to the specified socket, and retrieves the
 response.  It returns a reference to an array with all the lines that
 were reveived after the first C<+OK> line and before the end-of-message
 delimiter (a single dot on a line).  Returns C<undef>
@@ -508,7 +507,7 @@ sub login(;$)
 
 #------------------------------------------
 
-=method status SOCKET
+=method status $socket
 Update the current status of folder on the remote POP3 server.
 
 =error POP3 Could not do a STAT

@@ -39,33 +39,23 @@ the type of folder).
 
 =section Access to the header
 
-=method count NAME
-
-Count the number of fields with this NAME.  If the NAME cannot be found,
-the full header get loaded.  In case we find any NAME field, it is
+=method count $name
+Count the number of fields with this $name.  If the $name cannot be found,
+the full header get loaded.  In case we find any $name field, it is
 decided we know all of them, and loading is not needed.
-
 =cut
 
 sub count($)
 {   my ($self, $name) = @_;
-
-    my @values = $self->get($name);
-
-    return $self->load->count($name)
-       unless @values;
-
+    my @values = $self->get($name)
+        or return $self->load->count($name);
     scalar @values;
 }
 
-#-------------------------------------------
-
-=method get NAME [,INDEX]
-
-Get the data which is related to the field with the NAME.  The case of the
-characters in NAME does not matter.  When a NAME is used which is not known
+=method get $name, [$index]
+Get the data which is related to the field with the $name.  The case of the
+characters in $name does not matter.  When a $name is used which is not known
 yet, realization will take place.
-
 =cut
 
 sub get($;$)
@@ -85,15 +75,12 @@ sub get($;$)
 
 
 #-------------------------------------------
-
 =section About the body
 
 =method guessBodySize
-
 The body size is defined in the C<Content-Length> field.  However, this
 field may not be known.  In that case, a guess is made based on the known
 C<Lines> field.  When also that field is not known yet, C<undef> is returned.
-
 =cut
 
 sub guessBodySize()
@@ -132,13 +119,9 @@ sub guessTimestamp()
 }
 
 #-------------------------------------------
-
 =section Internals
-
 =cut
 
 sub load() { $_[0] = $_[0]->message->loadHead }
-
-#------------------------------------------
 
 1;

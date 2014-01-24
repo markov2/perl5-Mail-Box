@@ -25,7 +25,7 @@ handle which is reading.  Not all platforms support POSIX locking.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default method C<POSIX>
 

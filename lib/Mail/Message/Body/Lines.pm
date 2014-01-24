@@ -29,7 +29,7 @@ for inspecting message bodies).
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =error Unable to read file $filename for message body lines: $!
 

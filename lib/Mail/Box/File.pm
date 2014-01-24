@@ -39,7 +39,7 @@ the next one.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default folderdir C<$ENV{HOME}.'/Mail'>
 =default lock_file <foldername><lock-extension>
@@ -170,7 +170,7 @@ sub init($)
     :                              undef;
 }
 
-=ci_method create FOLDERNAME, OPTIONS
+=ci_method create $foldername, %options
 
 =error Cannot create directory $dir for folder $name.
 While creating a file-organized folder, at most one level of directories
@@ -248,14 +248,14 @@ sub close(@)
     $rc;
 }
 
-=c_method appendMessages OPTIONS
+=c_method appendMessages %options
 
 Appending messages to a file based folder which is not opened is a little
 risky.  In practice, this is often done without locking the folder.  So,
 another application may write to the folder at the same time... :(  Hopefully,
 all goes fast enough that the chance on collition is small.
 
-All OPTIONS of M<Mail::Box::Mbox::new()> can be supplied.
+All %options of M<Mail::Box::Mbox::new()> can be supplied.
 
 =option  lock_type ...
 =default lock_type C<NONE>
@@ -369,7 +369,7 @@ sub readMessages(@)
     $self->updateMessages;
 }
  
-=method updateMessages OPTIONS
+=method updateMessages %options
 For file based folders, the file handle stays open until the folder
 is closed.  Update is therefore rather simple: move to the end
 of the last known message, and continue reading...
@@ -404,13 +404,13 @@ sub updateMessages(@)
     $self;
 }
 
-=method messageCreateOptions [TYPE, CONFIG]
+=method messageCreateOptions [$type, $config]
 Returns a key-value list of options to be used each time a new message
-is read from a file.  The list is preceded by the TYPE of message which
+is read from a file.  The list is preceded by the $type of message which
 has to be created.
 
 This data is used by M<readMessages()> and M<updateMessages()>.  With
-TYPE and CONFIG, a new configuration is set.
+$type and $config, a new configuration is set.
 =cut
 
 sub messageCreateOptions(@)
@@ -423,8 +423,8 @@ sub messageCreateOptions(@)
     @{$self->{MBF_create_options}};
 }
 
-=method moveAwaySubFolder DIRECTORY, EXTENSION
-The DIRECTORY is renamed by appending the EXTENSION, which defaults to C<".d">,
+=method moveAwaySubFolder $directory, $extension
+The $directory is renamed by appending the $extension, which defaults to C<".d">,
 to make place for a folder file on that specific location.  C<false> is
 returned if this failed.
 
@@ -444,7 +444,7 @@ sub delete(@)
     unlink $self->filename;
 }
 
-=method write OPTIONS
+=method write %options
 
 =option  policy 'REPLACE'|'INPLACE'|undef
 =default policy undef
@@ -706,10 +706,10 @@ sub _write_inplace($)
 
 #-------------------------------------------
 
-=ci_method folderToFilename FOLDERNAME, FOLDERDIR, [SUBEXT]
+=ci_method folderToFilename $foldername, $folderdir, [$subext]
 
 Translate a folder name into a filename, using the
-FOLDERDIR value to replace a leading C<=>.  SUBEXT is only used for MBOX
+$folderdir value to replace a leading C<=>.  $subext is only used for MBOX
 folders.
 
 =cut

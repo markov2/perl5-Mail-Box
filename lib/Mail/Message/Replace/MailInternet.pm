@@ -41,7 +41,7 @@ a look at your M<smtpsend()> and M<send()> calls.
 
 =section Constructors
 
-=c_method new [ARG], [OPTIONS]
+=c_method new [$arg], [%options]
 
 =default head_type M<Mail::Message::Replace::MailHeader>
 
@@ -49,12 +49,12 @@ a look at your M<smtpsend()> and M<send()> calls.
 =default Header C<undef>
 The L<Mail::Header> object, which is passed here, is a fake one as well...
 It is translated into a M<new(head)>.  If not given, the header will be
-parsed from the ARG.
+parsed from the $arg.
 
 =option  Body ARRAY-OF-LINES
 =default Body C<undef>
 Array of C<"\n"> terminated lines.  If not specified, the lines will be
-read from ARG.
+read from $arg.
 
 =option  Modify BOOLEAN
 =default Modify 0
@@ -196,10 +196,10 @@ sub MailFrom(;$)
 
 =section Constructing a message
 
-=ci_method read ARRAY|FILEHANDLE, OPTIONS
-Read header and body from the specified ARRAY or FILEHANDLE.  When used as
+=ci_method read ARRAY|$fh, %options
+Read header and body from the specified ARRAY or $fh.  When used as
 object method, M<Mail::Message::read()> is called, to be MailBox compliant.
-As class method, the Mail::Internet compatible read is called.  OPTIONS are
+As class method, the Mail::Internet compatible read is called.  %options are
 only available in the first case.
 
 =cut
@@ -215,8 +215,8 @@ sub read($@)
     $thing->processRawData($data, 1, 1);
 }
 
-=method read_body ARRAY|FILEHANDLE
-Read only the message's body from the ARRAY or FILEHANDLE.
+=method read_body ARRAY|$fh
+Read only the message's body from the ARRAY or $fh.
 =cut
 
 sub read_body($)
@@ -224,8 +224,8 @@ sub read_body($)
     $self->processRawData($data, 0, 1);
 }
 
-=method read_header ARRAY|FILEHANDLE
-Read only the message's header from the ARRAY or FILEHANDLE
+=method read_header ARRAY|$fh
+Read only the message's header from the ARRAY or $fh
 =cut
 
 sub read_header($)
@@ -233,8 +233,8 @@ sub read_header($)
     $self->processRawData($data, 1, 0);
 }
 
-=method extract ARRAY or FILEHANDLE
-Read header and body from an ARRAY or FILEHANDLE
+=method extract ARRAY|$fh
+Read header and body from an ARRAY or $fh
 =cut
 
 sub extract($)
@@ -242,8 +242,7 @@ sub extract($)
     $self->processRawData($data, 1, 1);
 }
 
-=method reply OPTIONS
-
+=method reply %options
 BE WARNED: the main job for creating a reply is done by
 M<Mail::Message::reply()>, which may produce a result which is compatible,
 but may be different from L<Mail::Internet>'s version.
@@ -308,8 +307,8 @@ sub reply(@)
     ref($self)->coerce($reply);
 }
 
-=method add_signature [FILENAME]
-Replaced by M<sign()>, but still usable. FILENAME is the file which
+=method add_signature [$filename]
+Replaced by M<sign()>, but still usable. $filename is the file which
 contains the signature, which defaults to C<$ENV{HOME}/.signature>.
 =cut
 
@@ -320,7 +319,7 @@ sub add_signature(;$)
     $self->sign(File => $filename);
 }
 
-=method sign OPTIONS
+=method sign %options
 Add a signature (a few extra lines) to the message.
 
 =option  File FILENAME
@@ -353,9 +352,9 @@ sub sign(@)
 }
 
 =section The message
-=method send TYPE, OPTIONS
+=method send $type, %options
 Send via Mail Transfer Agents (MUA).  These will be handled by various
-M<Mail::Transport::Send> extensions.  The C<test> TYPE is not supported.
+M<Mail::Transport::Send> extensions.  The C<test> $type is not supported.
 =cut
 
 sub send($@)
@@ -363,7 +362,7 @@ sub send($@)
     $self->send(via => $type);
 }
 
-=method nntppost OPTIONS
+=method nntppost %options
 Send an NNTP message (newsgroup message), which is equivalent to
 M<Mail::Transport::NNTP> or M<Mail::Message::send()> with C<via 'nntp'>.
 
@@ -386,16 +385,16 @@ sub nntppost(@)
     $self->send(via => 'nntp', %args);
 }
 
-=method print [FILEHANDLE]
-Prints the whole message to the specified FILEHANDLE, which default to
+=method print [$fh]
+Prints the whole message to the specified $fh, which default to
 STDOUT.  This calls M<Mail::Message::print()>.
 =cut
 
 =section The header
 
-=method head [HEAD]
+=method head [$head]
 Returns the head of the message, or creates an empty one if none is
-defined.  The HEAD argument, which sets the header, is not available
+defined.  The $head argument, which sets the header, is not available
 for L<Mail::Internet>, but is there to be compatible with the C<head>
 method of M<Mail::Message>.
 
@@ -415,27 +414,27 @@ Implemented by M<Mail::Message::Replace::MailHeader::header()>
 
 sub header(;$) { shift->head->header(@_) }
 
-=method fold [LENGTH]
-Fold all the fields to a certain maximum LENGTH.
+=method fold [$length]
+Fold all the fields to a certain maximum $length.
 Implemented by M<Mail::Message::Replace::MailHeader::fold()>
 =cut
 
 sub fold(;$) { shift->head->fold(@_) }
 
-=method fold_length [[TAG], LENGTH]
-Set the maximum line LENGTH.  TAG is ignored.
+=method fold_length [[$tag], $length]
+Set the maximum line $length.  $tag is ignored.
 Implemented by M<Mail::Message::Replace::MailHeader::fold_length()>
 =cut
 
 sub fold_length(;$$) { shift->head->fold_length(@_) }
 
-=method combine TAG, [WITH]
+=method combine $tag, [$with]
 Not implemented, because I see no use for it.
 =cut
 
 sub combine($;$) { shift->head->combine(@_) }
 
-=method print_header FILEHANDLE
+=method print_header $fh
 Calls M<Mail::Message::Head::Complete::print()>.
 =cut
 
@@ -453,14 +452,14 @@ No effect anymore (always performed).
 
 sub tidy_headers() { }
 
-=method add LINES
+=method add $lines
 Add header lines, which simply calls C<Mail::Message::Head::add()> on
 the header for each specified LINE. The last added LINE is returned.
 =cut
 
 sub add(@) { shift->head->add(@_) }
 
-=method replace TAG, LINE, [INDEX]
+=method replace $tag, $line, [$index]
 Adds LINES to the header, but removes fields with the same name if they
 already exist.  Calls M<Mail::Message::Replace::MailHeader::replace()>
 
@@ -468,20 +467,20 @@ already exist.  Calls M<Mail::Message::Replace::MailHeader::replace()>
 
 sub replace(@) { shift->head->replace(@_) }
 
-=method get NAME, [INDEX]
-Get all the header fields with the specified NAME.  In scalar context,
-only the first fitting NAME is returned.  Even when only one NAME is
+=method get $name, [$index]
+Get all the header fields with the specified $name.  In scalar context,
+only the first fitting $name is returned.  Even when only one $name is
 specified, multiple lines may be returned: some fields appear more than
 once in a header.  Calls M<Mail::Message::Replace::MailHeader::get()>
 =cut
 
 sub get(@) { shift->head->get(@_) }
 
-=method delete NAME, [INDEX]]
-Delete the fields with the specified NAME.  The deleted fields are
+=method delete $name, [$index]]
+Delete the fields with the specified $name.  The deleted fields are
 returned.
 
-BE WARNED: if no NAME is specified, the C<delete> is interpreted as
+BE WARNED: if no $name is specified, the C<delete> is interpreted as
 the deletion of the message in a folder, so M<Mail::Box::Message::delete()>
 will be called.  This may have no negative effect at all...
 
@@ -496,8 +495,8 @@ sub delete(@)
 
 =section The body
 
-=method body [ARRAY-OF-LINES|LIST-OF-LINES]
-Returns an array of lines, representing the body.  With arguments, a
+=method body $lines|@lines
+Returns an ARRAY of lines, representing the body.  With arguments, a
 new body will be created.  In L<Mail::Internet>, the body is not an
 object but a simple array.
 
@@ -522,22 +521,22 @@ sub body(@)
     $body;
 }
 
-=method print_body [FILEHANDLE]
-Prints the body to the specified FILEHANDLE, which defaults to STDOUT.  This
+=method print_body [$fh]
+Prints the body to the specified $fh, which defaults to STDOUT.  This
 calls M<Mail::Message::Body::print()>.
 =cut
 
 sub print_body(@) { shift->SUPER::body->print(@_) }
 
-=method bodyObject [BODY]
+=method bodyObject [$body]
 Calls M<Mail::Message::body()>, because that C<body> method is overruled
 by the one which has a L<Mail::Internet> compatible interface.
 =cut
 
 sub bodyObject(;$) { shift->SUPER::body(@_) }
 
-=method remove_sig [NRLINES]
-Remove the signature of a message with a maximum of NRLINES lines, which
+=method remove_sig [$nrlines]
+Remove the signature of a message with a maximum of $nrlines lines, which
 defaults to 10.  The work is done on the decoded body content, by
 M<Mail::Message::Body::stripSignature()>.
 =cut
@@ -568,7 +567,7 @@ sub tidy_body(;$)
     $self->body($new);
 }
 
-=method smtpsend OPTIONS
+=method smtpsend %options
 This method is calling M<Mail::Message::send()> via C<smtp>, which is
 implemented in M<Mail::Transport::SMTP>.  The implementation is
 slightly different, so this method is not 100% compliant.
@@ -643,7 +642,7 @@ BEGIN {
    };
 }
 
-=ci_method isa CLASS
+=ci_method isa $class
 Of course, the C<isa()> class inheritance check should not see our
 nasty trick.
 =cut
@@ -656,8 +655,8 @@ sub isa($)
 
 =section Internals
 
-=c_method coerce MESSAGE
-Coerce (adapt type) of the specified MESSAGE (anything
+=c_method coerce $message
+Coerce (adapt type) of the specified $message (anything
 M<Mail::Message::coerce()> accepts) into an M<Mail::Internet> simulating
 object.
 =cut

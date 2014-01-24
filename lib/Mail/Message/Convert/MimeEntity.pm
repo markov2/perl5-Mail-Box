@@ -40,16 +40,15 @@ objects.
 
 =section Converting
 
-=method export MESSAGE, [PARSER]
-
+=method export $message, [$parser]
 Returns a new L<MIME::Entity> message object based on the
-information from the MESSAGE, which is a M<Mail::Message> object.
+information from the $message, which is a M<Mail::Message> object.
 
-You may want to supply your own PARSER, which is a M<MIME::Parser>
-object, to change the parser flags.  Without a PARSER object, one
+You may want to supply your own $parser, which is a M<MIME::Parser>
+object, to change the parser flags.  Without a $parser object, one
 is created for you, with all the default settings.
 
-If C<undef> is passed, in place of a MESSAGE, then an empty list is
+If C<undef> is passed, in place of a $message, then an empty list is
 returned.  When the parsing failes, then L<MIME::Parser> throws an
 exception.
 
@@ -74,10 +73,7 @@ sub export($$;$)
     $parser->parse($message->file);
 }
 
-#------------------------------------------
-
-=method from MIME-OBJECT
-
+=method from $mime_object
 Returns a new M<Mail::Message> object based on the information from
 the specified L<MIME::Entity>.  If the conversion fails, the C<undef>
 is returned.  If C<undef> is passed in place of an OBJECT, then an
@@ -102,7 +98,5 @@ sub from($)
 
     Mail::Message->read($mime_ent->as_string);
 }
-
-#------------------------------------------
 
 1;

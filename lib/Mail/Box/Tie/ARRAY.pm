@@ -75,8 +75,7 @@ sub TIEARRAY(@)
 
 =section Tied Interface
 
-=method FETCH INDEX
-
+=method FETCH $index
 Get the message which is at the indicated location in the list of
 messages contained in this folder.  Deleted messages will be returned
 as C<undef>.
@@ -97,8 +96,7 @@ sub FETCH($)
 
 #-------------------------------------------
 
-=method STORE INDEX, MESSAGE
-
+=method STORE $index, $message
 Random message replacement is not permitted --doing so would disturb threads
 etc.  An error occurs if you try to do this. The only thing which is allowed
 is to store a message at the first free index at the end of the folder (which
@@ -123,10 +121,7 @@ sub STORE($$)
     $msg;
 }
 
-#-------------------------------------------
-
 =method FETCHSIZE
-
 Return the total number of messages in a folder.  This is called when
 the folder-array is used in scalar context, for instance.
 
@@ -139,11 +134,8 @@ the folder-array is used in scalar context, for instance.
 
 sub FETCHSIZE()  { scalar shift->{MBT_folder}->messages }
 
-#-------------------------------------------
-
-=method PUSH MESSAGES
-
-Add MESSAGES to the end of the folder.
+=method PUSH @messages
+Add @messages to the end of the folder.
 
 =example
 
@@ -157,11 +149,7 @@ sub PUSH(@)
     scalar $folder->messages;
 }
  
-
-#-------------------------------------------
-
 =method DELETE
-
 Flag a message to be removed.  Be warned that the message stays in
 the folder, and is not removed before the folder is written.
 
@@ -174,11 +162,8 @@ the folder, and is not removed before the folder is written.
 
 sub DELETE($) { shift->{MBT_folder}->message(shift)->delete }
 
-#-------------------------------------------
-
-=method STORESIZE LENGTH
-
-Sets all messages behind from LENGTH to the end of folder to be deleted.
+=method STORESIZE $length
+Sets all messages behind from $length to the end of folder to be deleted.
 
 =cut
 

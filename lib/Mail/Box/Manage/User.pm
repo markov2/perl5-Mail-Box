@@ -37,7 +37,7 @@ folder files.
 
 =chapter METHODS
 
-=c_method new ARGS
+=c_method new $args
 
 Use M<new(default_folder_type)> to explicitly state which kind of folders
 you use.
@@ -114,8 +114,8 @@ sub identity() { shift->{MBMU_id} }
 
 #-------------------------------------------
 
-=method inbox [NAME]
-(Set and) get the NAME of the mailbox which is considered the folder
+=method inbox [$name]
+(Set and) get the $name of the mailbox which is considered the folder
 for incoming mail.  In many protocols, this folder is handled separately.
 For instance in IMAP this is the only case-insensitive folder name.
 =cut
@@ -145,7 +145,7 @@ sub topfolder() { shift->{MBMU_topfolder} }
 
 #-------------------------------------------
 
-=method folder NAME
+=method folder $name
 Returns the folder description, a M<Mail::Box::Identity>.
 =cut
 
@@ -160,9 +160,9 @@ sub folder($)
 
 #-------------------------------------------
 
-=method folderCollection NAME
+=method folderCollection $name
 Returns a pair: the folder collection (M<Mail::Box::Collection>) and
-the base name of NAME.
+the base name of $name.
 =cut
 
 sub folderCollection($)
@@ -182,7 +182,7 @@ sub folderCollection($)
 
 #-------------------------------------------
 
-=method create NAME, OPTIONS
+=method create $name, %options
 Creates a new folder with the specified name.  An folder's administrative
 structure (M<Mail::Box::Identity>) is returned, but the folder is not
 opened.
@@ -190,7 +190,7 @@ opened.
 In the accidental case that the folder already
 exists, a warning will be issued, and an empty list/undef returned.
 
-The OPTIONS are passed to M<Mail::Box::create()> of your default folder
+The %options are passed to M<Mail::Box::create()> of your default folder
 type, except for the options intended for this method itself.
 
 =option  id_options    ARRAY
@@ -264,7 +264,7 @@ sub create($@)
 
 #-------------------------------------------
                                                                                 
-=method delete NAME
+=method delete $name
 Remove all signs from the folder on the file-system.  Messages still in
 the folder will be removed.  This method returns a true value when the
 folder has been removed or not found, so "false" means failure.
@@ -290,8 +290,8 @@ sub delete($)
 
 #-------------------------------------------
 
-=method rename OLDNAME, NEWNAME, OPTIONS
-Rename the folder with name OLDNAME to NEWNAME.  Both names are full
+=method rename $oldname, $newname, %options
+Rename the folder with name $oldname to $newname.  Both names are full
 pathnames.
 
 =option  create_supers BOOLEAN

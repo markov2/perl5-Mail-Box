@@ -25,7 +25,7 @@ Mail::Server::IMAP4::List - folder related IMAP4 answers
 
 =section Constructors
 
-=c_method new USER
+=c_method new $user
 
 Create a (temporary) object to handle the LIST requests for
 a certain user, based upon a set of folders.  The data is kept by
@@ -72,7 +72,7 @@ sub new($)
 
 =section Attributes
 
-=method delimiter [FOLDERNAME]
+=method delimiter [$foldername]
 Returns the delimiter string.  The foldername is only required when a
 CODE reference was specified at initiation.
 
@@ -133,7 +133,7 @@ sub inbox()
 
 =section IMAP Commands
 
-=method list BASE, PATTERN
+=method list $base, $pattern
 IMAP's LIST command.  The request must be partially decoded, the answer
 will need to be encoded.
 

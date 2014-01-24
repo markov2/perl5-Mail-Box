@@ -49,9 +49,9 @@ and memory usage.  It could easily be optimized.
 
 =section Converting
 
-=method export MESSAGE, OPTIONS
+=method export $message, %options
 Returns a new M<Email::Simple> object based on the information from
-a M<Mail::Message> object.  The MESSAGE specified is an
+a M<Mail::Message> object.  The $message specified is an
 instance of a Mail::Message.
 
 =examples
@@ -70,7 +70,7 @@ sub export($@)
     Email::Simple->new($message->string);
 }
 
-=method from OBJECT, OPTIONS
+=method from $object, %options
 Returns a new M<Mail::Message> object based on the information from
 an M<Email::Simple>.
 

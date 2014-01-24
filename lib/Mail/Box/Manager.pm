@@ -50,7 +50,7 @@ more portable and safer code if you do use it.
 
 =chapter METHODS
 
-=c_method new ARGS
+=c_method new $args
 
 =option  folder_types NEW-TYPE | ARRAY-OF-NEW-TYPES
 =default folder_types <all standard types>
@@ -155,11 +155,11 @@ sub init($)
 
 =section Attributes
 
-=method registerType TYPE, CLASS [,OPTIONS]
+=method registerType $type, $class, %options
 
-With C<registerType> you can register one TYPE of folders.  The CLASS
+With C<registerType> you can register one $type of folders.  The $class
 is compiled automatically, so you do not need to C<use> them in your own
-modules.  The TYPE is just an arbitrary name.
+modules.  The $type is just an arbitrary name.
 
 The added types are prepended to the list of known types, so they are
 checked first when a folder is opened in autodetect mode.
@@ -228,7 +228,7 @@ sub defaultFolderType()
 
 =section Manage open folders
 
-=method open [FOLDERNAME], OPTIONS
+=method open [$foldername], %options
 
 Open a folder which name is specified as first parameter or with
 the option flag C<folder>.  The folder type is autodetected unless
@@ -504,8 +504,8 @@ Returns a list of all open folders.
 
 sub openFolders() { @{shift->{MBM_folders}} }
 
-=method isOpenFolder FOLDER
-Returns true if the FOLDER is currently open.
+=method isOpenFolder $folder
+Returns true if the $folder is currently open.
 
 =example
  print "Yes\n" if $mgr->isOpenFolder('Inbox');
@@ -518,11 +518,11 @@ sub isOpenFolder($)
 
 #-------------------------------------------
 
-=method close FOLDER, OPTIONS
+=method close $folder, %options
 
 C<close> removes the specified folder from the list of open folders.
 Indirectly it will update the files on disk if needed (depends on
-the M<Mail::Box::new(save_on_exit)> flag for each folder). OPTIONS are
+the M<Mail::Box::new(save_on_exit)> flag for each folder). %options are
 passed to M<Mail::Box::close()> of the folder.
 
 The folder's messages will also be withdrawn from the known message threads.
@@ -563,7 +563,7 @@ sub close($@)
 
 #-------------------------------------------
 
-=method closeAllFolders, OPTIONS
+=method closeAllFolders, %options
 
 C<closeAllFolders> calls close() for each folder managed by
 this object.  It is called just before the program stops (before global
@@ -583,9 +583,9 @@ END {map {defined $_ && $_->closeAllFolders} @managers}
 
 =section Manage existing folders
 
-=method delete FOLDERNAME, OPTIONS
+=method delete $foldername, %options
 
-Remove the named folder.  The OPTIONS are the same as those for M<open()>.
+Remove the named folder.  The %options are the same as those for M<open()>.
 
 The deletion of a folder can take some time.  Dependent on the type of
 folder, the folder must be read first.  For some folder-types this will
@@ -610,10 +610,10 @@ sub delete($@)
 
 =section Move messages to folders
 
-=method appendMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+=method appendMessage [$folder|$foldername], $messages, %options
 
 Append one or more messages to a folder (therefore, an C<appendMessages()>
-is defined as well). You may specify a FOLDERNAME or an opened folder
+is defined as well). You may specify a $foldername or an opened folder
 as the first argument. When the name is that of an open folder, it is
 treated as if the folder-object was specified, and not directly access
 the folder-files.  You may also specify the foldername as part of the
@@ -630,7 +630,7 @@ type does not have to match the folder type--the folder will try to
 resolve the differences with minimal loss of information.  The coerced
 messages (how the were actually written) are returned as list.
 
-The OPTIONS is a list of key/values, which are added to (overriding)
+The %options is a list of key/values, which are added to (overriding)
 the default options for the detected folder type.
 
 =examples
@@ -741,7 +741,7 @@ sub appendMessages(@)
 
 #-------------------------------------------
 
-=method copyMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+=method copyMessage [$folder|$foldername], $messages, %options
 
 Copy a message from one folder into another folder.  If the destination
 folder is already opened, M<Mail::Box::copyTo()> is used.  Otherwise,
@@ -822,7 +822,7 @@ sub copyMessage(@)
 
 #-------------------------------------------
 
-=method moveMessage [FOLDER|FOLDERNAME,] MESSAGES, OPTIONS
+=method moveMessage [$folder|$foldername], $messages, %options
 
 Move a message from one folder to another.
 
@@ -855,11 +855,11 @@ sub moveMessage(@)
 
 =section Manage message threads
 
-=method threads [FOLDERS], OPTIONS
+=method threads [$folders], %options
 
 Create a new object which keeps track of message threads.  You can
 read about the possible options in M<Mail::Box::Thread::Manager>.
-As OPTIONS specify one folder or an array of FOLDERS.
+As %options specify one folder or an array of $folders.
 It is also permitted to specify folders before the options.
 
 =examples
@@ -918,7 +918,7 @@ sub threads(@)
 
 =section Internals
 
-=method toBeThreaded FOLDER, MESSAGES
+=method toBeThreaded $folder, $messages
 Signal to the manager that all thread managers which are using the
 specified folder must be informed that new messages are
 coming in.
@@ -929,7 +929,7 @@ sub toBeThreaded($@)
     $_->toBeThreaded(@_) foreach @{$self->{MBM_threads}};
 }
 
-=method toBeUnthreaded FOLDER, MESSAGES
+=method toBeUnthreaded $folder, $messages
 Signal to the manager that all thread managers which are using the
 specified folder must be informed that new messages are
 or going out.
@@ -940,10 +940,10 @@ sub toBeUnthreaded($@)
     $_->toBeUnthreaded(@_) foreach @{$self->{MBM_threads}};
 }
 
-=method decodeFolderURL URL
-Try to decompose a folder name which is specified as URL (see open())
+=method decodeFolderURL $url
+Try to decompose a folder name which is specified as $url (see open())
 into separate options.  Special characters like @-sign, colon, and slash
-used in the user or password parts must be passed URL-encoded.
+used in the user or password parts must be passed $url-encoded.
 =cut
 
 sub decodeFolderURL($)

@@ -22,7 +22,7 @@ part of the qmail mail-delivery system.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default proxy C<'qmail-inject'>
 =default via C<'qmail'>
@@ -46,7 +46,7 @@ sub init($)
 
 #------------------------------------------
 
-=method trySend MESSAGE, OPTIONS
+=method trySend $message, %options
 
 =error Errors when closing Qmail mailer $program: $!
 

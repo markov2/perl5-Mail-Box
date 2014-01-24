@@ -29,7 +29,7 @@ many of these lines, so speed is very important here.
 # The body is kept in a folded fashion, where each line starts with
 # a single blank.
 
-=c_method new DATA
+=c_method new $data
 
 The constructor of this object does not follow the usual practise within
 the Mail::Box suite: it does not use the constructor

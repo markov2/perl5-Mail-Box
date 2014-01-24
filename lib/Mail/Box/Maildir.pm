@@ -38,7 +38,7 @@ which are not accepted by the Windows system.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default folderdir    C<$ENV{HOME}/.maildir>
 =default lock_type    C<'NONE'> (constant)
@@ -75,7 +75,7 @@ sub init($)
     $self;
 }
 
-=ci_method create FOLDERNAME, OPTIONS
+=ci_method create $foldername, %options
 
 =error Cannot create Maildir folder $name.
 One or more of the directories required to administer a Maildir folder
@@ -167,7 +167,7 @@ sub topFolderWithMessages() { 1 }
 
 my $uniq = rand 1000;
 
-=method coerce MESSAGE, OPTIONS
+=method coerce $message, %options
 
 =error Cannot create Maildir message file $new.
 A message is converted from some other message format into a Maildir format
@@ -201,9 +201,9 @@ sub coerce($)
 
 =section Internals
 
-=ci_method createDirs FOLDERDIR
+=ci_method createDirs $folderdir
 
-The FOLDERDIR contains the absolute path of the location where the
+The $folderdir contains the absolute path of the location where the
 messages are kept.  Maildir folders contain a C<tmp>, C<new>, and
 C<cur> sub-directory within that folder directory as well.  This
 method will ensure that all directories exist.
@@ -241,8 +241,8 @@ sub createDirs($)
     $thing;
 }
 
-=ci_method folderIsEmpty FOLDERDIR
-Checks whether the folder whose directory is specified as absolute FOLDERDIR
+=ci_method folderIsEmpty $folderdir
+Checks whether the folder whose directory is specified as absolute $folderdir
 is empty or not.  A folder is empty when the C<tmp>, C<new>, and C<cur>
 subdirectories are empty and some files which are left there by application
 programs.  The maildir spec explicitly states: C<.qmail>, C<bulletintime>,
@@ -407,7 +407,7 @@ sub writeMessages($)
     $self;
 }
 
-=c_method appendMessage OPTIONS
+=c_method appendMessage %options
 =error Cannot append Maildir message in $new to folder $self.
 The message (or messages) could not be stored in the right directories
 for the Maildir folder.

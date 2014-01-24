@@ -23,9 +23,9 @@ M<Mail::Box::Maildir> folder. Each message is stored in a separate file.
 
 =chapter METHODS
 
-=method filename [FILENAME]
+=method filename [$filename]
 
-Returns the current filename for this message.  If the FILENAME argument
+Returns the current filename for this message.  If the $filename argument
 is specified, a new filename will be set.  For maildir messages this
 means that modifications are immediately performed: there will be
 a rename (move) from the old name to the new name.  Labels may change

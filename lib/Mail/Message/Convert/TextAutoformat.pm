@@ -25,7 +25,7 @@ using Damian Conway's M<Text::Autoformat>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  options HASH-REF
 =default options C<{ (all, 1) }>
@@ -48,7 +48,7 @@ sub init($)
 
 =section Converting
 
-=method autoformatBody BODY
+=method autoformatBody $body
 
 Formats a single message body (a M<Mail::Message::Body> object)
 into a new body object using M<Text::Autoformat>.  If the

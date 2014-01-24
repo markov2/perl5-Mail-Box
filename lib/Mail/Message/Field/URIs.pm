@@ -34,7 +34,7 @@ time.  This class can maintain these fields.
 
 =section Constructors
 
-=c_method new DATA
+=c_method new $data
 
 =default attributes <ignored>
 
@@ -87,10 +87,10 @@ sub produceBody()
 
 =section Access to the content
 
-=method addURI URI
-Add an URI to the field.  The URI can be specified as M<URI> object
-or as string which will be turned into an URI object.  The added
-URI is returned.
+=method addURI $uri
+Add an $uri to the field.  The $uri can be specified as M<URI> object
+or as string which will be turned into an $uri object.  The added
+$uri is returned.
 
 =examples adding an URI to an URI field
  my $f   = Mail::Message::Field::URI->new('List-Post');

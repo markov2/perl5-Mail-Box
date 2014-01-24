@@ -46,7 +46,7 @@ code is not GPLed (yet).
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 Create a messages in a directory organized folder.
 
@@ -109,7 +109,7 @@ BEGIN { *write = \&print }  # simply alias
 
 #-------------------------------------------
 
-=method filename [FILENAME]
+=method filename [$filename]
 
 Returns the name of the file in which this message is actually stored.  This
 will return C<undef> when the message is not stored in a file.
@@ -275,11 +275,11 @@ sub loadBody()
 
 #-------------------------------------------
 
-=method create FILENAME
+=method create $filename
 Create the message in the specified file.  If the message already has
 a filename and is not modified, then a move is tried.  Otherwise the
-message is printed to the file.  If the FILENAME already exists for
-this message, nothing is done.  In any case, the new FILENAME is set
+message is printed to the file.  If the $filename already exists for
+this message, nothing is done.  In any case, the new $filename is set
 as well.
 
 =error Cannot write message to $filename: $!

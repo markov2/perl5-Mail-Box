@@ -27,10 +27,10 @@ dummy message.
 
 =chapter METHODS
 
-=c_method new MESSAGE-ID, OPTIONS
+=c_method new $message_id, %options
 
 Create a new dummy message to occupy the space for
-a real message with the specified MESSAGE-ID.
+a real message with the specified $message_id.
 
 =default body <not used>
 =default field_type <not used>
@@ -68,8 +68,6 @@ sub init($)
 
 sub isDummy()    { 1 }
 
-#-------------------------------------------
-
 =method head ...
 
 =error You cannot take the head/body of a dummy message
@@ -86,13 +84,9 @@ sub head()
      ();
 }
 
-#-------------------------------------------
-
 sub body()
 {    shift->log(ERROR => "You cannot take the body of a dummy message");
      ();
 }
-
-#-------------------------------------------
 
 1;

@@ -35,7 +35,7 @@ predefined, but more can be added without limitation.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =requires filename FILENAME
 
@@ -66,8 +66,8 @@ sub filename() {shift->{MBML_filename}}
 
 #-------------------------------------------
 
-=method get MSGNR
-Look if there is label info for message MSGNR.
+=method get $msgnr
+Look if there is label info for message $msgnr.
 
 =cut
 
@@ -122,7 +122,7 @@ sub read()
 
 #-------------------------------------------
 
-=method write MESSAGES
+=method write $messages
 Write the labels related to the specified messages to the label file.
 
 =cut
@@ -146,9 +146,9 @@ sub write(@)
 
 #-------------------------------------------
 
-=method append MESSAGES
+=method append $messages
 
-Append the label information about the specified MESSAGES to the end
+Append the label information about the specified $messages to the end
 of the label file.  The information will not be merged with the
 information already present in the label file.
 
@@ -167,7 +167,7 @@ sub append(@)
 
 #-------------------------------------------
 
-=method print FILEHANDLE, MESSAGES
+=method print $fh, $messages
 
 Print the labels of the specified messages to the opened file.
 

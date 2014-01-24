@@ -62,16 +62,16 @@ use overload
 
 =section Constructors
 
-=c_method new (NAME, [VALUE] | STRING), OPTIONS
+=c_method new <$name, [$value] | STRING>, %options
 
-Create a new attribute NAME with the optional VALUE.  If no VALUE is specified,
+Create a new attribute $name with the optional $value.  If no $value is specified,
 the first argument of this method is inspected for an equals sign C<'='>.
 If that character is present, the argument is taken as STRING, containing
 a preformatted attribute which is processed.  Otherwise, the argument is
-taken as name without VALUE: set the value later with value().
+taken as name without $value: set the value later with value().
 
-Whether encoding takes place depends on the OPTIONS and the existence
-of non-ascii characters in the VALUE.  The NAME can only contain ascii
+Whether encoding takes place depends on the %options and the existence
+of non-ascii characters in the $value.  The $name can only contain ascii
 characters, hence is never encoded.
 
 To speed things up, attributes are not derived from the M<Mail::Reporter>
@@ -80,7 +80,7 @@ base-class.
 =option  charset STRING
 =default charset C<'us-ascii'>
 
-The VALUE is translated from utf-8 (Perl internal) to this character set,
+The $value is translated from utf-8 (Perl internal) to this character set,
 and the resulting string is encoded if required.  C<us-ascii> is the normal
 encoding for e-mail.  Valid character sets can be found with 
 Encode::encodings(':all').
@@ -338,7 +338,7 @@ sub decode()
 
 =section Internals
 
-=method mergeComponent ATTRIBUTE
+=method mergeComponent $attribute
 Merge the components from the specified attribute into this attribute.  This
 is needed when components of the same attribute are created separately.
 Merging is required by the field parsing.

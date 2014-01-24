@@ -34,7 +34,7 @@ can do with the MH folder object C<Mail::Box::MH>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =default folderdir C<$ENV{HOME}/.mh>
 =default lock_file <index_file>
@@ -126,7 +126,7 @@ sub init($)
     $self;
 }
 
-=ci_method create FOLDERNAME, OPTIONS
+=ci_method create $foldername, %options
 
 =error Cannot create MH folder $name: $!
 For some reason, it is impossible to create the folder.  Check the permissions
@@ -269,7 +269,7 @@ sub topFolderWithMessages() { 1 }
 
 #-------------------------------------------
 
-=c_method appendMessages OPTIONS
+=c_method appendMessages %options
 Append a message to a folder which is not open.
 
 =error Cannot append message without lock on $folder.
@@ -482,7 +482,7 @@ sub delete(@)
 
 #-------------------------------------------
 
-=method writeMessages OPTIONS
+=method writeMessages %options
 
 =option  renumber BOOLEAN
 =default renumber <true>

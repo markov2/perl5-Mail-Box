@@ -22,7 +22,7 @@ Mutt is not automatically installed.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 =option  exe PATH
 =default exe C<mutt_dotlock>
 The name of the program.  May be a relative or absolute path.

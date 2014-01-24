@@ -58,7 +58,7 @@ Converts a text message into text using M<Text::Autoformat>.
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  fields NAMES|ARRAY-OF-NAMES|REGEXS
 =default fields <see description>
@@ -87,7 +87,7 @@ sub init($)
 
 =section Converting
 
-=method selectedFields HEAD
+=method selectedFields $head
 
 Returns a list of fields to be included in the format.  The list is
 an ordered selection of the fields in the actual header, and filtered

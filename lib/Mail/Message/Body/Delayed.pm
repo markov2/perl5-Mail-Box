@@ -63,7 +63,7 @@ use overload '""'    => 'string_unless_carp'
 
 =chapter METHODS
 
-=c_method new OPTIONS
+=c_method new %options
 
 =requires  message MESSAGE
 
@@ -165,7 +165,7 @@ sub string_unless_carp()
 
 =section Internals
 
-=method read PARSER, HEAD, BODYTYPE
+=method read $parser, $head, $bodytype
 
 =cut
 
@@ -181,7 +181,7 @@ sub read($$;$@)
 
 #------------------------------------------
 
-=method fileLocation [BEGIN, END]
+=method fileLocation [$begin, $end]
 
 =cut
 
@@ -193,7 +193,7 @@ sub fileLocation(;@) {
 
 #------------------------------------------
 
-=method moveLocation DISTANCE
+=method moveLocation $distance
 
 =cut
 
