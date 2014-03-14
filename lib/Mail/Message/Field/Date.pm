@@ -109,7 +109,7 @@ sub time()
     $ENV{TZ}  = 'UTC';
     tzset;
     my $timestamp = mktime $s, $min, $h, $d, $monthnr{$mon}-1, $y-1900;
-    $ENV{TZ}  = $oldtz;
+    if(defined $oldtz) { $ENV{TZ}  = $oldtz } else { delete $ENV{TZ} }
     tzset;
 
     $timestamp += ($1 eq '-' ? 1 : -1) * ($2*3600 + $3*60)

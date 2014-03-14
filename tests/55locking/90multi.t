@@ -19,6 +19,11 @@ my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 my $lockfile  = File::Spec->catfile('folders', 'lockfiletest');
 unlink $lockfile;
 
+if($windows)
+{   open my $OUT, '>', $lockfile or die;
+    close $OUT;
+}
+
 my $locker = Mail::Box::Locker->new
  ( method  => 'MULTI'
  , timeout => 1

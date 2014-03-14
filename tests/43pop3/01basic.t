@@ -6,7 +6,14 @@ use strict;
 use lib qw(. .. tests);
 use Tools;
 
-use Test::More tests => 14;
+use Test::More;
+BEGIN
+{   if($windows)
+    {   plan skip_all => "not available on MicroSoft Windows.";
+        exit 0;
+    }
+    plan tests => 14;
+}
 
 BEGIN { use_ok('Mail::Transport::POP3') }
 

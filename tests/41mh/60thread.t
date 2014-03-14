@@ -45,7 +45,53 @@ my @lines = split /^/, $out;
 cmp_ok(@lines, '==', $folder->messages);
 $out      = join '', sort @lines;
 
-my $dump = <<'DUMP';
+my $dump = $Mail::Message::crlf_platform ? <<'__DUMP_CRLF' : <<'__DUMP_LF';
+1.4K Resize with Transparency
+1.3K *- Re: File Conversion From HTML to PS and TIFF
+2.1K    `--*- Re: File Conversion From HTML to PS and TIFF
+2.1K       `- Re: File Conversion From HTML to PS and TIFF
+1.5K Transparency question
+2.5K RE: Transparency question
+3.4K RE: Transparency question
+5.7K RE: Transparency question
+7.4K RE: Transparency question
+2.8K RE: jpeg2000 question
+1.3K *- Problem resizing images through perl script
+843  |  `- Re: Problem resizing images through perl script
+1.9K |     `- RE: Problem resizing images through perl script
+1.0K |        `- Re: Problem resizing images through perl script
+1.2K `- Re: Convert HTM, HTML files to the .jpg format
+766  Undefined Symbol: SetWarningHandler
+1.1K `- Re: Undefined Symbol: SetWarningHandler
+1.9K *- Re: watermarks/embossing
+316  Re: Annotate problems (PR#298)
+585  `- Re: Annotate problems (PR#298)
+1.0K 
+1.4K `- Re: your mail
+2.0K    `- Re: your mail
+156  Re: your mail
+703  `- Re: your mail
+194  Re: your mail
+2.0K 
+684  Re: your mail
+4.5K `- Re: your mail
+569  mailing list archives
+1.4K delegates.mgk set-up for unixware printing
+1.5K printing solution for UW 7.1
+1.5K *- Re: converts new sharpen factors
+1.2K New ImageMagick mailing list
+ 28  subscribe
+847  Confirmation for subscribe magick-developer
+ 64  `- Re: Confirmation for subscribe magick-developer
+ 11K Welcome to magick-developer
+1.7K core dump in simple ImageMagick example
+2.2K `- Re: core dump in simple ImageMagick example
+908     `- Re: core dump in simple ImageMagick example
+770        `- Re: core dump in simple ImageMagick example
+2.0K Core Dump on ReadImage
+1.0K `- Re: Core Dump on ReadImage
+1.6K Font metrics
+__DUMP_CRLF
 1.3K Resize with Transparency
 1.2K *- Re: File Conversion From HTML to PS and TIFF
 2.1K    `--*- Re: File Conversion From HTML to PS and TIFF
@@ -91,7 +137,7 @@ my $dump = <<'DUMP';
 2.0K Core Dump on ReadImage
 1.0K `- Re: Core Dump on ReadImage
 1.6K Font metrics
-DUMP
+__DUMP_LF
 
 $dump = join '', sort split /^/, $dump;
 compare_thread_dumps($out, $dump, 'sort thread full dump');

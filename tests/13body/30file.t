@@ -33,7 +33,9 @@ ok($body,                                           'body creation from file');
 is($body->string, $filedata,                        'stringify');
 cmp_ok($body->nrLines, "==", 5,                     'nr lines');
 
-cmp_ok($body->size, "==", length $filedata,         'size');
+my $body_length = length $filedata;
+$body_length -= $body->nrLines if $Mail::Message::crlf_platform;
+cmp_ok($body->size, "==", $body_length,             'size');
 
 my $fakeout;
 my $g = IO::Scalar->new(\$fakeout);
@@ -52,7 +54,7 @@ $body = Mail::Message::Body::File->new(data => [@filedata]);
 ok($body,                                           'creation from array of lines');
 is($body->string, $filedata,                        'data');
 cmp_ok($body->nrLines, "==", 5,                     'nr lines');
-cmp_ok($body->size, "==", length $filedata,         'size');
+cmp_ok($body->size, "==", $body_length,             'size');
 
 $fakeout = '';
 $body->print($g);

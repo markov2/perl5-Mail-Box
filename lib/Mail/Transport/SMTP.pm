@@ -23,6 +23,8 @@ This module implements transport of C<Mail::Message> objects by negotiating
 to the destination host directly by using the SMTP protocol, without help of
 C<sendmail>, C<mail>, or other programs on the local host.
 
+B<warning:> you may need to install M<Net::SMTPS>, to get TLS support.
+
 =chapter METHODS
 
 =c_method new %options
@@ -34,13 +36,11 @@ C<sendmail>, C<mail>, or other programs on the local host.
 
 =option  smtp_debug BOOLEAN
 =default smtp_debug <false>
-
 Simulate transmission: the SMTP protocol output will be sent to your
 screen.
 
 =option  helo HOST
 =default helo <from Net::Config>
-
 The fully qualified name of the sender's host (your system) which
 is used for the greeting message to the receiver.  If not specified,
 M<Net::Config> or else M<Net::Domain> are questioned to find it.
@@ -49,13 +49,11 @@ C<From> line of the message is assumed.
 
 =option  timeout SECONDS
 =default timeout 120
-
 The number of seconds to wait for a valid response from the server before
 failing.
 
 =option  username STRING
 =default username undef
-
 Use SASL authentication to contact the remote SMTP server (RFC2554).
 This username in combination with new(password) is passed as arguments
 to M<Net::SMTP> method auth.  Other forms of authentication are not
@@ -90,18 +88,15 @@ sub init($)
       || eval { require Net::Config; $Net::Config::inet_domain }
       || eval { require Net::Domain; Net::Domain::hostfqdn() };
 
-    $self->{MTS_net_smtp_opts}
-       = { Hello   => $helo
-         , Debug   => ($args->{smtp_debug} || 0)
-         };
+    $self->{MTS_net_smtp_opts} =
+     +{ Hello   => $helo
+      , Debug   => ($args->{smtp_debug} || 0)
+      };
 
     $self;
 }
 
-#------------------------------------------
-
 =method trySend $message, %options
-
 Try to send the $message once.   This may fail, in which case this
 method will return C<false>.  In list context, the reason for failure
 can be caught: in list context C<trySend> will return a list of
@@ -223,11 +218,9 @@ sub trySend($@)
 }
 
 #------------------------------------------
-
 =section Server connection
 
 =method contactAnyServer
-
 Creates the connection to the SMTP server.  When more than one hostname
 was specified, the first which accepts a connection is taken.  An
 M<IO::Socket::INET> object is returned.
@@ -267,10 +260,7 @@ sub contactAnyServer()
     undef;
 }
 
-#------------------------------------------
-
 =method tryConnectTo $host, %options
-
 Try to establish a connection to deliver SMTP to the specified $host.  The
 %options are passed to the C<new> method of M<Net::SMTP>.
 
@@ -280,7 +270,5 @@ sub tryConnectTo($@)
 {   my ($self, $host) = (shift, shift);
     Net::SMTP->new($host, @_);
 }
-
-#------------------------------------------
 
 1;

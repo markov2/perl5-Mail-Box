@@ -33,31 +33,26 @@ without C<via> options to get a message transported.
 =over 4
 
 =item * M<Mail::Transport::Sendmail>
-
 Use sendmail to process and deliver the mail.  This requires the
 C<sendmail> program to be installed on your system.  Whether this
 is an original sendmail, or a replacement from Postfix does matter.
 
 =item * M<Mail::Transport::Exim>
-
 Use C<exim> to distribute the message.
 
 =item * M<Mail::Transport::Qmail>
-
 Use C<qmail-inject> to distribute the message.
 
 =item * M<Mail::Transport::SMTP>
-
-In this case, Perl is handling mail transport on its own.  This is less
-desired but more portable than sending with sendmail or qmail.
-The advantage is that this sender is environment independent, and easier to
-configure.  However, there is no daemon involved which means that your
-program will wait until the message is delivered, and the message is
-lost when your program is interrupted during delivery (which may
-take hours to complete).
+In this case, Perl is handling mail transport on its own.  This is
+less desired but more portable than sending with sendmail or qmail.
+The advantage is that this sender is environment independent, and easier
+to configure.  However, there is no daemon involved which means that
+your program will wait until the message is delivered, and the message
+is lost when your program is interrupted during delivery (which may take
+hours to complete).
 
 =item * M<Mail::Transport::Mailx>
-
 Use the external C<mail>, C<mailx>, or C<Mail> programs to send the
 message.  Usually, the result is poor, because some versions of these
 programs do not support MIME headers.  Besides, these programs are
