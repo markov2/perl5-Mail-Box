@@ -20,6 +20,10 @@ use File::Spec;
 use File::Basename;
 use POSIX ':unistd_h';
 
+# tell() is not available for open(my $fh) on perl versions <= 5.10  So,
+# we need to stick to IO::File syntax.
+use IO::File;
+
 my $windows;
 BEGIN { $windows = $^O =~ m/mswin32|cygwin/i }
 
@@ -204,7 +208,7 @@ sub create($@)
     $class->moveAwaySubFolder($filename, $subext)
         if -d $filename && defined $subext;
 
-    open my $create, '>:raw', $filename;
+    my $create = IO::File->new($filename, 'w');
     unless($create)
     {   $class->log(WARNING => "Cannot create folder file $name: $!");
         return;
@@ -576,8 +580,8 @@ sub _write_replace($)
     my $filename = $self->filename;
     my $tmpnew   = $self->tmpNewFolder($filename);
 
-    open my $new, '>:raw', $tmpnew   or return 0;
-    open my $old, '<:raw', $filename or return 0;
+    my $new      = IO::File->new($tmpnew, 'w')   or return 0;
+    my $old      = IO::File->new($filename, 'r') or return 0;
 
     my ($reprint, $kept) = (0,0);
 
@@ -660,9 +664,9 @@ sub _write_inplace($)
 
     $_->body->load foreach @messages;
 
-    my $mode     = $^O eq 'MSWin32' ? '>>' : '+<';
+    my $mode     = $^O eq 'MSWin32' ? 'a' : 'r+';
     my $filename = $self->filename;
-    open my $old, "$mode:raw", $filename or return 0;
+    my $old      = IO::File->new($filename, $mode) or return 0;
 
     # Chop the folder after the messages which does not have to change.
 
