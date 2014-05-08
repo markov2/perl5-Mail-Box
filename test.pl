@@ -9,7 +9,8 @@ use File::Basename;
 use lib qw(tests lib);
 
 # test env at home
-$ENV{PERL5LIB} .= qw(:/home/markov/shared/perl/IMAPClient/lib);
+$ENV{PERL5LIB} .= qw(:/home/markov/shared/perl/IMAPClient/lib)
+   if $ENV{MARKOV_DEVEL};
 delete $ENV{PERLIO};
 
 use Config;
