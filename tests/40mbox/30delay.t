@@ -22,11 +22,11 @@ use Mail::Box::Mbox;
 #
 
 copy $src, $cpy
-    or die "Cannot create test folder: $!\n";
+    or die "Cannot create test folder $cpy: $!\n";
 
 my $folder = new Mail::Box::Mbox
   ( folder       => "=$cpyfn"
-  , folderdir    => 'folders'
+  , folderdir    => $folderdir
   , lock_type    => 'NONE'
   , extract      => 'LAZY'
   , access       => 'rw'
@@ -80,7 +80,7 @@ cmp_ok($oldsize, "==",  -s $folder->filename,      "expected size");
 
 my $copy = new Mail::Box::Mbox
   ( folder       => "=$cpyfn"
-  , folderdir    => 'folders'
+  , folderdir    => $folderdir
   , lock_type    => 'NONE'
   , extract      => 'LAZY'
   );

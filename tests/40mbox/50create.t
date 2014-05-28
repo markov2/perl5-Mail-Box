@@ -17,7 +17,7 @@ use File::Spec;
 use Mail::Box::Mbox;
 
 use Mail::Message::Construct;
-my $top  = File::Spec->catdir('folders', 'Mail');
+my $top  = File::Spec->catdir($folderdir, 'Mail');
 
 clean_dir $top;
 

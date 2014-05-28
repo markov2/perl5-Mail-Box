@@ -14,7 +14,7 @@ use File::Compare;
 
 use Mail::Box::Mbox;
 
-my @src = (folder => "=$fn", folderdir => 'folders');
+my @src = (folder => "=$fn", folderdir => $folderdir);
 
 ok(Mail::Box::Mbox->foundIn(@src),    'check foundIn');
 

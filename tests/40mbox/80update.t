@@ -20,6 +20,7 @@ use Mail::Box::Manager;
 # over our test file.
 #
 
+unlink $cpy;
 copy $src, $cpy
     or die "Cannot create test folder $cpy: $!\n";
 

@@ -15,11 +15,15 @@ use Mail::Box::Parser::Perl;
 use Mail::Message::Body::File;
 use Mail::Message::Head;
 
+# MO: I do not know whether there is an other way to get this to work
+# on Windows without error messages.
+my $trusted = $Mail::Message::crlf_platform;
+
 ###
 ### First carefully read the first message
 ###
 
-my $parser = Mail::Box::Parser::Perl->new(filename  => $src);
+my $parser = Mail::Box::Parser::Perl->new(filename => $src, trusted =>$trusted);
 ok(defined $parser,                "creation of parser");
 
 $parser->pushSeparator('From ');
@@ -123,7 +127,7 @@ $parser->stop;
 
 undef $parser;
 
-$parser = Mail::Box::Parser::Perl->new(filename => $src);
+$parser = Mail::Box::Parser::Perl->new(filename => $src, trusted => $trusted);
 $parser->pushSeparator('From ');
 
 my $count = 0;
@@ -163,7 +167,7 @@ $parser->stop;
 
 undef $parser;
 
-$parser = Mail::Box::Parser::Perl->new(filename => $src);
+$parser = Mail::Box::Parser::Perl->new(filename => $src, trusted => $trusted);
 $parser->pushSeparator('From ');
 
 $count = 0;

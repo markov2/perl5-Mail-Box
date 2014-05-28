@@ -26,6 +26,11 @@ the reading into a lines body
 would work (or not)
 SIMULATED_FILE
 
+# Test script has Unix line endings (LF) even under Windows.
+# Replace LF by CRLF if running under Windows,
+# so the file is truly a Windows file:
+$filedata =~ s/\n/\r\n/gs if $Mail::Message::crlf_platform;
+
 my $f = IO::Scalar->new(\$filedata);
 
 my $body = Mail::Message::Body::File->new(file => $f);
@@ -33,6 +38,7 @@ ok($body,                                           'body creation from file');
 is($body->string, $filedata,                        'stringify');
 cmp_ok($body->nrLines, "==", 5,                     'nr lines');
 
+# Mail::Message::Body::File::size() substracts 1 per line (for CR) on Windows
 my $body_length = length $filedata;
 $body_length -= $body->nrLines if $Mail::Message::crlf_platform;
 cmp_ok($body->size, "==", $body_length,             'size');

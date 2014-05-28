@@ -28,7 +28,7 @@ ok($mgr);
 
 my $folder = $mgr->open
   ( folder       => "=$cpyfn"
-  , folderdir    => 'folders'
+  , folderdir    => $folderdir
   , lock_type    => 'NONE'
   , extract      => 'LAZY'
   , access       => 'rw'

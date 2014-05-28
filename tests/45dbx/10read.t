@@ -17,7 +17,7 @@ BEGIN
 {
    eval { require Mail::Box::Dbx };
 
-   if($@ || ! Mail::Box::Dbx->type eq 'dbx')
+   if($@ || Mail::Box::Dbx->type ne 'dbx')
    {   plan(skip_all => 'Mail::Box::Dbx is not installed');
        exit 0;
    }

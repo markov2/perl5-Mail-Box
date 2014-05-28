@@ -23,11 +23,11 @@ use Mail::Box::Mbox;
 
 unlink $cpy;
 copy $src, $cpy
-    or die "Cannot create test folder: $!\n";
+    or die "Cannot create test folder $cpy: $!\n";
 
 my $folder = new Mail::Box::Mbox
   ( folder       => "=$cpyfn"
-  , folderdir    => 'folders'
+  , folderdir    => $folderdir
   , lock_type    => 'NONE'
   , extract      => 'ALWAYS'
   , access       => 'rw'
@@ -57,7 +57,7 @@ ok($folder->write(policy => 'REPLACE'));
 
 my $copy = new Mail::Box::Mbox
   ( folder    => "=$cpyfn"
-  , folderdir => 'folders'
+  , folderdir => $folderdir
   , lock_type => 'NONE'
   , extract   => 'ALWAYS'
   );

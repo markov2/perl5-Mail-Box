@@ -49,7 +49,7 @@ where included and there is no name, then C<undef> is returned.
 sub string()
 {   my $self = shift;
     my $name = $self->name;
-    my @addr = sort map {$_->string} $self->addresses;
+    my @addr = sort map $_->string, $self->addresses;
 
     local $" = ', ';
 

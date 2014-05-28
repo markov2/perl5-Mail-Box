@@ -46,11 +46,15 @@ BEGIN {
    $winfn   = 'mbox.win';
    $cpyfn   = 'mbox.cpy';
 
-   $unixsrc = File::Spec->catfile('folders', $unixfn);
-   $winsrc  = File::Spec->catfile('folders', $winfn);
-   $cpy     = File::Spec->catfile('folders', $cpyfn);
+   $unixsrc = File::Spec->catfile($folderdir, $unixfn);
+   $winsrc  = File::Spec->catfile($folderdir, $winfn);
+   $cpy     = File::Spec->catfile($folderdir, $cpyfn);
 
    ($src, $fn) = $crlf_platform ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
+
+   # ensure to test the Perl Parser not the C-Parser (separate distribution)
+  require Mail::Box::Parser::Perl;
+  Mail::Box::Parser->defaultParserType( 'Mail::Box::Parser::Perl' );
 
    # IO::File::open() is wrapped, because starting with 1.11 (Perl 5.8.7)
    # it cannot open files with relative pathnames when tainting checks are

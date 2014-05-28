@@ -13,7 +13,7 @@ use Test::More tests => 58;
 
 use Mail::Box::Mbox;
 
-my @src = (folder => "=$fn", folderdir => 'folders');
+my @src = (folder => "=$fn", folderdir => $folderdir);
 
 #
 # Destruct folder messages

@@ -225,6 +225,9 @@ sub _read_stripped_lines(;$$)
         }
         unless($self->{MBPP_trusted})
         {   s/\015$// for @$lines;
+            # input is read as binary stream (i.e. preserving CRLF on Windows).
+            # Code is based on this assumption. Removal of CR if not trusted
+            # conflicts with this assumption. [Markus Spann]
         }
     }
 #warn "($bodyend, $msgend, ".@$lines, ")\n";
