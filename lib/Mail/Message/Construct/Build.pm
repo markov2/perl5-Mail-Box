@@ -17,16 +17,25 @@ Mail::Message::Construct::Build - building a Mail::Message from components
 
 =chapter SYNOPSIS
 
- my $msg3 = Mail::Message->build
-   (From => 'me', data => "only two\nlines\n");
+ my $msg1 = Mail::Message->build
+   ( From => 'me', data => "only two\nlines\n");
 
- my $msg4 = Mail::Message->buildFromBody($body);
+ my $msg2 = Mail::Message->buildFromBody($body);
+
+ Mail::Message->build
+   ( From     => 'me@myhost.com'
+   , To       => 'you@yourhost.com'
+   , Subject  => "Read our folder!"
+
+   , data     => \@lines
+   , file     => 'folder.pdf'
+   )->send(via => 'postfix';
 
 =chapter DESCRIPTION
 
 Complex functionality on M<Mail::Message> objects is implemented in
 different files which are autoloaded.  This file implements the
-functionality related to building of messages from various components.
+building of messages from various simpler components.
 
 =chapter METHODS
 

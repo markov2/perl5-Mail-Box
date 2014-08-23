@@ -62,9 +62,19 @@ M<Authen::SASL> object.
 
 =option  password STRING
 =default password undef
-
 The password to be used with the new(username) to log in to the remote
 server.
+
+=option  esmtp_options HASH
+=default esmtp_options {}
+[2.116] ESMTP options to pass to Net::SMTP.  See the L<Net::SMTP>
+documentation for full details. Options can also be passed at send time.
+For example: C<< { XVERP => 1 } >>
+
+=option  from ADDRESS
+=default from C<undef>
+Allows a default sender address to be specified globally.
+See M<trySend()> for full details.
 
 =cut
 
@@ -92,7 +102,8 @@ sub init($)
      +{ Hello   => $helo
       , Debug   => ($args->{smtp_debug} || 0)
       };
-
+    $self->{MTS_esmtp_options} = $args->{esmtp_options};
+    $self->{MTS_from}          = $args->{from};
     $self;
 }
 
@@ -123,6 +134,10 @@ taken from M<Mail::Message::sender()>, which means the content of the
 C<Sender> field of the message or the first address of the C<From>
 field.  This defaults to "E<lt> E<gt>", which represents "no address".
 
+=option  esmtp_options HASH
+=default esmtp_options {}
+Additional or overridden EMSTP options. See M<new(esmtp_options)>
+
 =notice No addresses found to send the message to, no connection made
 
 =cut
@@ -130,8 +145,13 @@ field.  This defaults to "E<lt> E<gt>", which represents "no address".
 sub trySend($@)
 {   my ($self, $message, %args) = @_;
 
+    my %send_options =
+      ( %{$self->{MTS_esmtp_options} || {}}
+      , %{$args{esmtp_options}       || {}}
+      );
+
     # From whom is this message.
-    my $from = $args{from} || $message->sender || '<>';
+    my $from = $args{from} || $self->{MTS_from} || $message->sender || '<>';
     $from = $from->address if ref $from && $from->isa('Mail::Address');
 
     # Who are the destinations.
@@ -165,7 +185,7 @@ sub trySend($@)
             unless $server = $self->contactAnyServer;
 
         return (0, $server->code, $server->message, 'FROM', $server->quit)
-            unless $server->mail($from);
+            unless $server->mail($from, %send_options);
 
         foreach (@to)
         {     next if $server->to($_);

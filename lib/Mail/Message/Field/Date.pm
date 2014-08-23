@@ -47,18 +47,19 @@ sub parse($)
     my ($dn, $d, $mon, $y, $h, $min, $s, $z) = $string =~
       m/ ^ \s*
            (?: ($dayname) \s* \, \s* )?
-           ( 0?[1-9] | [12][0-9] | 3[01] ) \s* # day
-           \s+ ( [A-Z][a-z][a-z] ) \s+         # month
-           ( 19[0-9][0-9] | 2[0-9]{3} ) \s+    # year
-                  ( [0-1]?[0-9] | 2[0-3] ) \s* # hour
-               [:.] ( [0-5][0-9] ) \s*         # minute
-           (?: [:.] ( [0-5][0-9] ) )? \s+      # second
-           ( [+-][0-9]{4} | [A-Z]+ )?          # zone
+           ( 0?[1-9] | [12][0-9] | 3[01] ) \s*    # day
+           \s+ ( [A-Z][a-z][a-z]|[0-9][0-9] ) \s+ # month
+           ( 19[0-9][0-9] | 2[0-9]{3} ) \s+       # year
+                  ( [0-1]?[0-9] | 2[0-3] ) \s*    # hour
+               [:.] ( [0-5][0-9] ) \s*            # minute
+           (?: [:.] ( [0-5][0-9] ) )? \s+         # second
+           ( [+-][0-9]{4} | [A-Z]+ )?             # zone
            \s* /x
        or return undef;
 
     defined $dn or $dn = '';
     $dn  =~ s/\s+//g;
+    $mon = $months[$mon-1] if $mon =~ /[0-9]+/;   # Broken mail clients
 
     $y  += 2000 if $y < 50;
     $y  += 1900 if $y < 100;

@@ -5,6 +5,18 @@ Limitations to be fixed:
  - when lines are over 997 chars, then the transfer-encoding should
    automatically change from 'none' into 'quoted-printable' or 'base64'
 
+version 2.116: Sat Aug 23 11:27:16 CEST 2014
+
+	Improvements:
+	- add Mail::Transport::SMTP->new(esmtp_options) and
+	  trySend(esmtp_options)
+	  rt.cpan.org#97630 [Andrew Beverley]
+	- add Mail::Transport::SMTP->new(from)
+	  rt.cpan.org#97636 [Andrew Beverley]
+	- ::Field::Date parse support for numeric months (format used
+	  by some broken clients)
+	  rt.cpan.org#98225 [Andrew Beverley]
+
 version 2.115: Wed May 28 15:27:48 CEST 2014
 
 	Improvements:

@@ -230,7 +230,7 @@ sub message(;$)
 Retuns the fields ordered the way they were read or added.
 =cut
 
-sub orderedFields() { grep {defined $_} @{shift->{MMH_order}} }
+sub orderedFields() { grep defined $_, @{shift->{MMH_order}} }
 
 =method knownNames
 Like M<Mail::Message::Head::Complete::names()>, but only returns the known

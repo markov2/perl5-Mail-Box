@@ -81,7 +81,6 @@ sub guessBodySize() {undef}
 sub guessTimestamp() {undef}
 
 #------------------------------------------
-
 =section Internals
 
 =cut

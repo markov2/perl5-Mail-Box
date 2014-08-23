@@ -90,7 +90,6 @@ SECONDS till time-out while establishing the connection to a remote server.
 
 =option  username STRING
 =default username undef
-
 Some protocols require a user to login.
 
 =option  via CLASS|NAME
