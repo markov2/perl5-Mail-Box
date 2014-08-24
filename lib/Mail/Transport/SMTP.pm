@@ -213,7 +213,7 @@ sub trySend($@)
     return 0 unless $server = $self->contactAnyServer;
 
     $server->quit, return 0
-        unless $server->mail($from);
+        unless $server->mail($from, %send_options);
 
     foreach (@to)
     {
