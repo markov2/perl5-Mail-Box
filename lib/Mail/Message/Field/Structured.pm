@@ -179,8 +179,14 @@ sub parse($)
     {   my $len = length $string;
 
         if($string =~ s/^\s*\;\s*// && length $found)
-        {   my $attr = Mail::Message::Field::Attribute->new($found);
-            $self->attribute($attr);
+        {   my ($name) = $found =~ m/^([^*]+)\*/;
+            if($name && (my $cont = $self->attribute($name)))
+            {   $cont->addComponent($found);   # continuation
+            }
+            else
+            {   my $attr = Mail::Message::Field::Attribute->new($found);
+                $self->attribute($attr);
+            }
             $found = '';
         }
 
@@ -196,8 +202,14 @@ sub parse($)
     }
 
     if(length $found)
-    {   my $attr = Mail::Message::Field::Attribute->new($found);
-        $self->attribute($attr);
+    {   my ($name) = $found =~ m/^([^*]+)\*/;
+        if($name && (my $cont = $self->attribute($name)))
+        {   $cont->addComponent($found); # continuation
+        }
+        else
+        {   my $attr = Mail::Message::Field::Attribute->new($found);
+            $self->attribute($attr);
+        }
     }
 
     1;

@@ -48,7 +48,7 @@ Implements the IMAP4 protocol.  B<UNDER DEVELOPMENT>
 =c_method new %options
 
 =default body_type M<Mail::Message::Body::Lines>
-=default folderdir <not used>
+=default folderdir <network location>
 =default lock_type C<'NONE'>
 =default remove_when_empty <false>
 =default trusted   <false>
@@ -56,22 +56,18 @@ Implements the IMAP4 protocol.  B<UNDER DEVELOPMENT>
 
 =option  server_name HOSTNAME
 =default server_name undef
-
 The name of the host which contains the remote mail server.
 
 =option  password STRING
 =default password undef
-
 The password which is required to contact the remote server.
 
 =option  username STRING
 =default username undef
-
 The username which is to be used for the remote server.
 
 =option  server_port INTEGER
 =default server_port undef
-
 Port number in use by the server application.
 
 =cut
@@ -81,15 +77,31 @@ sub init($)
 
     $args->{lock_type}  ||= 'NONE';
     $args->{body_type}  ||= 'Mail::Message::Body::Lines';
-    $args->{folder}     ||= '/';
     $args->{trusted}    ||= 0;
+
+    my ($scheme, $s, $port, $u, $pwd, $f);
+    if(my $d = $args->{folderdir})
+    {   # cannot use URI, because some scheme's are fake
+        ($scheme, $u, $pwd, $s, $port, $f) = $a =~
+          m! ^ (\w+) \://                # scheme
+               (?: ( [^:\@/]+ )          # username
+                   (?:  \: ( [^\@/]+ ))? # password
+                   \@ )?
+               ( [a-zA-Z0-9.-]+ )?       # hostname
+               (?: \: ([0-9]+)  )?       # port
+               ( / .* )?                 # path
+          !x;
+        $args->{folderdir} =~ s!/$!!;
+    }
+
+    $args->{folder}     ||= $f || '/';
 
     $self->SUPER::init($args);
 
-    $self->{MBN_username} = $args->{username};
-    $self->{MBN_password} = $args->{password};
-    $self->{MBN_hostname} = $args->{server_name};
-    $self->{MBN_port}     = $args->{server_port};
+    $self->{MBN_hostname} = $args->{server_name}  || $s;
+    $self->{MBN_port}     = $args->{server_port}  || $port;
+    $self->{MBN_username} = $args->{username}     || $u;
+    $self->{MBN_password} = $args->{password}     || $pwd;
 
     $self->log(WARNING => "The term 'hostname' is confusing wrt folder. You probably need 'server_name'")
          if exists $args->{hostname};
@@ -97,34 +109,13 @@ sub init($)
     $self;
 }
 
-#-------------------------------------------
-
 =ci_method create $folder, %options
-
 Create a new folder on the remote server.
-
-=default folderdir <not used>
 
 =cut
 
 sub create(@) {shift->notImplemented}
-
-#-------------------------------------------
-
-=method folderdir [$directory]
-
-Not applicatable for folders on a remote server, so will always return
-the C<undef>.
-
-=cut
-
-sub folderdir(;$) { undef }
-
-#-------------------------------------------
-
 sub organization() { 'REMOTE' }
-
-#-------------------------------------------
 
 sub url()
 {   my $self = shift;
@@ -149,7 +140,5 @@ sub url()
     
     $self->type . '://' . $perm . $loc;
 }
-
-#-------------------------------------------
 
 1;

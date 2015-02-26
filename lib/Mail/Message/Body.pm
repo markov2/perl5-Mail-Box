@@ -880,10 +880,17 @@ sub contentInfoFrom($)
 {   my ($self, $head) = @_;
 
     $self->type($head->get('Content-Type', 0));
-    $self->transferEncoding($head->get('Content-Transfer-Encoding'));
-    $self->disposition($head->get('Content-Disposition'));
-    $self->description($head->get('Content-Description'));
-    $self->contentId($head->get('Content-ID'));
+
+    my ($te, $disp, $desc, $cid)
+      = map { my $x = $head->get("Content-$_") || '';
+              s/^\s+//,s/\s+$// for $x;
+              length $x ? $x : undef
+            } qw/Transfer-Encoding Disposition Description ID/;
+
+    $self->transferEncoding($te);
+    $self->disposition($disp);
+    $self->description($desc);
+    $self->contentId($cid);
 
     delete $self->{MMB_mime};
     $self;

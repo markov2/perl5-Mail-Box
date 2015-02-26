@@ -29,7 +29,7 @@ Mail::Message::Construct::Build - building a Mail::Message from components
 
    , data     => \@lines
    , file     => 'folder.pdf'
-   )->send(via => 'postfix';
+   )->send(via => 'postfix');
 
 =chapter DESCRIPTION
 
@@ -220,7 +220,7 @@ sub build(@)
        : Mail::Message::Body::Multipart->new(parts => \@parts);
 
     # Setting the type explicitly, only after the body object is finalized
-    $body->type($type) if defined $type;
+    $body->type($type)           if defined $type;
     $body->disposition($dispose) if defined $dispose;
     $body->description($descr)   if defined $descr;
     $body->contentId($cid)       if defined $cid;

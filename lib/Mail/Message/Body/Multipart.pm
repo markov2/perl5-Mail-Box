@@ -313,14 +313,18 @@ sub encoded()
 sub read($$$$)
 {   my ($self, $parser, $head, $bodytype) = @_;
 
-    my $boundary = $self->boundary;
+    my $boundary   = $self->boundary;
 
     $parser->pushSeparator("--$boundary");
-    my @msgopts  = ($self->logSettings);
+    my @msgopts    = ($self->logSettings);
 
+    my $te;
+    $te = lc $1
+        if +($head->get('Content-Transfer-Encoding') || '') =~ m/(\w+)/;
+    
     my @sloppyopts = 
       ( mime_type         => 'text/plain'
-      , transfer_encoding => ($head->get('Content-Transfer-Encoding') || undef)
+      , transfer_encoding => $te
       );
 
     # Get preamble.

@@ -91,14 +91,10 @@ sub _data_from_lines(@)
     $self;
 }
 
-#------------------------------------------
-
 sub clone()
 {   my $self = shift;
     ref($self)->new(data => $self->string, based_on => $self);
 }
-
-#------------------------------------------
 
 sub nrLines()
 {   my $self = shift;
@@ -109,26 +105,16 @@ sub nrLines()
     $self->{MMBS_nrlines} = $lines;
 }
 
-#------------------------------------------
-
 sub size() { length shift->{MMBS_scalar} }
 
-#------------------------------------------
-
 sub string() { shift->{MMBS_scalar} }
-
-#------------------------------------------
 
 sub lines()
 {   my @lines = split /^/, shift->{MMBS_scalar};
     wantarray ? @lines : \@lines;
 }
 
-#------------------------------------------
-
-sub file() { Mail::Box::FastScalar->new(shift->{MMBS_scalar}) }
-
-#------------------------------------------
+sub file() { Mail::Box::FastScalar->new(\shift->{MMBS_scalar}) }
 
 sub print(;$)
 {   my $self = shift;
@@ -137,8 +123,6 @@ sub print(;$)
     else                  { $fh->print($self->{MMBS_scalar}) }
     $self;
 }
-
-#------------------------------------------
 
 sub read($$;$@)
 {   my ($self, $parser, $head, $bodytype) = splice @_, 0, 4;
@@ -150,10 +134,6 @@ sub read($$;$@)
     $self;
 }
 
-#------------------------------------------
-
 sub endsOnNewline() { shift->{MMBS_scalar} =~ m/\A\z|\n\z/ }
-
-#------------------------------------------
 
 1;

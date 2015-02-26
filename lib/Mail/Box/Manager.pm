@@ -377,19 +377,19 @@ sub open(@)
     {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 110;
-        $args{folder} = $name = "pop3://$un\@$srv:$port";
+        $args{folderdir} = $name = "pop3://$un\@$srv:$port";
     }
     elsif($type eq 'pop3s')
     {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 995;
-        $args{folder} = $name = "pop3s://$un\@$srv:$port";
+        $args{folderdir} = $name = "pop3s://$un\@$srv:$port";
     }
     elsif($type eq 'imap4')
     {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 143;
-        $args{folder} = $name = "imap4://$un\@$srv:$port";
+        $args{folderdir} = $name = "imap4://$un\@$srv:$port";
     }
 
     unless(defined $name && length $name)

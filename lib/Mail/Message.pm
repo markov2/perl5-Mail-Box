@@ -550,7 +550,7 @@ M<sender()>.
 
 sub from()
 {  my @from = shift->head->get('From') or return ();
-   map {$_->addresses} @from;
+   map $_->addresses, @from;
 }
 
 =method sender
@@ -585,7 +585,7 @@ carefully.
  my @to = $message->to;
 =cut
 
-sub to() { map {$_->addresses} shift->head->get('To') }
+sub to() { map $_->addresses, shift->head->get('To') }
 
 =method cc
 Returns the addresses which are specified on the C<Cc> header line (or lines)
@@ -594,7 +594,7 @@ I<Carbon Copy>; the people addressed on this line receive the message
 informational, and are usually not expected to reply on its content.
 =cut
 
-sub cc() { map {$_->addresses} shift->head->get('Cc') }
+sub cc() { map $_->addresses, shift->head->get('Cc') }
 
 =method bcc
 Returns the addresses which are specified on the C<Bcc> header line (or lines)
@@ -604,7 +604,7 @@ not listed in the messages actually sent.  So, this field will be empty
 for received messages, but may be present in messages you construct yourself.
 =cut
 
-sub bcc() { map {$_->addresses} shift->head->get('Bcc') }
+sub bcc() { map $_->addresses, shift->head->get('Bcc') }
 
 =method date
 Method has been removed for reasons of consistency.  Use M<timestamp()>
@@ -618,8 +618,7 @@ removed if detectable.
 
 sub destinations()
 {   my $self = shift;
-    my %to = map { (lc($_->address) => $_) }
-                  $self->to, $self->cc, $self->bcc;
+    my %to = map +(lc($_->address) => $_), $self->to, $self->cc, $self->bcc;
     values %to;
 }
 

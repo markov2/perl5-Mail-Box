@@ -6,7 +6,9 @@
 use strict;
 use warnings;
 
-package Mail::Message::Field::Attribute;   # define package name
+# define package name when loading fails
+package Mail::Message::Field::Attribute;
+package Mail::Message::Field::Full;
 package main;
 
 use lib qw(. .. tests);
@@ -26,7 +28,9 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 98;
+   {   plan tests => 100;
+       eval 'require Mail::Message::Field::Full';
+       plan skip_all => $@ if $@;
    }
 }
 
@@ -237,3 +241,15 @@ ok($m1 ne $m4, "$m1 ne $m4");
 # fallback
 my $m5 = $mmfa->new(M => 42);
 cmp_ok($m5 +1, '==', 43, 'fallback');
+
+# rt.cpan.org#90342
+my $h = Mail::Message::Field::Full->new('Content-Disposition' =>
+   'inline;
+        filename*0="Selling #1 (signed) -";
+        filename*1=" 11-13.p";
+        filename*2=df');
+
+#use Data::Dumper;
+#warn Dumper $h;
+isa_ok($h, 'Mail::Message::Field::Structured');
+is($h->attribute('filename'), 'Selling #1 (signed) - 11-13.pdf');

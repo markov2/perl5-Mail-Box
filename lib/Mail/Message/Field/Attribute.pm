@@ -107,10 +107,10 @@ but not supported by some Mail User Agents.
 
  my $fattr = 'Mail::Message::Field::Attribute';  # abbrev
  my $fn    = $fattr->new
-     ( filename => "Re\xC7u"
-     , charset  => 'iso-8859-15'
-     , language => 'nl-BE'
-     );
+   ( filename => "Re\xC7u"
+   , charset  => 'iso-8859-15'
+   , language => 'nl-BE'
+   );
  print $fn;
    # -->  filename*=iso-8859-15'nl-BE'Re%C7u
 
@@ -311,10 +311,10 @@ sub decode()
     my $value = '';
 
     foreach my $cont (  @{$self->{MMFF_cont}} )
-    {   unless(defined $cont)
-        {   $value .= "[continuation missing]";
-            next;
-        }
+    {    unless(defined $cont)
+         {   $value .= "[continuation missing]";
+             next;
+         }
 
         (my $name, local $_) = split /\=/, $cont, 2;
 

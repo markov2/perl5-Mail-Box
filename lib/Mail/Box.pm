@@ -1934,32 +1934,6 @@ sub DESTROY
 }
 
 #-------------------------------------------
-# Instance variables
-# MB_access: new(access)
-# MB_body_type: new(body_type)
-# MB_coerce_opts: Options which have to be applied to the messages which
-#    are coerced into this folder.
-# MB_current: Used by some mailbox-types to save last read message.
-# MB_field_type: new(field_type)
-# MB_folderdir: new(folderdir)
-# MB_foldername: new(folder)
-# MB_head_type: new(head_type)
-# MB_init_options: A copy of all the arguments given to the constructor
-# MB_is_closed: Whether or not the mailbox is closed
-# MB_extract: When to extract the body on the moment the header is read
-# MB_keep_dups: new(keep_dups)
-# MB_locker: A reference to the mail box locker.
-# MB_manager: new(manager)
-# MB_messages: A list of all the messages in the folder
-# MB_message_type: new(message_type)
-# MB_modified: true when the message is modified for sure
-# MB_msgid: A hash of all the messages in the mailbox, keyed on message ID
-# MB_open_time: The time at which a mail box is first opened
-# MB_organization: new(organization)
-# MB_remove_empty: new(remove_when_empty)
-# MB_save_on_exit: new(save_on_exit)
-
-#-------------------------------------------
 
 =chapter DETAILS
 

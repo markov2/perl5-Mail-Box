@@ -30,7 +30,6 @@ are stored in the same node.
 =chapter METHODS
 
 =c_method new %options
-
 You will not call this method yourself. The M<Mail::Box::Thread::Manager>
 object will call it to construct C<Mail::Box::Thread::Node> objects.
 Either a C<message> or a C<messageId> must be supplied.
