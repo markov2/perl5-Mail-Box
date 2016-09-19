@@ -29,13 +29,20 @@ Mail::Message - general message object
  my $subject = $msg->subject;         # The message's subject
  my @cc      = $msg->cc;              # List of Mail::Address'es
 
- my $msg       = Mail::Message->build(...);
- my $reply_msg = Mail::Message->reply(...);
- my $frwd_msg  = Mail::Message->forward(...);
-
  my Mail::Message::Head $head = $msg->head;
  my Mail::Message::Body $body = $msg->decoded;
  $msg->decoded->print($outfile);
+
+ # Send a simple email
+ Mail::Message->build
+   ( To             => 'you@example.com'
+   , From           => 'me@example.com'
+   , Subject        => "My subject"
+   , data           => "Some plain text content"
+   )->send(via => 'postfix');
+
+ my $reply_msg = Mail::Message->reply(...);
+ my $frwd_msg  = Mail::Message->forward(...);
 
 =chapter DESCRIPTION
 
@@ -61,7 +68,7 @@ Those package add functionality to all kinds of message objects.
 =cut
 
 our $crlf_platform;
-BEGIN { $crlf_platform = $^O =~ m/win32|cygwin/i }
+BEGIN { $crlf_platform = $^O =~ m/win32/i }
 
 #------------------------------------------
 
@@ -839,14 +846,15 @@ sub parts(;$)
     my $body    = $self->body;
     my $recurse = $what eq 'RECURSE' || ref $what;
 
-    my @parts
-     = $body->isNested     ? $body->nested->parts($what)
+    my @parts   = $self;
+    push @parts
+     , $body->isNested     ? $body->nested->parts($what)
      : $body->isMultipart  ? $body->parts($recurse ? 'RECURSE' : ())
-     :                       $self;
+     :                       ();
 
-      ref $what eq 'CODE' ? (grep {$what->($_)} @parts)
-    : $what eq 'ACTIVE'   ? (grep {not $_->isDeleted } @parts)
-    : $what eq 'DELETED'  ? (grep { $_->isDeleted } @parts)
+      ref $what eq 'CODE' ? (grep $what->($_), @parts)
+    : $what eq 'ACTIVE'   ? (grep !$_->isDeleted, @parts)
+    : $what eq 'DELETED'  ? (grep $_->isDeleted, @parts)
     : $what eq 'ALL'      ? @parts
     : $recurse            ? @parts
     : confess "Select parts via $what?";

@@ -290,10 +290,16 @@ sub readMessageFilenames
 
     opendir DIR, $dirname or return ();
 
-    # unsorted list of untainted filenames.
-    my @files = map { /^([0-9][\w.:,=\-]+)$/
-                      && -f "$dirname/$1" ? $1 : () }
+    my @files;
+    if(${^TAINT})
+    {   # unsorted list of untainted filenames.
+        @files = map { m/^([0-9][\w.:,=\-]+)$/ && -f "$dirname/$1" ? $1 : () }
                    readdir DIR;
+    }
+    else
+    {   # not running tainted
+        @files = grep /^([0-9][\w.:,=\-]+)$/ && -f "$dirname/$1", readdir DIR;
+    }
     closedir DIR;
 
     # Sort the names.  Solve the Y2K (actually the 1 billion seconds
@@ -302,10 +308,11 @@ sub readMessageFilenames
     # timestamp has the same length.
 
     my %unified;
-    m/^(\d+)/ and $unified{ ('0' x (9-length($1))).$_ } = $_ foreach @files;
+    m/^(\d+)/ and $unified{ ('0' x (9-length($1))).$_ } = $_
+        for @files;
 
-    map "$dirname/$unified{$_}"
-      , sort keys %unified;
+    map "$dirname/$unified{$_}",
+        sort keys %unified;
 }
 
 sub readMessages(@)

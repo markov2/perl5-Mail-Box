@@ -35,7 +35,7 @@ Mail::Message::Field::Full - construct one smart line in a message header
 
  my $full = $msg->head->get('subject')->study;  # same
  my $full = $msg->head->study('subject');       # same
- my $full = $msg->get('subject');               # same
+ my $full = $msg->study('subject');             # same
 
  # ... or build a complex header field yourself
 
@@ -573,6 +573,9 @@ sub decode($@)
 #------------------------------------------
 
 =section Parsing
+
+You probably do not want to call these parsing methods yourself: use
+the standard constructors (M<new()>) and it will be done for you.
 
 =method parse STRING
 Get the detailed information from the STRING, and store the data found

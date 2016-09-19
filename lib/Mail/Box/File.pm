@@ -25,7 +25,7 @@ use POSIX ':unistd_h';
 use IO::File;
 
 my $windows;
-BEGIN { $windows = $^O =~ m/mswin32|cygwin/i }
+BEGIN { $windows = $^O =~ m/mswin32/i }
 
 =chapter NAME
 

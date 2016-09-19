@@ -1,10 +1,10 @@
 use ExtUtils::MakeMaker;
 
-require 5.006_001;
+require 5.008_005;
 
 use IO::Handle;
 
-my $VERSION = '2.118';
+my $VERSION = '2.119';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
@@ -95,7 +95,7 @@ my %prereq =
  , File::Remove   => '0.20'
  , File::Spec     => 0.7
  , IO::Scalar     => 0.0
- , Mail::Address  => 0.0
+ , Mail::Address  => 2.17
  , MIME::Base64   => 0.0
  , MIME::Types    => 1.004
  , Object::Realize::Later => 0.19

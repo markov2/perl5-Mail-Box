@@ -5,6 +5,7 @@
 
 use strict;
 use warnings;
+use utf8;
 
 # define package name when loading fails
 package Mail::Message::Field::Attribute;
@@ -28,7 +29,7 @@ BEGIN {
        exit 0;
    }
    else
-   {   plan tests => 100;
+   {   plan tests => 101;
        eval 'require Mail::Message::Field::Full';
        plan skip_all => $@ if $@;
    }
@@ -243,13 +244,20 @@ my $m5 = $mmfa->new(M => 42);
 cmp_ok($m5 +1, '==', 43, 'fallback');
 
 # rt.cpan.org#90342
-my $h = Mail::Message::Field::Full->new('Content-Disposition' =>
+my $h1 = Mail::Message::Field::Full->new('Content-Disposition' =>
    'inline;
         filename*0="Selling #1 (signed) -";
         filename*1=" 11-13.p";
         filename*2=df');
 
 #use Data::Dumper;
-#warn Dumper $h;
-isa_ok($h, 'Mail::Message::Field::Structured');
-is($h->attribute('filename'), 'Selling #1 (signed) - 11-13.pdf');
+#warn Dumper $h1;
+isa_ok($h1, 'Mail::Message::Field::Structured');
+is($h1->attribute('filename'), 'Selling #1 (signed) - 11-13.pdf');
+
+my $h2 = Mail::Message::Field::Full->new('Content-Disposition' => q{inline;
+filename*0*="ISO-8859-15''R%FCckstellung%20DB%2C%20DZ%20u.%20KommSt%202001-";
+        filename*1*="2004.xls"});
+my $h2a = $h2->attribute('filename');
+is($h2a, 'Rückstellung DB, DZ u. KommSt 2001-2004.xls');
+

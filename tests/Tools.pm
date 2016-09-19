@@ -35,7 +35,7 @@ our ($cpy, $cpyfn);
 our ($crlf_platform, $windows);
 
 BEGIN {
-   $windows       = $^O =~ m/mswin32|cygwin/i;
+   $windows       = $^O =~ m/mswin32/i;
    $crlf_platform = $windows;
 
    $folderdir     = -d 'folders' ? 'folders'

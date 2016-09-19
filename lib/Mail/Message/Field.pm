@@ -457,7 +457,8 @@ sub attribute($;$)
     my $body  = $self->unfoldedBody;
 
     unless(@_)
-    {   if($body =~ m/\b$attr\s*\=\s*
+    {   # only get a value
+        if($body =~ m/\b$attr\s*\=\s*
                       ( "( (?> [^\\"]+|\\. )* )"
                       | ([^";\s]*)
                       )/xi)
@@ -467,6 +468,7 @@ sub attribute($;$)
         return undef;
     }
 
+    # set the value
     my $value = shift;
     unless(defined $value)  # remove attribute
     {   for($body)
@@ -493,8 +495,10 @@ sub attribute($;$)
 
 =method attributes
 Returns a list of key-value pairs, where the values are not yet decoded.
+Keys may appear more than once.
+
 =example
- my %attributes = $head->get('Content-Disposition')->attributes;
+ my @pairs = $head->get('Content-Disposition')->attributes;
 =cut
 
 sub attributes()

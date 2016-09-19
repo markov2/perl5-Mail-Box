@@ -11,6 +11,8 @@ use Mail::Message::Field           ();
 
 use Mail::Address  ();
 
+use Scalar::Util   qw(reftype);
+
 =chapter NAME
 
 Mail::Message::Construct::Build - building a Mail::Message from components
@@ -78,25 +80,26 @@ construct one.
  line 2
  TEXT
 
-=option  file FILENAME|FILEHANDLE|IOHANDLE
+=option  file FILENAME|FILEHANDLE|IOHANDLE|ARRAY
 =default file undef
 
 Create a body where the data is read from the specified FILENAME,
 FILEHANDLE, or object of type M<IO::Handle>.  Also this body is used
-to create a M<Mail::Message::Body>.
+to create a M<Mail::Message::Body>. [2.119] You may even pass more
+than one file at once: 'file' and 'files' option are equivalent.
 
  my $in = IO::File->new('/etc/passwd', 'r');
 
- file => 'picture.jpg'                   # filename
- file => \*MYINPUTFILE                   # file handle
- file => $in                             # any IO::Handle
+ file  => 'picture.jpg'                   # filename
+ file  => \*MYINPUTFILE                   # file handle
+ file  => $in                             # any IO::Handle
+ files => [ 'picture.jpg', \*MYINPUTFILE, $in ]
 
  open my $in, '<:raw', '/etc/passwd';    # alternative for IO::File
 
 =option  files ARRAY-OF-FILE
 =default files C<[ ]>
-
-See option file, but then an array reference collection more of them.
+Alias for option C<file>.
 
 =option  attach BODY|PART|MESSAGE|ARRAY
 =default attach undef
@@ -183,12 +186,12 @@ sub build(@)
         {   $head = $value }
         elsif($key eq 'data')
         {   @data = Mail::Message::Body->new(data => $value) }
-        elsif($key eq 'file')
-        {   @data = Mail::Message::Body->new(file => $value) }
-        elsif($key eq 'files')
-        {   @data = map {Mail::Message::Body->new(file => $_) } @$value }
+        elsif($key eq 'file' || $key eq 'files')
+        {   @data = map Mail::Message::Body->new(file => $_)
+              , reftype $value eq 'ARRAY' ? @$value : $value;
+        }
         elsif($key eq 'attach')
-        {   foreach my $c (ref $value eq 'ARRAY' ? @$value : $value)
+        {   foreach my $c (reftype $value eq 'ARRAY' ? @$value : $value)
 	    {   defined $c or next;
                 push @data, ref $c && $c->isa('Mail::Message')
 		          ? Mail::Message::Body::Nested->new(nested => $c)
