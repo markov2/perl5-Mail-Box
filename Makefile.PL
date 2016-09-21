@@ -4,7 +4,7 @@ require 5.008_005;
 
 use IO::Handle;
 
-my $VERSION = '2.120';
+my $VERSION = '2.121';
 
 # Usually, Scalar::Util is installed (in core since perl 5.8.0)
 # However, sometimes it is (incorrectly) installed without XS, but as
