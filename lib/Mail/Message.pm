@@ -811,12 +811,15 @@ sub contentType()
 }
 
 =method parts [<'ALL'|'ACTIVE'|'DELETED'|'RECURSE'|$filter>]
-Returns the I<parts> of this message. Usually, the term I<part> is used
-with I<multipart> messages: messages which are encapsulated in the body
-of a message.  To abstract this concept: this method will return you
-all header-body combinations which are stored within this message
-B<except> the multipart and message/rfc822 wrappers.
-Objects returned are C<Mail::Message>'s and M<Mail::Message::Part>'s.
+Returns the I<parts> of this message.  Maybe a bit inconvenient: it
+returns the message itself when it is not a multipart.
+
+Usually, the term I<part> is used with I<multipart> messages: messages
+which are encapsulated in the body of a message.  To abstract this
+concept: this method will return you all header-body combinations
+which are stored within this message B<except> the multipart and
+message/rfc822 wrappers.  Objects returned are C<Mail::Message>'s and
+M<Mail::Message::Part>'s.
 
 The option default to 'ALL', which will return the message itself for
 single-parts, the nested content of a message/rfc822 object, respectively
@@ -846,11 +849,10 @@ sub parts(;$)
     my $body    = $self->body;
     my $recurse = $what eq 'RECURSE' || ref $what;
 
-    my @parts   = $self;
-    push @parts
-     , $body->isNested     ? $body->nested->parts($what)
+    my @parts
+     = $body->isNested     ? $body->nested->parts($what)
      : $body->isMultipart  ? $body->parts($recurse ? 'RECURSE' : ())
-     :                       ();
+     :                       $self;
 
       ref $what eq 'CODE' ? (grep $what->($_), @parts)
     : $what eq 'ACTIVE'   ? (grep !$_->isDeleted, @parts)
