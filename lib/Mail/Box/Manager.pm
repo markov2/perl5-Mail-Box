@@ -276,6 +276,9 @@ folder for writing, then the default will be the most recently registered
 type. (If you add more than one type at once, the first of the list is
 used.)
 
+Currently, the types are mbox, mh, maildir, pop3, pop3s, and imap4.
+
+
 =option authenticate  TYPE|ARRAY-OF-TYPES|'AUTO'
 =default authenticate C<'AUTO'>
 The TYPE of authentication to be used, or a list of TYPES which the

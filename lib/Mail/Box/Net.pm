@@ -82,7 +82,7 @@ sub init($)
     my ($scheme, $s, $port, $u, $pwd, $f);
     if(my $d = $args->{folderdir})
     {   # cannot use URI, because some scheme's are fake
-        ($scheme, $u, $pwd, $s, $port, $f) = $a =~
+        ($scheme, $u, $pwd, $s, $port, $f) = $d =~
           m! ^ (\w+) \://                # scheme
                (?: ( [^:\@/]+ )          # username
                    (?:  \: ( [^\@/]+ ))? # password

@@ -123,7 +123,6 @@ sub fullname(;$)
     $parent->parent->fullname($delim) . $delim . $self->name;
 }
 
-#-------------------------------------------
 
 =method location [$filename|$directory|undef]
 Returns the directory or filename of the folder.  If this is not pre-defined,
@@ -149,7 +148,6 @@ sub location(;$)
          ->nameOfSubFolder($self->name, $parent->parent->location)
 }
 
-#-------------------------------------------
 
 =method folderType
 Returns the type of this folder.
@@ -169,7 +167,6 @@ sub folderType()
     $parent->parent->folderType;
 }
 
-#-------------------------------------------
 
 =method manager
 Returns the manager (usually a M<Mail::Box::Manage::User> which owns
@@ -183,7 +180,6 @@ sub manager()
      $self->parent->manager;
 }
 
-#-------------------------------------------
 
 =method topfolder
 Run up the tree to find the highest level folder.
@@ -195,7 +191,6 @@ sub topfolder()
     $parent->parent->topfolder;
 }
 
-#-------------------------------------------
 
 =method onlySubfolders [BOOLEAN]
 Than this folder be opened (without trying) or not?  The default
@@ -210,7 +205,6 @@ sub onlySubfolders(;$)
     $self->parent ? 1 : ! $self->folderType->topFolderWithMessages;
 }
 
-#-------------------------------------------
 
 =method marked [BOOLEAN|undef]
 When something special has happened with the folder, this flag can
@@ -224,7 +218,6 @@ sub marked(;$)
     @_ ? ($self->{MBI_marked} = shift) : $self->{MBI_marked};
 }
 
-#-------------------------------------------
 
 =method inferiors [BOOLEAN]
 C<Inferiors> are C<subfolders>.  When this flag is set, it is permitted
@@ -236,10 +229,7 @@ sub inferiors(;$)
     @_ ? ($self->{MBI_inferiors} = shift) : $self->{MBI_inferiors};
 }
 
-#-------------------------------------------
-                                                                                
-=section Attributes
-                                                                                
+
 =method deleted [BOOLEAN]
 =cut
 
@@ -292,7 +282,6 @@ sub subfolders()
     wantarray ? $subs->roles : $subs;
 }
 
-#-------------------------------------------
 
 =method subfolderNames
 Convenience method: returns the names of the collected subfolders.
@@ -300,7 +289,6 @@ Convenience method: returns the names of the collected subfolders.
 
 sub subfolderNames() { map {$_->name} shift->subfolders }
 
-#-------------------------------------------
 
 =method folder [..., $name]
 Returns the subfolder's object with $name or C<undef> if it does not
@@ -325,7 +313,6 @@ sub folder(@)
     $nest->folder(@_);
 }
 
-#-------------------------------------------
 
 =method open %options
 Open the folder which is described by this identity.  Returned is some
@@ -337,7 +324,6 @@ sub open(@)
     $self->manager->open($self->fullname, type => $self->folderType, @_);
 }
 
-#-------------------------------------------
 
 =method foreach CODE
 For each of the subfolders found below this point call CODE.  This current
@@ -354,7 +340,6 @@ sub foreach($)
     $self;
 }
 
-#-------------------------------------------
 
 =method addSubfolder $m<Mail::Box::Identity>|$data
 Add a new folder into the administration.  With $data, a new object
@@ -383,7 +368,6 @@ sub addSubfolder(@)
     $subs->addRole(@_);
 }
 
-#-------------------------------------------
 
 =method remove [$name]
 Remove the folder (plus subfolders) with the $name.  Without $name, this
@@ -417,7 +401,6 @@ sub remove(;$)
     $subs->removeRole($name);
 }
 
-#-------------------------------------------
 
 =method rename $folder, [$newsubname]
 Move the folder to a different super-$folder, under a NEW SUBfolder NAME.
@@ -441,6 +424,8 @@ sub rename($;$)
 
     $folder->addSubfolder($away);
 }
+
+#-------------------------------------------
 
 =section Error handling
 =cut

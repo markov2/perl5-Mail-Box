@@ -9,7 +9,7 @@ use Object::Realize::Later
     realize        => 'load',
     believe_caller => 1;
 
-use Date::Parse;
+use Date::Parse qw(str2time);
 
 =chapter NAME
 

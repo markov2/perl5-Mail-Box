@@ -29,6 +29,31 @@ slower) if you need the full folder sequentially.
 You may want to have a look at the sample scripts in the C<scripts>
 directory.
 
+=section Distributions
+
+Upto MailBox v2, all C<Mail::*> modules where released as a single
+distribution.  From v3, there are a few separate distributions in an
+attempt to reduce the dependencies:
+
+=over 4
+
+=item * Mail::Message
+
+=item * Mail::Transfer
+
+=item * Mail::Box
+
+=item * Mail::Box::IMAP4
+
+=item * Mail::Box::POP3
+
+=item * Mail::Box::Parser::C
+
+=back
+
+The names of the classes are not always ideal: the 'Mail' namespace on
+CPAN is quite full.
+
 =section The class relations
 
 M<Mail::Box::Manager> objects play a central role in any program which

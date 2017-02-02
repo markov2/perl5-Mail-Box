@@ -5,7 +5,6 @@ use warnings;
 package Mail::Box::Message;
 use base 'Mail::Message';
 
-use Date::Parse;
 use Scalar::Util 'weaken';
 
 =chapter NAME

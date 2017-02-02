@@ -1,0 +1,34 @@
+# This file contains parts which could be used for doc
+
+* Labels
+
+Labels are flags which come with a message.  Usually: old, seen, replied,
+flagged, and trashed.
+
+The folder-types differ how they store label information.  Mbox folders
+use the Status and X-Status fields, MH folders keep a seperate labels
+file called .mh_sequences, and Maildir folders put the labels in the
+name of the file.
+
+Keeping the labels right is quite complicated.  The `[X-]Status' header
+lines are only immediately updated with Mbox messages which will cause
+them to be written.  Those lines are ignored for MH and Maildir, however
+updated when a new version of such a message has to be written to
+file.
+
+The reason behind the MH/Maildir way of storing labels is pure
+performance: labels are often needed.  Opening each message to see
+how the labels are set is cheap for Mbox, which has to read the whole
+folder on opening anyway, but terribly expensive for directory
+origanized folders (as MH and Maildir) which need to take every
+single message from a separate file.
+
+Often used labels:
+  draft     to be transmitted
+  trashed   to be deleted
+  flagged   selected
+  current   last used
+  replied   a reponse message was constructed
+  seen      handled by the user
+  old       existence of message seen by user in the previous opening
+            of the folder.
