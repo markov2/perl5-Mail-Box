@@ -8,6 +8,12 @@ use Fcntl;
 use IO::File;
 use Errno   qw/EAGAIN/;
 
+# fcntl() should not be used without XS: the below is sensitive
+# for changes in the structure.  However, at the moment it seems
+# there are only two options: either SysV-style or BSD-style
+
+my $pack_pattern = $^O =~ /bsd|darwin/i ? '@20 s @256' : 's @256';
+
 =chapter NAME
 
 Mail::Box::Locker::POSIX - lock a folder using kernel file-locking
@@ -21,7 +27,12 @@ Mail::Box::Locker::POSIX - lock a folder using kernel file-locking
 This locker object is created by the folder to get an exclusive lock on
 the file which contains the data using the kernel's POSIX facilities.  This
 lock is created on a separate file-handle to the folder file, so not the
-handle which is reading.  Not all platforms support POSIX locking.
+handle which is reading.
+
+B<WARNING>: Not all platforms support POSIX locking (via fcntl) and not
+always in the same way.  This implementation does not use XS to access
+the structure of fcntl(): it is better to use the ::FcntlLock which does.
+No, this implementation "guesses" the location of the bytes.
 
 =chapter METHODS
 
@@ -45,18 +56,18 @@ sub name() {'POSIX'}
 
 sub _try_lock($)
 {   my ($self, $file) = @_;
-    my $p = pack 's @256', F_WRLCK;
+    my $p = pack $pack_pattern, F_WRLCK;
     $? = fcntl($file, F_SETLK, $p) || ($!+0);
     $?==0;
 }
 
 sub _unlock($)
 {   my ($self, $file) = @_;
-    my $p = pack 's @256', F_UNLCK;
+    my $p = pack $pack_pattern, F_UNLCK;
     fcntl $file, F_SETLK, $p;
-    delete $self->{MBL_has_lock};
     $self;
 }
+
 
 =method lock
 
@@ -83,27 +94,27 @@ sub lock()
     }
 
     my $filename = $self->filename;
+    my $folder   = $self->folder;
 
-    my $file   = IO::File->new($filename, 'r+');
+    my $file     = IO::File->new($filename, 'r+');
     unless(defined $file)
-    {   my $folder = $self->folder;
-        $self->log(ERROR =>
+    {   $self->log(ERROR =>
            "Unable to open POSIX lock file $filename for $folder: $!");
         return 0;
     }
 
-    my $end = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1 : $self->{MBL_timeout};
+    my $timeout  = $self->timeout;
+    my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
     while(1)
     {   if($self->_try_lock($file))
-        {   $self->{MBL_has_lock}    = 1;
-            $self->{MBLF_filehandle} = $file;
-            return 1;
+        {   $self->{MBLF_filehandle} = $file;
+            return $self->SUPER::lock;
         }
 
         unless($!==EAGAIN)
         {   $self->log(ERROR =>
-            "Will never get a POSIX lock on $filename for $self->{MBL_folder}: $!");
+               "Will never get a POSIX lock on $filename for $folder: $!");
             last;
         }
 
@@ -130,14 +141,16 @@ sub isLocked()
 
     my $file     = IO::File->new($filename, "r");
     unless($file)
-    {   $self->log(ERROR =>
-               "Unable to check lock file $filename for $self->{MBL_folder}: $!");
+    {   my $folder = $self->folder;
+        $self->log(ERROR => "Unable to check lock file $filename for $folder: $!");
         return 0;
     }
 
     $self->_try_lock($file)==0 or return 0;
     $self->_unlock($file);
     $file->close;
+
+    $self->SUPER::unlock;
     1;
 }
 
@@ -147,6 +160,7 @@ sub unlock()
     $self->_unlock(delete $self->{MBLF_filehandle})
        if $self->hasLock;
 
+    $self->SUPER::unlock;
     $self;
 }
 

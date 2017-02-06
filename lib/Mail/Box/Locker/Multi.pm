@@ -55,7 +55,7 @@ sub init($)
     my @use
      = exists $args->{use} ? @{delete $args->{use}}
      : $^O eq 'MSWin32'    ? qw/Flock/
-     :                       qw/NFS POSIX Flock/;
+     :                       qw/NFS FcntlLock Flock/;
 
     my (@lockers, @used);
 
@@ -107,10 +107,11 @@ sub _try_lock($)
 
 sub unlock()
 {   my $self = shift;
-    return $self unless $self->{MBL_has_lock};
+    $self->hasLock
+		or return $self;
 
     $_->unlock foreach $self->lockers;
-    delete $self->{MBL_has_lock};
+    $self->SUPER::unlock;
 
     $self;
 }
@@ -119,10 +120,11 @@ sub lock()
 {   my $self  = shift;
     return 1 if $self->hasLock;
 
-    my $end   = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1 : $self->{MBL_timeout};
+    my $timeout = $self->timeout;
+    my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
     while(1)
-    {   return $self->{MBL_has_lock} = 1
+    {   return $self->SUPER::lock
             if $self->_try_lock;
 
         last unless --$end;
@@ -134,7 +136,11 @@ sub lock()
 
 sub isLocked()
 {   my $self     = shift;
+
+    # Try get a lock
     $self->_try_lock($self->filename) or return 0;
+
+    # and release it immediately
     $self->unlock;
     1;
 }

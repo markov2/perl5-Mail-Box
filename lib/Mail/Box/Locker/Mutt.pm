@@ -30,8 +30,8 @@ The name of the program.  May be a relative or absolute path.
 
 sub init($)
 {   my ($self, $args) = @_;
-
     $self->SUPER::init($args);
+
     $self->{MBLM_exe} = $args->{exe} || 'mutt_dotlock';
     $self;
 }
@@ -39,11 +39,13 @@ sub init($)
 sub name()     {'MUTT'}
 sub lockfile() { shift->filename . '.lock' }
 
+
 =method exe
 Returns the name of the external binary.
 =cut
 
 sub exe() {shift->{MBLM_exe}}
+
 
 =method unlock
 =warning Couldn't remove mutt-unlock $folder: $!
@@ -51,7 +53,7 @@ sub exe() {shift->{MBLM_exe}}
 
 sub unlock()
 {   my $self = shift;
-    $self->{MBL_has_lock}
+    $self->hasLock
         or return $self;
 
     unless(system($self->exe, '-u', $self->filename))
@@ -59,11 +61,10 @@ sub unlock()
         $self->log(WARNING => "Couldn't remove mutt-unlock $folder: $!");
     }
 
-    delete $self->{MBL_has_lock};
+    $self->SUPER::unlock;
     $self;
 }
 
-#-------------------------------------------
 
 =method lock
 =warning Folder $folder already mutt-locked
@@ -82,9 +83,9 @@ sub lock()
     my $filename = $self->filename;
     my $lockfn   = $self->lockfile;
 
-    my $end      = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1
-                 : $self->{MBL_timeout};
-    my $expire   = $self->{MBL_expires}/86400;  # in days for -A
+    my $timeout  = $self->timeout;
+    my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+    my $expire   = $self->expires / 86400;  # in days for -A
     my $exe      = $self->exe;
 
     while(1)
@@ -96,7 +97,7 @@ sub lock()
             }
         }
         else
-        {   return $self->{MBL_has_lock} = 1;
+        {   return $self->SUPER::lock;
         }
 
         if(-e $lockfn && -A $lockfn > $expire)
@@ -119,15 +120,12 @@ sub lock()
     return 0;
 }
 
-#-------------------------------------------
 
 sub isLocked()
 {   my $self     = shift;
     system($self->exe, '-t', $self->filename);
     WIFEXITED($?) && WEXITSTATUS($?)==3;
 }
-
-#-------------------------------------------
 
 1;
 

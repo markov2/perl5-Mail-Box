@@ -8,6 +8,7 @@ use warnings;
 
 use Mail::Box::Test;
 use Mail::Box::Locker::DotLock;
+use Mail::Box;
 
 use Test::More tests => 7;
 use File::Spec;

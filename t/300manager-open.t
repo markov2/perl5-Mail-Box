@@ -39,7 +39,9 @@ ok(!defined $second,                             'open same folder fails');
 my @errors = $manager->report('ERRORS');
 cmp_ok(@errors, "==", 1,                       'mgr noticed double');
 
-$errors[-1] =~ s#[\\/]mbox\.win#/mbox.src#g;  # Windows
+my $error = $errors[-1];
+$error =~ s#mbox\.win#mbox.src#g;  # Windows mutulated path
+$error =~ s#\\#/#g;
 
 is($errors[-1], "Folder t/folders/mbox.src is already open.");
 cmp_ok($manager->openFolders, "==", 1,           'only one folder open');

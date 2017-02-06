@@ -52,10 +52,7 @@ my $hostname = hostname;
 
 sub _tmpfilename()
 {   my $self = shift;
-    return $self->{MBL_tmp} if $self->{MBL_tmp};
-
-    my $folder = $self->{MBL_folder};
-    $self->{MBL_tmp} = $self->filename . $$;
+    $self->{MBLN_tmp} ||= $self->filename . $$;
 }
 
 sub _construct_tmpfile()
@@ -114,7 +111,7 @@ lock file, so we need to wait until it vanishes by some external cause.
 
 sub lock()
 {   my $self     = shift;
-    my $folder   = $self->{MBL_folder};
+    my $folder   = $self->folder;
 
     if($self->hasLock)
     {   $self->log(WARNING => "Folder $folder already locked over nfs");
@@ -123,9 +120,9 @@ sub lock()
 
     my $lockfile = $self->filename;
     my $tmpfile  = $self->_construct_tmpfile or return;
-    my $end      = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1
-                 : $self->{MBL_timeout};
-    my $expires  = $self->{MBL_expires}/86400;  # in days for -A
+    my $timeout  = $self->timeout;
+    my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+    my $expires  = $self->expires / 86400;  # in days for -A
 
     if(-e $lockfile && -A $lockfile > $expires)
     {   if(unlink $lockfile)
@@ -135,10 +132,8 @@ sub lock()
     }
 
     while(1)
-    {   if($self->_try_lock($tmpfile, $lockfile))
-        {   $self->{MBL_has_lock} = 1;
-            return 1;
-        }
+    {   return $self->SUPER::lock
+			if $self->_try_lock($tmpfile, $lockfile);
 
         last unless --$end;
         sleep 1;
@@ -158,6 +153,8 @@ sub isLocked()
 
     close $fh;
     $self->_unlock($tmpfile, $lockfile);
+    $self->SUPER::unlock;
+
     1;
 }
 
@@ -168,7 +165,7 @@ sub unlock($)
     return $self unless $self->hasLock;
 
     $self->_unlock($self->_tmpfilename, $self->filename);
-    delete $self->{MBL_has_lock};
+    $self->SUPER::unlock;
     $self;
 }
 

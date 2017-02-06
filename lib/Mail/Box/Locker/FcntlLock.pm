@@ -56,7 +56,6 @@ sub _unlock($)
     my $fl = File::FcntlLock->new;
     $fl->l_type(F_UNLCK);
     $fl->lock($file, F_SETLK);
-    delete $self->{MBL_has_lock};
     $self;
 }
 
@@ -94,18 +93,20 @@ sub lock()
         return 0;
     }
 
-    my $end = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1 : $self->{MBL_timeout};
+    my $timeout = $self->timeout;
+    my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
     while(1)
     {   if($self->_try_lock($file))
-        {   $self->{MBL_has_lock}    = 1;
+        {   $self->SUPER::lock;
             $self->{MBLF_filehandle} = $file;
             return 1;
         }
 
         unless($!==EAGAIN)
-        {   $self->log(ERROR =>
-            "Will never get a FcntlLock lock on $filename for $self->{MBL_folder}: $!");
+        {   my $folder = $self->folder;
+            $self->log(ERROR =>
+                "Will never get a FcntlLock lock on $filename for $folder: $!");
             last;
         }
 
@@ -115,6 +116,7 @@ sub lock()
 
     return 0;
 }
+
 
 =method isLocked
 
@@ -132,14 +134,17 @@ sub isLocked()
 
     my $file     = IO::File->new($filename, "r");
     unless($file)
-    {   $self->log(ERROR =>
-               "Unable to check lock file $filename for $self->{MBL_folder}: $!");
+    {   my $folder = $self->folder;
+        $self->log(ERROR =>
+               "Unable to check lock file $filename for $folder: $!");
         return 0;
     }
 
     $self->_try_lock($file)==0 or return 0;
     $self->_unlock($file);
     $file->close;
+
+    $self->SUPER::unlock;
     1;
 }
 
@@ -149,6 +154,7 @@ sub unlock()
     $self->_unlock(delete $self->{MBLF_filehandle})
        if $self->hasLock;
 
+    $self->SUPER::unlock;
     $self;
 }
 

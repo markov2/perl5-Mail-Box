@@ -8,10 +8,18 @@ use warnings;
 
 use Mail::Box::Test;
 use Mail::Box::Locker::Multi;
+use Mail::Box;
 
-use Test::More tests => 7;
+use Test::More;
 use File::Spec;
 
+# The problem is that 'isLocked' on BSD behaves differently from the
+# calls on SysV (like Linux).  It's about the same process attempting
+# to lock the same file twice.
+$^O !~ /bsd|darwin/
+    or plan skip_all => 'not tested for BSD-likes';
+
+plan tests => 7;
 my $fakefolder = bless {MB_foldername=> 'this'}, 'Mail::Box';
 
 my $lockfile  = File::Spec->catfile($folderdir, 'lockfiletest');

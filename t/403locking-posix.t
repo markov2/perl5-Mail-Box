@@ -8,6 +8,7 @@ use warnings;
 
 use Mail::Box::Test;
 use Mail::Box::Locker::POSIX;
+use Mail::Box;
 
 use Test::More;
 use File::Spec;

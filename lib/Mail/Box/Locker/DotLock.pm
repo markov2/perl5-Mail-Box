@@ -90,7 +90,7 @@ sub _try_lock($)
 
 sub unlock()
 {   my $self = shift;
-    $self->{MBL_has_lock}
+    $self->hasLock
         or return $self;
 
     my $lock = $self->filename;
@@ -98,7 +98,7 @@ sub unlock()
     unlink $lock
         or $self->log(WARNING => "Couldn't remove lockfile $lock: $!");
 
-    delete $self->{MBL_has_lock};
+    $self->SUPER::unlock;
     $self;
 }
 
@@ -117,13 +117,13 @@ sub lock()
         return 1;
     }
 
-    my $end      = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1
-                 : $self->{MBL_timeout};
-    my $expire   = $self->{MBL_expires}/86400;  # in days for -A
+    my $timeout  = $self->timeout;
+    my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+    my $expire   = $self->expires/86400;  # in days for -A
 
     while(1)
     {
-        return $self->{MBL_has_lock} = 1
+        return $self->SUPER::lock
            if $self->_try_lock($lockfile);
 
         if(-e $lockfile && -A $lockfile > $expire)

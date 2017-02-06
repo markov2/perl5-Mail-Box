@@ -4,7 +4,7 @@ require 5.010;
 
 use IO::Handle;
 
-my $VERSION = '3.000';
+my $VERSION = '3.001';
 
 my %prereq =
  ( Carp           => 0

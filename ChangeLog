@@ -1,6 +1,19 @@
 
 ===== ChangeLog of Mail::Box version 3.*
 
+version 3.001: Mon  6 Feb 17:07:53 CET 2017
+
+	Fixes:
+	- test on windows, cause the path syntax differences
+	- posix lock on BSD [Slaven Rezic]
+	- SEE ALSO links broken.
+	  rt.cpan.org#120119 [Christophe Deroulers]
+	- do not test multi-lock on BSDs
+
+	Improvements:
+	- Mail::Box::Locker* cleaner OO
+	- ::Locker::Multi uses FcntlLock, not POSIX by default
+
 version 3.000: Thu  2 Feb 15:50:36 CET 2017
 
 	Changes:

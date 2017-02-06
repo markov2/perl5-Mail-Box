@@ -135,7 +135,7 @@ sub inbox(;$)
 
 #-------------------------------------------
 
-=section Manage existing folders
+=section Manage folders
 
 =method topfolder
 Returns the top folder of the user's mailbox storage.
@@ -143,7 +143,6 @@ Returns the top folder of the user's mailbox storage.
 
 sub topfolder() { shift->{MBMU_topfolder} }
 
-#-------------------------------------------
 
 =method folder $name
 Returns the folder description, a M<Mail::Box::Identity>.
@@ -158,7 +157,6 @@ sub folder($)
     $top->folder(@path);
 }
 
-#-------------------------------------------
 
 =method folderCollection $name
 Returns a pair: the folder collection (M<Mail::Box::Collection>) and
@@ -180,7 +178,6 @@ sub folderCollection($)
     ($top->folder(@path), $base);
 }
 
-#-------------------------------------------
 
 =method create $name, %options
 Creates a new folder with the specified name.  An folder's administrative
@@ -262,7 +259,6 @@ sub create($@)
     $id;
 }
 
-#-------------------------------------------
                                                                                 
 =method delete $name
 Remove all signs from the folder on the file-system.  Messages still in
@@ -288,7 +284,6 @@ sub delete($)
     $self->SUPER::delete($name);
 }
 
-#-------------------------------------------
 
 =method rename $oldname, $newname, %options
 Rename the folder with name $oldname to $newname.  Both names are full

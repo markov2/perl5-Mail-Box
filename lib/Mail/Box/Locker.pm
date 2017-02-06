@@ -118,7 +118,7 @@ number of seconds.
 Which FOLDER is to be locked, a M<Mail::Box> object.
 
 =option  timeout SECONDS|'NOTIMEOUT'
-=default timeout 10 seconds
+=default timeout 10
 
 How long to wait while trying to acquire the lock. The lock request will
 fail when the specified number of seconds is reached.  If C<'NOTIMEOUT'> is
@@ -186,6 +186,30 @@ sub init($)
 
     $self->folder($args->{folder});
     $self;
+}
+
+#-------------------------------------------
+
+=section Attributes
+
+=method timeout [SECONDS]
+
+Get/Set the timeout.  Not available for all lockers.
+
+=method expires [SECONDS]
+
+Get/Set the expiration time.  Not available for all lockers.
+
+=cut
+
+sub timeout(;$)
+{   my $self = shift;
+    @_ ? $self->{MBL_timeout} = shift : $self->{MBL_timeout};
+}
+
+sub expires(;$)
+{   my $self = shift;
+    @_ ? $self->{MBL_expires} = shift : $self->{MBL_expires};
 }
 
 #-------------------------------------------

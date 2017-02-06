@@ -43,7 +43,6 @@ sub _try_lock($)
 sub _unlock($)
 {   my ($self, $file) = @_;
     flock $file, LOCK_UN;
-    delete $self->{MBL_has_lock};
     $self;
 }
 
@@ -87,13 +86,13 @@ sub lock()
         return 0;
     }
 
-    my $end = $self->{MBL_timeout} eq 'NOTIMEOUT' ? -1 : $self->{MBL_timeout};
+    my $timeout = $self->timeout;
+    my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
     while(1)
     {   if($self->_try_lock($file))
-        {   $self->{MBL_has_lock}    = 1;
-            $self->{MBLF_filehandle} = $file;
-            return 1;
+        {   $self->{MBLF_filehandle} = $file;
+            return $self->SUPER::lock;
         }
 
         if($! != EAGAIN)
@@ -123,8 +122,9 @@ sub isLocked()
 
     my $file     = IO::File->new($filename, $lockfile_access_mode);
     unless($file)
-    {   $self->log(ERROR =>
-            "Unable to check lock file $filename for $self->{MBL_folder}: $!");
+    {   my $folder = $self->folder;
+        $self->log(ERROR =>
+            "Unable to check lock file $filename for $folder: $!");
         return 0;
     }
 
@@ -132,6 +132,7 @@ sub isLocked()
     $self->_unlock($file);
     $file->close;
 
+    $self->SUPER::unlock;
     1;
 }
 
@@ -141,6 +142,7 @@ sub unlock()
     $self->_unlock(delete $self->{MBLF_filehandle})
         if $self->hasLock;
 
+    $self->SUPER::unlock;
     $self;
 }
 

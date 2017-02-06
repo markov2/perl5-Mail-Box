@@ -9,6 +9,7 @@ use warnings;
 
 use Mail::Box::Test;
 use Mail::Box::Locker::Flock;
+use Mail::Box;
 
 use Test::More;
 use File::Spec;

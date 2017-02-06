@@ -48,7 +48,7 @@ BEGIN {
    $winsrc  = File::Spec->catfile($folderdir, $winfn);
    $cpy     = File::Spec->catfile($folderdir, $cpyfn);
 
-   ($src, $fn) = $crlf_platform ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
+   ($src, $fn) = $windows ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
 
    # ensure to test the Perl Parser not the C-Parser (separate distribution)
    require Mail::Box::Parser::Perl;
