@@ -1,0 +1,143 @@
+#!/usr/bin/perl
+# Count the size of the module
+
+use strict;
+use warnings;
+
+my $verbose   = 0;
+
+my $home      = "$ENV{HOME}/shared/perl";
+my $realize   = "$home/ORL";
+my $mailbox   = "$home/MailBox3";
+my $parserc   = "$home/MailBoxC";
+my $mime      = "$home/MimeTypes";
+my $identity  = "$home/UserIdentity";
+my $htmlfm    = "$home/HtmlFromMail";
+my $procmail  = "$home/Procmail";
+my $oodoc     = "$home/OODoc";
+
+my @trees     = ($realize, $mailbox, $parserc, $mime, $identity,
+                 $htmlfm, $procmail, $oodoc);
+
+my @files;
+foreach my $top (@trees)
+{   print "* $top\n";
+    my $manifest = "$top/MANIFEST";
+    open MANIFEST, '<', $manifest or die "$manifest: $!";
+    push @files, map {chomp; "$top/$_"} <MANIFEST>;
+    close MANIFEST;
+}
+
+sub countcodefile($)
+{   my $filename = shift;
+
+    my $chars = -s $filename;
+    open COUNT, '<', $filename or die "$filename:$!\n";
+
+    my ($lines, $codelines, $codechars) = (0,0,0);
+    my ($ccodelines, $ccodechars) = (0,0);
+    my ($c_code, $comment) = (0,0);
+
+    while(<COUNT>)
+    {   $lines++;
+
+        if( /^=cut/ )   { $comment = 0 }
+        elsif( /^=/ )   { $comment = 1 }
+        elsif( /^__(END|DATA)__/ ) {$comment = 1; $c_code = 0}
+        elsif( /^__C__/ ) { $comment = 0; $c_code = 1 }
+        elsif($c_code)
+        {   1 while s!/\*.*?\*/!!;
+            if( s!/\*.*!! ) { $comment = 1 }
+            else
+            {   s/^\s+//;
+                s/\s+$//;
+                s/\s{2,}/ /g;
+                if(length)
+                {   $ccodelines++;
+                    $ccodechars += length;
+                }
+            }
+        }
+        elsif($comment) { ; }
+        else
+        {   s/\s+\#.*//;
+            s/^\#.*//;
+            s/\s{2,}/ /g;
+            s/^\s*//;
+
+            if(length)
+            {   $codelines++;
+                $codechars += length;
+            }
+        }
+    }
+
+    close COUNT;
+
+    print "$filename: $chars, $lines; $codechars, $codelines; $ccodechars, $ccodelines\n"
+        if $verbose;
+
+    ($chars, $lines, $codechars, $codelines, $ccodechars, $ccodelines);
+}
+
+sub counttextfile($)
+{   my $filename = shift;
+
+    my $chars = -s $filename;
+    my $lines = 0;
+
+    open COUNT, '<', $filename or die "$filename:$!\n";
+    $lines++ while <COUNT>;
+    close COUNT;
+
+    ($chars, $lines);
+}
+
+my ($sumchars, $sumlines, $sumcodechars, $sumcodelines,
+    $sumccodechars, $sumccodelines,
+    $sumtestchars, $sumtestlines, $modules, $tests);
+
+foreach my $filename (@files)
+{   next if $filename =~ /mbox.src$/;
+
+    my ($chars, $lines);
+
+    if($filename =~ m/\.t$/ )
+    {   ($chars, $lines, my $codechars, my $codelines)
+           = countcodefile $filename;
+        $sumtestchars += $codechars;
+        $sumtestlines += $codelines;
+        $tests++;
+    }
+    elsif(($filename =~ m!\.(pm|PL||pl)$! && !$filename !~ m!/t/!)
+          || -x $filename)
+    {   ($chars, $lines, my $codechars, my $codelines, my $ccodechars,
+         my $ccodelines) = countcodefile $filename;
+        $sumcodechars  += $codechars;
+        $sumcodelines  += $codelines;
+        $sumccodechars += $ccodechars;
+        $sumccodelines += $ccodelines;
+        $modules++;
+    }
+    else
+    {   ($chars, $lines) = counttextfile $filename;
+    }
+    $sumchars     += $chars;
+    $sumlines     += $lines;
+
+}
+
+format STDOUT =
+
+@>>>>>> modules       @>>>>>>>>>> chars   @>>>>>>> lines   Perl
+$modules, $sumcodechars, $sumcodelines
+                      @>>>>>>>>>> chars   @>>>>>>> lines   C
+$sumccodechars, $sumccodelines
+@>>>>>> test scripts  @>>>>>>>>>> chars   @>>>>>>> lines
+$tests, $sumtestchars, $sumtestlines
+
+@>>>>>> files         @>>>>>>>>>> chars   @>>>>>>> lines
+scalar @files, $sumchars, $sumlines
+.
+
+write;
