@@ -1,8 +1,12 @@
-
-use strict;
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::Locker::Multi;
 use base 'Mail::Box::Locker';
+
+use strict;
+use warnings;
 
 use Carp;
 
@@ -37,7 +41,7 @@ used by the multi locker.
 
 Array of locker type NAMES or LOCKER objects to be used to lock one
 folder.  The type NAMES are converted into objects.  When you create your
-own LOCKER objects, be sure to set the timeout very short (preferrably
+own LOCKER objects, be sure to set the timeout very short (preferably
 to 1).
 
 Some locking types are not available on some platforms, so they will

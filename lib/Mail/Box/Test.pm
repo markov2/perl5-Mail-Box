@@ -1,7 +1,12 @@
-use strict;
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::Test;
 use base 'Exporter';
+
+use strict;
+use warnings;
 
 use File::Copy 'copy';
 use List::Util 'first';

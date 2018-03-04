@@ -1,11 +1,9 @@
 ChangeLog
-LICENSE
 MANIFEST
 MANIFEST.extra
 META.yml
 Makefile.PL
-README
-README.FAQ
+README.md
 README.todo
 examples/build.pl
 examples/grep.pl
@@ -21,7 +19,6 @@ examples/unpack.pl
 lib/Mail/Box-Cookbook.pod
 lib/Mail/Box-Index.pod
 lib/Mail/Box-Overview.pod
-lib/Mail/Box-Shorts.pod
 lib/Mail/Box.pm
 lib/Mail/Box/Collection.pm
 lib/Mail/Box/Dir.pm
@@ -159,3 +156,4 @@ t/folders/maildir.src/new/110000042.l.43
 t/folders/mbox.cpy
 t/folders/mbox.src
 t/folders/mbox.win
+xt/99pod.t

@@ -1,9 +1,12 @@
-
-use strict;
-use warnings;
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box;
 use base 'Mail::Reporter';
+
+use strict;
+use warnings;
 
 use Mail::Box::Message;
 use Mail::Box::Locker;
@@ -67,7 +70,7 @@ C<Mail::Box> is the base class for accessing various types of mailboxes
 they store their messages, but when some effort those differences could
 be hidden behind a general API. For example, some folders store many
 messages in one single file, where other store each message in a separate
-file withing the same directory.
+file within the same directory.
 
 No object in your program will be of type C<Mail::Box>: it is only used
 as base class for the real folder types.  C<Mail::Box> is extended by
@@ -719,7 +722,7 @@ folder types do support it by creating a hardlink (on UNIX/Linux).
 =error Destination folder $name is not writable.
 The folder where the messages are copied to is not opened with write
 access (see M<new(access)>).  This has no relation with write permission
-to the folder which is controled by your operating system.
+to the folder which is controlled by your operating system.
 
 =error Copying failed for one message.
 For some reason, for instance disc full, removed by external process, or
@@ -1983,7 +1986,7 @@ The best feature of this organization is that each message is kept
 exactly as it was received, and can be processed with external scripts
 as well: you do not need any mail user agent (MUA).
 
-Examples of directoy organized folders are MH, Maildir, EMH, and XMH.
+Examples of directory organized folders are MH, Maildir, EMH, and XMH.
 
 =item * Network (external) folders M<Mail::Box::Net>
 
@@ -2020,7 +2023,7 @@ feature is support for encrypted connections.
 
 =item * M<Mail::Box::Maildir>
 Maildir folders have a directory for each folder.  A folder directory
-contains C<tmp>, C<new>, and C<cur> sub-directories, each containting
+contains C<tmp>, C<new>, and C<cur> sub-directories, each containing
 messages with a different purpose.  Files with new messages are created
 in C<tmp>, then moved to C<new> (ready to be accepted).  Later, they are
 moved to the C<cur> directory (accepted).  Each message is one file with

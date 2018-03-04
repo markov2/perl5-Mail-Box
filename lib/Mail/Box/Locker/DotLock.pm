@@ -1,8 +1,12 @@
-
-use strict;
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::Locker::DotLock;
 use base 'Mail::Box::Locker';
+
+use strict;
+use warnings;
 
 use IO::File;
 use File::Spec;

@@ -1,8 +1,13 @@
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::File;
 use base 'Mail::Box';
 
 use strict;
+use warnings;
+
 use filetest 'access';
 
 use Mail::Box::File::Message;
@@ -254,8 +259,8 @@ sub close(@)
 
 Appending messages to a file based folder which is not opened is a little
 risky.  In practice, this is often done without locking the folder.  So,
-another application may write to the folder at the same time... :(  Hopefully,
-all goes fast enough that the chance on collition is small.
+another application may write to the folder at the same time... :(
+Hopefully, all goes fast enough that the chance on collision is small.
 
 All %options of M<Mail::Box::Mbox::new()> can be supplied.
 

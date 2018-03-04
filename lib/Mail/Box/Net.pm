@@ -1,6 +1,11 @@
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+
+package Mail::Box::Net;
 
 use strict;
-package Mail::Box::Net;
+use warnings;
 
 use base 'Mail::Box';
 

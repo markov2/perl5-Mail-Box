@@ -1,8 +1,12 @@
-
-use strict;
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::Locker::Flock;
 use base 'Mail::Box::Locker';
+
+use strict;
+use warnings;
 
 use IO::File;
 use Fcntl         qw/:DEFAULT :flock/;
@@ -51,7 +55,7 @@ sub _unlock($)
 
 =warning Folder $folder already flocked
 The folder is already locked, but you attempt to lock it again.  The
-behavior of double flock's is platform dependend, and therefore should
+behavior of double flock's is platform dependent, and therefore should
 not be attempted.  The second lock is ignored (but the unlock isn't)
 
 =error Unable to open flock file $filename for $folder: $!

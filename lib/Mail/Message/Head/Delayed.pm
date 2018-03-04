@@ -1,7 +1,12 @@
-use strict;
+# This code is part of distribution Mail-Box.  Meta-POD processed with
+# OODoc into POD and HTML manual-pages.  See README.md
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Message::Head::Delayed;
 use base 'Mail::Message::Head';
+
+use strict;
+use warnings;
 
 use Object::Realize::Later
     becomes          => 'Mail::Message::Head::Complete',
@@ -95,7 +100,7 @@ sub get($;$)
 =section About the body
 
 =method guessBodySize
-On a delayed head, this retuns C<undef>, because when there is no header
+On a delayed head, this returns C<undef>, because when there is no header
 there is also no body.
 
 For messages in directory or network organized folders,
