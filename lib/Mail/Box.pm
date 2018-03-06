@@ -1986,7 +1986,7 @@ The best feature of this organization is that each message is kept
 exactly as it was received, and can be processed with external scripts
 as well: you do not need any mail user agent (MUA).
 
-Examples of directory organized folders are MH, Maildir, EMH, and XMH.
+Examples of directory organized folders are MH, Maildir, EMH and XMH.
 
 =item * Network (external) folders M<Mail::Box::Net>
 
