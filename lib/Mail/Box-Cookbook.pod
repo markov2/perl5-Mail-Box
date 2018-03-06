@@ -46,7 +46,7 @@ may change in the future.
 
 =section Multi part messages
 
-In early days of Internet, multi-part messages where very rare.
+In early days of Internet, multi-part messages were very rare.
 However, in recent years, a large deal of all transmitted message have
 attachments.  This makes handling of the bodies of messages a bit harder:
 when a message contains more than one part, which part is then the most

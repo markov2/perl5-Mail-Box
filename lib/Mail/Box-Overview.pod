@@ -31,7 +31,7 @@ directory.
 
 =section Distributions
 
-Up to MailBox v2, all C<Mail::*> modules where released as a single
+Up to MailBox v2, all C<Mail::*> modules were released as a single
 distribution.  From v3, there are a few separate distributions in an
 attempt to reduce the dependencies:
 
