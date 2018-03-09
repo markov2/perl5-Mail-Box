@@ -312,7 +312,7 @@ sub readMessageFilenames
     # timestamp has the same length.
 
     my %unified;
-    m/^(\d+)/ and $unified{ ('0' x (9-length($1))).$_ } = $_
+    m/^(\d+)/ and $unified{ ('0' x (10-length($1))).$_ } = $_
         for @files;
 
     map "$dirname/$unified{$_}",
