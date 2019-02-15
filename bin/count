@@ -6,18 +6,32 @@ use warnings;
 
 my $verbose   = 0;
 
-my $home      = "$ENV{HOME}/shared/perl";
-my $realize   = "$home/ORL";
-my $mailbox   = "$home/MailBox3";
-my $parserc   = "$home/MailBoxC";
+my $home      = "$ENV{HOME}/shared/perl-git";
+my $realize   = "$home/Object-Realize-Later";
+my $mailbox   = "$home/Mail-Box";
+my $parserc   = "$home/Mail-Box-Parser-Cx";
 my $mime      = "$home/MimeTypes";
 my $identity  = "$home/UserIdentity";
 my $htmlfm    = "$home/HtmlFromMail";
 my $procmail  = "$home/Procmail";
 my $oodoc     = "$home/OODoc";
 
-my @trees     = ($realize, $mailbox, $parserc, $mime, $identity,
-                 $htmlfm, $procmail, $oodoc);
+# Add OODoc, Procmail?
+my @trees     = map "$ENV{HOME}/shared/perl-git/$_", qw/
+	HTML-FromMail
+	Mail-Box
+	Mail-Box-IMAP4
+	Mail-Box-Parser-C
+	Mail-Box-POP3
+	Mail-Message
+	MailTools
+	Mail-Transport
+	Math-Polygon
+	MIME-Types
+	MIME-Types
+	Object-Realize-Later
+	User-Identity
+	/;
 
 my @files;
 foreach my $top (@trees)
