@@ -92,7 +92,6 @@ sub init($)
 =section The body
 
 =method message
-
 =cut
 
 sub message() { shift->{MMBD_message} }
@@ -102,7 +101,6 @@ sub message() { shift->{MMBD_message} }
 =section About to the payload
 
 =method modified
-
 =cut
 
 sub modified(;$)
@@ -110,42 +108,18 @@ sub modified(;$)
     shift->forceRealize(shift);
 }
 
-#------------------------------------------
-
 =method isModified
-
-=cut
-
-sub isModified() { 0 }
-
-#------------------------------------------
-
 =method isDelayed
-
-=cut
-
-sub isDelayed()   {1}
-
-#------------------------------------------
-
 =method isMultipart
-
-=cut
-
-sub isMultipart() {shift->message->head->isMultipart}
-
-#------------------------------------------
-
 =method guessSize
-
 =cut
 
+sub isModified()  {0}
+sub isDelayed()   {1}
+sub isMultipart() {shift->message->head->isMultipart}
 sub guessSize()   {shift->{MMBD_size}}
 
-#------------------------------------------
-
 =method nrLines
-
 =cut
 
 sub nrLines()
@@ -155,11 +129,9 @@ sub nrLines()
     : $_[0]->forceRealize->nrLines;
 }
 
-#------------------------------------------
-
 sub string_unless_carp()
 {   my $self = shift;
-    return $self->load->string unless (caller)[0] eq 'Carp';
+    return $self->load->string if (caller)[0] ne 'Carp';
 
     (my $class = ref $self) =~ s/^Mail::Message/MM/g;
     "$class object";
@@ -170,7 +142,6 @@ sub string_unless_carp()
 =section Internals
 
 =method read $parser, $head, $bodytype
-
 =cut
 
 sub read($$;$@)
@@ -183,10 +154,7 @@ sub read($$;$@)
     $self;
 }
 
-#------------------------------------------
-
 =method fileLocation [$begin, $end]
-
 =cut
 
 sub fileLocation(;@) {
@@ -195,10 +163,7 @@ sub fileLocation(;@) {
    @$self{ qw/MMBD_begin MMBD_end/ } = @_;
 }
 
-#------------------------------------------
-
 =method moveLocation $distance
-
 =cut
 
 sub moveLocation($)
@@ -208,12 +173,8 @@ sub moveLocation($)
     $self;
 }
 
-#------------------------------------------
-
 =method load
-
 Returns the loaded version of this body.
-
 =cut
 
 sub load() {$_[0] = $_[0]->message->loadBody}

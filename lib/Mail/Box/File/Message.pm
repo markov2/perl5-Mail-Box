@@ -159,7 +159,6 @@ sub loadBody()
     return $body unless $body->isDelayed;
 
     my ($begin, $end) = $body->fileLocation;
-
     my $parser   = $self->folder->parser;
     $parser->filePosition($begin);
 

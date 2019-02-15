@@ -6,6 +6,8 @@ version 3.006:
 	Fixes:
 	- MailDir warns about repeat count, since last release added 'use
 	  warnings' to the file.  [Keita Jamadam] github issue #2
+	- mbox parsing failed on changing handling of blank lines by Mail::Message
+	  rt.cpan.org#128513 [Gregor Herrmann] + [cpantesters]
 
 version 3.005: Sun Mar  4 21:48:38 CET 2018
 
