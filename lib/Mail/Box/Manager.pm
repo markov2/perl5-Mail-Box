@@ -276,8 +276,9 @@ folder for writing, then the default will be the most recently registered
 type. (If you add more than one type at once, the first of the list is
 used.)
 
-Currently, the types are mbox, mh, maildir, pop3, pop3s, imap4, and imap4s.
-You may also use names pop, pops, imap, and imaps.
+Currently, the types are C<mbox>, C<mh>, C<maildir>, C<pop3>, C<pop3s>,
+C<imap4>, and C<imap4s>.  You may also use names C<pop>, C<pops>, C<imap>,
+and C<imaps>.
 
 =option authenticate  TYPE|ARRAY-OF-TYPES|'AUTO'
 =default authenticate C<'AUTO'>
@@ -399,6 +400,10 @@ sub open(@)
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 993;
         $args{folderdir} = $name = "imap4s://$un\@$srv:$port";
+    }
+    else
+    {   $self->log(ERROR => "Unknown folder type '$type'.");
+        return undef;
     }
 
     unless(defined $name && length $name)
