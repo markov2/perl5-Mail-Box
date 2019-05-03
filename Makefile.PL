@@ -4,7 +4,7 @@ require 5.010;
 
 use IO::Handle;
 
-my $VERSION = '3.007';
+my $VERSION = '3.008';
 
 my %prereq =
  ( Carp           => 0
@@ -30,11 +30,6 @@ my %prereq =
 # Currently, it seems to be wise not to depend on these
 #   Mail::SpamAssassin    split-off?
 #   File::FcntLock
-
-# Split-off distributions which are probably not often used, but have
-# many dependencies
-#   Mail::Box::IMAP4
-#   Mail::Box::POP3
  );
 
 
