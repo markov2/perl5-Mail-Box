@@ -375,6 +375,7 @@ sub open(@)
         $args{folder} = $name;
     }
 
+    # Do not show password in folder name
     my $type = $args{type};
     if(!defined $type) { ; }
     elsif($type eq 'pop3' || $type eq 'pop')
@@ -400,10 +401,6 @@ sub open(@)
         my $srv  = $args{server_name} ||= 'localhost';
         my $port = $args{server_port} ||= 993;
         $args{folderdir} = $name = "imap4s://$un\@$srv:$port";
-    }
-    else
-    {   $self->log(ERROR => "Unknown folder type '$type'.");
-        return undef;
     }
 
     unless(defined $name && length $name)

@@ -39,12 +39,10 @@ At the moment, this object is extended by
 =over 4
 
 =item * M<Mail::Box::POP3>
-
 Implements the POP3 protocol.
 
 =item * M<Mail::Box::IMAP4>
-
-Implements the IMAP4 protocol.  B<UNDER DEVELOPMENT>
+Implements the IMAP4 protocol.
 
 =back
 
