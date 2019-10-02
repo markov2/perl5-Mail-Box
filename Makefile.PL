@@ -18,6 +18,7 @@ my %prereq =
  , File::Compare  => 0
  , File::Copy     => 0
  , File::Remove   => 0.20
+ , File::Temp     => 0
  , IO::Scalar     => 0
  , Mail::Message  => 3.008
  , Mail::Transport => 3.003
