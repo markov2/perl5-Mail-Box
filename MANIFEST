@@ -156,4 +156,5 @@ t/folders/maildir.src/new/110000042.l.43
 t/folders/mbox.cpy
 t/folders/mbox.src
 t/folders/mbox.win
+testrules.yml
 xt/99pod.t
