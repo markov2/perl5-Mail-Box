@@ -12,6 +12,7 @@ use File::Copy 'copy';
 use List::Util 'first';
 use IO::File;            # to overrule open()
 use File::Spec;
+use File::Temp 'tempdir';
 use Cwd qw(getcwd);
 use Sys::Hostname qw(hostname);
 use Test::More;
@@ -25,6 +26,7 @@ our @EXPORT =
      compare_thread_dumps
 
      $folderdir
+     $workdir
      $src $unixsrc $winsrc
      $fn  $unixfn  $winfn
      $cpy $cpyfn
@@ -37,12 +39,15 @@ our ($src, $unixsrc, $winsrc);
 our ($fn,  $unixfn,  $winfn);
 our ($cpy, $cpyfn);
 our ($crlf_platform, $windows);
+our $workdir;
 
 BEGIN {
    $windows       = $^O =~ m/mswin32/i;
    $crlf_platform = $windows;
 
    $folderdir     = File::Spec->catdir('t','folders');
+   $workdir       = tempdir(CLEANUP => 1);
+
 
    $logfile = File::Spec->catfile(getcwd(), 'run-log');
    $unixfn  = 'mbox.src';
@@ -51,7 +56,7 @@ BEGIN {
 
    $unixsrc = File::Spec->catfile($folderdir, $unixfn);
    $winsrc  = File::Spec->catfile($folderdir, $winfn);
-   $cpy     = File::Spec->catfile($folderdir, $cpyfn);
+   $cpy     = File::Spec->catfile($workdir, $cpyfn);
 
    ($src, $fn) = $windows ? ($winsrc, $winfn) : ($unixsrc, $unixfn);
 
@@ -201,7 +206,7 @@ our @maildir_names =
  , '110000041.l.43'
  , '110000042.l.43'
  );
- 
+
 sub unpack_mbox2maildir($$)
 {   my ($file, $dir) = @_;
     clean_dir($dir);
