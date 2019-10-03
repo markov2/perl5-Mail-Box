@@ -2,6 +2,7 @@
 ===== ChangeLog of distribution Mail-Box version 3.*
 
 version 3.008:
+	- test suite can now run in parallel
 
 version 3.007: Fri  3 May 09:38:17 CEST 2019
 
