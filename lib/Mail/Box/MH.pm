@@ -278,7 +278,7 @@ Append a message to a folder which is not open.
 
 =error Cannot append message without lock on $folder.
 It is impossible to append one or more messages to the folder which is
-not opened, because locking it failes.  The folder may be in use by
+not opened, because locking it fails.  The folder may be in use by
 an other application, or you may need to specify some lock related
 options (see M<new()>).
 
@@ -464,6 +464,7 @@ sub readMessages(@)
     }
 
     $self->{MBM_highest_msgnr}  = $msgnrs[-1];
+    $locker->unlock;
     $self;
 }
  
