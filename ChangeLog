@@ -2,6 +2,7 @@
 ===== ChangeLog of distribution Mail-Box version 3.*
 
 version 3.008:
+	- test suite can now run in parallel
 
 	Fixes:
 	- MH reading message did not unlock after processing.
