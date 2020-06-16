@@ -1,0 +1,12 @@
+t/folders/maildir.src/
+MYMETA.json
+MYMETA.yml
+Makefile
+Makefile.old
+TODO.v2
+blib/
+docs/
+pm_to_blib
+public_html/
+try/
+
