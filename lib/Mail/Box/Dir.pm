@@ -166,7 +166,19 @@ sub folderToDirectory($$)
     $dir;
 }
 
-#-------------------------------------------
+sub storeMessage($)
+{   my ($self, $message) = @_;
+    $self->SUPER::storeMessage($message);
+    my $fn = $message->filename or return $message;
+    $self->{MBD_by_fn}{$fn} = $message;
+}
+
+=method messageInFile $filename
+Returns the folder message which is found the indicated C<filename>.  This
+may be useful when some external tool reports filename to be opened.
+=cut
+
+sub messageInFile($) { $_[0]->{MBD_by_fn}{$_[1]} }
 
 =method readMessageFilenames $directory
 

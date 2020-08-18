@@ -3,6 +3,10 @@
 
 version 3.009:
 
+	Improvements:
+	- for file-per-message based folders, you can now address the message
+	  via its filename. rt.cpan.org#132823 [Alexander Adolf]
+
 version 3.008: Fri  4 Oct 08:34:32 CEST 2019
 
 	Fixes:
