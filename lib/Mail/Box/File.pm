@@ -132,7 +132,7 @@ sub init($)
            , $self->folderdir
            );
 
-       if(-e $filename) {;}    # Folder already exists
+    if(-e $filename) {;}    # Folder already exists
     elsif($args->{create} && $class->create($args->{folder}, %$args)) {;}
     else
     {   $self->log(PROGRESS =>
