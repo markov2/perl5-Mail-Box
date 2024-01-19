@@ -30,7 +30,7 @@ Mail::Box::Maildir - handle Maildir folders
 =chapter SYNOPSIS
 
  use Mail::Box::Maildir;
- my $folder = new Mail::Box::Maildir folder => $ENV{MAIL}, ...;
+ my $folder = Mail::Box::Maildir->new(folder => $ENV{MAIL}, ...);
 
 =chapter DESCRIPTION
 

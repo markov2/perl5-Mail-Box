@@ -94,6 +94,10 @@ sub init($)
                (?: \: ([0-9]+)  )?       # port
                ( / .* )?                 # path
           !x;
+
+        defined && s/%([0-9a-fA-F]{2})/hex $1/ge
+            for $username, $password, $hostname, $port, $path;
+
         $args->{folderdir} =~ s!/$!!;
     }
 

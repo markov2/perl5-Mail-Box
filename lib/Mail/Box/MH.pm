@@ -29,7 +29,7 @@ Mail::Box::MH - handle MH folders
 =chapter SYNOPSIS
 
  use Mail::Box::MH;
- my $folder = new Mail::Box::MH folder => $ENV{MAIL}, ...;
+ my $folder = Mail::Box::MH->new(folder => $ENV{MAIL}, ...);
 
 =chapter DESCRIPTION
 
