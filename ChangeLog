@@ -1,7 +1,7 @@
 
 ===== ChangeLog of distribution Mail-Box version 3.*
 
-version 3.011:
+version 3.011: Fri 18 Apr 18:33:17 CEST 2025
 
 	Fixes:
 	- url use for folder requires % decoding. [Gabrielle Schmidt]

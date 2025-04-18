@@ -96,7 +96,7 @@ sub init($)
           !x;
 
         defined && s/%([0-9a-fA-F]{2})/hex $1/ge
-            for $username, $password, $hostname, $port, $path;
+            for $u, $pwd, $s, $port, $f;
 
         $args->{folderdir} =~ s!/$!!;
     }
