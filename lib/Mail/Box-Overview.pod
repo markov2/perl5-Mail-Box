@@ -96,19 +96,20 @@ The situation for MH and Maildir folders is a little more complicated,
 because they have an extra intermediate level of abstraction: M<Mail::Box::Dir>.
 The POP3 folder has an intermediate M<Mail::Box::Net>.
 
-In the future, when more Mbox-like folder types get implemented, there
-may be a M<Mail::Box::File> level too.  The following is also true
-for the mail boxes
+MailBox actively use inheritance.  For folders, the structure is just like
+this depicted for Message classes:
 
- MB::MH::Message                 MB::POP3::Message
-       \  MB::Maildir::Message            /
-        \         /                      /
-         \       /   MB::Mbox::Message  /
-          \     /         |            /
+    MB::MH::Message              MB::POP3::Message
+    MB::Maildir::Message         MB::IMAP4::Message
+          \                              /
+           \      MB::Mbox::Message     /
+            \             |            /
+             \    MB::File::Message   /
+              \           |          /
         MB::Dir::Message  |   MB::Net::Message
+                    \     |     /
                      \    |    /
-                      \   |   /
-                      MB::Message
+                     MB::Message
                           |
                           |
                      Mail::Message
