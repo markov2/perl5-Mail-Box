@@ -78,11 +78,11 @@ be used for MBOX, MH, Maildir, and POP3 folders with no change at all (as
 long as you stick to the rules).
 
  M<Mail::Box::Mbox>  <-----------* M<Mail::Box::Mbox::Message>
-        ^             <has-a>            ^
+        |             <has-a>            |
         | <isa>                          | <isa>
         |                                |
     M<Mail::Box>     ............. M<Mail::Box::Message>
-                                         ^
+                                         |
                                          | <isa>
                                          |
                                    M<Mail::Message>
@@ -97,7 +97,7 @@ because they have an extra intermediate level of abstraction: M<Mail::Box::Dir>.
 The POP3 folder has an intermediate M<Mail::Box::Net>.
 
 MailBox actively use inheritance.  For folders, the structure is just like
-this depicted for Message classes:
+this depicted for Message class relations:
 
     MB::MH::Message              MB::POP3::Message
     MB::Maildir::Message         MB::IMAP4::Message
@@ -109,11 +109,38 @@ this depicted for Message classes:
         MB::Dir::Message  |   MB::Net::Message
                     \     |     /
                      \    |    /
-                     MB::Message
-                          |
+                  Mail::Box::Message
                           |
                      Mail::Message
 
+Any Message has the structure of the M<Mail::Message>
+
+                              Mail::Message::Head::Complete
+                                         |
+   Mail::Message                        isa
+         |                               |
+         `---has a---> Mail::Message::Head::Partial
+         |              `-- has many --> MM::Field
+         |              `-- has many --> MM::Field::Full
+         |
+         `---has a---> Mail::Message::Body
+                       | one of:
+                       `--- MMB::Lines
+                       `--- MMB::String
+                       `--- MMB::File  
+                       `--- MMB::Nested
+                       |     `--- one ---> MM:Message
+                       `--- MMB::Multipart  
+                             `--- many --> MM:Part
+                                      isa Mail::Message
+
+The header is not always totally known, for instance via IMAP or when
+the message is located in a file.  Basically, only used Fields are cached
+until the whole header is needed for additions, deletes, or changes.
+
+The "Full" Fields have a very detailed, perfect handling of the RFCs.
+You will get them via C<study()> methods.  The default Field is sloppy:
+just text strings.
 
 =section The Manager
 
