@@ -162,8 +162,7 @@ $folderdir to replace a leading C<=>.
 sub folderToDirectory($$)
 {   my ($class, $name, $folderdir) = @_;
     my $dir = ( $name =~ m#^=\/?(.*)# ? "$folderdir/$1" : $name);
-    $dir =~ s!/$!!;
-    $dir;
+    $dir =~ s!/$!!r;
 }
 
 sub storeMessage($)

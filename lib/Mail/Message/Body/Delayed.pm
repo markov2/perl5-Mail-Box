@@ -64,15 +64,11 @@ use overload '""'    => 'string_unless_carp'
            , '@{}'   => sub {shift->load->lines};
 
 #------------------------------------------
-
 =chapter METHODS
 
 =c_method new %options
-
 =requires  message MESSAGE
-
 The MESSAGE object which contains this delayed body.
-
 =cut
 
 sub init($)
@@ -88,7 +84,6 @@ sub init($)
 }
 
 #------------------------------------------
-
 =section The body
 
 =method message
@@ -97,7 +92,6 @@ sub init($)
 sub message() { shift->{MMBD_message} }
 
 #------------------------------------------
-
 =section About to the payload
 
 =method modified
@@ -122,23 +116,17 @@ sub guessSize()   {shift->{MMBD_size}}
 =method nrLines
 =cut
 
-sub nrLines()
-{   my ($self) = @_;
-      defined $self->{MMBD_lines}
-    ? $self->{MMBD_lines}
-    : $_[0]->forceRealize->nrLines;
-}
+sub nrLines() { $_[0]->{MMBD_lines} // $_[0]->forceRealize->nrLines }
 
 sub string_unless_carp()
 {   my $self = shift;
     return $self->load->string if (caller)[0] ne 'Carp';
 
-    (my $class = ref $self) =~ s/^Mail::Message/MM/g;
+    my $class = ref $self =~ s/^Mail::Message/MM/gr;
     "$class object";
 }
 
 #------------------------------------------
-
 =section Internals
 
 =method read $parser, $head, $bodytype
@@ -148,9 +136,7 @@ sub read($$;$@)
 {   my ($self, $parser, $head, $bodytype) = splice @_, 0, 4;
     $self->{MMBD_parser} = $parser;
 
-    @$self{ qw/MMBD_begin MMBD_end MMBD_size MMBD_lines/ }
-        = $parser->bodyDelayed(@_);
-
+    @$self{ qw/MMBD_begin MMBD_end MMBD_size MMBD_lines/ } = $parser->bodyDelayed(@_);
     $self;
 }
 
@@ -177,12 +163,10 @@ sub moveLocation($)
 Returns the loaded version of this body.
 =cut
 
-sub load() {$_[0] = $_[0]->message->loadBody}
+sub load() { $_[0] = $_[0]->message->loadBody }
 
 #------------------------------------------
-
 =section Error handling
-
 =cut
 
 1;

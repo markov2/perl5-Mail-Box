@@ -1133,14 +1133,13 @@ sub messageId($;$)
 {   my ($self, $msgid) = (shift, shift);
 
     if($msgid =~ m/\<([^>]+)\>/s )
-    {   $msgid = $1;
-        $msgid =~ s/\s//gs;
+    {   $msgid = $1 =~ s/\s//grs;
 
-        $self->log(WARNING => "Message-id '$msgid' does not contain a domain.")
-            unless index($msgid, '@') >= 0;
+        index($msgid, '@') >= 0
+            or $self->log(WARNING => "Message-id '$msgid' does not contain a domain.");
     }
 
-    return $self->{MB_msgid}{$msgid} unless @_;
+    @_ or return $self->{MB_msgid}{$msgid};
 
     my $message = shift;
 
@@ -1188,8 +1187,7 @@ sub find($)
     my $msgids = $self->{MB_msgid};
 
     if($msgid =~ m/\<([^>]*)\>/s)
-    {   $msgid = $1;
-        $msgid =~ s/\s//gs;
+    {   $msgid = $1 =~ s/\s//grs;
     }
     else
     {   # Illegal message-id

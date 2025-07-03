@@ -976,7 +976,6 @@ sub decodeFolderURL($)
     }
 
     $hostname ||= 'localhost';
-
     $path     ||= '=';
 
     ( type        => $type,     folder      => $path

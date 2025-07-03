@@ -229,7 +229,7 @@ sub create($@)
             return undef;
         }
 
-        (my $upper = $name) =~ s!$self->{MBMU_delim}$base!!
+        my $upper = $name =~ s!$self->{MBMU_delim}$base!!r
              or die "$name - $base";
 
         $dir = $self->create($upper, %args, deleted => 1);
@@ -237,7 +237,7 @@ sub create($@)
 
     my $id = $dir->folder($base);
     if(!defined $id)
-    {   my $idopt= $args{id_options} || [];
+    {   my $idopt = $args{id_options} || [];
         $id  = $dir->addSubfolder($base, @$idopt, deleted => $args{deleted});
     }
     elsif($args{deleted})
@@ -256,7 +256,7 @@ sub create($@)
 
     if(!defined $args{create_real} || $args{create_real})
     {   $self->defaultFolderType->create($id->location, %args)
-           or return undef;
+            or return undef;
     }
 
     $id;
@@ -320,7 +320,7 @@ sub rename($$@)
             return ();
         }
 
-        (my $upper = $newname) =~ s!$self->{MBMU_delim}$base!!
+        my $upper = $newname =~ s!$self->{MBMU_delim}$base!!r
              or die "$newname - $base";
 
         $newdir = $self->create($upper, %args, deleted => 1);

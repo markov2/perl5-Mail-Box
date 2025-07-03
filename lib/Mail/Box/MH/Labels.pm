@@ -92,7 +92,7 @@ sub read()
     {   s/\s*\#.*$//;
         next unless length;
 
-        next unless s/^\s*(\w+)\s*\:\s*//;
+        s/^\s*(\w+)\s*\:\s*// or next;
         my $label = $1;
 
         my $set   = 1;
@@ -169,7 +169,7 @@ sub print($@)
     my %labeled;
     foreach my $message (@_)
     {   my $labels = $message->labels;
-        (my $seq   = $message->filename) =~ s!.*/!!;
+        my $seq    = $message->filename =~ s!.*/!!r;
 
         push @{$labeled{unseen}}, $seq
             unless $labels->{seen};

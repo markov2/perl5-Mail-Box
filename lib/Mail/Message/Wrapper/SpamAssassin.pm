@@ -94,9 +94,7 @@ sub put_header($$)
     my $head = $self->get_mail_object->head;
     $value =~ s/\s{2,}/ /g;
     $value =~ s/\s*$//;      # will cause a refold as well
-    return () unless length $value;
-
-    $head->add($name => $value);
+    length $value ? $head->add($name => $value) : ();
 }
 
 sub get_all_headers($)

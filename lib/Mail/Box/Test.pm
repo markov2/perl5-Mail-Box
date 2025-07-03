@@ -278,8 +278,7 @@ sub compare_message_prints($$$)
 {   my ($first, $second, $label) = @_;
 
     if($crlf_platform)
-    {   $first  =~ s/Content-Length: (\d+)/Content-Length: <removed>/g;
-        $second =~ s/Content-Length: (\d+)/Content-Length: <removed>/g;
+    {   s/Content-Length: \d+/Content-Length: <removed>/g for $first, $second;
     }
 
     is($first, $second, $label);

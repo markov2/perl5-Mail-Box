@@ -214,7 +214,7 @@ sub listSubFolders(@)
                 @sub or next;
             }
 
-            (my $folder = $_) =~ s/$extension$//;
+            my $folder = $_ =~ s/$extension$//r;
             $folders{$folder}++;
         }
     }

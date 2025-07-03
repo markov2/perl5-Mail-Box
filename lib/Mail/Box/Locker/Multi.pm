@@ -66,7 +66,7 @@ sub init($)
     foreach my $method (@use)
     {   if(UNIVERSAL::isa($method, 'Mail::Box::Locker'))
         {   push @lockers, $method;
-            (my $used = ref $method) =~ s/.*\:\://;
+            my $used = ref $method =~ s/.*\:\://r;
             push @used, $used;
             next;
         }

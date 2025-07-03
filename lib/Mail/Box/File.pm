@@ -148,8 +148,7 @@ sub init($)
 
     my $lockfile = $locker->filename;
     if($lockfile eq '--')            # filename to be used not resolved yet
-    {   my $lockdir   = $filename;
-        $lockdir      =~ s!/([^/]*)$!!;
+    {   my $lockdir   = $filename =~ s!/([^/]*)$!!r;
         my $extension = $args->{lock_extension} || '.lock';
 
         $locker->filename
