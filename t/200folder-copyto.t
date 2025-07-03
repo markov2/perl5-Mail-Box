@@ -65,8 +65,7 @@ cmp_ok(@sub, "==", 2,                      "a has two subfolders");
 is($sub[0], 'b',                           "   named b");
 is($sub[1], 'c',                           "   and c");
 
-my $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw',
-   lock_type => 'NONE');
+my $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw', lock_type => 'NONE');
 cmp_ok($A->messages, "==", 10,              "e has 10 messages");
 
 $A->message($_)->delete for 3,4,8;
@@ -90,8 +89,7 @@ $e = $mgr->open('e', type => 'mbox', create => 1, access => 'rw',
    lock_type => 'NONE');
 ok(defined $e,                          "e is opened again");
 
-ok(defined $A->copyTo($e, select => 'ACTIVE', subfolders => 'RECURSE'),
-                                        "copyTo reports success");
+ok(defined $A->copyTo($e, select => 'ACTIVE', subfolders => 'RECURSE'), "copyTo reports success");
 cmp_ok($e->messages, "==", 7,           "e contains 7 messages");
 
 my @subs = sort $e->listSubFolders;

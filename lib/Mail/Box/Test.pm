@@ -48,7 +48,6 @@ BEGIN {
    $folderdir     = File::Spec->catdir('t','folders');
    $workdir       = tempdir(CLEANUP => 1);
 
-
    $logfile = File::Spec->catfile(getcwd(), 'run-log');
    $unixfn  = 'mbox.src';
    $winfn   = 'mbox.win';
@@ -128,20 +127,20 @@ sub unpack_mbox2mh($$)
     my $count = 1;
     my $blank;
 
-    open FILE, $file or die;
-    open OUT, '>', File::Spec->devnull;
+    open my $fh, '<', $file or die;
+    open my $out, '>', File::Spec->devnull;
 
-    while(<FILE>)
+    local $_;
+    while(<$fh>)
     {   if( /^From / )
-        {   close OUT;
+        {   $out->close;
             undef $blank;
-            open OUT, ">$dir/".$count++ or die;
+            open $out, '>', "$dir/".$count++ or die;
             $count++ if $count==13;  # skip 13 for test
             next;                    # from line not included in file.
         }
 
-        print OUT $blank
-            if defined $blank;
+        $out->print($blank) if defined $blank;
 
         if( m/^\015?\012$/ )
         {   $blank = $_;
@@ -149,11 +148,10 @@ sub unpack_mbox2mh($$)
         }
 
         undef $blank;
-        print OUT;
+        $out->print($_);
     }
-
-    close OUT;
-    close FILE;
+    $out->close;
+    $fh->close;
 }
 
 # UNPACK_MBOX2MAILDIR
@@ -211,23 +209,23 @@ sub unpack_mbox2maildir($$)
 {   my ($file, $dir) = @_;
     clean_dir($dir);
 
-    die unless @maildir_names==45;
-
+    @maildir_names==45 or die;
     mkdir $dir or die;
     mkdir File::Spec->catfile($dir, 'cur') or die;
     mkdir File::Spec->catfile($dir, 'new') or die;
     mkdir File::Spec->catfile($dir, 'tmp') or die;
-    my $msgnr = 0;
 
-    open FILE, $file or die;
-    open OUT, '>', File::Spec->devnull;
+    open my $fh, '<', $file or die;
+    open my $out, '>', File::Spec->devnull;
 
+    my $msgnr      = 0;
     my $last_empty = 0;
     my $blank;
 
-    while(<FILE>)
+    local $_;
+    while(<$fh>)
     {   if( m/^From / )
-        {   close OUT;
+        {   $out->close;
             undef $blank;
             my $now      = time;
             my $hostname = hostname;
@@ -237,12 +235,11 @@ sub unpack_mbox2maildir($$)
               , $maildir_names[$msgnr++]
               );
 
-            open OUT, ">", $msgfile or die "Create $msgfile: $!\n";
+            open $out, ">", $msgfile or die "Create $msgfile: $!\n";
             next;                    # from line not included in file.
         }
 
-        print OUT $blank
-            if defined $blank;
+        $out->print($blank) if defined $blank;
 
         if( m/^\015?\012$/ )
         {   $blank = $_;
@@ -250,11 +247,11 @@ sub unpack_mbox2maildir($$)
         }
 
         undef $blank;
-        print OUT;
+        $out->print($_);
     }
 
-    close OUT;
-    close FILE;
+    $out->close;
+    $fh->close;
 }
 
 #

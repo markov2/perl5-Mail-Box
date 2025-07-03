@@ -779,31 +779,30 @@ sub _copy_to($@)
     # Take subfolders
 
   SUBFOLDER:
-    foreach ($self->listSubFolders(check => 1))
-    {   my $subfolder = $self->openSubFolder($_, access => 'r');
-        $self->log(ERROR => "Unable to open subfolder $_"), next
-            unless defined $subfolder;
+    foreach my $subf ($self->listSubFolders(check => 1))
+    {   my $subfolder = $self->openSubFolder($subf, access => 'r')
+            or $self->log(ERROR => "Unable to open subfolder $subf"), next;
 
         if($flatten)   # flatten
-        {    unless($subfolder->_copy_to($to, @options))
-             {   $subfolder->close;
-                 return;
-             }
+        {   unless($subfolder->_copy_to($to, @options))
+            {   $subfolder->close;
+                return;
+            }
         }
         else           # recurse
-        {    my $subto = $to->openSubFolder($_, create => 1, access => 'rw');
-             unless($subto)
-             {   $self->log(ERROR => "Unable to create subfolder $_ of $to");
-                 next SUBFOLDER;
-             }
+        {   my $subto = $to->openSubFolder($subf, create => 1, access => 'rw');
+            unless($subto)
+            {   $self->log(ERROR => "Unable to create subfolder $subf of $to");
+                next SUBFOLDER;
+            }
 
-             unless($subfolder->_copy_to($subto, @options))
-             {   $subfolder->close;
-                 $subto->close;
-                 return;
-             }
+            unless($subfolder->_copy_to($subto, @options))
+            {   $subfolder->close;
+                $subto->close;
+                return;
+            }
 
-             $subto->close;
+            $subto->close;
         }
 
         $subfolder->close;
@@ -1562,6 +1561,8 @@ as instance method, or specify a $parentname.
 sub nameOfSubFolder($;$)
 {   my ($thing, $name) = (shift, shift);
     my $parent = @_ ? shift : ref $thing ? $thing->name : undef;
+use Carp;
+$name or confess;
     defined $parent ? "$parent/$name" : $name;
 }
 

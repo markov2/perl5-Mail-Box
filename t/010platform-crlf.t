@@ -8,26 +8,24 @@ use strict;
 use warnings;
 
 use Mail::Box::Test;
-
 use Test::More tests => 1;
-
-use FileHandle;
 
 my $crlf = "\015\012";
 
-open SRC,  '<', $unixsrc  or die "Cannot open $unixsrc to read: $!\n";
-binmode SRC;
+open my $src,  '<', $unixsrc  or die "Cannot open $unixsrc to read: $!\n";
+binmode $src;
 
-open DEST, '>', $winsrc or die "Cannot open $winsrc for writing: $!\n";
-select DEST;
-binmode DEST;
+open my $dest, '>', $winsrc or die "Cannot open $winsrc for writing: $!\n";
+binmode $dest;
+select $dest;
 
-until(eof SRC)
+until($src->eof)
 {
     my ($lines, $bytes);
+    local $_;
 
   HEADER:
-    while(<SRC>)
+    while(<$src>)
     {   s/[\012\015]*$/$crlf/;
 
            if( m/^Content-Length\: / ) {$bytes = $' +0}
@@ -49,14 +47,14 @@ until(eof SRC)
     }
 
   BODY:
-    while(<SRC>)
+    while(<$src>)
     {   s/[\012\015]*$/$crlf/;
         print;
         last BODY if m/^From /;
     }
 }
 
-die "Errors in reading $unixsrc"  unless close SRC;
-die "Errors in writing $winsrc"   unless close DEST;
+$src->close or die "Errors in reading $unixsrc";
+$dest->close or die "Errors in writing $winsrc";
 
-pass("Folder conversion complete");
+pass "Folder conversion complete";

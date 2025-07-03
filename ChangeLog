@@ -6,6 +6,9 @@ version 3.012:
 	Changes:
 	- mid-life upgrade project: require minimal Perl version 5.16
 
+	Improvements:
+	- remove all internal use of bareword file-handles.
+
 version 3.011: Fri 18 Apr 18:33:17 CEST 2025
 
 	Fixes:

@@ -36,7 +36,6 @@ predefined, but more can be added without limitation.
 =cut
 
 #-------------------------------------------
-
 =chapter METHODS
 
 =c_method new %options
@@ -58,21 +57,16 @@ sub init($)
 }
 
 #-------------------------------------------
-
 =section The Label Table
 
 =method filename
 Returns the name of the index file.
-
 =cut
 
 sub filename() {shift->{MBML_filename}}
 
-#-------------------------------------------
-
 =method get $msgnr
 Look if there is label info for message $msgnr.
-
 =cut
 
 sub get($)
@@ -80,24 +74,21 @@ sub get($)
     $self->{MBML_labels}[$msgnr];
 }
 
-#-------------------------------------------
-
 =method read
 Read all label information from file.
-
 =cut
 
 sub read()
-{   my $self = shift;
-    my $seq  = $self->filename;
+{   my $self  = shift;
+    my $seqfn = $self->filename;
 
-    open SEQ, '<:raw', $seq
+    open my $seq, '<:raw', $seqfn
        or return;
 
     my @labels;
 
     local $_;
-    while(<SEQ>)
+    while(<$seq>)
     {   s/\s*\#.*$//;
         next unless length;
 
@@ -117,14 +108,10 @@ sub read()
             }
         }
     }
-
-    close SEQ;
-
+	$seq->close;
     $self->{MBML_labels} = \@labels;
     $self;
 }
-
-#-------------------------------------------
 
 =method write $messages
 Write the labels related to the specified messages to the label file.
@@ -148,8 +135,6 @@ sub write(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method append $messages
 
 Append the label information about the specified $messages to the end
@@ -162,7 +147,7 @@ sub append(@)
 {   my $self     = shift;
     my $filename = $self->filename;
 
-    open(my $out, '>>:raw', $filename) or return;
+    open my $out, '>>:raw', $filename or return;
     $self->print($out, @_);
     close $out;
 

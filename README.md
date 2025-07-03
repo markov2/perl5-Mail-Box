@@ -1,4 +1,4 @@
-# distribution Mail-Box
+# Distribution Mail-Box
 
   * My extended documentation: <http://perl.overmeer.net/CPAN/>
   * Development via GitHub: <https://github.com/markov2/perl5-Mail-Box>

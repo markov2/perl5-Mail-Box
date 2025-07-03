@@ -103,37 +103,36 @@ Write an index file containing the headers specified $messages
 =cut
 
 sub write(@)
-{   my $self  = shift;
-    my $index = $self->filename or return $self;
+{   my $self    = shift;
+    my $indexfn = $self->filename // return $self;
 
     # Remove empty index-file.
     unless(@_)
-    {   unlink $index;
+    {   unlink $indexfn;
         return $self;
     }
 
-    local *INDEX;
-    open INDEX, '>:raw', $index
+    open my $index, '>:raw', $indexfn
         or return $self;
 
     my $fieldtype = 'Mail::Message::Field';
-    my $written    = 0;
+    my $written   = 0;
 
     foreach my $msg (@_)
-    {   my $head     = $msg->head;
+    {   my $head  = $msg->head;
         next if $head->isDelayed && $head->isa('Mail::Message::Head::Subset');
 
-        my $filename = $msg->filename;
-        print INDEX "X-MailBox-Filename: $filename\n"
-                  , 'X-MailBox-Size: ', (-s $filename), "\n";
-
-        $head->print(\*INDEX);
+        my $fn    = $msg->filename;
+        $index->print(
+            "X-MailBox-Filename: $fn\n",
+            'X-MailBox-Size: ', (-s $fn), "\n",
+        );
+        $head->print($index);
         $written++;
     }
 
-    close INDEX;
-
-    $written or unlink $index;
+    $index->close;
+    $written or unlink $indexfn;
 
     $self;
 }
@@ -145,27 +144,26 @@ Append $messages to the index file.
 =cut
 
 sub append(@)
-{   my $self      = shift;
-    my $index     = $self->filename or return $self;
+{   my $self    = shift;
+    my $indexfn = $self->filename or return $self;
 
-    local *INDEX;
-    open INDEX, '>>:raw', $index
+    open my $index, '>>:raw', $indexfn
         or return $self;
 
     my $fieldtype = 'Mail::Message::Field';
 
     foreach my $msg (@_)
-    {   my $head     = $msg->head;
+    {   my $head  = $msg->head;
         next if $head->isDelayed && $head->isa('Mail::Message::Head::Subset');
 
-        my $filename = $msg->filename;
-        print INDEX "X-MailBox-Filename: $filename\n"
-                  , 'X-MailBox-Size: ', (-s $filename), "\n";
-
-        $head->print(\*INDEX);
+        my $fn    = $msg->filename;
+        $index->print(
+           "X-MailBox-Filename: $fn\n",
+           'X-MailBox-Size: ', (-s $fn), "\n",
+        );
+        $head->print($index);
     }
-
-    close INDEX;
+    $index->close;
     $self;
 }
 
@@ -182,10 +180,8 @@ sub read(;$)
 {   my $self     = shift;
     my $filename = $self->{MBMI_filename};
 
-    my $parser   = Mail::Box::Parser->new
-      ( filename => $filename
-      , mode     => 'r'
-      ) or return;
+    my $parser   = Mail::Box::Parser->new(filename => $filename, mode => 'r')
+        or return;
 
     my @options  = ($self->logSettings, wrap_length => $self->{MBMI_head_wrap});
     my $type     = $self->{MBMI_head_type};

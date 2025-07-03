@@ -115,13 +115,13 @@ this depicted for Message class relations:
 
 Any Message has the structure of the M<Mail::Message>
 
-                              Mail::Message::Head::Complete
+                                 MM::Head::Complete
                                          |
    Mail::Message                        isa
          |                               |
          `---has a---> Mail::Message::Head::Partial
-         |              `-- has many --> MM::Field
-         |              `-- has many --> MM::Field::Full
+         |             `-- has many --> MM::Field::Fast
+         |             `-- has many --> MM::Field::Full
          |
          `---has a---> Mail::Message::Body
                        | one of:
@@ -139,8 +139,8 @@ the message is located in a file.  Basically, only used Fields are cached
 until the whole header is needed for additions, deletes, or changes.
 
 The "Full" Fields have a very detailed, perfect handling of the RFCs.
-You will get them via C<study()> methods.  The default Field is sloppy:
-just text strings.
+You will get them via C<study()> methods.  The default Fast field is
+sloppy: just text strings.
 
 =section The Manager
 

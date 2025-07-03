@@ -36,9 +36,9 @@ sub folder($;$@)
 
     foreach (@_)
     {   my $f = File::Spec->catfile($dirname, $_);
-        open CREATE, ">$f" or die "Cannot create $f: $!\n";
-        $mbox->message($_)->print(\*CREATE) if m/^\d+$/;
-        close CREATE;
+        open my $create, ">", $f or die "Cannot create $f: $!\n";
+        $mbox->message($_)->print($create) if m/^\d+$/;
+        $create->close;
     }
     $dirname;
 }
