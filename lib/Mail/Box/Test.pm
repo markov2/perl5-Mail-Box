@@ -72,17 +72,17 @@ BEGIN {
 sub clean_dir($);
 sub clean_dir($)
 {   my $dir = shift;
-    local *DIR;
-    opendir DIR, $dir or return;
+    opendir my $dh, $dir or return;
 
-    my @items = map { m/(.*)/ && "$dir/$1" }   # untainted
-                    grep !/^\.\.?$/, readdir DIR;
+    my @items = map m/(.*)/ && "$dir/$1",   # untainted
+        grep !/^\.\.?$/, readdir $dh;
+
     foreach (@items)
     {   if(-d)  { clean_dir $_ }
         else    { unlink $_ }
     }
 
-    closedir DIR;
+    closedir $dh;
     rmdir $dir;
 }
 
@@ -95,15 +95,15 @@ sub clean_dir($)
 sub copy_dir($$)
 {   my ($orig, $dest) = @_;
 
-    clean_dir($dest);
+    clean_dir $dest;
 
     mkdir $dest
         or die "Cannot create copy destination $dest: $!\n";
 
-    opendir ORIG, $orig
+    opendir my $dh, $orig
         or die "Cannot open directory $orig: $!\n";
 
-    foreach my $name (map { !m/^\.\.?$/ && m/(.*)/ ? $1 : () } readdir ORIG)
+    foreach my $name (map { !m/^\.\.?$/ && m/(.*)/ ? $1 : () } readdir $dh)
     {   my $from = File::Spec->catfile($orig, $name);
         next if -d $from;
 
@@ -111,7 +111,7 @@ sub copy_dir($$)
         copy($from, $to) or die "Couldn't copy $from,$to: $!\n";
     }
 
-    close ORIG;
+    close $dh;
 }
 
 # UNPACK_MBOX2MH
@@ -121,9 +121,10 @@ sub copy_dir($$)
 
 sub unpack_mbox2mh($$)
 {   my ($file, $dir) = @_;
-    clean_dir($dir);
 
+    clean_dir $dir;
     mkdir $dir, 0700;
+
     my $count = 1;
     my $blank;
 
@@ -322,9 +323,9 @@ sub compare_thread_dumps($$$)
 
 sub listdir($)
 {   my $dir = shift;
-    opendir LISTDIR, $dir or return ();
-    my @entities = grep !/^\.\.?$/, readdir LISTDIR;
-    closedir LISTDIR;
+    opendir my $list, $dir or return ();
+    my @entities = grep !/^\.\.?$/, readdir $list;
+    closedir $list;
     @entities;
 }
 

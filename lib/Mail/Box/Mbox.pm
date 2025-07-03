@@ -100,11 +100,10 @@ sub foundIn($@)
     if(-d $filename)
     {   # Maildir and MH Sylpheed have a 'new' sub-directory
         return 0 if -d File::Spec->catdir($filename, 'new');
-        local *DIR;
-        if(opendir DIR, $filename)
-        {    my @f = grep !/^\./, readdir DIR;   # skip . .. and hidden
+        if(opendir my $dir, $filename)
+        {    my @f = grep !/^\./, readdir $dir;   # skip . .. and hidden
              return 0 if @f && ! grep /\D/, @f;              # MH
-             closedir DIR;
+             closedir $dir;
         }
 
         return 0                                             # Other MH

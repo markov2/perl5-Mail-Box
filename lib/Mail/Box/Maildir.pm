@@ -136,29 +136,30 @@ sub listSubFolders(@)
     # stored here.  Some directories have to be removed because they
     # are created by all kinds of programs, but are no folders.
 
-    return () unless -d $dir && opendir DIR, $dir;
+    -d $dir && opendir my $dh, $dir
+        or return ();
 
     my @dirs;
-    while(my $d = readdir DIR)
+    while(my $d = readdir $dh)
     {   next if $d =~ m/^(new|tmp|cur|\.\.?)$/;
 
         my $dir = "$dir/$d";
         push @dirs, $d if -d $dir && -r _;
     }
 
-    closedir DIR;
+    closedir $dh;
 
     # Skip empty folders.
 
-    @dirs = grep {!$class->folderIsEmpty("$dir/$_")} @dirs
+    @dirs = grep !$class->folderIsEmpty("$dir/$_"), @dirs
         if $args{skip_empty};
 
     # Check if the files we want to return are really folders.
 
     @dirs = map { m/(.*)/ && $1 } @dirs;  # untaint
-    return @dirs unless $args{check};
+    $args{check} or return @dirs;
 
-    grep { $class->foundIn("$dir/$_") } @dirs;
+    grep $class->foundIn("$dir/$_"), @dirs;
 }
 
 sub openSubFolder($@)
@@ -194,8 +195,8 @@ sub coerce($)
     my $new = "$dir/new/$basename";
 
     if($coerced->create($tmp) && $coerced->create($new))
-         {$self->log(PROGRESS => "Added Maildir message in $new") }
-    else {$self->log(ERROR    => "Cannot create Maildir message file $new.") }
+         { $self->log(PROGRESS => "Added Maildir message in $new") }
+    else { $self->log(ERROR    => "Cannot create Maildir message file $new.") }
 
     $coerced->labelsToFilename unless $is_native;
     $coerced;
@@ -231,16 +232,16 @@ sub createDirs($)
         unless -d $dir || mkdir $dir;
 
     my $tmp = "$dir/tmp";
-    $thing->log(ERROR => "Cannot create Maildir folder subdir $tmp: $!"), return
-        unless -d $tmp || mkdir $tmp;
+    -d $tmp || mkdir $tmp
+        or $thing->log(ERROR => "Cannot create Maildir folder subdir $tmp: $!"), return;
 
     my $new = "$dir/new";
-    $thing->log(ERROR => "Cannot create Maildir folder subdir $new: $!"), return
-        unless -d $new || mkdir $new;
+    -d $new || mkdir $new
+        or $thing->log(ERROR => "Cannot create Maildir folder subdir $new: $!"), return;
 
     my $cur = "$dir/cur";
-    $thing->log(ERROR =>  "Cannot create Maildir folder subdir $cur: $!"), return
-        unless -d $cur || mkdir $cur;
+    -d $cur || mkdir $cur
+        or $thing->log(ERROR =>  "Cannot create Maildir folder subdir $cur: $!"), return;
 
     $thing;
 }
@@ -262,23 +263,23 @@ sub folderIsEmpty($)
     {   my $subdir = "$dir/$_";
         next unless -d $subdir;
 
-        opendir DIR, $subdir or return 0;
-        my $first  = readdir DIR;
-        closedir DIR;
+        opendir my $dh, $subdir or return 0;
+        my $first  = readdir $dh;
+        closedir $dh;
 
         return 0 if defined $first;
     }
 
-    opendir DIR, $dir or return 1;
-    while(my $entry = readdir DIR)
+    opendir my $dh, $dir or return 1;
+    while(my $entry = readdir $dh)
     {   next if $entry =~
            m/^(?:tmp|cur|new|bulletin(?:time|lock)|seriallock|\..?)$/;
 
-        closedir DIR;
+        closedir $dh;
         return 0;
     }
 
-    closedir DIR;
+    closedir $dh;
     1;
 }
 
@@ -292,19 +293,18 @@ sub delete(@)
 sub readMessageFilenames
 {   my ($self, $dirname) = @_;
 
-    opendir DIR, $dirname or return ();
+    opendir my $dh, $dirname or return ();
 
     my @files;
     if(${^TAINT})
     {   # unsorted list of untainted filenames.
-        @files = map { m/^([0-9][\w.:,=\-]+)$/ && -f "$dirname/$1" ? $1 : () }
-                   readdir DIR;
+        @files = map +(m/^([0-9][\w.:,=\-]+)$/ && -f "$dirname/$1" ? $1 : ()), readdir $dh;
     }
     else
     {   # not running tainted
-        @files = grep /^([0-9][\w.:,=\-]+)$/ && -f "$dirname/$1", readdir DIR;
+        @files = grep m/^([0-9][\w.:,=\-]+)$/ && -f "$dirname/$1", readdir $dh;
     }
-    closedir DIR;
+    closedir $dh;
 
     # Sort the names.  Solve the Y2K (actually the 1 billion seconds
     # since 1970 bug) which hunts Maildir.  The timestamp, which is
@@ -315,8 +315,7 @@ sub readMessageFilenames
     m/^(\d+)/ and $unified{ ('0' x (10-length($1))).$_ } = $_
         for @files;
 
-    map "$dirname/$unified{$_}",
-        sort keys %unified;
+    map "$dirname/$unified{$_}", sort keys %unified;
 }
 
 sub readMessages(@)
@@ -434,11 +433,11 @@ sub appendMessages(@)
 
     my $self     = $class->new(@_, access => 'a');
     my $directory= $self->directory;
-    return unless -d $directory;
+    -d $directory or return;
 
     my $tmpdir   = "$directory/tmp";
-    croak "Cannot create directory $tmpdir: $!", return
-        unless -d $tmpdir || mkdir $tmpdir;
+    -d $tmpdir || mkdir $tmpdir
+        or croak "Cannot create directory $tmpdir: $!", return;
 
     my $msgtype  = $args{message_type} || 'Mail::Box::Maildir::Message';
 
@@ -460,18 +459,15 @@ sub appendMessages(@)
        my $new = "$dir/new/$basename";
 
        if($coerced->create($tmp) && $coerced->create($new))
-            {$self->log(PROGRESS => "Appended Maildir message in $new") }
-       else {$self->log(ERROR    =>
-                "Cannot append Maildir message in $new to folder $self.") }
+            { $self->log(PROGRESS => "Appended Maildir message in $new") }
+       else { $self->log(ERROR    => "Cannot append Maildir message in $new to folder $self.") }
     }
- 
-    $self->close;
 
+    $self->close;
     @messages;
 }
 
 #-------------------------------------------
-
 =chapter DETAILS
 
 The explanation is complicated, but for normal use you should bother

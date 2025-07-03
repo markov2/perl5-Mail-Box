@@ -163,28 +163,24 @@ sub foundIn($@)
     my $folderdir = $args{folderdir} || $default_folder_dir;
     my $directory = $class->folderToDirectory($name, $folderdir);
 
-    return 0 unless -d $directory;
-    return 1 if -f "$directory/1";
+    -d $directory or return 0;
+    -f "$directory/1" and return 1;  # cheap
 
     # More thorough search required in case some numbered messages
     # disappeared (lost at fsck or copy?)
 
-    return unless opendir DIR, $directory;
-    foreach (readdir DIR)
-    {   next unless m/^\d+$/;   # Look for filename which is a number.
-        closedir DIR;
+    opendir my $dh, $directory or return 0;
+    foreach (readdir $dh)
+    {   m/^[0-9]+$/ or next;   # Look for filename which is a number.
+        closedir $dh;
         return 1;
     }
 
-    closedir DIR;
+    closedir $dh;
     0;
 }
 
-#-------------------------------------------
-
 sub type() {'mh'}
-
-#-------------------------------------------
 
 sub listSubFolders(@)
 {   my ($class, %args) = @_;
@@ -206,12 +202,9 @@ sub listSubFolders(@)
     # stored here.  Some directories have to be removed because they
     # are created by all kinds of programs, but are no folders.
 
-    return () unless -d $dir && opendir DIR, $dir;
-
-    my @dirs = grep { !/^\d+$|^\./ && -d "$dir/$_" && -r _ }
-                   readdir DIR;
-
-    closedir DIR;
+    -d $dir && opendir my $dh, $dir or return ();
+    my @dirs = grep { !/^\d+$|^\./ && -d "$dir/$_" && -r _ } readdir $dh;
+    closedir $dh;
 
     # Skip empty folders.  If a folder has sub-folders, then it is not
     # empty.
@@ -225,9 +218,9 @@ sub listSubFolders(@)
                  next;
              }
 
-             opendir DIR, "$dir/$subdir" or next;
-             my @entities = grep !/^\./, readdir DIR;
-             closedir DIR;
+             opendir my $dh, "$dir/$subdir" or next;
+             my @entities = grep !/^\./, readdir $dh;
+             closedir $dh;
 
              if(grep /^\d+$/, @entities)   # message 1 was not there, but
              {   push @not_empty, $subdir; # other message-numbers exist.
@@ -235,11 +228,10 @@ sub listSubFolders(@)
              }
 
              foreach (@entities)
-             {   next unless -d "$dir/$subdir/$_";
+             {   -d "$dir/$subdir/$_" or next;
                  push @not_empty, $subdir;
                  last;
              }
-
          }
 
          @dirs = @not_empty;
@@ -248,30 +240,22 @@ sub listSubFolders(@)
     # Check if the files we want to return are really folders.
 
     @dirs = map { m/(.*)/ && $1 ? $1 : () } @dirs;   # untaint
-    return @dirs unless $args{check};
+    $args{check} or return @dirs;
 
-    grep { $class->foundIn("$dir/$_") } @dirs;
+    grep $class->foundIn("$dir/$_"), @dirs;
 }
-
-#-------------------------------------------
 
 sub openSubFolder($)
 {   my ($self, $name) = @_;
 
     my $subdir = $self->nameOfSubFolder($name);
-    unless(-d $subdir || mkdir $subdir, 0755)
-    {   warn "Cannot create subfolder $name for $self: $!\n";
-        return;
-    }
+    -d $subdir || mkdir $subdir, 0755
+        or warn("Cannot create subfolder $name for $self: $!\n"), return;
 
     $self->SUPER::openSubFolder($name, @_);
 }
 
-#-------------------------------------------
-
 sub topFolderWithMessages() { 1 }
-
-#-------------------------------------------
 
 =c_method appendMessages %options
 Append a message to a folder which is not open.
@@ -285,7 +269,6 @@ options (see M<new()>).
 =error Unable to write message for $folder to $filename: $!
 The new message could not be written to its new file, for the specific
 reason.
-
 =cut
 
 sub appendMessages(@)
@@ -300,21 +283,18 @@ sub appendMessages(@)
         or return ();
 
     my $directory= $self->directory;
-    return unless -d $directory;
+    -d $directory or return;
 
     my $locker   = $self->locker;
-    unless($locker->lock)
-    {   $self->log(ERROR => "Cannot append message without lock on $self.");
-        return;
-    }
+    $locker->lock
+        or $self->log(ERROR => "Cannot append message without lock on $self."), return;
 
     my $msgnr    = $self->highestMessageNumber +1;
 
     foreach my $message (@messages)
     {   my $filename = "$directory/$msgnr";
         $message->create($filename)
-           or $self->log(ERROR =>
-	           "Unable to write message for $self to $filename: $!\n");
+           or $self->log(ERROR => "Unable to write message for $self to $filename: $!\n");
 
         $msgnr++;
     }
@@ -329,16 +309,13 @@ sub appendMessages(@)
 }
 
 #-------------------------------------------
-
 =section Internals
 
 =method highestMessageNumber
-
 Returns the highest number which is used in the folder to store a file.
 This method may be called when the folder is read (then this number can
 be derived without file-system access), but also when the folder is not
 read (yet).
-
 =cut
 
 sub highestMessageNumber()
@@ -349,83 +326,64 @@ sub highestMessageNumber()
 
     my $directory    = $self->directory;
 
-    opendir DIR, $directory or return;
-    my @messages = sort {$a <=> $b} grep /^\d+$/, readdir DIR;
-    closedir DIR;
+    opendir my $dh, $directory or return;
+    my @messages = sort {$a <=> $b} grep /^[0-9]+$/, readdir $dh;
+    closedir $dh;
 
     $messages[-1];
 }
 
-#-------------------------------------------
-
 =method index
-
 Create a index reader/writer object.
-
 =cut
 
 sub index()
 {   my $self  = shift;
-    return () unless $self->{MBM_keep_index};
-    return $self->{MBM_index} if defined $self->{MBM_index};
+    $self->{MBM_keep_index} or return ();
 
-    $self->{MBM_index} = $self->{MBM_index_type}->new
-     ( filename  => $self->{MBM_index_filename}
-     , $self->logSettings
-     )
-
+    $self->{MBM_index} //= $self->{MBM_index_type}->new(
+        filename => $self->{MBM_index_filename},
+        $self->logSettings,
+    );
 }
 
-#-------------------------------------------
-
 =method labels
-
 Create a label reader/writer object.
-
 =cut
 
 sub labels()
-{   my $self   = shift;
-    return $self->{MBM_labels} if defined $self->{MBM_labels};
-
-    $self->{MBM_labels} = $self->{MBM_labels_type}->new
-      ( filename => $self->{MBM_labels_filename}
-      , $self->logSettings
-      );
+{   my $self = shift;
+    $self->{MBM_labels} //= $self->{MBM_labels_type}->new(
+        filename => $self->{MBM_labels_filename},
+        $self->logSettings,
+    );
 }
-
-#-------------------------------------------
 
 sub readMessageFilenames
 {   my ($self, $dirname) = @_;
 
-    opendir DIR, $dirname or return;
+    opendir my $dh, $dirname or return;
 
     # list of numerically sorted, untainted filenames.
-    my @msgnrs
-       = sort {$a <=> $b}
-            map { /^(\d+)$/ && -f "$dirname/$1" ? $1 : () }
-               readdir DIR;
+    my @msgnrs = sort {$a <=> $b}
+        map { /^(\d+)$/ && -f "$dirname/$1" ? $1 : () } readdir $dh;
 
-    closedir DIR;
-
+    closedir $dh;
     @msgnrs;
 }
-
-#-------------------------------------------
 
 sub readMessages(@)
 {   my ($self, %args) = @_;
 
     my $directory = $self->directory;
-    return unless -d $directory;
+    -d $directory or return;
 
-    my $locker = $self->locker;
+    my $locker    = $self->locker;
     $locker->lock or return;
 
-    my @msgnrs = $self->readMessageFilenames($directory);
+    my @msgnrs    = $self->readMessageFilenames($directory);
 
-    my $index  = $self->{MBM_index};
+    my $index     = $self->{MBM_index};
     unless($index)
     {   $index = $self->index;
         $index->read if $index;
@@ -442,19 +400,18 @@ sub readMessages(@)
     my @log         = $self->logSettings;
 
     foreach my $msgnr (@msgnrs)
-    {
-        my $msgfile = "$directory/$msgnr";
+    {   my $msgfile = "$directory/$msgnr";
 
         my $head;
         $head       = $index->get($msgfile) if $index;
         $head     ||= $head_type->new(@log);
 
         my $message = $args{message_type}->new
-         ( head       => $head
-         , filename   => $msgfile
-         , folder     => $self
-         , fix_header => $self->{MB_fix_headers}
-         );
+          ( head       => $head
+          , filename   => $msgfile
+          , folder     => $self
+          , fix_header => $self->{MB_fix_headers}
+          );
 
         my $labref  = $labels ? $labels->get($msgnr) : ();
         $message->label(seen => 1, $labref ? @$labref : ());
@@ -468,39 +425,33 @@ sub readMessages(@)
     $self;
 }
  
-#-------------------------------------------
-
 sub delete(@)
 {   my $self = shift;
     $self->SUPER::delete(@_);
 
     my $dir = $self->directory;
-    return 1 unless opendir DIR, $dir;
-    IO::Handle::untaint \*DIR;
+    opendir my $dh, $dir or return 1;
+    untaint $dh;
 
     # directories (subfolders) are not removed, as planned
-    unlink "$dir/$_" for readdir DIR;
-    closedir DIR;
+    unlink "$dir/$_" for readdir $dh;
+    closedir $dh;
 
     rmdir $dir;    # fails when there are subdirs (without recurse)
 }
 
-#-------------------------------------------
 
 =method writeMessages %options
 
 =option  renumber BOOLEAN
 =default renumber <true>
-
 Permit renumbering of message.  By default this is true, but for some
 unknown reason, you may be thinking that messages should not be renumbered.
 
 =error Cannot write folder $name without lock.
-
 It is impossible to get a lock on the folder, which means that the changes
 can not be made.  You may need to tune the lock related options which
 are available at folder creation.
-
 =cut
 
 sub writeMessages($)
@@ -513,8 +464,8 @@ sub writeMessages($)
     #       is on disk.
 
     my $locker    = $self->locker;
-    $self->log(ERROR => "Cannot write folder $self without lock."), return
-        unless $locker->lock;
+    $locker->lock
+        or $self->log(ERROR => "Cannot write folder $self without lock."), return;
 
     my $renumber  = exists $args->{renumber} ? $args->{renumber} : 1;
     my $directory = $self->directory;
@@ -522,8 +473,7 @@ sub writeMessages($)
 
     my $writer    = 0;
     foreach my $message (@messages)
-    {
-        my $filename = $message->filename;
+    {   my $filename = $message->filename;
 
         my $newfile;
         if($renumber || !$filename)
@@ -560,7 +510,6 @@ sub writeMessages($)
 }
 
 #-------------------------------------------
-
 =chapter DETAILS
 
 =section How MH folders work
