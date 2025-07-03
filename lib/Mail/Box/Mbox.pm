@@ -183,15 +183,13 @@ sub listSubFolders(@)
     }
 
     my $real  = -d $dir ? $dir : "$dir$extension";
-
-    opendir DIR, $real
-        or return ();
+    opendir my $dh, $real or return ();
 
     # Some files have to be removed because they are created by all
     # kinds of programs, but are no folders.
 
-    my @entries = grep !m/\.lo?ck$|^\./, readdir DIR;
-    closedir DIR;
+    my @entries = grep !m/\.lo?ck$|^\./, readdir $dh;
+    closedir $dh;
 
     # Look for files in the folderdir.  They should be readable to
     # avoid warnings for usage later.  Furthermore, if we check on
@@ -210,10 +208,10 @@ sub listSubFolders(@)
         elsif( -d _ )
         {   # Directories may create fake folders.
             if($args{skip_empty})
-            {   opendir DIR, $entry or next;
-                my @sub = grep !/^\./, readdir DIR;
-                closedir DIR;
-                next unless @sub;
+            {   opendir my $dh, $entry or next;
+                my @sub = grep !/^\./, readdir $dh;
+                closedir $dh;
+                @sub or next;
             }
 
             (my $folder = $_) =~ s/$extension$//;
