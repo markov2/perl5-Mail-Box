@@ -12,11 +12,9 @@ use Test::More tests => 1;
 
 my $crlf = "\015\012";
 
-open my $src,  '<', $unixsrc  or die "Cannot open $unixsrc to read: $!\n";
-binmode $src;
+open my $src,  '<:raw', $unixsrc  or die "Cannot open $unixsrc to read: $!\n";
 
-open my $dest, '>', $winsrc or die "Cannot open $winsrc for writing: $!\n";
-binmode $dest;
+open my $dest, '>:raw', $winsrc or die "Cannot open $winsrc for writing: $!\n";
 select $dest;
 
 until($src->eof)

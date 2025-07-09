@@ -62,32 +62,27 @@ Create a spam filter.  Internally, a M<Mail::SpamAssassin> object is
 maintained.
 
 =default in    C<'MESSAGE'>
-
 Only the whole message can be searched; this is a limitation of
 the M<Mail::SpamAssassin> module.
 
 =option  label STRING|undef
 =default label c<'spam'>
-
 Mark all selected message with the specified STRING.  If this
 option is explicitly set to C<undef>, the label will not be set.
 
 =option  rewrite_mail BOOLEAN
 =default rewrite_mail <true>
-
 Add lines to the message header describing the results of the spam
 scan. See M<Mail::SpamAssassin::PerMsgStatus::rewrite_mail()>.
 
 =option  spam_assassin OBJECT
 =default spam_assassin undef
-
 Provide a Mail::SpamAssassin object to be used for searching spam.  If
 none is specified, one is created internally.  The object can be
 retrieved with assassinator().
 
 =option  sa_options     HASH
 =default sa_options     C<{ }>
-
 Options to create the internal M<Mail::SpamAssassin> object; see its
 manual page for the available options.  Other setting may be provided
 via SpamAssassins configuration file mechanism, which is explained in
@@ -108,18 +103,12 @@ sub init($)
 
     $self->SUPER::init($args);
 
-    $self->{MBSS_rewrite_mail}
-       = defined $args->{rewrite_mail} ? $args->{rewrite_mail} : 1;
-
-    $self->{MBSS_sa}
-       = defined $args->{spamassassin} ? $args->{spamassassin}
-       : Mail::SpamAssassin->new($args->{sa_options} || {});
-
+    $self->{MBSS_rewrite_mail} = exists $args->{rewrite_mail} ? $args->{rewrite_mail} : 1;
+    $self->{MBSS_sa} = $args->{spamassassin} // Mail::SpamAssassin->new($args->{sa_options} // {});
     $self;
 }
 
 #-------------------------------------------
-
 =section Searching
 
 =method assassinator
@@ -131,16 +120,10 @@ to reach this object for complex configuration.
 
 sub assassinator() { shift->{MBSS_sa} }
 
-#-------------------------------------------
-
 sub searchPart($)
 {   my ($self, $message) = @_;
-
-    my @details = (message => $message);
-   
-    my $sa      = Mail::Message::Wrapper::SpamAssassin->new($message)
-        or return;
-
+    my @details = ( message => $message );
+    my $sa      = Mail::Message::Wrapper::SpamAssassin->new($message) or return;
     my $status  = $self->assassinator->check($sa);
 
     my $is_spam = $status->is_spam;
@@ -154,14 +137,7 @@ sub searchPart($)
     $is_spam;
 }
 
-#-------------------------------------------
-
 sub inHead(@) {shift->notImplemented}
-
-#-------------------------------------------
-
 sub inBody(@) {shift->notImplemented}
-
-#-------------------------------------------
 
 1;

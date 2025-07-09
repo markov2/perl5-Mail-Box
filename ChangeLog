@@ -10,6 +10,7 @@ version 3.012:
 	- remove all internal use of bareword file-handles.
 	- remove all internal use of bareword directory-handles.
 	- use s///r
+	- use defined-or
 
 version 3.011: Fri 18 Apr 18:33:17 CEST 2025
 

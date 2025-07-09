@@ -432,17 +432,14 @@ sub init($)
     $self->{MB_init_options} = $args->{init_options};
     $self->{MB_coerce_opts}  = $args->{coerce_options} || [];
     $self->{MB_access}       = $args->{access}         || 'r';
-    $self->{MB_remove_empty}
-         = defined $args->{remove_when_empty} ? $args->{remove_when_empty} : 1;
-
-    $self->{MB_save_on_exit}
-         = defined $args->{save_on_exit} ? $args->{save_on_exit} : 1;
+    $self->{MB_remove_empty} = exists $args->{remove_when_empty} ? $args->{remove_when_empty} : 1;
+    $self->{MB_save_on_exit} = exists $args->{save_on_exit} ? $args->{save_on_exit} : 1;
 
     $self->{MB_messages}     = [];
     $self->{MB_msgid}        = {};
-    $self->{MB_organization} = $args->{organization}      || 'FILE';
+    $self->{MB_organization} = $args->{organization} || 'FILE';
     $self->{MB_linesep}      = "\n";
-    $self->{MB_keep_dups}    = !$self->writable || $args->{keep_dups};
+    $self->{MB_keep_dups}    = ! $self->writable || $args->{keep_dups};
     $self->{MB_fix_headers}  = $args->{fix_headers};
 
     my $folderdir = $self->folderdir($args->{folderdir});
@@ -456,17 +453,13 @@ sub init($)
         weaken($self->{MB_manager});
     }
 
-    my $message_type = $self->{MB_message_type}
-        = $args->{message_type}     || $class . '::Message';
-    $self->{MB_body_type}
-        = $args->{body_type}        || 'Mail::Message::Body::Lines';
-    $self->{MB_body_delayed_type}
-        = $args->{body_delayed_type}|| 'Mail::Message::Body::Delayed';
-    $self->{MB_head_delayed_type}
-        = $args->{head_delayed_type}|| 'Mail::Message::Head::Delayed';
-    $self->{MB_multipart_type}
-        = $args->{multipart_type}   || 'Mail::Message::Body::Multipart';
-    $self->{MB_field_type}          = $args->{field_type};
+    my $message_type =
+        $self->{MB_message_type}  = $args->{message_type}      || $class . '::Message';
+    $self->{MB_body_type}         = $args->{body_type}         || 'Mail::Message::Body::Lines';
+    $self->{MB_body_delayed_type} = $args->{body_delayed_type} || 'Mail::Message::Body::Delayed';
+    $self->{MB_head_delayed_type} = $args->{head_delayed_type} || 'Mail::Message::Head::Delayed';
+    $self->{MB_multipart_type}    = $args->{multipart_type}    || 'Mail::Message::Body::Multipart';
+    $self->{MB_field_type}        = $args->{field_type};
 
     my $headtype     = $self->{MB_head_type}
         = $args->{head_type}        || 'Mail::Message::Head::Complete';
@@ -477,7 +470,7 @@ sub init($)
       : $extract eq 'ALWAYS'   ? sub {1}
       : $extract eq 'LAZY'     ? sub {0}
       : $extract eq 'NEVER'    ? sub {1}  # compatibility
-      : $extract =~ m/\D/      ? sub {no strict 'refs';shift->$extract(@_)}
+      : $extract =~ m/\D/      ? sub {no strict 'refs'; shift->$extract(@_)}
       :     sub { my $size = $_[1]->guessBodySize;
                   defined $size && $size < $extract;
                 };
@@ -1559,8 +1552,6 @@ as instance method, or specify a $parentname.
 sub nameOfSubFolder($;$)
 {   my ($thing, $name) = (shift, shift);
     my $parent = @_ ? shift : ref $thing ? $thing->name : undef;
-use Carp;
-$name or confess;
     defined $parent ? "$parent/$name" : $name;
 }
 

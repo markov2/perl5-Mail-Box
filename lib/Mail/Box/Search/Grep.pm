@@ -118,29 +118,30 @@ sub init($)
 
     my $deliver = $args->{deliver} || $args->{details};  # details is old name
     $args->{deliver}
-     = !defined $deliver       ? $deliver
-     : ref $deliver eq 'CODE'  ? $deliver
-     : $deliver eq 'PRINT'     ? sub { $_[0]->printMatch($_[1]) }
-     : ref $deliver eq 'ARRAY' ? sub { push @$deliver, $_[1] }
-     :                           $deliver;
+      = !defined $deliver       ? undef
+      : ref $deliver eq 'CODE'  ? $deliver
+      : $deliver eq 'PRINT'     ? sub { $_[0]->printMatch($_[1]) }
+      : ref $deliver eq 'ARRAY' ? sub { push @$deliver, $_[1] }
+      :                           $deliver;
 
     $self->SUPER::init($args);
 
     my $take = $args->{field};
     $self->{MBSG_field_check}
-     = !defined $take         ? sub {1}
-     : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
-     :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
-     :  ref $take eq 'CODE'   ? $take
-     : croak "Illegal field selector $take.";
+      = !defined $take         ? sub {1}
+      : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
+      :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
+      :  ref $take eq 'CODE'   ? $take
+      : croak "Illegal field selector $take.";
 
     my $match = $args->{match}
-       or croak "No match pattern specified.\n";
+        or croak "No match pattern specified.\n";
+
     $self->{MBSG_match_check}
-     = !ref $match             ? sub { index("$_[1]", $match) >= $[ }
-     :  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match } 
-     :  ref $match eq 'CODE'   ? $match
-     : croak "Illegal match pattern $match.";
+      = !ref $match             ? sub { index("$_[1]", $match) >= $[ }
+      :  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match } 
+      :  ref $match eq 'CODE'   ? $match
+      : croak "Illegal match pattern $match.";
 
     $self;
 }

@@ -117,10 +117,8 @@ sub init($)
     # Register all folder-types.  There may be some added later.
 
     my @new_types;
-    if(exists $args->{folder_types})
-    {   @new_types = ref $args->{folder_types}[0]
-                   ? @{$args->{folder_types}}
-                   : $args->{folder_types};
+    if(my $ft = $args->{folder_types})
+    {   @new_types = ref($ft->[0]) eq 'ARRAY' ? @$ft : $ft;
     }
 
     my @basic_types = reverse @basic_folder_types;
