@@ -40,7 +40,7 @@ to the message-id.
 
 =section Constructors
 
-=tie TIEHASH 'Mail::Box::Tie::HASH', FOLDER
+=tie %hash, 'Mail::Box::Tie::HASH', FOLDER
 
 Connects the FOLDER object to a HASH.
 

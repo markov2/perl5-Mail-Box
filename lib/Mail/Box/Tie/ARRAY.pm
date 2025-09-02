@@ -56,7 +56,7 @@ Examples what you I<cannot> do:
 
 =section Constructors
 
-=tie TIEARRAY 'Mail::Box::Tie::ARRAY', FOLDER
+=tie @array, 'Mail::Box::Tie::ARRAY', FOLDER
 
 Create the tie on an existing folder.
 
@@ -77,7 +77,6 @@ sub TIEARRAY(@)
 }
 
 #-------------------------------------------
-
 =section Tied Interface
 
 =method FETCH $index
