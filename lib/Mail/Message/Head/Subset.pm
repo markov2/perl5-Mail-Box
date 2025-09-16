@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Message::Head::Subset;
 use base 'Mail::Message::Head';
@@ -9,22 +10,23 @@ use strict;
 use warnings;
 
 use Object::Realize::Later
-    becomes        => 'Mail::Message::Head::Complete',
-    realize        => 'load',
-    believe_caller => 1;
+	becomes        => 'Mail::Message::Head::Complete',
+	realize        => 'load',
+	believe_caller => 1;
 
-use Date::Parse qw(str2time);
+use Date::Parse qw/str2time/;
 
+#--------------------
 =chapter NAME
 
 Mail::Message::Head::Subset - subset of header information of a message
 
 =chapter SYNOPSIS
 
- my $subset = Mail::Message::Head::Subset->new(...)
- $subset->isa('M<Mail::Message::Head>')  # true
- $subset->guessBodySize               # integer or undef
- $subset->isDelayed                   # true
+  my $subset = Mail::Message::Head::Subset->new(...)
+  $subset->isa('Mail::Message::Head')  # true
+  $subset->guessBodySize               # integer or undef
+  $subset->isDelayed                   # true
 
 =chapter DESCRIPTION
 
@@ -50,10 +52,10 @@ decided we know all of them, and loading is not needed.
 =cut
 
 sub count($)
-{   my ($self, $name) = @_;
-    my @values = $self->get($name)
-        or return $self->load->count($name);
-    scalar @values;
+{	my ($self, $name) = @_;
+	my @values = $self->get($name)
+		or return $self->load->count($name);
+	scalar @values;
 }
 
 =method get $name, [$index]
@@ -63,66 +65,65 @@ yet, realization will take place.
 =cut
 
 sub get($;$)
-{   my $self = shift;
- 
-    if(wantarray)
-    {   my @values = $self->SUPER::get(@_);
-        return @values if @values;
-    }
-    else
-    {   my $value  = $self->SUPER::get(@_);
-        return $value  if defined $value;
-    }
+{	my $self = shift;
 
-    $self->load->get(@_);
+	if(wantarray)
+	{	my @values = $self->SUPER::get(@_);
+		return @values if @values;
+	}
+	else
+	{	my $value  = $self->SUPER::get(@_);
+		return $value  if defined $value;
+	}
+
+	$self->load->get(@_);
 }
 
 
-#-------------------------------------------
+#--------------------
 =section About the body
 
 =method guessBodySize
 The body size is defined in the C<Content-Length> field.  However, this
 field may not be known.  In that case, a guess is made based on the known
-C<Lines> field.  When also that field is not known yet, C<undef> is returned.
+C<Lines> field.  When also that field is not known yet, undef is returned.
 =cut
 
 sub guessBodySize()
-{   my $self = shift;
+{	my $self = shift;
 
-    my $cl = $self->SUPER::get('Content-Length');
-    return $1 if defined $cl && $cl =~ m/(\d+)/;
+	my $cl = $self->SUPER::get('Content-Length');
+	return $1 if defined $cl && $cl =~ m/(\d+)/;
 
-    my $lines = $self->SUPER::get('Lines');   # 40 chars per lines
-    return $1*40 if defined $lines && $lines =~ m/(\d+)/;
+	my $lines = $self->SUPER::get('Lines');   # 40 chars per lines
+	return $1*40 if defined $lines && $lines =~ m/(\d+)/;
 
-    undef;
+	undef;
 }
 
-#-------------------------------------------
 # Be careful not to trigger loading: this is not the thoroughness
 # we want from this method.
 
 sub guessTimestamp()
-{   my $self = shift;
-    return $self->{MMHS_timestamp} if $self->{MMHS_timestamp};
+{	my $self = shift;
+	return $self->{MMHS_timestamp} if $self->{MMHS_timestamp};
 
-    my $stamp;
-    if(my $date = $self->SUPER::get('date'))
-    {   $stamp = str2time($date, 'GMT');
-    }
+	my $stamp;
+	if(my $date = $self->SUPER::get('date'))
+	{	$stamp = str2time($date, 'GMT');
+	}
 
-    unless($stamp)
-    {   foreach ($self->SUPER::get('received'))
-        {   $stamp = str2time($_, 'GMT');
-            last if $stamp;
-        }
-    }
+	unless($stamp)
+	{	foreach ($self->SUPER::get('received'))
+		{	$stamp = str2time($_, 'GMT');
+			last if $stamp;
+		}
+	}
 
-    $self->{MMHS_timestamp} = $stamp;
+	$self->{MMHS_timestamp} = $stamp;
 }
 
-#-------------------------------------------
+#--------------------
 =section Internals
 =cut
 

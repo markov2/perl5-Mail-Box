@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Thread::Node;
 use base 'Mail::Reporter';
@@ -10,15 +11,16 @@ use warnings;
 
 use Carp;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Thread::Node - one node in a message thread
 
 =chapter SYNOPSIS
 
- my $node = Mail::Box::Thread::Node->new;
- $node->addMessage($message);
- ...
+  my $node = Mail::Box::Thread::Node->new;
+  $node->addMessage($message);
+  ...
 
 =chapter DESCRIPTION
 
@@ -35,52 +37,51 @@ are stored in the same node.
 =chapter METHODS
 
 =c_method new %options
-You will not call this method yourself. The M<Mail::Box::Thread::Manager>
+You will not call this method yourself. The Mail::Box::Thread::Manager
 object will call it to construct C<Mail::Box::Thread::Node> objects.
-Either a C<message> or a C<messageId> must be supplied.
+Either a P<message> or a P<messageId> must be supplied.
 
-=option  message MESSAGE
+=option  message $message
 =default message undef
-The MESSAGE which is stored in this node.  The message
+The $message which is stored in this node.  The $message object
 must be a Mail::Box::Message.
 
-=option  messageId MESSAGE-ID
+=option  messageId $msgid
 =default messageId undef
-The MESSAGE-ID for the message which is stored in this node.  Only
+The $msgid for the message which is stored in this node.  Only
 specify it when you don't have the message yet.
 
-=option  dummy_type CLASS
+=option  dummy_type $class
 =default dummy_type undef
-Indicates the class name of dummy messages. Dummy messages are
-placeholders in a M<Mail::Box::Thread::Manager> data structure.
+Indicates the $class name of dummy messages. Dummy messages are
+placeholders in a Mail::Box::Thread::Manager data structure.
 
 =cut
 
 sub new(@)
-{   my ($class, %args) = @_;
-    (bless {}, $class)->init(\%args);
+{	my ($class, %args) = @_;
+	(bless {}, $class)->init(\%args);
 }
 
 sub init($)
-{   my ($self, $args) = @_;
+{	my ($self, $args) = @_;
 
-    if(my $message = $args->{message})
-    {   push @{$self->{MBTN_messages}}, $message;
-        $self->{MBTN_msgid} = $args->{msgid} || $message->messageId;
-    }
-    elsif(my $msgid = $args->{msgid})
-    {   $self->{MBTN_msgid} = $msgid;
-    }
-    else
-    {   croak "Need to specify message or message-id";
-    }
+	if(my $message = $args->{message})
+	{	push @{$self->{MBTN_messages}}, $message;
+		$self->{MBTN_msgid} = $args->{msgid} || $message->messageId;
+	}
+	elsif(my $msgid = $args->{msgid})
+	{	$self->{MBTN_msgid} = $msgid;
+	}
+	else
+	{	croak "Need to specify message or message-id";
+	}
 
-    $self->{MBTN_dummy_type} = $args->{dummy_type};
-    $self;
+	$self->{MBTN_dummy_type} = $args->{dummy_type};
+	$self;
 }
 
-#-------------------------------------------
-
+#--------------------
 =section The thread node
 
 =method message
@@ -88,51 +89,42 @@ Get the message which is stored in this thread node.  NOTE: the same
 message may be located in many folders at the same time, and these
 folders may be controlled by the same thread manager.
 
-In scalar context, this method returns the first instance of the
+In SCALAR context, this method returns the first instance of the
 message that is not deleted. If all instances are flagged for deletion,
 then you get the first deleted message. When the open folders only
 contain references to the message, but no instance, you get a dummy
-message (see M<Mail::Message::Dummy>).
+message (see Mail::Message::Dummy).
 
 In list context, all instances of the message which have been found are
 returned.
 
 =examples
 
- my $threads = $mgr->threads(folders => [$draft, $sent]);
- my $node    = $draft->message(1)->thread;
+  my $threads = $mgr->threads(folders => [$draft, $sent]);
+  my $node    = $draft->message(1)->thread;
 
- foreach my $instance ($node->message) {
-    print "Found in ", $instance->folder, ".\n";
- }
+  foreach my $instance ($node->message) {
+     print "Found in ", $instance->folder, ".\n";
+  }
 
- print "Subject is ", $node->message->subject, ".\n";
-   
+  print "Subject is ", $node->message->subject, ".\n";
+
 =cut
 
 sub message()
-{   my $self = shift;
+{	my $self = shift;
+	my $messages = $self->{MBTN_messages} ||= [];
 
-    unless($self->{MBTN_messages})
-    {   return () if wantarray;
+	unless(@$messages)
+	{	return () if wantarray;
 
-        my $dummy = $self->{MBTN_dummy_type}->new
-          ( messageId =>$self->{MBTN_msgid}
-          );
+		my $dummy = $self->{MBTN_dummy_type}->new(messageId => $self->{MBTN_msgid});
+		push @$messages, $dummy;
+		return $dummy;
+	}
 
-        push @{$self->{MBTN_messages}}, $dummy;
-        return $dummy;
-    }
-
-    my @messages = @{$self->{MBTN_messages}};
-    return @messages    if wantarray;
-    return $messages[0] if @messages==1;
-
-    foreach (@messages)
-    {   return $_ unless $_->isDeleted;
-    }
-
-    $messages[0];
+	return @$messages if wantarray;
+	(first { ! $_->isDeleted } @$messages) // $messages->[0];
 }
 
 =method addMessage $message
@@ -142,13 +134,13 @@ list.
 =cut
 
 sub addMessage($)
-{   my ($self, $message) = @_;
- 
-    return $self->{MBTN_messages} = [ $message ]
-        if $self->isDummy;
+{	my ($self, $message) = @_;
 
-    push @{$self->{MBTN_messages}}, $message;
-    $message;
+	return $self->{MBTN_messages} = [ $message ]
+		if $self->isDummy;
+
+	push @{$self->{MBTN_messages}}, $message;
+	$message;
 }
 
 =method isDummy
@@ -157,8 +149,8 @@ which has follow-ups but does not have a message.
 =cut
 
 sub isDummy()
-{   my $self = shift;
-    !defined $self->{MBTN_messages} || $self->{MBTN_messages}[0]->isDummy;
+{	my $self = shift;
+	!defined $self->{MBTN_messages} || $self->{MBTN_messages}[0]->isDummy;
 }
 
 =method messageId
@@ -166,7 +158,7 @@ Return the message-id related to this thread node.  Each of the messages
 listed in this node will have the same ID.
 =cut
 
-sub messageId() { shift->{MBTN_msgid} }
+sub messageId() { $_[0]->{MBTN_msgid} }
 
 =method expand [BOOLEAN]
 Returns whether this (part of the) folder has to be shown expanded or not.
@@ -175,19 +167,18 @@ store this.
 =cut
 
 sub expand(;$)
-{   my $self = shift;
-    return $self->message->label('folded') || 0
-        unless @_;
+{	my $self = shift;
+	@_ or return $self->message->label('folded') || 0;
 
-    my $fold = not shift;
-    $_->label(folded => $fold) foreach $self->message;
-    $fold;
+	my $fold = not shift;
+	$_->label(folded => $fold) for $self->message;
+	$fold;
 }
 
-sub folded(;$)    # compatibility <2.0
-{  @_ == 1 ? shift->expand : shift->expand(not shift) }
+# compatibility <2.0
+sub folded(;$) { my $s = shift; @_ ? $s->expand(not $_[0]) : $s->expand }
 
-#-------------------------------------------
+#--------------------
 =section The thread order
 
 =method repliedTo
@@ -195,7 +186,7 @@ Returns the message(s) to which the message in this node replies. In
 scalar context, this method will return the message to which the message
 in this node replies. This message object may be a dummy message.
 
-If the message seems to be the first message of a thread, the value C<undef>
+If the message seems to be the first message of a thread, the value undef
 is returned.  (Remember that some MUA are not adding reference information
 to the message's header, so you can never be sure a message is the
 start of a thread)
@@ -232,24 +223,21 @@ More constants may be added later.
 
 =examples
 
- my $question = $answer->repliedTo;
- my ($question, $quality) = $answer->repliedTo;
- if($question && $quality eq 'REPLY') { ... };
+  my $question = $answer->repliedTo;
+  my ($question, $quality) = $answer->repliedTo;
+  if($question && $quality eq 'REPLY') { ... };
 
 =cut
 
 sub repliedTo()
-{   my $self = shift;
-
-    return wantarray
-         ? ($self->{MBTN_parent}, $self->{MBTN_quality})
-         : $self->{MBTN_parent};
+{	my $self = shift;
+	wantarray ? ($self->{MBTN_parent}, $self->{MBTN_quality}) : $self->{MBTN_parent};
 }
 
 =method follows $thread, $quality
 Register that the current thread is a reply to the specified $thread. The
 $quality of the relation is specified by the second argument.  The method
-returns C<undef> if the link is not accepted in order to avoid circular
+returns undef if the link is not accepted in order to avoid circular
 references.
 
 The relation may be specified more than once, but only the most confident
@@ -260,37 +248,37 @@ new thread overrides the previous.
 =cut
 
 sub follows($$)
-{   my ($self, $thread, $how) = @_;
-    my $quality = $self->{MBTN_quality};
+{	my ($self, $thread, $how) = @_;
+	my $quality = $self->{MBTN_quality};
 
-    # Do not create cyclic constructs caused by erroneous refs.
+	# Do not create cyclic constructs caused by erroneous refs.
 
-    my $msgid = $self->messageId;       # Look up for myself, upwards in thread
-    for(my $walker = $thread; defined $walker; $walker = $walker->repliedTo)
-    {   return undef if $walker->messageId eq $msgid;
-    }
+	my $msgid = $self->messageId;       # Look up for myself, upwards in thread
+	for(my $walker = $thread; defined $walker; $walker = $walker->repliedTo)
+	{	return undef if $walker->messageId eq $msgid;
+	}
 
-    my $threadid = $thread->messageId;  # a->b and b->a  (ref order reversed)
-    foreach ($self->followUps)
-    {   return undef if $_->messageId eq $threadid;
-    }
+	my $threadid = $thread->messageId;  # a->b and b->a  (ref order reversed)
+	foreach ($self->followUps)
+	{	return undef if $_->messageId eq $threadid;
+	}
 
-    # Register
+	# Register
 
-    if($how eq 'REPLY' || !defined $quality)
-    {   $self->{MBTN_parent}  = $thread;
-        $self->{MBTN_quality} = $how;
-        return $self;
-    }
-    
-    return $self if $quality eq 'REPLY';
+	if($how eq 'REPLY' || !defined $quality)
+	{	$self->{MBTN_parent}  = $thread;
+		$self->{MBTN_quality} = $how;
+		return $self;
+	}
 
-    if($how eq 'REFERENCE' || ($how eq 'GUESS' && $quality ne 'REFERENCE'))
-    {   $self->{MBTN_parent}  = $thread;
-        $self->{MBTN_quality} = $how;
-    }
+	return $self if $quality eq 'REPLY';
 
-    $self;
+	if($how eq 'REFERENCE' || ($how eq 'GUESS' && $quality ne 'REFERENCE'))
+	{	$self->{MBTN_parent}  = $thread;
+		$self->{MBTN_quality} = $how;
+	}
+
+	$self;
 }
 
 =method followedBy $threads
@@ -304,9 +292,9 @@ be duplicated.
 =cut
 
 sub followedBy(@)
-{   my $self = shift;
-    $self->{MBTN_followUps}{$_->messageId} = $_ foreach @_;
-    $self;
+{	my $self = shift;
+	$self->{MBTN_followUps}{$_->messageId} = $_ foreach @_;
+	$self;
 }
 
 =method followUps
@@ -315,8 +303,8 @@ may contain parsed, not-parsed, and dummy messages.
 =cut
 
 sub followUps()
-{   my $self    = shift;
-    $self->{MBTN_followUps} ? values %{$self->{MBTN_followUps}} : ();
+{	my $self    = shift;
+	$self->{MBTN_followUps} ? values %{$self->{MBTN_followUps}} : ();
 }
 
 =method sortedFollowUps [$prepare, [$compare]]
@@ -326,15 +314,15 @@ startTimeEstimate().
 =cut
 
 sub sortedFollowUps()
-{   my $self    = shift;
-    my $prepare = shift || sub {shift->startTimeEstimate||0};
-    my $compare = shift || sub {(shift) <=> (shift)};
+{	my $self    = shift;
+	my $prepare = shift || sub { $_[0]->startTimeEstimate || 0 };
+	my $compare = shift || sub { $_[0] <=> $_[1]};
 
-    my %value   = map { ($prepare->($_) => $_) } $self->followUps;
-    map { $value{$_} } sort {$compare->($a, $b)} keys %value;
+	my %value   = map +($prepare->($_) => $_), $self->followUps;
+	map $value{$_}, sort { $compare->($a, $b) } keys %value;
 }
 
-#-------------------------------------------
+#--------------------
 =section On the whole thread
 
 Some convenience methods are added to threads, to simplify retrieving
@@ -354,66 +342,65 @@ In the first example below, this routine is called seven times.
 
 =examples
 
- print $node->threadToString;
+  print $node->threadToString;
 
 may result in
 
- Subject of this message
- |- Re: Subject of this message
- |-*- Re: Re: Subject of this message
- | |- Re(2) Subject of this message
- | |- [3] Re(2) Subject of this message
- | `- Re: Subject of this message (reply)
- `- Re: Subject of this message
+  Subject of this message
+  |- Re: Subject of this message
+  |-*- Re: Re: Subject of this message
+  | |- Re(2) Subject of this message
+  | |- [3] Re(2) Subject of this message
+  | `- Re: Subject of this message (reply)
+  `- Re: Subject of this message
 
 The `*' represents a missing message (a "dummy" message).  The `[3]'
 presents a folded thread with three messages.
 
- print $node->threadToString(\&show);
+  print $node->threadToString(\&show);
 
- sub show($) {
-    my $message = shift;
-    my $subject = $message->head->get('subject');
-    length $subject ? $subject : '<no subject>';
- }
+  sub show($) {
+     my $message = shift;
+     my $subject = $message->head->get('subject');
+     length $subject ? $subject : '<no subject>';
+  }
 
 =cut
 
 sub threadToString(;$$$)   # two undocumented parameters for layout args
-{   my $self    = shift;
-    my $code    = shift || sub {shift->head->study('subject')};
-    my ($first, $other) = (shift || '', shift || '');
-    my $message = $self->message;
-    my @follows = $self->sortedFollowUps;
+{	my $self    = shift;
+	my $code    = shift || sub {shift->head->study('subject')};
+	my ($first, $other) = (shift || '', shift || '');
+	my $message = $self->message;
+	my @follows = $self->sortedFollowUps;
 
-    my @out;
-    if($self->folded)
-    {   my $text = $code->($message) || '';
-        chomp $text;
-        return "    $first [" . $self->nrMessages . "] $text\n";
-    }
-    elsif($message->isDummy)
-    {   $first .= $first ? '-*-' : ' *-';
-        return (shift @follows)->threadToString($code, $first, "$other   " )
-            if @follows==1;
+	my @out;
+	if($self->folded)
+	{	my $text = $code->($message) || '';
+		chomp $text;
+		return "    $first [" . $self->nrMessages . "] $text\n";
+	}
+	elsif($message->isDummy)
+	{	$first .= $first ? '-*-' : ' *-';
+		return (shift @follows)->threadToString($code, $first, "$other   " )
+			if @follows==1;
 
-        push @out, (shift @follows)->threadToString($code, $first, "$other | " )
-            while @follows > 1;
-    }
-    else
-    {   my $text  = $code->($message) || '';
-        chomp $text;
-        my $size  = $message->shortSize;
-        @out = "$size$first $text\n";
-        push @out, (shift @follows)
-                       ->threadToString($code, "$other |-", "$other | " )
-            while @follows > 1;
-    }
+		push @out, (shift @follows)->threadToString($code, $first, "$other | " )
+			while @follows > 1;
+	}
+	else
+	{	my $text  = $code->($message) || '';
+		chomp $text;
+		my $size  = $message->shortSize;
+		@out = "$size$first $text\n";
+		push @out, (shift @follows)->threadToString($code, "$other |-", "$other | " )
+			while @follows > 1;
+	}
 
-    push @out, (shift @follows)->threadToString($code, "$other `-","$other   " )
-        if @follows;
+	push @out, (shift @follows)->threadToString($code, "$other `-","$other   " )
+		if @follows;
 
-    join '', @out;
+	join '', @out;
 }
 
 =method startTimeEstimate
@@ -426,20 +413,16 @@ estimated timestamp of the node's message is returned.
 =cut
 
 sub startTimeEstimate()
-{   my $self = shift;
+{	my $self = shift;
+	$self->isDummy or return $self->message->timestamp;
 
-    return $self->message->timestamp
-        unless $self->isDummy;
+	my $earliest;
+	foreach ($self->followUps)
+	{	my $stamp = $_->startTimeEstimate;
+		$earliest = $stamp if !defined $earliest || (defined $stamp && $stamp < $earliest);
+	}
 
-    my $earliest;
-    foreach ($self->followUps)
-    {   my $stamp = $_->startTimeEstimate;
-
-        $earliest = $stamp
-	    if !defined $earliest || (defined $stamp && $stamp < $earliest);
-    }
-
-    $earliest;
+	$earliest;
 }
 
 =method endTimeEstimate
@@ -448,19 +431,18 @@ know for sure whether there fill follow messages in the future).
 =cut
 
 sub endTimeEstimate()
-{   my $self = shift;
+{	my $self = shift;
 
-    my $latest;
-    $self->recurse
-     (  sub { my $node = shift;
-              unless($node->isDummy)
-              {   my $stamp = $node->message->timestamp;
-                  $latest = $stamp if !$latest || $stamp > $latest;
-              }
-            }
-     );
+	my $latest;
+	$self->recurse( sub {
+		my $node = shift;
+		return 1 if $node->isDummy;
+		my $stamp = $node->message->timestamp;
+		$latest   = $stamp if !$latest || $stamp > $latest;
+		1;
+	});
 
-    $latest;
+	$latest;
 }
 
 =method recurse CODE
@@ -471,14 +453,14 @@ only argument.
 =cut
 
 sub recurse($)
-{   my ($self, $code) = @_;
+{	my ($self, $code) = @_;
 
-    $code->($self) or return $self;
+	$code->($self) or return $self;
 
-    $_->recurse($code) or last
-        foreach $self->followUps;
+	$_->recurse($code) or last
+		for $self->followUps;
 
-    $self;
+	$self;
 }
 
 =method totalSize
@@ -486,17 +468,16 @@ Returns the sum of the size of all the messages in the thread.
 =cut
 
 sub totalSize()
-{   my $self  = shift;
-    my $total = 0;
+{	my $self  = shift;
+	my $total = 0;
 
-    $self->recurse
-     ( sub {
-          my @msgs = shift->messages;
-          $total += $msgs[0]->size if @msgs;
-          1;}
-     );
+	$self->recurse(sub {
+		my @msgs = shift->messages;
+		$total += $msgs[0]->size if @msgs;
+		1;
+	});
 
-    $total;
+	$total;
 }
 
 =method numberOfMessages
@@ -505,10 +486,10 @@ not counting the dummies.
 =cut
 
 sub numberOfMessages()
-{   my $self  = shift;
-    my $total = 0;
-    $self->recurse( sub {++$total unless shift->isDummy; 1} );
-    $total;
+{	my $self  = shift;
+	my $total = 0;
+	$self->recurse( sub { ++$total unless shift->isDummy; 1 } );
+	$total;
 }
 
 sub nrMessages() {shift->numberOfMessages}  # compatibility
@@ -518,46 +499,34 @@ Returns all the messages in the thread starting at the current thread
 node.  This list will not include dummies.
 
 =example
- my @t = $folder->message(3)
-                ->threadStart
-                ->threadMessages;
+  my @t = $folder->message(3)->threadStart->threadMessages;
 =cut
 
 sub threadMessages()
-{   my $self = shift;
-    my @messages;
-    $self->recurse
-     ( sub
-       { my $node = shift;
-         push @messages, $node->message unless $node->isDummy;
-         1;
-       }
-     );
+{	my $self = shift;
+	my @messages;
+	$self->recurse( sub {
+		my $node = shift;
+		push @messages, $node->message unless $node->isDummy;
+		1;
+	});
 
-    @messages;
+	@messages;
 }
-
 
 =method ids
 Returns all the ids in the thread starting at the current thread node.
 
 =examples
- $newfolder->addMessages($folder->ids($thread->ids));
- $folder->delete($thread->ids);
+  $newfolder->addMessages($folder->ids($thread->ids));
+  $folder->delete($thread->ids);
 =cut
 
 sub ids()
-{   my $self = shift;
-    my @ids;
-    $self->recurse( sub {push @ids, shift->messageId} );
-    @ids;
+{	my $self = shift;
+	my @ids;
+	$self->recurse( sub {push @ids, shift->messageId} );
+	@ids;
 }
-
-#-------------------------------------------
-
-=section Error handling
-
-=cut
-
 
 1;

@@ -1,24 +1,28 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Mbox;
-use base 'Mail::Box::File';
+use parent 'Mail::Box::File';
 
 use strict;
 use warnings;
 use filetest 'access';
 
-use Mail::Box::Mbox::Message;
+use Mail::Box::Mbox::Message ();
 
+use File::Spec::Functions    qw/catdir catfile/;
+
+#--------------------
 =chapter NAME
 
 Mail::Box::Mbox - handle folders in Mbox format
 
 =chapter SYNOPSIS
 
- use Mail::Box::Mbox;
- my $folder = Mail::Box::Mbox->new(folder => $ENV{MAIL}, ...);
+  use Mail::Box::Mbox;
+  my $folder = Mail::Box::Mbox->new(folder => $ENV{MAIL}, ...);
 
 =chapter DESCRIPTION
 
@@ -29,7 +33,7 @@ what you can do with the Mbox folder object Mail::Box::Mbox.
 
 =c_method new %options
 
-=default message_type M<Mail::Box::Mbox::Message>
+=default message_type Mail::Box::Mbox::Message
 
 =option  subfolder_extension STRING
 =default subfolder_extension C<'.d'>
@@ -43,12 +47,12 @@ our $default_folder_dir    = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
 our $default_sub_extension = '.d';
 
 sub init($)
-{   my ($self, $args) = @_;
+{	my ($self, $args) = @_;
 
-    $self->{MBM_sub_ext}    # required during init
-        = $args->{subfolder_extension} || $default_sub_extension;
+    # required during init
+	$self->{MBM_sub_ext} = $args->{subfolder_extension} || $default_sub_extension;
 
-    $self->SUPER::init($args);
+	$self->SUPER::init($args);
 }
 
 =ci_method create $foldername, %options
@@ -63,16 +67,23 @@ is passed to M<folderToFilename()>.
 =cut
 
 sub create($@)
-{   my ($thingy, $name, %args) = @_;
-    my $class = ref $thingy    || $thingy;
-    $args{folderdir}           ||= $default_folder_dir;
-    $args{subfolder_extension} ||= $default_sub_extension;
+{	my ($thingy, $name, %args) = @_;
+	my $class = ref $thingy    || $thingy;
+	$args{folderdir}           ||= $default_folder_dir;
+	$args{subfolder_extension} ||= $default_sub_extension;
 
-    $class->SUPER::create($name, %args);
+	$class->SUPER::create($name, %args);
 }
 
+#--------------------
+=section Attributes
+=method subfolderExtension
+=cut
+
+sub subfolderExtension() { $_[0]->{MBM_sub_ext} }
+
 =c_method foundIn [$foldername], %options
-If no $foldername is specified, then the value of the C<folder> option
+If no $foldername is specified, then the value of the P<folder> option
 is taken.  A mbox folder is a file which starts with a separator
 line: a line with C<'From '> as first characters.  Blank lines which
 start the file are ignored, which is not for all MUA's acceptable.
@@ -85,65 +96,65 @@ start the file are ignored, which is not for all MUA's acceptable.
 =cut
 
 sub foundIn($@)
-{   my $class = shift;
-    my $name  = @_ % 2 ? shift : undef;
-    my %args  = @_;
-    $name   ||= $args{folder} or return;
+{	my $class = shift;
+	my $name  = @_ % 2 ? shift : undef;
+	my %args  = @_;
+	$name   ||= $args{folder} or return;
 
-    my $folderdir = $args{folderdir} || $default_folder_dir;
-    my $extension = $args{subfolder_extension} || $default_sub_extension;
-    my $filename  = $class->folderToFilename($name, $folderdir, $extension);
+	my $folderdir = $args{folderdir} || $default_folder_dir;
+	my $extension = $args{subfolder_extension} || $default_sub_extension;
+	my $filename  = $class->folderToFilename($name, $folderdir, $extension);
 
-    if(-d $filename)
-    {   # Maildir and MH Sylpheed have a 'new' sub-directory
-        return 0 if -d File::Spec->catdir($filename, 'new');
-        if(opendir my $dir, $filename)
-        {    my @f = grep !/^\./, readdir $dir;   # skip . .. and hidden
-             return 0 if @f && ! grep /\D/, @f;              # MH
-             closedir $dir;
-        }
+	if(-d $filename)
+	{	# Maildir and MH Sylpheed have a 'new' sub-directory
+		return 0 if -d catdir $filename, 'new';
+		if(opendir my $dir, $filename)
+		{	my @f = grep !/^\./, readdir $dir;   # skip . .. and hidden
+			return 0 if @f && ! grep /\D/, @f;              # MH
+			closedir $dir;
+		}
 
-        return 0                                             # Other MH
-            if -f "$filename/.mh_sequences";
+		return 0                                             # Other MH
+			if -f "$filename/.mh_sequences";
 
-        return 1;      # faked empty Mbox sub-folder (with subsub-folders?)
-    }
+		return 1;      # faked empty Mbox sub-folder (with subsub-folders?)
+	}
 
-    return 0 unless -f $filename;
-    return 1 if -z $filename;               # empty folder is ok
+	return 0 unless -f $filename;
+	return 1 if -z $filename;               # empty folder is ok
 
-    open my $file, '<:raw', $filename or return 0;
-    local $_;
-    while(<$file>)
-    {   next if /^\s*$/;                    # skip empty lines
-        $file->close;
-        return substr($_, 0, 5) eq 'From '; # found Mbox separator?
-    }
+	open my $file, '<:raw', $filename or return 0;
+	local $_;
+	while(<$file>)
+	{	next if /^\s*$/;                    # skip empty lines
+		$file->close;
+		return substr($_, 0, 5) eq 'From '; # found Mbox separator?
+	}
 
-    return 1;
+	return 1;
 }
 
 sub delete(@)
-{   my $self = shift;
-    $self->SUPER::delete(@_);
+{	my $self = shift;
+	$self->SUPER::delete(@_);
 
-    my $subfdir = $self->filename . $default_sub_extension;
-    rmdir $subfdir;   # may fail, when there are still subfolders (no recurse)
+	my $subfdir = $self->filename . $default_sub_extension;
+	rmdir $subfdir;   # may fail, when there are still subfolders (no recurse)
 }
 
 sub writeMessages($)
-{   my ($self, $args) = @_;
+{	my ($self, $args) = @_;
 
-    $self->SUPER::writeMessages($args) or return;
+	$self->SUPER::writeMessages($args) or return;
 
-    if($self->{MB_remove_empty})
-    {   # Can the sub-folder directory be removed?  Don't mind if this
-        # doesn't work: probably no subdir or still something in it.  This
-        # is a rather blunt approach...
-        rmdir $self->filename . $self->{MBM_sub_ext};
-    }
+	if($self->removeEmpty)
+	{	# Can the sub-folder directory be removed?  Don't mind if this
+		# doesn't work: probably no subdir or still something in it.  This
+		# is a rather blunt approach...
+		rmdir $self->filename . $self->subfolderExtension;
+	}
 
-    $self;
+	$self;
 }
 
 sub type() {'mbox'}
@@ -156,77 +167,71 @@ used to detect sub-folders by default.  Otherwise, C<'.d'> is taken.
 =cut
 
 sub listSubFolders(@)
-{   my ($thingy, %args)  = @_;
-    my $class      = ref $thingy || $thingy;
+{	my ($thingy, %args)  = @_;
+	my $class      = ref $thingy || $thingy;
 
-    my $skip_empty = $args{skip_empty} || 0;
-    my $check      = $args{check}      || 0;
+	my $skip_empty = $args{skip_empty} || 0;
+	my $check      = $args{check}      || 0;
+	my $folder     = $args{folder}     // '=';
+	my $folderdir  = $args{folderdir}  // $default_folder_dir;
+	my $extension  = $args{subfolder_extension};
 
-    my $folder     = exists $args{folder} ? $args{folder} : '=';
-    my $folderdir  = exists $args{folderdir}
-                   ? $args{folderdir}
-                   : $default_folder_dir;
+	my $dir;
+	if(ref $thingy)   # Mail::Box::Mbox
+	{	$extension ||= $thingy->subfolderExtension;
+		$dir = $thingy->filename;
+	}
+	else
+	{	$extension ||= $default_sub_extension;
+		$dir = $class->folderToFilename($folder, $folderdir, $extension);
+	}
 
-    my $extension  = $args{subfolder_extension};
+	my $real  = -d $dir ? $dir : "$dir$extension";
+	opendir my $dh, $real or return ();
 
-    my $dir;
-    if(ref $thingy)   # Mail::Box::Mbox
-    {    $extension ||= $thingy->{MBM_sub_ext};
-         $dir = $thingy->filename;
-    }
-    else
-    {    $extension ||= $default_sub_extension;
-         $dir = $class->folderToFilename($folder, $folderdir, $extension);
-    }
+	# Some files have to be removed because they are created by all
+	# kinds of programs, but are no folders.
 
-    my $real  = -d $dir ? $dir : "$dir$extension";
-    opendir my $dh, $real or return ();
+	my @entries = grep !m/\.lo?ck$|^\./, readdir $dh;
+	closedir $dh;
 
-    # Some files have to be removed because they are created by all
-    # kinds of programs, but are no folders.
+	# Look for files in the folderdir.  They should be readable to
+	# avoid warnings for usage later.  Furthermore, if we check on
+	# the size too, we avoid a syscall especially to get the size
+	# of the file by performing that check immediately.
 
-    my @entries = grep !m/\.lo?ck$|^\./, readdir $dh;
-    closedir $dh;
+	my %folders;  # hash to immediately un-double names.
 
-    # Look for files in the folderdir.  They should be readable to
-    # avoid warnings for usage later.  Furthermore, if we check on
-    # the size too, we avoid a syscall especially to get the size
-    # of the file by performing that check immediately.
+	foreach my $b (@entries)
+	{	my $entry = catfile $real, $b;
+		if( -f $entry )
+		{	next if $args{skip_empty} && ! -s _;
+			next if $args{check} && !$class->foundIn($entry);
+			$folders{$b}++;
+		}
+		elsif( -d _ )
+		{	# Directories may create fake folders.
+			if($args{skip_empty})
+			{	opendir my $dh, $entry or next;
+				my @sub = grep !/^\./, readdir $dh;
+				closedir $dh;
+				@sub or next;
+			}
 
-    my %folders;  # hash to immediately un-double names.
+			my $folder = $b =~ s/$extension$//r;
+			$folders{$folder}++;
+		}
+	}
 
-    foreach (@entries)
-    {   my $entry = File::Spec->catfile($real, $_);
-        if( -f $entry )
-        {   next if $args{skip_empty} && ! -s _;
-            next if $args{check} && !$class->foundIn($entry);
-            $folders{$_}++;
-        }
-        elsif( -d _ )
-        {   # Directories may create fake folders.
-            if($args{skip_empty})
-            {   opendir my $dh, $entry or next;
-                my @sub = grep !/^\./, readdir $dh;
-                closedir $dh;
-                @sub or next;
-            }
-
-            my $folder = $_ =~ s/$extension$//r;
-            $folders{$folder}++;
-        }
-    }
-
-    map +(m/(.*)/ && $1), keys %folders;   # untained names
+	map +(m/(.*)/ && $1), keys %folders;   # untained names
 }
 
 sub openRelatedFolder(@)
-{   my $self = shift;
-    $self->SUPER::openRelatedFolder(subfolder_extension => $self->{MBM_sub_ext}
-      , @_);
+{	my $self = shift;
+	$self->SUPER::openRelatedFolder(subfolder_extension => $self->subfolderExtension, @_);
 }
 
-#-------------------------------------------
-
+#--------------------
 =section Internals
 
 =ci_method folderToFilename $foldername, $folderdir, [$extension]
@@ -237,31 +242,25 @@ Otherwise, the extension default to C<'.d'>.
 =cut
 
 sub folderToFilename($$;$)
-{   my ($thingy, $name, $folderdir, $extension) = @_;
+{	my ($thingy, $name, $folderdir, $extension) = @_;
+	$extension ||= ref $thingy ? $thingy->subfolderExtension : $default_sub_extension;
 
-    $extension ||=
-          ref $thingy ? $thingy->{MBM_sub_ext} : $default_sub_extension;
+	$name     =~ s#^=#$folderdir/#;
+	my @parts = split m!/!, $name;
 
-    $name     =~ s#^=#$folderdir/#;
-    my @parts = split m!/!, $name;
+	my $real  = shift @parts;
+	$real     = '/' if $real eq '';
 
-    my $real  = shift @parts;
-    $real     = '/' if $real eq '';
+	if(@parts)
+	{	my $file  = pop @parts;
+		$real = catdir  $real.(-d $real ? '' : $extension), $_ for @parts;
+		$real = catfile $real.(-d $real ? '' : $extension), $file;
+	}
 
-    if(@parts)
-    {   my $file  = pop @parts;
-
-        $real = File::Spec->catdir($real.(-d $real ? '' : $extension), $_) 
-            foreach @parts;
-
-        $real = File::Spec->catfile($real.(-d $real ? '' : $extension), $file);
-    }
-
-    $real;
+	$real;
 }
 
-#-------------------------------------------
-
+#--------------------
 =chapter DETAILS
 
 =section How MBOX folders work
@@ -282,13 +281,13 @@ MBOX folders do not have a sub-folder concept as directory based folders
 do, but this MBOX module tries to simulate them.  In this implementation
 a directory like
 
- Mail/subject1/
+  Mail/subject1/
 
 is taken as an empty folder C<Mail/subject1>, with the folders in that
 directory as sub-folders for it.  You may also use
 
- Mail/subject1
- Mail/subject1.d/
+  Mail/subject1
+  Mail/subject1.d/
 
 where C<Mail/subject1> is the folder, and the folders in the
 C<Mail/subject1.d> directory are used as sub-folders.  If your situation

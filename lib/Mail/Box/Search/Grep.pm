@@ -1,6 +1,18 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
+
+#oorestyle: not found P for c_method new($head)
+#oorestyle: not found P for c_method new($body)
+#oorestyle: not found P for c_method new($head)
+#oorestyle: not found P for c_method new($body)
+#oorestyle: not found P for c_method new($field)
+#oorestyle: not found P for c_method new($line)
+#oorestyle: not found P for c_method new($linenr)
+#oorestyle: not found P for c_method new($field)
+#oorestyle: not found P for c_method new($line)
+#oorestyle: not found P for c_method new($linenr)
 
 package Mail::Box::Search::Grep;
 use base 'Mail::Box::Search';
@@ -10,31 +22,30 @@ use warnings;
 
 use Carp;
 
-#-------------------------------------------
-
+#--------------------
 =chapter NAME
 
 Mail::Box::Search::Grep - select messages within a mail box like grep does
 
 =chapter SYNOPSIS
 
- use Mail::Box::Manager;
- my $mgr    = Mail::Box::Manager->new;
- my $folder = $mgr->open('Inbox');
+  use Mail::Box::Manager;
+  my $mgr    = Mail::Box::Manager->new;
+  my $folder = $mgr->open('Inbox');
 
- my $filter = Mail::Box::Search::Grep->new
-    ( label => 'selected'
-    , in => 'BODY', match => qr/abc?d*e/
-    );
+  my $filter = Mail::Box::Search::Grep->new(
+     label => 'selected',
+     in => 'BODY', match => qr/abc?d*e/
+  );
 
- my @msgs   = $filter->search($folder);
+  my @msgs   = $filter->search($folder);
 
- my $filter = Mail::Box::Search::Grep->new
-   ( field => 'To'
-   , match => $my_email
-   );
+  my $filter = Mail::Box::Search::Grep->new(
+    field => 'To',
+    match => $my_email,
+  );
 
- if($filter->search($message)) {...}
+  if($filter->search($message)) {...}
 
 =chapter DESCRIPTION
 
@@ -57,14 +68,13 @@ Create a UNIX-grep like search filter.
 
 =option  deliver undef|CODE|'DELETE'|LABEL|'PRINT'|REF-ARRAY
 =default deliver undef
-
 Store the details about where the match was found.  The search may take
 much longer when this feature is enabled.
 
 When an ARRAY is specified it will contain a list of references to hashes.
 Each hash contains the information of one match.  A match in a header
-line will result in a line with fields C<message>, C<part>, and C<field>, where
-the field is a M<Mail::Message::Field> object.  When the match is in
+line will result in a line with fields C<message>, C<part>, and P<field>, where
+the field is a Mail::Message::Field object.  When the match is in
 the body the hash will contain a C<message>, C<part>, C<linenr>, and C<line>.
 
 In case of a CODE reference, that routine is called for each match. The
@@ -82,8 +92,7 @@ is matched, the whole message will be flagged for deletion.
 
 =option  field undef|STRING|REGEX|CODE
 =default field undef
-
-Not valid in combination with C<in> set to C<BODY>.
+Not valid in combination with P<in> set to C<BODY>.
 The STRING is one full field name (case-insensitive).  Use a REGEX
 to select more than one header line to be scanned. CODE is a routine which
 is called for each field in the header.   The CODE is called with the header
@@ -99,8 +108,8 @@ fields.
 With a CODE reference, that function will be called each field or body-line.
 When the result is true, the details are delivered.  The call formats are
 
- $code->($head, $field);          # for HEAD searches
- $code->($body, $linenr, $line);  # for BODY searches
+  $code->($head, $field);          # for HEAD searches
+  $code->($body, $linenr, $line);  # for BODY searches
 
 The C<$head> resp C<$body> are one message's head resp. body object.  The
 C<$field> is a header line which matches.  The C<$line> and C<$linenr>
@@ -112,147 +121,142 @@ both formats.
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
+{	my ($self, $args) = @_;
 
-    $args->{in} ||= ($args->{field} ? 'HEAD' : 'BODY');
+	$args->{in} ||= ($args->{field} ? 'HEAD' : 'BODY');
 
-    my $deliver = $args->{deliver} || $args->{details};  # details is old name
-    $args->{deliver}
-      = !defined $deliver       ? undef
-      : ref $deliver eq 'CODE'  ? $deliver
-      : $deliver eq 'PRINT'     ? sub { $_[0]->printMatch($_[1]) }
-      : ref $deliver eq 'ARRAY' ? sub { push @$deliver, $_[1] }
-      :                           $deliver;
+	my $deliver = $args->{deliver} || $args->{details};  # details is old name
+	$args->{deliver}
+	  = !defined $deliver       ? undef
+	  : ref $deliver eq 'CODE'  ? $deliver
+	  : $deliver eq 'PRINT'     ? sub { $_[0]->printMatch($_[1]) }
+	  : ref $deliver eq 'ARRAY' ? sub { push @$deliver, $_[1] }
+	  :   $deliver;
 
-    $self->SUPER::init($args);
+	$self->SUPER::init($args);
 
-    my $take = $args->{field};
-    $self->{MBSG_field_check}
-      = !defined $take         ? sub {1}
-      : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
-      :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
-      :  ref $take eq 'CODE'   ? $take
-      : croak "Illegal field selector $take.";
+	my $take = $args->{field};
+	$self->{MBSG_field_check}
+	  = !defined $take         ? sub {1}
+	  : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
+	  :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
+	  :  ref $take eq 'CODE'   ? $take
+	  :    croak "Illegal field selector $take.";
 
-    my $match = $args->{match}
-        or croak "No match pattern specified.\n";
+	my $match = $args->{match}
+		or croak "No match pattern specified.\n";
 
-    $self->{MBSG_match_check}
-      = !ref $match             ? sub { index("$_[1]", $match) >= $[ }
-      :  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match } 
-      :  ref $match eq 'CODE'   ? $match
-      : croak "Illegal match pattern $match.";
+	$self->{MBSG_match_check}
+	= !ref $match             ? sub { index("$_[1]", $match) >= $[ }
+	:  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match }
+	:  ref $match eq 'CODE'   ? $match
+	:    croak "Illegal match pattern $match.";
 
-    $self;
+	$self;
 }
 
 sub search(@)
-{   my ($self, $object, %args) = @_;
-    delete $self->{MBSG_last_printed};
-    $self->SUPER::search($object, %args);
+{	my ($self, $object, %args) = @_;
+	delete $self->{MBSG_last_printed};
+	$self->SUPER::search($object, %args);
 }
 
 sub inHead(@)
-{   my ($self, $part, $head, $args) = @_;
+{	my ($self, $part, $head, $args) = @_;
 
-    my @details = (message => $part->toplevel, part => $part);
-    my ($field_check, $match_check, $deliver)
-      = @$self{ qw/MBSG_field_check MBSG_match_check MBS_deliver/ };
+	my @details = (message => $part->toplevel, part => $part);
+	my ($field_check, $match_check, $deliver) = @$self{ qw/MBSG_field_check MBSG_match_check MBS_deliver/ };
 
-    my $matched = 0;
-  LINES:
-    foreach my $field ($head->orderedFields)
-    {   next unless $field_check->($head, $field->name)
-                 && $match_check->($head, $field);
+	my $matched = 0;
+LINES:
+	foreach my $field ($head->orderedFields)
+	{	$field_check->($head, $field->name) && $match_check->($head, $field) or next;
+		$matched++;
+		$deliver or last LINES;  # no deliver: only one match needed
+		$deliver->( {@details, field => $field} );
+	}
 
-        $matched++;
-        last LINES unless $deliver;  # no deliver: only one match needed
-        $deliver->( {@details, field => $field} );
-    }
-
-    $matched;
+	$matched;
 }
 
 sub inBody(@)
-{   my ($self, $part, $body, $args) = @_;
+{	my ($self, $part, $body, $args) = @_;
 
-    my @details = (message => $part->toplevel, part => $part);
-    my ($field_check, $match_check, $deliver)
-      = @$self{ qw/MBSG_field_check MBSG_match_check MBS_deliver/ };
+	my @details = (message => $part->toplevel, part => $part);
+	my ($field_check, $match_check, $deliver) = @$self{ qw/MBSG_field_check MBSG_match_check MBS_deliver/ };
 
-    my $matched = 0;
-    my $linenr  = 0;
+	my $matched = 0;
+	my $linenr  = 0;
 
   LINES:
-    foreach my $line ($body->lines)
-    {   $linenr++;
-        next unless $match_check->($body, $line);
+	foreach my $line ($body->lines)
+	{	$linenr++;
+		$match_check->($body, $line) or next;
 
-        $matched++;
-        last LINES unless $deliver;  # no deliver: only one match needed
-        $deliver->( {@details, linenr => $linenr, line => $line} );
-    }
+		$matched++;
+		$deliver or last LINES;  # no deliver: only one match needed
+		$deliver->( +{ @details, linenr => $linenr, line => $line } );
+	}
 
-    $matched;
+	$matched;
 }
 
-#-------------------------------------------
-
+#--------------------
 =section The Results
 
 =method printMatch [$fh], $match
 =cut
 
 sub printMatch($;$)
-{   my $self = shift;
-    my ($out, $match) = @_==2 ? @_ : (select, shift);
+{	my $self = shift;
+	my ($out, $match) = @_==2 ? @_ : (select, shift);
 
-      $match->{field}
-    ? $self->printMatchedHead($out, $match)
-    : $self->printMatchedBody($out, $match)
+	  $match->{field}
+	? $self->printMatchedHead($out, $match)
+	: $self->printMatchedBody($out, $match)
 }
 
 =method printMatchedHead $fh, $match
 =cut
 
 sub printMatchedHead($$)
-{   my ($self, $out, $match) = @_;
-    my $message = $match->{message};
-    my $msgnr   = $message->seqnr;
-    my $folder  = $message->folder->name;
-    my $lp      = $self->{MBSG_last_printed} || '';
+{	my ($self, $out, $match) = @_;
+	my $message = $match->{message};
+	my $msgnr   = $message->seqnr;
+	my $folder  = $message->folder->name;
+	my $lp      = $self->{MBSG_last_printed} || '';
 
-    unless($lp eq "$folder $msgnr")  # match in new message
-    {   my $subject = $message->subject;
-        $out->print("$folder, message $msgnr: $subject\n");
-        $self->{MBSG_last_printed} = "$folder $msgnr";
-    }
+	unless($lp eq "$folder $msgnr")  # match in new message
+	{	my $subject = $message->subject;
+		$out->print("$folder, message $msgnr: $subject\n");
+		$self->{MBSG_last_printed} = "$folder $msgnr";
+	}
 
-    my @lines   = $match->{field}->string;
-    my $inpart  = $match->{part}->isPart ? 'p ' : '  ';
-    $out->print($inpart, join $inpart, @lines);
-    $self;
+	my @lines   = $match->{field}->string;
+	my $inpart  = $match->{part}->isPart ? 'p ' : '  ';
+	$out->print($inpart, join $inpart, @lines);
+	$self;
 }
 
 =method printMatchedBody $fh, $match
 =cut
 
 sub printMatchedBody($$)
-{   my ($self, $out, $match) = @_;
-    my $message = $match->{message};
-    my $msgnr   = $message->seqnr;
-    my $folder  = $message->folder->name;
-    my $lp      = $self->{MBSG_last_printed} || '';
+{	my ($self, $out, $match) = @_;
+	my $message = $match->{message};
+	my $msgnr   = $message->seqnr;
+	my $folder  = $message->folder->name;
+	my $lp      = $self->{MBSG_last_printed} || '';
 
-    unless($lp eq "$folder $msgnr")  # match in new message
-    {   my $subject = $message->subject;
-        $out->print("$folder, message $msgnr: $subject\n");
-        $self->{MBSG_last_printed} = "$folder $msgnr";
-    }
+	unless($lp eq "$folder $msgnr")  # match in new message
+	{	my $subject = $message->subject;
+		$out->print("$folder, message $msgnr: $subject\n");
+		$self->{MBSG_last_printed} = "$folder $msgnr";
+	}
 
-    my $inpart  = $match->{part}->isPart ? 'p ' : '  ';
-    $out->print(sprintf "$inpart %2d: %s", $match->{linenr}, $match->{line});
-    $self;
+	my $inpart  = $match->{part}->isPart ? 'p ' : '  ';
+	$out->print(sprintf "$inpart %2d: %s", $match->{linenr}, $match->{line});
+	$self;
 }
 
 1;

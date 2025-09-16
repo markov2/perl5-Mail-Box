@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::Flock;
 use base 'Mail::Box::Locker';
@@ -12,13 +13,14 @@ use IO::File;
 use Fcntl         qw/:DEFAULT :flock/;
 use Errno         qw/EAGAIN/;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Locker::Flock - lock a folder using kernel file-locking
 
 =chapter SYNOPSIS
 
- See M<Mail::Box::Locker>
+  See Mail::Box::Locker
 
 =chapter DESCRIPTION
 
@@ -40,14 +42,14 @@ operating systems do not support C<flock>.
 sub name() {'FLOCK'}
 
 sub _try_lock($)
-{   my ($self, $file) = @_;
-    flock $file, LOCK_EX|LOCK_NB;
+{	my ($self, $file) = @_;
+	flock $file, LOCK_EX|LOCK_NB;
 }
 
 sub _unlock($)
-{   my ($self, $file) = @_;
-    flock $file, LOCK_UN;
-    $self;
+{	my ($self, $file) = @_;
+	flock $file, LOCK_UN;
+	$self;
 }
 
 
@@ -73,43 +75,40 @@ try again.
 my $lockfile_access_mode = ($^O eq 'solaris' || $^O eq 'aix') ? 'r+' : 'r';
 
 sub lock()
-{   my $self   = shift;
-    my $folder = $self->folder;
+{	my $self   = shift;
+	my $folder = $self->folder;
 
-    if($self->hasLock)
-    {   $self->log(WARNING => "Folder $folder already flocked.");
-        return 1;
-    }
+	if($self->hasLock)
+	{	$self->log(WARNING => "Folder $folder already flocked.");
+		return 1;
+	}
 
-    my $filename = $self->filename;
+	my $filename = $self->filename;
+	my $file      = IO::File->new($filename, $lockfile_access_mode);
+	unless($file)
+	{	$self->log(ERROR => "Unable to open flock file $filename for $folder: $!");
+		return 0;
+	}
 
-    my $file   = IO::File->new($filename, $lockfile_access_mode);
-    unless($file)
-    {   $self->log(ERROR =>
-           "Unable to open flock file $filename for $folder: $!");
-        return 0;
-    }
+	my $timeout = $self->timeout;
+	my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
-    my $timeout = $self->timeout;
-    my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+	while(1)
+	{	if($self->_try_lock($file))
+		{	$self->{MBLF_filehandle} = $file;
+			return $self->SUPER::lock;
+		}
 
-    while(1)
-    {   if($self->_try_lock($file))
-        {   $self->{MBLF_filehandle} = $file;
-            return $self->SUPER::lock;
-        }
+		if($! != EAGAIN)
+		{	$self->log(ERROR => "Will never get a flock on $filename for $folder: $!");
+			last;
+		}
 
-        if($! != EAGAIN)
-        {   $self->log(ERROR =>
-               "Will never get a flock on $filename for $folder: $!");
-            last;
-        }
+		last unless --$end;
+		sleep 1;
+	}
 
-        last unless --$end;
-        sleep 1;
-    }
-
-    return 0;
+	return 0;
 }
 
 =method isLocked
@@ -121,33 +120,33 @@ locked neither that it is unlocked.
 =cut
 
 sub isLocked()
-{   my $self     = shift;
-    my $filename = $self->filename;
+{	my $self     = shift;
+	my $filename = $self->filename;
 
-    my $file     = IO::File->new($filename, $lockfile_access_mode);
-    unless($file)
-    {   my $folder = $self->folder;
-        $self->log(ERROR =>
-            "Unable to check lock file $filename for $folder: $!");
-        return 0;
-    }
+	my $file     = IO::File->new($filename, $lockfile_access_mode);
+	unless($file)
+	{	my $folder = $self->folder;
+		$self->log(ERROR =>
+			"Unable to check lock file $filename for $folder: $!");
+		return 0;
+	}
 
-    $self->_try_lock($file) or return 0;
-    $self->_unlock($file);
-    $file->close;
+	$self->_try_lock($file) or return 0;
+	$self->_unlock($file);
+	$file->close;
 
-    $self->SUPER::unlock;
-    1;
+	$self->SUPER::unlock;
+	1;
 }
 
 sub unlock()
-{   my $self = shift;
+{	my $self = shift;
 
-    $self->_unlock(delete $self->{MBLF_filehandle})
-        if $self->hasLock;
+	$self->_unlock(delete $self->{MBLF_filehandle})
+		if $self->hasLock;
 
-    $self->SUPER::unlock;
-    $self;
+	$self->SUPER::unlock;
+	$self;
 }
 
 1;

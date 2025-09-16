@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker;
 use base 'Mail::Reporter';
@@ -12,39 +13,37 @@ use Carp;
 use Scalar::Util 'weaken';
 use Devel::GlobalDestruction 'in_global_destruction';
 
-#-------------------------------------------
-
+#--------------------
 =chapter NAME
 
 Mail::Box::Locker - manage the locking of mail folders
 
 =chapter SYNOPSIS
 
- use Mail::Box::Locker;
- my $locker = new Mail::Box::Locker(folder => $folder);
+  use Mail::Box::Locker;
+  my $locker = new Mail::Box::Locker(folder => $folder);
 
- $locker->lock;
- $locker->isLocked;
- $locker->hasLock;
- $locker->unlock;
+  $locker->lock;
+  $locker->isLocked;
+  $locker->hasLock;
+  $locker->unlock;
 
- use Mail::Box;
- my $folder = Mail::Box->new(lock_method => 'DOTLOCK');
- print $folder->locker->type;
+  use Mail::Box;
+  my $folder = Mail::Box->new(lock_method => 'DOTLOCK');
+  print $folder->locker->type;
 
 =chapter DESCRIPTION
 
-Each M<Mail::Box> will create its own C<Mail::Box::Locker> object which
+Each Mail::Box will create its own C<Mail::Box::Locker> object which
 will handle the locking for it.  You can access of the object directly
 from the folder, as shown in the examples below.
 
 =chapter METHODS
 
 =c_method new %options
-
 Create a new lock. You may do this directly. However, in most cases the
 lock will not be separately instantiated but will be the second class in
-a multiple inheritance construction with a M<Mail::Box>.
+a multiple inheritance construction with a Mail::Box.
 
 Generally the client program specifies the locking behavior through
 options given to the folder class.
@@ -54,7 +53,7 @@ options given to the folder class.
 
 Which kind of locking, specified as one of the following names as STRING.
 You may also specify a CLASS name, or an ARRAY of names.  In case of an
-ARRAY, a 'multi' locker is started with all thee 
+ARRAY, a 'multi' locker is started with all thee
 full CLASS name.
 
 Supported locking names are
@@ -75,10 +74,10 @@ options to change the default behavior.
 For some folder handlers, locking is based on a file locking mechanism
 provided by the operating system.  However, this does not work on all
 systems, such as network filesystems, and such. This also doesn't work on
-folders based on directories (M<Mail::Box::Dir> and derived).
+folders based on directories (Mail::Box::Dir and derived).
 
 =item 'FCNTLLOCK' | 'fcntllock'
-POSIX locking via M<File::FcntlLock>, which works on more platforms.
+POSIX locking via File::FcntlLock, which works on more platforms.
 However, that module requires a C compiler to install.
 
 =item 'POSIX' | 'posix'
@@ -108,8 +107,8 @@ which implements the desired locking method. (Please consider offering it
 for inclusion in the public Mail::Box module!) Create an instance of that
 class with this parameter:
 
- my $locker = Mail::Box::Locker::MyOwn->new;
- $folder->open(locker => $locker);
+  my $locker = Mail::Box::Locker::MyOwn->new;
+  $folder->open(locker => $locker);
 
 =option  expires SECONDS
 =default expires 1 hour
@@ -120,7 +119,7 @@ number of seconds.
 
 =option  folder FOLDER
 =default folder <undef>
-Which FOLDER is to be locked, a M<Mail::Box> object.
+Which FOLDER is to be locked, a Mail::Box object.
 
 =option  timeout SECONDS|'NOTIMEOUT'
 =default timeout 10
@@ -135,91 +134,73 @@ will always wait until the lock has been received.
 
 =option  file FILENAME
 =default file undef
-
 Name of the file to lock.  By default, the name of the folder is taken.
 
 =cut
 
-my %lockers =
-  ( DOTLOCK   => __PACKAGE__ .'::DotLock'
-  , FCNTLLOCK => __PACKAGE__ .'::FcntlLock'
-  , FLOCK     => __PACKAGE__ .'::Flock'
-  , MULTI     => __PACKAGE__ .'::Multi'
-  , MUTT      => __PACKAGE__ .'::Mutt'
-  , NFS       => __PACKAGE__ .'::NFS'
-  , NONE      => __PACKAGE__
-  , POSIX     => __PACKAGE__ .'::POSIX'
-  );
+my %lockers = (
+	DOTLOCK   => __PACKAGE__ .'::DotLock',
+	FCNTLLOCK => __PACKAGE__ .'::FcntlLock',
+	FLOCK     => __PACKAGE__ .'::Flock',
+	MULTI     => __PACKAGE__ .'::Multi',
+	MUTT      => __PACKAGE__ .'::Mutt',
+	NFS       => __PACKAGE__ .'::NFS',
+	NONE      => __PACKAGE__,
+	POSIX     => __PACKAGE__ .'::POSIX',
+);
 
 sub new(@)
-{   my $class  = shift;
+{	my ($class, %args) = @_;
 
-    return $class->SUPER::new(@_)
-        unless $class eq __PACKAGE__;
+	$class eq __PACKAGE__
+		or return $class->SUPER::new(%args);
 
-    # Try to figure out which locking method we really want (bootstrap)
+	# Try to figure out which locking method we really want (bootstrap)
 
-    my %args   = @_;
-    my $method = !defined $args{method}       ? 'DOTLOCK'
-               : ref $args{method} eq 'ARRAY' ? 'MULTI'
-               :                                 uc $args{method};
+	my $method
+	  = ! defined $args{method}      ? 'DOTLOCK'
+	  : ref $args{method} eq 'ARRAY' ? 'MULTI'
+	  :   uc $args{method};
 
-    my $create = $lockers{$method} || $args{$method};
+	my $create = $lockers{$method} || $args{$method};
 
-    local $"   = ' or ';
-    confess "No locking method $method defined: use @{[ keys %lockers ]}"
-        unless $create;
+	local $"   = ' or ';
+	$create
+		or confess "No locking method $method defined: use @{[ keys %lockers ]}";
 
-    # compile the locking module (if needed)
-    eval "require $create";
-    confess $@ if $@;
+	# compile the locking module (if needed)
+	eval "require $create";
+	confess $@ if $@;
 
-    $args{use} = $args{method} if ref $args{method} eq 'ARRAY';
-
-    $create->SUPER::new(%args);
+	$args{use} = $args{method} if ref $args{method} eq 'ARRAY';
+	$create->SUPER::new(%args);
 }
 
 sub init($)
-{   my ($self, $args) = @_;
+{	my ($self, $args) = @_;
+	$self->SUPER::init($args);
 
-    $self->SUPER::init($args);
+	$self->{MBL_expires}  = $args->{expires} || 3600;  # one hour
+	$self->{MBL_timeout}  = $args->{timeout} || 10;    # ten secs
+	$self->{MBL_filename} = $args->{file}    || $args->{folder}->name;
+	$self->{MBL_has_lock} = 0;
 
-    $self->{MBL_expires}  = $args->{expires}   || 3600;  # one hour
-    $self->{MBL_timeout}  = $args->{timeout}   || 10;    # ten secs
-    $self->{MBL_filename} = $args->{file}      || $args->{folder}->name;
-    $self->{MBL_has_lock} = 0;
-
-    $self->folder($args->{folder});
-    $self;
+	$self->folder($args->{folder});
+	$self;
 }
 
-#-------------------------------------------
-
+#--------------------
 =section Attributes
 
 =method timeout [SECONDS]
-
 Get/Set the timeout.  Not available for all lockers.
 
 =method expires [SECONDS]
-
 Get/Set the expiration time.  Not available for all lockers.
-
 =cut
 
-sub timeout(;$)
-{   my $self = shift;
-    @_ ? $self->{MBL_timeout} = shift : $self->{MBL_timeout};
-}
-
-sub expires(;$)
-{   my $self = shift;
-    @_ ? $self->{MBL_expires} = shift : $self->{MBL_expires};
-}
-
-#-------------------------------------------
-
-=section The Locker
+sub timeout(;$) { my $self = shift; @_ ? $self->{MBL_timeout} = shift : $self->{MBL_timeout} }
+sub expires(;$) { my $self = shift; @_ ? $self->{MBL_expires} = shift : $self->{MBL_expires} }
 
 =method name
 Returns the method used to lock the folder. See the M<new(method)> for
@@ -227,26 +208,23 @@ details on how to specify the lock method.  The name of the method is
 returned in upper-case.
 
 =examples
- if($locker->name eq 'FLOCK') ...
-
+  if($locker->name eq 'FLOCK') ...
 =cut
 
-sub name {shift->notImplemented}
+sub name { $_[0]->notImplemented }
 
-sub lockMethod($$$$)
-{   confess "Method removed: use inheritance to implement own method."
-}
+sub lockMethod($$$$) { confess "Method removed: use inheritance to implement own method." }
 
 =method folder [$folder]
 Returns the folder object which is locker.
 =cut
 
 sub folder(;$)
-{   my $self = shift;
-    @_ && $_[0] or return $self->{MBL_folder};
+{	my $self = shift;
+	@_ && $_[0] or return $self->{MBL_folder};
 
-    $self->{MBL_folder} = shift;
-    weaken $self->{MBL_folder};
+	$self->{MBL_folder} = shift;
+	weaken $self->{MBL_folder};
 }
 
 =method filename [$filename]
@@ -254,36 +232,31 @@ Returns the filename which is used to lock the folder, optionally after
 setting it to the specified $filename.
 
 =example
- print $locker->filename;
+  print $locker->filename;
 
 =cut
 
-sub filename(;$)
-{   my $self = shift;
-    $self->{MBL_filename} = shift if @_;
-    $self->{MBL_filename};
-}
+sub filename(;$) { my $self = shift; @_ ? $self->{MBL_filename} = shift : $self->{MBL_filename} }
 
-#-------------------------------------------
-
+#--------------------
 =section Locking
 
 =method lock $folder
 Get a lock on a folder.  This will return false if the lock fails.
 
 =examples
- die unless $locker->lock;
- if($folder->locker->lock) {...}
+  die unless $locker->lock;
+  if($folder->locker->lock) {...}
 =cut
 
-sub lock($) { shift->{MBL_has_lock} = 1 }
+sub lock($) { $_[0]->{MBL_has_lock} = 1 }
 
 =method isLocked
 Test if the folder is locked by this or a different application.
 
 =examples
- if($locker->isLocked) {...}
- if($folder->locker->isLocked) {...}
+  if($locker->isLocked) {...}
+  if($folder->locker->isLocked) {...}
 =cut
 
 sub isLocked($) {0}
@@ -292,30 +265,27 @@ sub isLocked($) {0}
 Check whether the folder has the lock.
 
 =examples
- if($locker->hasLock) {...}
- if($folder->locker->hasLock) {...}
-
+  if($locker->hasLock) {...}
+  if($folder->locker->hasLock) {...}
 =cut
 
-sub hasLock() {shift->{MBL_has_lock}}
+sub hasLock() { $_[0]->{MBL_has_lock} }
 
 =method unlock
 Undo the lock on a folder.
 
 =examples
- $locker->unlock;
- $folder->locker->unlock;
-
+  $locker->unlock;
+  $folder->locker->unlock;
 =cut
 
 # implementation hazard: the unlock must be self-reliant, without
 # help by the folder, because it may be called at global destruction
 # after the folder has been removed.
 
-sub unlock() { shift->{MBL_has_lock} = 0 }
+sub unlock() { $_[0]->{MBL_has_lock} = 0 }
 
-#-------------------------------------------
-
+#--------------------
 =section Error handling
 
 =section Cleanup
@@ -328,12 +298,12 @@ or the program ends, the lock will be automatically removed.
 =cut
 
 sub DESTROY()
-{   my $self = shift;
-    return $self if in_global_destruction;
+{	my $self = shift;
+	return $self if in_global_destruction;
 
-    $self->unlock if $self->hasLock;
-    $self->SUPER::DESTROY;
-    $self;
+	$self->unlock if $self->hasLock;
+	$self->SUPER::DESTROY;
+	$self;
 }
 
 1;

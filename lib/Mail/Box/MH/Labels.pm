@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::MH::Labels;
 use base 'Mail::Reporter';
@@ -13,15 +14,16 @@ use Mail::Message::Head::Subset;
 use File::Copy;
 use Carp;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::MH::Labels - maintain MH message related labels
 
 =chapter SYNOPSIS
 
- my $labels = Mail::Box::MH::Labels->new;
- $labels->read(...)
- $labels->write(...)
+  my $labels = Mail::Box::MH::Labels->new;
+  $labels->read(...)
+  $labels->write(...)
 
 =chapter DESCRIPTION
 
@@ -35,43 +37,41 @@ predefined, but more can be added without limitation.
 
 =cut
 
-#-------------------------------------------
+#--------------------
 =chapter METHODS
 
 =c_method new %options
 
 =requires filename FILENAME
-
 The FILENAME which is used in each directory to store the headers of all
 mails. The filename must be an absolute path.
-
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    $self->SUPER::init($args);
-    $self->{MBML_filename}  = $args->{filename}
-       or croak "No label filename specified.";
+{	my ($self, $args) = @_;
+	$self->SUPER::init($args);
+	$self->{MBML_filename}  = $args->{filename}
+		or croak "No label filename specified.";
 
-    $self;
+	$self;
 }
 
-#-------------------------------------------
+#--------------------
 =section The Label Table
 
 =method filename
 Returns the name of the index file.
 =cut
 
-sub filename() {shift->{MBML_filename}}
+sub filename() { $_[0]->{MBML_filename} }
 
 =method get $msgnr
 Look if there is label info for message $msgnr.
 =cut
 
 sub get($)
-{   my ($self, $msgnr) = @_;
-    $self->{MBML_labels}[$msgnr];
+{	my ($self, $msgnr) = @_;
+	$self->{MBML_labels}[$msgnr];
 }
 
 =method read
@@ -79,136 +79,121 @@ Read all label information from file.
 =cut
 
 sub read()
-{   my $self  = shift;
-    my $seqfn = $self->filename;
+{	my $self  = shift;
+	my $seqfn = $self->filename;
 
-    open my $seq, '<:raw', $seqfn
-       or return;
+	open my $seq, '<:raw', $seqfn
+		or return;
 
-    my @labels;
+	my @labels;
 
-    local $_;
-    while(<$seq>)
-    {   s/\s*\#.*$//;
-        next unless length;
+	local $_;
+	while(<$seq>)
+	{	s/\s*\#.*$//;
+		length or next;
 
-        s/^\s*(\w+)\s*\:\s*// or next;
-        my $label = $1;
+		s/^\s*(\w+)\s*\:\s*// or next;
+		my $label = $1;
 
-        my $set   = 1;
-           if($label eq 'cur'   ) { $label = 'current' }
-        elsif($label eq 'unseen') { $label = 'seen'; $set = 0 }
+		my $set   = 1;
+		   if($label eq 'cur'   ) { $label = 'current' }
+		elsif($label eq 'unseen') { $label = 'seen'; $set = 0 }
 
-        foreach (split /\s+/)
-        {   if( /^(\d+)\-(\d+)\s*$/ )
-            {   push @{$labels[$_]}, $label, $set foreach $1..$2;
-            }
-            elsif( /^\d+\s*$/ )
-            {   push @{$labels[$_]}, $label, $set;
-            }
-        }
-    }
+		foreach (split /\s+/)
+		{	if( /^(\d+)\-(\d+)\s*$/ )
+			{	push @{$labels[$_]}, $label, $set foreach $1..$2;
+			}
+			elsif( /^\d+\s*$/ )
+			{	push @{$labels[$_]}, $label, $set;
+			}
+		}
+	}
 	$seq->close;
-    $self->{MBML_labels} = \@labels;
-    $self;
+	$self->{MBML_labels} = \@labels;
+	$self;
 }
 
-=method write $messages
-Write the labels related to the specified messages to the label file.
-
+=method write @messages
+Write the labels related to the specified @messages to the label file.
 =cut
 
 sub write(@)
-{   my $self     = shift;
-    my $filename = $self->filename;
+{	my $self     = shift;
+	my $filename = $self->filename;
 
-    # Remove when no messages are left.
-    unless(@_)
-    {   unlink $filename;
-        return $self;
-    }
+	# Remove when no messages are left.
+	unless(@_)
+	{	unlink $filename;
+		return $self;
+	}
 
-    open my $out, '>:raw', $filename or return;
-    $self->print($out, @_);
-    close $out;
+	open my $out, '>:raw', $filename or return;
+	$self->print($out, @_);
+	close $out;
 
-    $self;
+	$self;
 }
 
 =method append $messages
-
 Append the label information about the specified $messages to the end
 of the label file.  The information will not be merged with the
 information already present in the label file.
-
 =cut
 
 sub append(@)
-{   my $self     = shift;
-    my $filename = $self->filename;
+{	my $self     = shift;
+	my $filename = $self->filename;
 
-    open my $out, '>>:raw', $filename or return;
-    $self->print($out, @_);
-    close $out;
+	open my $out, '>>:raw', $filename or return;
+	$self->print($out, @_);
+	close $out;
 
-    $self;
+	$self;
 }
 
-#-------------------------------------------
-
 =method print $fh, $messages
-
 Print the labels of the specified messages to the opened file.
-
 =cut
 
 sub print($@)
-{   my ($self, $out) = (shift, shift);
+{	my ($self, $out) = (shift, shift);
 
-    # Collect the labels from the selected messages.
-    my %labeled;
-    foreach my $message (@_)
-    {   my $labels = $message->labels;
-        my $seq    = $message->filename =~ s!.*/!!r;
+	# Collect the labels from the selected messages.
+	my %labeled;
+	foreach my $message (@_)
+	{	my $labels = $message->labels;
+		my $seq    = $message->filename =~ s!.*/!!r;
 
-        push @{$labeled{unseen}}, $seq
-            unless $labels->{seen};
+		push @{$labeled{unseen}}, $seq
+			unless $labels->{seen};
 
-        foreach (keys %$labels)
-        {   push @{$labeled{$_}}, $seq
-                if $labels->{$_};
-        }
-    }
-    delete $labeled{seen};
+		foreach (keys %$labels)
+		{	push @{$labeled{$_}}, $seq
+				if $labels->{$_};
+		}
+	}
+	delete $labeled{seen};
 
-    # Write it out
+	# Write it out
 
-    local $"     = ' ';
-    foreach (sort keys %labeled)
-    {
-        my @msgs = @{$labeled{$_}};  #they are ordered already.
-        $_ = 'cur' if $_ eq 'current';
-        print $out "$_:";
+	local $"     = ' ';
+	foreach (sort keys %labeled)
+	{
+		my @msgs = @{$labeled{$_}};  #they are ordered already.
+		$_ = 'cur' if $_ eq 'current';
+		print $out "$_:";
 
-        while(@msgs)
-        {   my $start = shift @msgs;
-            my $end   = $start;
+		while(@msgs)
+		{	my $start = shift @msgs;
+			my $end   = $start;
+			$end = shift @msgs while @msgs && $msgs[0]==$end+1;
 
-            $end = shift @msgs
-                 while @msgs && $msgs[0]==$end+1;
+			print $out ($start==$end ? " $start" : " $start-$end");
+		}
+		print $out "\n";
+	}
 
-            print $out ($start==$end ? " $start" : " $start-$end");
-        }
-        print $out "\n";
-    }
-
-    $self;
+	$self;
 }
-
-#-------------------------------------------
-
-=section Error handling
-
-=cut
 
 1;

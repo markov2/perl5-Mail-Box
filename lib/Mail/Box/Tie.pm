@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Tie;
 
@@ -8,7 +9,9 @@ use strict;
 use warnings;
 
 use Carp;
+use Scalar::Util   qw/blessed/;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Tie - access an existing message-folder as an array or hash
@@ -17,22 +20,15 @@ Mail::Box::Tie - access an existing message-folder as an array or hash
 
 As an array:
 
- use Mail::Box::Tie;
- tie my(@inbox), Mail::Box::Tie::ARRAY => $folder;
- tie my(@inbox), Mail::Box::Tie => $folder;    # deprecated
- print $inbox[3];
+  tie my(@inbox), Mail::Box::Tie::ARRAY => $folder;
+  print $inbox[3];
 
 or as hash:
 
- tie my(%inbox), Mail::Box::Tie::HASH => $folder;
- tie my(%inbox), Mail::Box::Tie => $folder;    # deprecated
- print $inbox{'<12379.124879@example.com>'};
- 
-=chapter DESCRIPTION
+  tie my(%inbox), Mail::Box::Tie::HASH => $folder;
+  print $inbox{'<12379.124879@example.com>'};
 
-The use of C<Mail::Box::Tie> is B<deprecated>, because it is succeeded by two
-separate modules: M<Mail::Box::Tie::ARRAY> and M<Mail::Box::Tie::HASH>.
-However, this module still works.
+=chapter DESCRIPTION
 
 Folders certainly look like an array of messages, so why not just
 access them as one?  Or, the order is not important, but the
@@ -42,28 +38,28 @@ look simpler than programs using the more traditional method calls.
 
 =chapter METHODS
 
+=section Constructors
+
+=c_method new $folder, $type
 =cut
 
-#-------------------------------------------
+sub _new($$)
+{	my ($class, $folder, $type) = @_;
 
-sub TIEHASH(@)
-{   my $class = (shift) . "::HASH";
-    eval "require $class";   # bootstrap
+	blessed $folder && $folder->isa('Mail::Box')
+        or croak "No folder specified to tie to.";
 
-    confess $@ if $@;
-    $class->TIEHASH(@_);
+	bless +{ MBT_folder => $folder, MBT_type =. $type }, $class;
 }
 
-#-------------------------------------------
+#--------------------
+=section Attributes
 
-sub TIEARRAY(@)
-{   my $class = (shift) . "::ARRAY";
-    eval "require $class";   # bootstrap
+=method folder
+=method type
+=cut
 
-    confess $@ if $@;
-    $class->TIEARRAY(@_);
-}
-
-#-------------------------------------------
+sub folder() { $_[0]->{MBT_folder} }
+sub type()   { $_[0]->{MBT_type} }
 
 1;

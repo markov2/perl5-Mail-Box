@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::FcntlLock;
 use base 'Mail::Box::Locker';
@@ -14,21 +15,22 @@ use Errno   qw/EAGAIN/;
 use File::FcntlLock;
 
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Locker::FcntlLock - lock a folder using File::FcntlLock
 
 =chapter SYNOPSIS
 
- See M<Mail::Box::Locker>
+  See Mail::Box::Locker
 
 =chapter DESCRIPTION
 
-This locker object is uses M<File::FcntlLock>, and was contributed by
-Jim in Aus. It is close to M<Mail::Box::Locker::POSIX>, but does work
+This locker object is uses File::FcntlLock, and was contributed by
+Jim in Aus. It is close to Mail::Box::Locker::POSIX, but does work
 on more systems, for instance Darwin.
 
-You will need to install M<File::FcntlLock> separately: there is no
+You will need to install File::FcntlLock separately: there is no
 dependency to it by the MailBox distribution.
 
 =chapter METHODS
@@ -40,27 +42,27 @@ dependency to it by the MailBox distribution.
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    $args->{file} = $args->{posix_file} if $args->{posix_file};
-    $self->SUPER::init($args);
+{	my ($self, $args) = @_;
+	$args->{file} = $args->{posix_file} if $args->{posix_file};
+	$self->SUPER::init($args);
 }
 
 sub name() {'FcntlLock'}
 
 sub _try_lock($)
-{   my ($self, $file) = @_;
-    my $fl = File::FcntlLock->new;
-    $fl->l_type(F_WRLCK);
-    $? = $fl->lock($file, F_SETLK);
-    $?==0;
+{	my ($self, $file) = @_;
+	my $fl = File::FcntlLock->new;
+	$fl->l_type(F_WRLCK);
+	$? = $fl->lock($file, F_SETLK);
+	$?==0;
 }
 
 sub _unlock($)
-{   my ($self, $file) = @_;
-    my $fl = File::FcntlLock->new;
-    $fl->l_type(F_UNLCK);
-    $fl->lock($file, F_SETLK);
-    $self;
+{	my ($self, $file) = @_;
+	my $fl = File::FcntlLock->new;
+	$fl->l_type(F_UNLCK);
+	$fl->lock($file, F_SETLK);
+	$self;
 }
 
 =method lock
@@ -79,87 +81,80 @@ try again.
 =cut
 
 sub lock()
-{   my $self   = shift;
+{	my $self   = shift;
 
-    if($self->hasLock)
-    {   my $folder = $self->folder;
-        $self->log(WARNING => "Folder $folder already lockf'd");
-        return 1;
-    }
+	if($self->hasLock)
+	{	my $folder = $self->folder;
+		$self->log(WARNING => "Folder $folder already lockf'd");
+		return 1;
+	}
 
-    my $filename = $self->filename;
+	my $filename = $self->filename;
+	my $file     = IO::File->new($filename, 'r+');
+	unless(defined $file)
+	{	my $folder = $self->folder;
+		$self->log(ERROR => "Unable to open FcntlLock lock file $filename for $folder: $!");
+		return 0;
+	}
 
-    my $file   = IO::File->new($filename, 'r+');
-    unless(defined $file)
-    {   my $folder = $self->folder;
-        $self->log(ERROR =>
-           "Unable to open FcntlLock lock file $filename for $folder: $!");
-        return 0;
-    }
+	my $timeout = $self->timeout;
+	my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
-    my $timeout = $self->timeout;
-    my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+	while(1)
+	{	if($self->_try_lock($file))
+		{	$self->SUPER::lock;
+			$self->{MBLF_filehandle} = $file;
+			return 1;
+		}
 
-    while(1)
-    {   if($self->_try_lock($file))
-        {   $self->SUPER::lock;
-            $self->{MBLF_filehandle} = $file;
-            return 1;
-        }
+		unless($!==EAGAIN)
+		{	my $folder = $self->folder;
+			$self->log(ERROR => "Will never get a FcntlLock lock on $filename for $folder: $!");
+			last;
+		}
 
-        unless($!==EAGAIN)
-        {   my $folder = $self->folder;
-            $self->log(ERROR =>
-                "Will never get a FcntlLock lock on $filename for $folder: $!");
-            last;
-        }
+		last unless --$end;
+		sleep 1;
+	}
 
-        last unless --$end;
-        sleep 1;
-    }
-
-    return 0;
+	return 0;
 }
 
 
 =method isLocked
 
 =error Unable to check lock file $filename for $folder: $!
-
 To check whether the filename is used to flock a folder, the file must be
 opened.  Apparently this fails, which does not mean that the folder is
 locked neither that it is unlocked.
-
 =cut
 
 sub isLocked()
-{   my $self     = shift;
-    my $filename = $self->filename;
+{	my $self     = shift;
+	my $filename = $self->filename;
+	my $file     = IO::File->new($filename, "r");
+	unless($file)
+	{	my $folder = $self->folder;
+		$self->log(ERROR => "Unable to check lock file $filename for $folder: $!");
+		return 0;
+	}
 
-    my $file     = IO::File->new($filename, "r");
-    unless($file)
-    {   my $folder = $self->folder;
-        $self->log(ERROR =>
-               "Unable to check lock file $filename for $folder: $!");
-        return 0;
-    }
+	$self->_try_lock($file)==0 or return 0;
+	$self->_unlock($file);
+	$file->close;
 
-    $self->_try_lock($file)==0 or return 0;
-    $self->_unlock($file);
-    $file->close;
-
-    $self->SUPER::unlock;
-    1;
+	$self->SUPER::unlock;
+	1;
 }
 
 sub unlock()
-{   my $self = shift;
+{	my $self = shift;
 
-    $self->_unlock(delete $self->{MBLF_filehandle})
-       if $self->hasLock;
+	$self->_unlock(delete $self->{MBLF_filehandle})
+		if $self->hasLock;
 
-    $self->SUPER::unlock;
-    $self;
+	$self->SUPER::unlock;
+	$self;
 }
 
 1;

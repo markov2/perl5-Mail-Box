@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::DotLock;
 use base 'Mail::Box::Locker';
@@ -13,13 +14,14 @@ use File::Spec;
 use Errno      qw/EEXIST/;
 use Carp;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Locker::DotLock - lock a folder with a separate file
 
 =chapter SYNOPSIS
 
- See Mail::Box::Locker
+  See Mail::Box::Locker
 
 =chapter DESCRIPTION
 
@@ -31,61 +33,56 @@ same name as the folder, extended by C<.lock>.
 =c_method new %options
 
 =default file <folderfile>C<.lock>
-
 Name of the file to lock.  By default, the folder's name is extended
 with C<.lock>.
 
 =option  dotlock_file FILENAME
 =default dotlock_file <undef>
-Alternative name for C<file>, especially useful to confusion when
+Alternative name for P<file>, especially useful to confusion when
 the multi locker is used.
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    $args->{file} = $args->{dotlock_file} if $args->{dotlock_file};
-    $self->SUPER::init($args);
+{	my ($self, $args) = @_;
+	$args->{file} = $args->{dotlock_file} if $args->{dotlock_file};
+	$self->SUPER::init($args);
 }
 
 sub name() {'DOTLOCK'}
 
 sub folder(;$)
-{   my $self = shift;
-    @_ && $_[0] or return $self->SUPER::folder;
+{	my $self = shift;
+	@_ && $_[0] or return $self->SUPER::folder;
 
-    my $folder = shift;
-    unless(defined $self->filename)
-    {   my $org = $folder->organization;
+	my $folder = shift;
+	unless(defined $self->filename)
+	{	my $org = $folder->organization;
 
-        my $filename
-          = $org eq 'FILE'     ? $folder->filename . '.lock'
-          : $org eq 'DIRECTORY'? File::Spec->catfile($folder->directory,'.lock')
-          : croak "Need lock file name for DotLock.";
+		my $filename
+		  = $org eq 'FILE'     ? $folder->filename . '.lock'
+		  : $org eq 'DIRECTORY'? File::Spec->catfile($folder->directory,'.lock')
+		  :    croak "Need lock file name for DotLock.";
 
-        $self->filename($filename);
-    }
+		$self->filename($filename);
+	}
 
-    $self->SUPER::folder($folder);
+	$self->SUPER::folder($folder);
 }
 
 sub _try_lock($)
-{   my ($self, $lockfile) = @_;
-    return if -e $lockfile;
+{	my ($self, $lockfile) = @_;
+	return if -e $lockfile;
 
-    my $flags    = $^O eq 'MSWin32'
-                 ?  O_CREAT|O_EXCL|O_WRONLY
-                 :  O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK;
+	my $flags = $^O eq 'MSWin32' ?  O_CREAT|O_EXCL|O_WRONLY :  O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK;
+	if(my $lock = IO::File->new($lockfile, $flags, 0600))
+	{	close $lock;
+		return 1;
+	}
 
-    my $lock = IO::File->new($lockfile, $flags, 0600);
-    if($lock)
-    {   close $lock;
-        return 1;
-    }
-
-    if($! != EEXIST)
-    {   $self->log(ERROR => "lockfile $lockfile can never be created: $!");
-        return 1;
-    }
+	if($! != EEXIST)
+	{	$self->log(ERROR => "lockfile $lockfile can never be created: $!");
+		return 1;
+	}
 }
 
 =method unlock
@@ -93,17 +90,17 @@ sub _try_lock($)
 =cut
 
 sub unlock()
-{   my $self = shift;
-    $self->hasLock
-        or return $self;
+{	my $self = shift;
+	$self->hasLock
+		or return $self;
 
-    my $lock = $self->filename;
+	my $lock = $self->filename;
 
-    unlink $lock
-        or $self->log(WARNING => "Couldn't remove lockfile $lock: $!");
+	unlink $lock
+		or $self->log(WARNING => "Couldn't remove lockfile $lock: $!");
 
-    $self->SUPER::unlock;
-    $self;
+	$self->SUPER::unlock;
+	$self;
 }
 
 =method lock
@@ -113,44 +110,42 @@ sub unlock()
 =cut
 
 sub lock()
-{   my $self   = shift;
+{	my $self   = shift;
 
-    my $lockfile = $self->filename;
-    if($self->hasLock)
-    {   $self->log(WARNING => "Folder already locked with file $lockfile");
-        return 1;
-    }
+	my $lockfile = $self->filename;
+	if($self->hasLock)
+	{	$self->log(WARNING => "Folder already locked with file $lockfile");
+		return 1;
+	}
 
-    my $timeout  = $self->timeout;
-    my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
-    my $expire   = $self->expires/86400;  # in days for -A
+	my $timeout  = $self->timeout;
+	my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+	my $expire   = $self->expires/86400;  # in days for -A
 
-    while(1)
-    {
-        return $self->SUPER::lock
-           if $self->_try_lock($lockfile);
+	while(1)
+	{
+		return $self->SUPER::lock
+			if $self->_try_lock($lockfile);
 
-        if(-e $lockfile && -A $lockfile > $expire)
-        {
-            if(unlink $lockfile)
-            {   $self->log(WARNING => "Removed expired lockfile $lockfile");
-                redo;
-            }
-            else
-            {   $self->log(ERROR =>
-                   "Failed to remove expired lockfile $lockfile: $!");
-                last;
-            }
-        }
+		if(-e $lockfile && -A $lockfile > $expire)
+		{
+			if(unlink $lockfile)
+			{	$self->log(WARNING => "Removed expired lockfile $lockfile");
+				redo;
+			}
+			else
+			{	$self->log(ERROR => "Failed to remove expired lockfile $lockfile: $!");
+				last;
+			}
+		}
 
-        last unless --$end;
-        sleep 1;
-    }
+		last unless --$end;
+		sleep 1;
+	}
 
-    return 0;
+	return 0;
 }
 
 sub isLocked() { -e shift->filename }
 
 1;
-

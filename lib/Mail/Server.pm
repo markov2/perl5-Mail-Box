@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Server;
 use base 'Mail::Reporter';
@@ -8,14 +9,15 @@ use base 'Mail::Reporter';
 use strict;
 use warnings;
 
+#--------------------
 =chapter NAME
 
 Mail::Server - Base class for email servers in MailBox
 
 =chapter SYNOPSIS
 
- my $server = Mail::Server::IMAP4->new($msg);
- my $server = Mail::Server::POP3->new($msg);
+  my $server = Mail::Server::IMAP4->new($msg);
+  my $server = Mail::Server::POP3->new($msg);
 
 =chapter DESCRIPTION
 
@@ -26,7 +28,7 @@ exist.
 Servers:
 
 =over 4
-=item * M<Mail::Server::IMAP4>
+=item * Mail::Server::IMAP4
 Partial IMAP4 implementation.
 =back
 

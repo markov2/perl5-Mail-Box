@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::Mutt;
 use base 'Mail::Box::Locker';
@@ -10,13 +11,14 @@ use warnings;
 
 use POSIX      qw/sys_wait_h/;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Locker::Mutt - lock a folder using mutt_dotlock
 
 =chapter SYNOPSIS
 
- See Mail::Box::Locker
+  See Mail::Box::Locker
 
 =chapter DESCRIPTION
 
@@ -33,40 +35,37 @@ The name of the program.  May be a relative or absolute path.
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    $self->SUPER::init($args);
+{	my ($self, $args) = @_;
+	$self->SUPER::init($args);
 
-    $self->{MBLM_exe} = $args->{exe} || 'mutt_dotlock';
-    $self;
+	$self->{MBLM_exe} = $args->{exe} || 'mutt_dotlock';
+	$self;
 }
 
 sub name()     {'MUTT'}
-sub lockfile() { shift->filename . '.lock' }
-
+sub lockfile() { $_[0]->filename . '.lock' }
 
 =method exe
 Returns the name of the external binary.
 =cut
 
-sub exe() {shift->{MBLM_exe}}
-
+sub exe() { $_[0]->{MBLM_exe} }
 
 =method unlock
 =warning Couldn't remove mutt-unlock $folder: $!
 =cut
 
 sub unlock()
-{   my $self = shift;
-    $self->hasLock
-        or return $self;
+{	my $self = shift;
+	$self->hasLock or return $self;
 
-    unless(system($self->exe, '-u', $self->filename))
-    {   my $folder = $self->folder;
-        $self->log(WARNING => "Couldn't remove mutt-unlock $folder: $!");
-    }
+	unless(system($self->exe, '-u', $self->filename))
+	{	my $folder = $self->folder;
+		$self->log(WARNING => "Couldn't remove mutt-unlock $folder: $!");
+	}
 
-    $self->SUPER::unlock;
-    $self;
+	$self->SUPER::unlock;
+	$self;
 }
 
 
@@ -77,59 +76,57 @@ sub unlock()
 =cut
 
 sub lock()
-{   my $self   = shift;
-    my $folder = $self->folder;
-    if($self->hasLock)
-    {   $self->log(WARNING => "Folder $folder already mutt-locked");
-        return 1;
-    }
+{	my $self   = shift;
+	my $folder = $self->folder;
+	if($self->hasLock)
+	{	$self->log(WARNING => "Folder $folder already mutt-locked");
+		return 1;
+	}
 
-    my $filename = $self->filename;
-    my $lockfn   = $self->lockfile;
+	my $filename = $self->filename;
+	my $lockfn   = $self->lockfile;
 
-    my $timeout  = $self->timeout;
-    my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
-    my $expire   = $self->expires / 86400;  # in days for -A
-    my $exe      = $self->exe;
+	my $timeout  = $self->timeout;
+	my $end      = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
+	my $expire   = $self->expires / 86400;  # in days for -A
+	my $exe      = $self->exe;
 
-    while(1)
-    {
-        if(system($exe, '-p', '-r', 1, $filename))
-        {   unless(WIFEXITED($?) && WEXITSTATUS($?)==3)
-            {   $self->log(ERROR => "Will never get a mutt-lock: $!");
-                return 0;
-            }
-        }
-        else
-        {   return $self->SUPER::lock;
-        }
+	while(1)
+	{
+		if(system($exe, '-p', '-r', 1, $filename))
+		{	unless(WIFEXITED($?) && WEXITSTATUS($?)==3)
+			{	$self->log(ERROR => "Will never get a mutt-lock: $!");
+				return 0;
+			}
+		}
+		else
+		{	return $self->SUPER::lock;
+		}
 
-        if(-e $lockfn && -A $lockfn > $expire)
-        {
-            if(system($exe, '-f', '-u', $filename))
-            {   $self->log(ERROR =>
-                   "Failed to remove expired mutt-lock $lockfn: $!");
-                last;
-            }
-            else
-            {   $self->log(WARNING => "Removed expired mutt-lock $lockfn");
-                redo;
-            }
-        }
+		if(-e $lockfn && -A $lockfn > $expire)
+		{
+			if(system($exe, '-f', '-u', $filename))
+			{	$self->log(ERROR => "Failed to remove expired mutt-lock $lockfn: $!");
+				last;
+			}
+			else
+			{	$self->log(WARNING => "Removed expired mutt-lock $lockfn");
+				redo;
+			}
+		}
 
-        last unless --$end;
-        sleep 1;
-    }
+		last unless --$end;
+		sleep 1;
+	}
 
-    return 0;
+	return 0;
 }
 
 
 sub isLocked()
-{   my $self     = shift;
-    system($self->exe, '-t', $self->filename);
-    WIFEXITED($?) && WEXITSTATUS($?)==3;
+{	my $self     = shift;
+	system($self->exe, '-t', $self->filename);
+	WIFEXITED($?) && WEXITSTATUS($?)==3;
 }
 
 1;
-

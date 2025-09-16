@@ -1,33 +1,37 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Message;
-use base 'Mail::Message';
+use parent 'Mail::Message';
 
 use strict;
 use warnings;
 
-use Scalar::Util 'weaken';
+use Scalar::Util  qw/weaken/;
 
+use Mail::Box::Message::Destructed  ();
+
+#--------------------
 =chapter NAME
 
 Mail::Box::Message - manage one message within a mail-folder
 
 =chapter SYNOPSIS
 
- # Usually these message objects are created indirectly
- use Mail::Box::Manager;
- my $manager = Mail::Box::Manager->new;
- my $folder  = $manager->open(folder => 'Mail/Drafts');
- my $msg     = $folder->message(1);
- $msg->delete;
- $msg->size;   # and much more
+  # Usually these message objects are created indirectly
+  use Mail::Box::Manager;
+  my $manager = Mail::Box::Manager->new;
+  my $folder  = $manager->open(folder => 'Mail/Drafts');
+  my $msg     = $folder->message(1);
+  $msg->delete;
+  $msg->size;   # and much more
 
 =chapter DESCRIPTION
 
 These pages do only describe methods which relate to folders.  If you
-access the knowledge of a message, then read M<Mail::Message>.
+access the knowledge of a message, then read Mail::Message.
 
 During its life, a message will pass through certain stages.  These
 stages were introduced to reduce the access-time to the folder.  Changing
@@ -39,12 +43,11 @@ from stage, the message's body and head objects may change.
 
 =c_method new %options
 
-=requires folder FOLDER
+=requires folder $folder
+The $folder where this message appeared in.  The argument is
+an instance of (a sub-class of) a Mail::Box.
 
-The folder where this message appeared in.  The argument is
-an instance of (a sub-class of) a M<Mail::Box>.
-
-=option  body_type CODE|CLASS
+=option  body_type CODE|$class
 =default body_type <from folder>
 If the body of a message is used delay-loaded, the message must what type
 of message to become when it finally gets parsed.  The folder which is
@@ -58,45 +61,41 @@ message separators which may be used by the folder type.
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    $self->SUPER::init($args);
+{	my ($self, $args) = @_;
+	$self->SUPER::init($args);
 
-    $self->{MBM_body_type} = $args->{body_type};
-    $self->{MBM_folder}    = $args->{folder};
-    weaken($self->{MBM_folder});
-
-    return $self if $self->isDummy;
-    $self;
+	$self->{MBM_body_type} = $args->{body_type};
+	$self->folder($args->{folder});
+	$self;
 }
 
 sub head(;$)
-{   my $self  = shift;
-    return $self->SUPER::head unless @_;
+{	my $self  = shift;
+	@_ or return $self->SUPER::head;
 
-    my $new   = shift;
-    my $old   = $self->head;
-    $self->SUPER::head($new);
+	my $new   = shift;
+	my $old   = $self->head;
+	$self->SUPER::head($new);
 
-    return unless defined $new || defined $old;
+	defined $new || defined $old return;
 
-    my $folder = $self->folder
-        or return $new;
+	my $folder = $self->folder
+		or return $new;
 
-    if(!defined $new && defined $old && !$old->isDelayed)
-    {   $folder->messageId($self->messageId, undef);
-        $folder->toBeUnthreaded($self);
-    }
-    elsif(defined $new && !$new->isDelayed)
-    {   $folder->messageId($self->messageId, $self);
-        $folder->toBeThreaded($self);
-    }
+	if(!defined $new && defined $old && !$old->isDelayed)
+	{	$folder->messageId($self->messageId, undef);
+		$folder->toBeUnthreaded($self);
+	}
+	elsif(defined $new && !$new->isDelayed)
+	{	$folder->messageId($self->messageId, $self);
+		$folder->toBeThreaded($self);
+	}
 
-    $new || $old;
+	$new || $old;
 }
 
-#-------------------------------------------
-
-=section The message
+#--------------------
+=section Attributes
 
 =method folder [$folder]
 In with folder did we detect this message/dummy?  This is a reference
@@ -105,13 +104,13 @@ to the folder-object.
 =cut
 
 sub folder(;$)
-{   my $self = shift;
-    if(@_)
-    {   $self->{MBM_folder} = shift;
-        weaken($self->{MBM_folder});
-        $self->modified(1);
-    }
-    $self->{MBM_folder};
+{	my $self = shift;
+	if(@_)
+	{	$self->{MBM_folder} = shift;
+		weaken($self->{MBM_folder});
+		$self->modified(1);
+	}
+	$self->{MBM_folder};
 }
 
 =method seqnr [$integer]
@@ -119,10 +118,10 @@ Get the number of this message is the current folder.  It starts counting
 from zero.  Do not change the number.
 =cut
 
-sub seqnr(;$)
-{   my $self = shift;
-    @_ ? $self->{MBM_seqnr} = shift : $self->{MBM_seqnr};
-}
+sub seqnr(;$) {	my $self = shift; @_ ? $self->{MBM_seqnr} = shift : $self->{MBM_seqnr} }
+
+#--------------------
+=section The message
 
 =method copyTo $folder, %options
 Copy the message to the indicated opened $folder, without deleting the
@@ -148,14 +147,14 @@ Used for M<clone(shallow_body)>.
 Used for M<clone(shallow_head)>.
 
 =example
- my $draft = $mgr->open(folder => 'Draft');
- $message->copyTo($draft, share => 1);
+  my $draft = $mgr->open(folder => 'Draft');
+  $message->copyTo($draft, share => 1);
 
 =cut
 
 sub copyTo($@)
-{   my ($self, $folder) = (shift, shift);
-    $folder->addMessage($self->clone(@_));
+{	my ($self, $folder) = (shift, shift);
+	$folder->addMessage($self->clone(@_));
 }
 
 =method moveTo $folder, %options
@@ -180,29 +179,28 @@ reused.  A message can therefore not be shared in storage unless
 explicitly stated.
 
 =example of moving a message
- my $trash = Mail::Box::Mbox->new(folder => 'trash');
- my $t = $msg->moveTo($trash);
+  my $trash = Mail::Box::Mbox->new(folder => 'trash');
+  my $t = $msg->moveTo($trash);
 
 is equivalent to
 
- my $t = $msg->copyTo($trash, share => 1);
- $msg->delete;
+  my $t = $msg->copyTo($trash, share => 1);
+  $msg->delete;
 
 =cut
 
 sub moveTo($@)
-{   my ($self, $folder, %args) = @_;
+{	my ($self, $folder, %args) = @_;
 
-    $args{share} = 1
-        unless exists $args{share} || exists $args{shallow_body};
+	$args{share} = 1
+		unless exists $args{share} || exists $args{shallow_body};
 
-    my $added = $self->copyTo($folder, %args);
-    $self->label(deleted => 1);
-    $added;
+	my $added = $self->copyTo($folder, %args);
+	$self->label(deleted => 1);
+	$added;
 }
 
-#-------------------------------------------
-
+#--------------------
 =section Internals
 
 =method readBody $parser, $head, [$bodytype]
@@ -217,14 +215,14 @@ where the message will be added to.
 =cut
 
 sub readBody($$;$)
-{   my ($self, $parser, $head, $getbodytype) = @_;
+{	my ($self, $parser, $head, $getbodytype) = @_;
 
-    unless($getbodytype)
-    {   my $folder   = $self->{MBM_folder};
-        $getbodytype = sub {$folder->determineBodyType(@_)} if defined $folder;
-    }
+	unless($getbodytype)
+	{	my $folder   = $self->folder;
+		$getbodytype = sub { $folder->determineBodyType(@_) } if defined $folder;
+	}
 
-    $self->SUPER::readBody($parser, $head, $getbodytype);
+	$self->SUPER::readBody($parser, $head, $getbodytype);
 }
 
 =method diskDelete
@@ -233,28 +231,24 @@ else, like parts of the message which are stored outside from the
 folder.
 =cut
 
-sub diskDelete() { shift }
+sub diskDelete() { $_[0] }
 
 sub forceLoad() {   # compatibility
-   my $self = shift;
-   $self->loadBody(@_);
-   $self;
+	my $self = shift;
+	$self->loadBody(@_);
+	$self;
 }
 
-#-------------------------------------------
-
+#--------------------
 =section Cleanup
 
 =method destruct
 Removes most of the memory occupied by the message by detaching the header
-and body.  Then, the object changes into a M<Mail::Box::Message::Destructed>
+and body.  Then, the object changes into a Mail::Box::Message::Destructed
 which will catch all attempts to access the header and body.  Be careful
 with the usage of this method.
 =cut
 
-sub destruct()
-{   require Mail::Box::Message::Destructed;
-    Mail::Box::Message::Destructed->coerce(shift);
-}
+sub destruct() { Mail::Box::Message::Destructed->coerce(shift) }
 
 1;

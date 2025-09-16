@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Manager;
 use base 'Mail::Reporter';
@@ -17,39 +18,40 @@ use Scalar::Util 'weaken';
 # so we need to keep track.
 my %require_failed;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Manager - manage a set of folders
 
 =chapter SYNOPSIS
 
- use Mail::Box::Manager;
- my $mgr     = new Mail::Box::Manager;
+  use Mail::Box::Manager;
+  my $mgr     = new Mail::Box::Manager;
 
- # Create folder objects.
- my $folder   = $mgr->open(folder => $ENV{MAIL});
- my $message1 = $folder->message(0);
- $mgr->copyMessage('Draft', $message);
+  # Create folder objects.
+  my $folder   = $mgr->open(folder => $ENV{MAIL});
+  my $message1 = $folder->message(0);
+  $mgr->copyMessage('Draft', $message);
 
- my @messages = $folder->message(0,3);
- $mgr->moveMessage('Outbox', @messages, create => 1 );
- $mgr->close($folder);
+  my @messages = $folder->message(0,3);
+  $mgr->moveMessage('Outbox', @messages, create => 1 );
+  $mgr->close($folder);
 
- # Create thread-detectors (see M<Mail::Box::Thread::Manager>)
- my $t       = $mgr->threads($inbox, $outbox);
+  # Create thread-detectors (see Mail::Box::Thread::Manager)
+  my $t       = $mgr->threads($inbox, $outbox);
 
- my $threads = $mgr->threads(folder => $folder);
- foreach my $thread ($threads->all)
- {   $thread->print;
- }
+  my $threads = $mgr->threads(folder => $folder);
+  foreach my $thread ($threads->all)
+  {   $thread->print;
+  }
 
- $mgr->registerType(mbox => 'Mail::Box::MyType');
+  $mgr->registerType(mbox => 'Mail::Box::MyType');
 
 =chapter DESCRIPTION
 
 The manager keeps track on a set of open folders and a set of message-thread
 supporting objects.  You are not obliged to use this object (you can
-directly create a M<Mail::Box::Mbox> if you prefer), but you will create
+directly create a Mail::Box::Mbox if you prefer), but you will create
 more portable and safer code if you do use it.
 
 =chapter METHODS
@@ -68,7 +70,7 @@ folder-specific defaults as OPTIONS.  They override the settings of
 the manager.
 
 =option  autodetect TYPE|ARRAY-OF-TYPES
-=default autodetect C<undef>
+=default autodetect undef
 Select only a subset of the folder types which are implemented by MailBox
 to be detected automatically.  This may improve the auto-detection of
 folder types.  Normally, all folder types will be tried when a folder's
@@ -94,73 +96,72 @@ a loss of information depending on the folder types.
 
 =cut
 
-my @basic_folder_types =
-  ( [ mbox    => 'Mail::Box::Mbox'    ]
-  , [ mh      => 'Mail::Box::MH'      ]
-  , [ maildir => 'Mail::Box::Maildir' ]
-  , [ pop     => 'Mail::Box::POP3'    ]
-  , [ pop3    => 'Mail::Box::POP3'    ]
-  , [ pops    => 'Mail::Box::POP3s'   ]
-  , [ pop3s   => 'Mail::Box::POP3s'   ]
-  , [ imap    => 'Mail::Box::IMAP4'   ]
-  , [ imap4   => 'Mail::Box::IMAP4'   ]
-  , [ imaps   => 'Mail::Box::IMAP4s'  ]
-  , [ imap4s  => 'Mail::Box::IMAP4s'  ]
-  );
+my @basic_folder_types = (
+	[ mbox    => 'Mail::Box::Mbox'    ],
+	[ mh      => 'Mail::Box::MH'      ],
+	[ maildir => 'Mail::Box::Maildir' ],
+	[ pop     => 'Mail::Box::POP3'    ],
+	[ pop3    => 'Mail::Box::POP3'    ],
+	[ pops    => 'Mail::Box::POP3s'   ],
+	[ pop3s   => 'Mail::Box::POP3s'   ],
+	[ imap    => 'Mail::Box::IMAP4'   ],
+	[ imap4   => 'Mail::Box::IMAP4'   ],
+	[ imaps   => 'Mail::Box::IMAP4s'  ],
+	[ imap4s  => 'Mail::Box::IMAP4s'  ]
+);
 
 my @managers;  # usually only one, but there may be more around :(
 
 sub init($)
-{   my ($self, $args) = @_;
-    $self->SUPER::init($args);
+{	my ($self, $args) = @_;
+	$self->SUPER::init($args);
 
-    # Register all folder-types.  There may be some added later.
+	# Register all folder-types.  There may be some added later.
 
-    my @new_types;
-    if(my $ft = $args->{folder_types})
-    {   @new_types = ref($ft->[0]) eq 'ARRAY' ? @$ft : $ft;
-    }
+	my @new_types;
+	if(my $ft = $args->{folder_types})
+	{	@new_types = ref($ft->[0]) eq 'ARRAY' ? @$ft : $ft;
+	}
 
-    my @basic_types = reverse @basic_folder_types;
-    if(my $basic = $args->{autodetect})
-    {   my %types = map +($_ => 1), ref $basic ? @$basic : $basic;
-        @basic_types = grep $types{$_->[0]}, @basic_types;
-    }
+	my @basic_types = reverse @basic_folder_types;
+	if(my $basic = $args->{autodetect})
+	{	my %types = map +($_ => 1), ref $basic ? @$basic : $basic;
+		@basic_types = grep $types{$_->[0]}, @basic_types;
+	}
 
-    $self->{MBM_folder_types} = [];
-    $self->registerType(@$_) for @new_types, @basic_types;
+	$self->{MBM_folder_types} = [];
+	$self->registerType(@$_) for @new_types, @basic_types;
 
-    $self->{MBM_default_type} = $args->{default_folder_type} || 'mbox';
+	$self->{MBM_default_type} = $args->{default_folder_type} || 'mbox';
 
-    # Inventory on existing folder-directories.
-    my $fd = $self->{MBM_folderdirs} = [ ];
-    if(exists $args->{folderdir})
-    {   my @dirs = $args->{folderdir};
-        @dirs = @{$dirs[0]} if ref $dirs[0] eq 'ARRAY';
-        push @$fd, @dirs;
-    }
+	# Inventory on existing folder-directories.
+	my $fd = $self->{MBM_folderdirs} = [ ];
+	if(exists $args->{folderdir})
+	{	my @dirs = $args->{folderdir};
+		@dirs = @{$dirs[0]} if ref $dirs[0] eq 'ARRAY';
+		push @$fd, @dirs;
+	}
 
-    if(exists $args->{folderdirs})
-    {   my @dirs = $args->{folderdirs};
-        @dirs = @{$dirs[0]} if ref $dirs[0];
-        push @$fd, @dirs;
-    }
-    push @$fd, '.';
+	if(exists $args->{folderdirs})
+	{	my @dirs = $args->{folderdirs};
+		@dirs = @{$dirs[0]} if ref $dirs[0];
+		push @$fd, @dirs;
+	}
+	push @$fd, '.';
 
-    $self->{MBM_folders} = [];
-    $self->{MBM_threads} = [];
+	$self->{MBM_folders} = [];
+	$self->{MBM_threads} = [];
 
-    push @managers, $self;
-    weaken $managers[-1];
+	push @managers, $self;
+	weaken $managers[-1];
 
-    $self;
+	$self;
 }
 
-#-------------------------------------------
+#--------------------
 =section Attributes
 
 =method registerType $type, $class, %options
-
 With C<registerType> you can register one $type of folders.  The $class
 is compiled automatically, so you do not need to C<use> them in your own
 modules.  The $type is just an arbitrary name.
@@ -169,16 +170,14 @@ The added types are prepended to the list of known types, so they are
 checked first when a folder is opened in autodetect mode.
 
 =example
-
- $manager->registerType(mbox => 'Mail::Box::Mbox',
-     save_on_exit => 0, folderdir => '/tmp');
-
+  $manager->registerType(mbox => 'Mail::Box::Mbox',
+      save_on_exit => 0, folderdir => '/tmp');
 =cut
 
 sub registerType($$@)
-{   my ($self, $name, $class, @options) = @_;
-    unshift @{$self->{MBM_folder_types}}, [$name, $class, @options];
-    $self;
+{	my ($self, $name, $class, @options) = @_;
+	unshift @{$self->{MBM_folder_types}}, [$name, $class, @options];
+	$self;
 }
 
 =method folderdir
@@ -187,23 +186,22 @@ context only the first.
 =cut
 
 sub folderdir()
-{   my $dirs = shift->{MBM_folderdirs} or return ();
-    wantarray ? @$dirs : $dirs->[0];
+{	my $dirs = shift->{MBM_folderdirs} or return ();
+	wantarray ? @$dirs : $dirs->[0];
 }
 
 =method folderTypes
 Returns the list of currently defined folder types.
 
 =example
- print join("\n", $manager->folderTypes), "\n";
-
+  print join("\n", $manager->folderTypes), "\n";
 =cut
 
 sub folderTypes()
-{   my $self = shift;
-    my %uniq;
-    $uniq{$_->[0]}++ foreach @{$self->{MBM_folder_types}};
-    sort keys %uniq;
+{	my $self = shift;
+	my %uniq;
+	$uniq{$_->[0]}++ for $self->folderTypeDefs;
+	sort keys %uniq;
 }
 
 =method defaultFolderType
@@ -211,26 +209,32 @@ Returns the default folder type, some class name.
 =cut
 
 sub defaultFolderType()
-{   my $self = shift;
-    my $name = $self->{MBM_default_type};
-    return $name if $name =~ m/\:\:/;  # obviously a class name
+{	my $self = shift;
+	my $name = $self->{MBM_default_type};
+	return $name if $name =~ m/\:\:/;  # obviously a class name
 
-    foreach my $def (@{$self->{MBM_folder_types}})
-    {   return $def->[1] if $def->[0] eq $name || $def->[1] eq $name;
-    }
+	foreach my $def ($self->folderTypeDefs)
+	{	return $def->[1] if $def->[0] eq $name || $def->[1] eq $name;
+	}
 
-    undef;
+	undef;
 }
 
-#-------------------------------------------
+=method threads
+=method folderTypeDefs
+=cut
 
+sub threads()        { @{$_[0]->{MBM_threads}} }
+sub folderTypeDefs() { @{$_[0]->{MBM_folder_types}} }
+
+#--------------------
 =section Manage open folders
 
 =method open [$foldername], %options
 
 Open a folder which name is specified as first parameter or with
-the option flag C<folder>.  The folder type is autodetected unless
-the C<type> is specified.
+the option flag P<folder>.  The folder type is autodetected unless
+the P<type> is specified.
 
 C<open> carries options for the manager which are described here, but
 may also have additional options for the folder type.  For a
@@ -239,17 +243,15 @@ M<Mail::Box::new()> for each type of mail box.
 
 =option  create BOOLEAN
 =default create <false>
-
 Create the folder if it does not exist. By default, this is not done.
-The C<type> option specifies which type of folder is created.
+The P<type> option specifies which type of folder is created.
 
 =option  folder NAME|URL
 =default folder C<$ENV{MAIL}>
-
 Which folder to open, specified by NAME or special URL.
 The URL format is composed as
 
- type://username:password@hostname:port/foldername
+  type://username:password@hostname:port/foldername
 
 Like real URLs, all fields are optional and have smart defaults, as long
 as the string starts with a known folder type.  Far
@@ -262,7 +264,6 @@ passed directly to the C<new> method of the folder which is opened.
 
 =option  folderdir DIRECTORY
 =default folderdir C<'.'>
-
 The directory where the folders are usually stored.
 
 =option  type FOLDERTYPENAME|FOLDERTYPE
@@ -287,21 +288,21 @@ folder types, especially by POP and IMAP.
 
 =examples opening folders via the manager
 
- my $jack  = $manager->open(folder => '=jack',
-    type => 'mbox');
+  my $jack  = $manager->open(folder => '=jack',
+     type => 'mbox');
 
- my $rcvd  = $manager->open('myMail',
-    type => 'Mail::Box::Mbox', access => 'rw');
+  my $rcvd  = $manager->open('myMail',
+     type => 'Mail::Box::Mbox', access => 'rw');
 
- my $inbox = $manager->open('Inbox')
-    or die "Cannot open Inbox.\n";
+  my $inbox = $manager->open('Inbox')
+     or die "Cannot open Inbox.\n";
 
- my $pop   = 'pop3://myself:secret@pop3.server.com:120/x';
- my $send  = $manager->open($url);
+  my $pop   = 'pop3://myself:secret@pop3.server.com:120/x';
+  my $send  = $manager->open($url);
 
- my $send  = $manager->open(folder => '/x',
-   type => 'pop3', username => 'myself', password => 'secret'
-   server_name => 'pop3.server.com', server_port => '120');
+  my $send  = $manager->open(folder => '/x',
+    type => 'pop3', username => 'myself', password => 'secret'
+    server_name => 'pop3.server.com', server_port => '120');
 
 =error Illegal folder URL '$url'.
 The folder name was specified as URL, but not according to the syntax.
@@ -309,7 +310,7 @@ See M<decodeFolderURL()> for an description of the syntax.
 
 =error No foldername specified to open.
 C<open()> needs a folder name as first argument (before the list of options),
-or with the C<folder> option within the list.  If no name was found, the
+or with the P<folder> option within the list.  If no name was found, the
 MAIL environment variable is checked.  When even that does not result in
 a usable folder, then this error is produced.  The error may be caused by
 an accidental odd-length option list.
@@ -322,7 +323,7 @@ only useful for folders which have write or append access modes
 =warning Folder type $type is unknown, using autodetect.
 The specified folder type (see M<open(type)>, possibly derived from
 the folder name when specified as url) is not known to the manager.
-This may mean that you forgot to require the M<Mail::Box> extension
+This may mean that you forgot to require the Mail::Box extension
 which implements this folder type, but probably it is a typo.  Usually,
 the manager is able to figure-out which type to use by itself.
 
@@ -333,7 +334,7 @@ access rights to the folder (for instance wrong password for POP3),
 this warning will be produced as well.
 
 The manager tried to open a folder of the specified type.  It may help
-to explicitly state the type of your folder with the C<type> option.
+to explicitly state the type of your folder with the P<type> option.
 There will probably be another warning or error message which is related
 to this report and provides more details about its cause.  You may also
 have a look at M<new(autodetect)> and M<new(folder_types)>.
@@ -348,184 +349,177 @@ influence the second, probably unexpectedly.
 =cut
 
 sub open(@)
-{   my $self = shift;
-    my $name = @_ % 2 ? shift : undef;
-    my %args = @_;
-    $args{authentication} ||= 'AUTO';
+{	my $self = shift;
+	my $name = @_ % 2 ? shift : undef;
+	my %args = @_;
 
-    $name    = defined $args{folder} ? $args{folder} : ($ENV{MAIL} || '')
-        unless defined $name;
+	$args{authentication} ||= 'AUTO';
+	$name  //= defined $args{folder} ? $args{folder} : ($ENV{MAIL} || '');
 
-    if($name =~ m/^(\w+)\:/ && grep $_ eq $1, $self->folderTypes)
-    {   # Complicated folder URL
-        my %decoded = $self->decodeFolderURL($name);
-        if(keys %decoded)
-        {   # accept decoded info
-            @args{keys %decoded} = values %decoded;
-        }
-        else
-        {   $self->log(ERROR => "Illegal folder URL '$name'.");
-            return;
-        }
-    }
-    else
-    {   # Simple folder name
-        $args{folder} = $name;
-    }
+	if($name =~ m/^(\w+)\:/ && grep $_ eq $1, $self->folderTypes)
+	{	# Complicated folder URL
+		my %decoded = $self->decodeFolderURL($name);
+		if(keys %decoded)
+		{	# accept decoded info
+			@args{keys %decoded} = values %decoded;
+		}
+		else
+		{	$self->log(ERROR => "Illegal folder URL '$name'.");
+			return;
+		}
+	}
+	else
+	{	# Simple folder name
+		$args{folder} = $name;
+	}
 
-    # Do not show password in folder name
-    my $type = $args{type};
-    if(!defined $type) { ; }
-    elsif($type eq 'pop3' || $type eq 'pop')
-    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
-        my $srv  = $args{server_name} ||= 'localhost';
-        my $port = $args{server_port} ||= 110;
-        $args{folderdir} = $name = "pop3://$un\@$srv:$port";
-    }
-    elsif($type eq 'pop3s' || $type eq 'pops')
-    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
-        my $srv  = $args{server_name} ||= 'localhost';
-        my $port = $args{server_port} ||= 995;
-        $args{folderdir} = $name = "pop3s://$un\@$srv:$port";
-    }
-    elsif($type eq 'imap4' || $type eq 'imap')
-    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
-        my $srv  = $args{server_name} ||= 'localhost';
-        my $port = $args{server_port} ||= 143;
-        $args{folderdir} = $name = "imap4://$un\@$srv:$port";
-    }
-    elsif($type eq 'imap4s' || $type eq 'imaps')
-    {   my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
-        my $srv  = $args{server_name} ||= 'localhost';
-        my $port = $args{server_port} ||= 993;
-        $args{folderdir} = $name = "imap4s://$un\@$srv:$port";
-    }
+	# Do not show password in folder name
+	my $type = $args{type};
+	   if(!defined $type) { ; }
+	elsif($type eq 'pop3' || $type eq 'pop')
+	{	my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+		my $srv  = $args{server_name} ||= 'localhost';
+		my $port = $args{server_port} ||= 110;
+		$args{folderdir} = $name = "pop3://$un\@$srv:$port";
+	}
+	elsif($type eq 'pop3s' || $type eq 'pops')
+	{	my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+		my $srv  = $args{server_name} ||= 'localhost';
+		my $port = $args{server_port} ||= 995;
+		$args{folderdir} = $name = "pop3s://$un\@$srv:$port";
+	}
+	elsif($type eq 'imap4' || $type eq 'imap')
+	{	my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+		my $srv  = $args{server_name} ||= 'localhost';
+		my $port = $args{server_port} ||= 143;
+		$args{folderdir} = $name = "imap4://$un\@$srv:$port";
+	}
+	elsif($type eq 'imap4s' || $type eq 'imaps')
+	{	my $un   = $args{username}    ||= $ENV{USER} || $ENV{LOGIN};
+		my $srv  = $args{server_name} ||= 'localhost';
+		my $port = $args{server_port} ||= 993;
+		$args{folderdir} = $name = "imap4s://$un\@$srv:$port";
+	}
 
-    unless(defined $name && length $name)
-    {   $self->log(ERROR => "No foldername specified to open.");
-        return undef;
-    }
-        
-    $args{folderdir} ||= $self->{MBM_folderdirs}->[0]
-        if $self->{MBM_folderdirs};
+	unless(defined $name && length $name)
+	{	$self->log(ERROR => "No foldername specified to open.");
+		return undef;
+	}
 
-    $args{access} ||= 'r';
+	$args{folderdir} ||= $self->{MBM_folderdirs}->[0]
+		if $self->{MBM_folderdirs};
 
-    if($args{create} && $args{access} !~ m/w|a/)
-    {   $self->log(WARNING
-           => "Will never create a folder $name without having write access.");
-        undef $args{create};
-    }
+	$args{access} ||= 'r';
 
-    # Do not open twice.
-    if(my $folder = $self->isOpenFolder($name))
-    {   $self->log(ERROR => "Folder $name is already open.");
-        return undef;
-    }
+	if($args{create} && $args{access} !~ m/w|a/)
+	{	$self->log(WARNING => "Will never create a folder $name without having write access.");
+		undef $args{create};
+	}
 
-    #
-    # Which folder type do we need?
-    #
+	# Do not open twice.
+	my $folder = $self->isOpenFolder($name)
+		or $self->log(ERROR => "Folder $name is already open."), return undef;
 
-    my ($folder_type, $class, @defaults);
-    if($type)
-    {   # User-specified foldertype prevails.
-        foreach (@{$self->{MBM_folder_types}})
-        {   (my $abbrev, $class, @defaults) = @$_;
+	#
+	# Which folder type do we need?
+	#
 
-            if($type eq $abbrev || $type eq $class)
-            {   $folder_type = $abbrev;
-                last;
-            }
-        }
+	my ($folder_type, $class, @defaults);
+	my @typedefs = $self->folderTypeDefs;
+	if($type)
+	{	# User-specified foldertype prevails.
+		foreach (@typedefs)
+		{	(my $abbrev, $class, @defaults) = @$_;
 
-        $self->log(ERROR => "Folder type $type is unknown, using autodetect.")
-            unless $folder_type;
-    }
+			if($type eq $abbrev || $type eq $class)
+			{	$folder_type = $abbrev;
+				last;
+			}
+		}
 
-    unless($folder_type)
-    {   # Try to autodetect foldertype.
-        foreach (@{$self->{MBM_folder_types}})
-        {   next unless $_;
-            (my $abbrev, $class, @defaults) = @$_;
-            next if $require_failed{$class};
+		$folder_type
+			or $self->log(ERROR => "Folder type $type is unknown, using autodetect.");
+	}
 
-            eval "require $class";
-            if($@)
-            {   $require_failed{$class}++;
-                next;
-            }
+	unless($folder_type)
+	{	# Try to autodetect foldertype.
+		foreach (@typedefs)
+		{	(my $abbrev, $class, @defaults) = @$_;
+			next if $require_failed{$class};
 
-            if($class->foundIn($name, @defaults, %args))
-            {   $folder_type = $abbrev;
-                last;
-            }
-        }
-     }
+			eval "require $class";
+			if($@)
+			{	$require_failed{$class}++;
+				next;
+			}
 
-    unless($folder_type)
-    {   # Use specified default
-        if(my $type = $self->{MBM_default_type})
-        {   foreach (@{$self->{MBM_folder_types}})
-            {   (my $abbrev, $class, @defaults) = @$_;
-                if($type eq $abbrev || $type eq $class)
-                {   $folder_type = $abbrev;
-                    last;
-                }
-            }
-        }
-    }
+			if($class->foundIn($name, @defaults, %args))
+			{	$folder_type = $abbrev;
+				last;
+			}
+		}
+	}
 
-    unless($folder_type)
-    {   # use first type (last defined)
-        ($folder_type, $class, @defaults) = @{$self->{MBM_folder_types}[0]};
-    }
-    
-    #
-    # Try to open the folder
-    #
+	unless($folder_type)
+	{	# Use specified default
+		if(my $type = $self->{MBM_default_type})
+		{	foreach (@typedefs)
+			{	(my $abbrev, $class, @defaults) = @$_;
+				if($type eq $abbrev || $type eq $class)
+				{	$folder_type = $abbrev;
+					last;
+				}
+			}
+		}
+	}
 
-    return if $require_failed{$class};
-    eval "require $class";
-    if($@)
-    {   $self->log(ERROR => "Failed for folder default $class: $@");
-        $require_failed{$class}++;
-        return ();
-    }
+	unless($folder_type)
+	{	# use first type (last defined)
+		($folder_type, $class, @defaults) = @{$typedefs[0]};
+	}
 
-    push @defaults, manager => $self;
-    my $folder = $class->new(@defaults, %args);
-    unless(defined $folder)
-    {   $self->log(WARNING =>
-           "Folder does not exist, failed opening $folder_type folder $name.")
-           unless $args{access} eq 'd';
-        return;
-    }
+	#
+	# Try to open the folder
+	#
 
-    $self->log(PROGRESS => "Opened folder $name ($folder_type).");
-    push @{$self->{MBM_folders}}, $folder;
-    $folder;
+	return if $require_failed{$class};
+	eval "require $class";
+	if($@)
+	{	$self->log(ERROR => "Failed for folder default $class: $@");
+		$require_failed{$class}++;
+		return ();
+	}
+
+	push @defaults, manager => $self;
+	my $folder = $class->new(@defaults, %args);
+	unless(defined $folder)
+	{	$args{access} eq 'd'
+			or $self->log(WARNING => "Folder does not exist, failed opening $folder_type folder $name.");
+		return;
+	}
+
+	$self->log(PROGRESS => "Opened folder $name ($folder_type).");
+	push @{$self->{MBM_folders}}, $folder;
+	$folder;
 }
 
 =method openFolders
 Returns a list of all open folders.
 =cut
 
-sub openFolders() { @{shift->{MBM_folders}} }
+sub openFolders() { @{ $_[0]->{MBM_folders}} }
 
 =method isOpenFolder $folder
 Returns true if the $folder is currently open.
 
 =example
- print "Yes\n" if $mgr->isOpenFolder('Inbox');
+  print "Yes\n" if $mgr->isOpenFolder('Inbox');
 =cut
 
 sub isOpenFolder($)
-{   my ($self, $name) = @_;
-    first {$name eq $_->name} $self->openFolders;
+{	my ($self, $name) = @_;
+	first { $name eq $_->name } $self->openFolders;
 }
-
-#-------------------------------------------
 
 =method close $folder, %options
 
@@ -545,32 +539,31 @@ not change this.
 
 =examples
 
- my $inbox = $mgr->open('inbox');
- $mgr->close($inbox);
- $inbox->close;        # alternative
+  my $inbox = $mgr->open('inbox');
+  $mgr->close($inbox);
+  $inbox->close;        # alternative
 
 =cut
 
 sub close($@)
-{   my ($self, $folder, %options) = @_;
-    return unless $folder;
+{	my ($self, $folder, %options) = @_;
+	return unless $folder;
 
-    my $name      = $folder->name;
-    my @remaining = grep {$name ne $_->name} @{$self->{MBM_folders}};
+	my $name      = $folder->name;
+	my @folders   = $self->openFolders;
+	my @remaining = grep $name ne $_->name, @folders;
 
-    # folder opening failed:
-    return if @{$self->{MBM_folders}} == @remaining;
+	# folder opening failed:
+	return if @folders == @remaining;
 
-    $self->{MBM_folders} = [ @remaining ];
-    $_->removeFolder($folder) foreach @{$self->{MBM_threads}};
+	$self->{MBM_folders} = [ @remaining ];
+	$_->removeFolder($folder) for $self->threads;
 
-    $folder->close(close_by_manager => 1, %options)
-       unless $options{close_by_self};
+	$options{close_by_self}
+		or $folder->close(close_by_manager => 1, %options);
 
-    $self;
+	$self;
 }
-
-#-------------------------------------------
 
 =method closeAllFolders, %options
 
@@ -581,14 +574,14 @@ cleanup).
 =cut
 
 sub closeAllFolders(@)
-{   my ($self, @options) = @_;
-    $_->close(@options) for $self->openFolders;
-    $self;
+{	my ($self, @options) = @_;
+	$_->close(@options) for $self->openFolders;
+	$self;
 }
 
 END { map defined $_ && $_->closeAllFolders, @managers }
 
-#-------------------------------------------
+#--------------------
 =section Manage existing folders
 
 =method delete $foldername, %options
@@ -605,16 +598,16 @@ Some folder can only be recursively deleted, other have more flexibility.
 =cut
 
 sub delete($@)
-{   my ($self, $name, %args) = @_;
-    my $recurse = delete $args{recursive};
+{	my ($self, $name, %args) = @_;
+	my $recurse = delete $args{recursive};
 
-    my $folder = $self->open(folder => $name, access => 'd', %args)
-        or return $self;  # still successful
+	my $folder = $self->open(folder => $name, access => 'd', %args)
+		or return $self;  # still successful
 
-    $folder->delete(recursive => $recurse);
+	$folder->delete(recursive => $recurse);
 }
 
-#-------------------------------------------
+#--------------------
 =section Move messages to folders
 
 =method appendMessage [$folder|$foldername], $messages, %options
@@ -632,7 +625,7 @@ disk until a write of that folder takes place.  When the name of an
 unopened folder is given, the folder is opened, the messages stored on
 disk, and then the folder is closed.
 
-A message must be an instance of a M<Mail::Message>.  The actual message
+A message must be an instance of a Mail::Message.  The actual message
 type does not have to match the folder type--the folder will try to
 resolve the differences with minimal loss of information.  The coerced
 messages (how the were actually written) are returned as list.
@@ -642,17 +635,17 @@ the default options for the detected folder type.
 
 =examples
 
- $mgr->appendMessage('=send', $message, folderdir => '/');
- $mgr->appendMessage($received, $inbox->messages);
+  $mgr->appendMessage('=send', $message, folderdir => '/');
+  $mgr->appendMessage($received, $inbox->messages);
 
- my @appended = $mgr->appendMessages($inbox->messages,
-    folder => 'Drafts');
- $_->label(seen => 1) foreach @appended;
+  my @appended = $mgr->appendMessages($inbox->messages,
+     folder => 'Drafts');
+  $_->label(seen => 1) foreach @appended;
 
 =error Folder $name is not a Mail::Box; cannot add a message.
 
 The folder where the message should be appended to is an object which is
-not a folder type which extends M<Mail::Box>.  Probably, it is not a folder
+not a folder type which extends Mail::Box.  Probably, it is not a folder
 at all.
 
 =warning Use moveMessage() or copyMessage() to move between open folders.
@@ -664,86 +657,83 @@ both will clone the message (not the body, because they are immutable).
 =cut
 
 sub appendMessage(@)
-{   my $self     = shift;
-    my @appended = $self->appendMessages(@_);
-    wantarray ? @appended : $appended[0];
+{	my $self     = shift;
+	my @appended = $self->appendMessages(@_);
+	wantarray ? @appended : $appended[0];
 }
 
 sub appendMessages(@)
-{   my $self = shift;
-    my $folder;
-    $folder  = shift if !ref $_[0] || $_[0]->isa('Mail::Box');
+{	my $self = shift;
+	my $folder;
+	$folder  = shift if !ref $_[0] || $_[0]->isa('Mail::Box');
 
-    my @messages;
-    push @messages, shift while @_ && ref $_[0];
+	my @messages;
+	push @messages, shift while @_ && ref $_[0];
 
-    my %options = @_;
-    $folder ||= $options{folder};
+	my %options = @_;
+	$folder ||= $options{folder};
 
-    # Try to resolve filenames into opened-files.
-    $folder = $self->isOpenFolder($folder) || $folder
-        unless ref $folder;
+	# Try to resolve filenames into opened-files.
+	$folder = $self->isOpenFolder($folder) || $folder
+		unless ref $folder;
 
-    if(ref $folder)
-    {   # An open file.
-        unless($folder->isa('Mail::Box'))
-        {   $self->log(ERROR =>
-                "Folder $folder is not a Mail::Box; cannot add a message.\n");
-            return ();
-        }
+	if(ref $folder)
+	{	# An open file.
+		$folder->isa('Mail::Box')
+			or $self->log(ERROR => "Folder $folder is not a Mail::Box; cannot add a message.\n"), return ();
 
-        foreach (@messages)
-        {   next unless $_->isa('Mail::Box::Message') && $_->folder;
-            $self->log(WARNING =>
-               "Use moveMessage() or copyMessage() to move between open folders.");
-        }
+		foreach my $msg (@messages)
+		{	$msg->isa('Mail::Box::Message') && $msg->folder or next;
+			$self->log(WARNING => "Use moveMessage() or copyMessage() to move between open folders.");
+		}
 
-        return $folder->addMessages(@messages);
-    }
+		return $folder->addMessages(@messages);
+	}
 
-    # Not an open file.
-    # Try to autodetect the folder-type and then add the message.
+	# Not an open file.
+	# Try to autodetect the folder-type and then add the message.
 
-    my ($name, $class, @gen_options, $found);
+	my ($name, $class, @gen_options, $found);
+	my @typedefs;
 
-    foreach (@{$self->{MBM_folder_types}})
-    {   ($name, $class, @gen_options) = @$_;
-        next if $require_failed{$class};
-        eval "require $class";
-        if($@)
-        {   $require_failed{$class}++;
-            next;
-        }
+	foreach (@typedefs)
+	{	($name, $class, @gen_options) = @$_;
+		next if $require_failed{$class};
+		eval "require $class";
+		if($@)
+		{	$require_failed{$class}++;
+			next;
+		}
 
-        if($class->foundIn($folder, @gen_options, access => 'a'))
-        {   $found++;
-            last;
-        }
-    }
- 
-    # The folder was not found at all, so we take the default folder-type.
-    my $type = $self->{MBM_default_type};
-    if(!$found && $type)
-    {   foreach (@{$self->{MBM_folder_types}})
-        {   ($name, $class, @gen_options) = @$_;
-            if($type eq $name || $type eq $class)
-            {   $found++;
-                last;
-            }
-        }
-    }
+		if($class->foundIn($folder, @gen_options, access => 'a'))
+		{	$found++;
+			last;
+		}
+	}
 
-    # Even the default foldertype was not found (or nor defined).
-    ($name, $class, @gen_options) = @{$self->{MBM_folder_types}[0]}
-        unless $found;
+	# The folder was not found at all, so we take the default folder-type.
+	my $type = $self->{MBM_default_type};
+	if(!$found && $type)
+	{	foreach (@typedefs)
+		{	($name, $class, @gen_options) = @$_;
+			if($type eq $name || $type eq $class)
+			{	$found++;
+				last;
+			}
+		}
+	}
 
-    $class->appendMessages
-      ( type     => $name
-      , messages => \@messages
-      , @gen_options
-      , %options
-      , folder   => $folder
-      );
+	# Even the default foldertype was not found (or nor defined).
+	($name, $class, @gen_options) = @{$typedefs[0]}
+		unless $found;
+
+	$class->appendMessages(
+		type     => $name,
+		messages => \@messages,
+		@gen_options,
+		%options,
+		folder   => $folder,
+	);
 }
 
 
@@ -765,17 +755,17 @@ message is copied to.  Silently ignored when not possible to share.
 
 =examples
 
- my $drafts = $mgr->open(folder => 'Drafts');
- my $outbox = $mgr->open(folder => 'Outbox');
- $mgr->copyMessage($outbox, $drafts->message(0));
+  my $drafts = $mgr->open(folder => 'Drafts');
+  my $outbox = $mgr->open(folder => 'Outbox');
+  $mgr->copyMessage($outbox, $drafts->message(0));
 
- my @messages = $drafts->message(1,2);
- $mgr->copyMessage('=Trash', @messages,
-    folderdir => '/tmp', create => 1);
+  my @messages = $drafts->message(1,2);
+  $mgr->copyMessage('=Trash', @messages,
+     folderdir => '/tmp', create => 1);
 
- $mgr->copyMessage($drafts->message(1),
-    folder => '=Drafts' folderdir => '/tmp',
-    create => 1);
+  $mgr->copyMessage($drafts->message(1),
+     folder => '=Drafts' folderdir => '/tmp',
+     create => 1);
 
 =error Use appendMessage() to add messages which are not in a folder.
 
@@ -785,50 +775,48 @@ not share the message between folders.
 =cut
 
 sub copyMessage(@)
-{   my $self   = shift;
-    my $folder;
-    $folder    = shift if !ref $_[0] || $_[0]->isa('Mail::Box');
+{	my $self   = shift;
+	my $folder;
+	$folder    = shift if !ref $_[0] || $_[0]->isa('Mail::Box');
 
-    my @messages;
-    while(@_ && ref $_[0])
-    {   my $message = shift;
-        $self->log(ERROR =>
-            "Use appendMessage() to add messages which are not in a folder.")
-                unless $message->isa('Mail::Box::Message');
-        push @messages, $message;
-    }
+	my @messages;
+	while(@_ && ref $_[0])
+	{	my $message = shift;
+		$message->isa('Mail::Box::Message')
+			or $self->log(ERROR => "Use appendMessage() to add messages which are not in a folder.");
+		push @messages, $message;
+	}
 
-    my %args = @_;
-    $folder ||= $args{folder};
-    my $share   = exists $args{share} ? $args{share} : $args{_delete};
+	my %args = @_;
+	$folder ||= $args{folder};
+	my $share   = exists $args{share} ? $args{share} : $args{_delete};
 
-    # Try to resolve filenames into opened-files.
-    $folder = $self->isOpenFolder($folder) || $folder
-        unless ref $folder;
+	# Try to resolve filenames into opened-files.
+	$folder = $self->isOpenFolder($folder) || $folder
+		unless ref $folder;
 
-    unless(ref $folder)
-    {   my @c = $self->appendMessages(@messages, %args, folder => $folder);
-        if($args{_delete})
-        {   $_->label(deleted => 1) for @messages;
-        }
-        return @c;
-    }
+	unless(ref $folder)
+	{	my @c = $self->appendMessages(@messages, %args, folder => $folder);
+		if($args{_delete})
+		{	$_->label(deleted => 1) for @messages;
+		}
+		return @c;
+	}
 
-    my @coerced;
-    foreach my $msg (@messages)
-    {   if($msg->folder eq $folder)  # ignore move to same folder
-        {   push @coerced, $msg;
-            next;
-        }
-        push @coerced, $msg->copyTo($folder, share => $args{share});
-        $msg->label(deleted => 1) if $args{_delete};
-    }
-    @coerced;
+	my @coerced;
+	foreach my $msg (@messages)
+	{	if($msg->folder eq $folder)  # ignore move to same folder
+		{	push @coerced, $msg;
+			next;
+		}
+		push @coerced, $msg->copyTo($folder, share => $args{share});
+		$msg->label(deleted => 1) if $args{_delete};
+	}
+	@coerced;
 }
 
 
 =method moveMessage [$folder|$foldername], $messages, %options
-
 Move a message from one folder to another.
 
 BE WARNED that removals from a folder only take place when the folder
@@ -839,12 +827,12 @@ BE WARNED that message labels may get lost when a message is moved from
 one folder type to an other.  An attempt is made to translate labels,
 but there are many differences in interpretation by applications.
 
- $mgr->moveMessage($received, $inbox->message(1))
+  $mgr->moveMessage($received, $inbox->message(1))
 
 is equivalent to
 
- $mgr->copyMessage($received, $inbox->message(1), share => 1);
- $inbox->message(1)->delete;
+  $mgr->copyMessage($received, $inbox->message(1), share => 1);
+  $inbox->message(1)->delete;
 
 =option  share BOOLEAN
 =default share <true>
@@ -852,73 +840,72 @@ is equivalent to
 =cut
 
 sub moveMessage(@)
-{   my $self = shift;
-    $self->copyMessage(@_, _delete => 1);
+{	my $self = shift;
+	$self->copyMessage(@_, _delete => 1);
 }
 
-#-------------------------------------------
+#--------------------
 =section Manage message threads
 
 =method threads [$folders], %options
 
 Create a new object which keeps track of message threads.  You can
-read about the possible options in M<Mail::Box::Thread::Manager>.
+read about the possible options in Mail::Box::Thread::Manager.
 As %options specify one folder or an array of $folders.
 It is also permitted to specify folders before the options.
 
 =examples
 
- my $t1 = $mgr->threads(folders => [ $inbox, $send ]);
- my $t2 = $mgr->threads($inbox);
- my $t3 = $mgr->threads($inbox, $send);
+  my $t1 = $mgr->threads(folders => [ $inbox, $send ]);
+  my $t2 = $mgr->threads($inbox);
+  my $t3 = $mgr->threads($inbox, $send);
 
 =cut
 
 sub threads(@)
-{   my $self    = shift;
-    my @folders;
-    push @folders, shift
-       while @_ && ref $_[0] && $_[0]->isa('Mail::Box');
-    my %args    = @_;
+{	my $self    = shift;
+	my @folders;
+	push @folders, shift while @_ && ref $_[0] && $_[0]->isa('Mail::Box');
+	my %args    = @_;
 
-    my $base    = 'Mail::Box::Thread::Manager';
-    my $type    = $args{threader_type} || $base;
+	my $base    = 'Mail::Box::Thread::Manager';
+	my $type    = $args{threader_type} || $base;
 
-    my $folders = delete $args{folder} || delete $args{folders};
-    push @folders
-     , ( !$folders               ? ()
-       : ref $folders eq 'ARRAY' ? @$folders
-       :                           $folders
-       );
+	my $folders = delete $args{folder} || delete $args{folders};
+	push @folders,
+		( !$folders               ? ()
+		: ref $folders eq 'ARRAY' ? @$folders
+		:                           $folders
+		);
 
-    $self->log(INTERNAL => "No folders specified.")
-       unless @folders;
+	@folders
+		or $self->log(INTERNAL => "No folders specified.");
 
-    my $threads;
-    if(ref $type)
-    {   # Already prepared object.
-        $self->log(INTERNAL => "You need to pass a $base derived")
-            unless $type->isa($base);
-        $threads = $type;
-    }
-    else
-    {   # Create an object.  The code is compiled, which safes us the
-        # need to compile Mail::Box::Thread::Manager when no threads are needed.
-        eval "require $type";
-        $self->log(INTERNAL => "Unusable threader $type: $@") if $@;
+	my $threads;
+	if(ref $type)
+	{	# Already prepared object.
+		$type->isa($base)
+			or $self->log(INTERNAL => "You need to pass a $base derived");
+		$threads = $type;
+	}
+	else
+	{	# Create an object.  The code is compiled, which safes us the
+		# need to compile Mail::Box::Thread::Manager when no threads are needed.
+		eval "require $type";
+		$self->log(INTERNAL => "Unusable threader $type: $@") if $@;
 
-        $self->log(INTERNAL => "You need to pass a $base derived")
-            unless $type->isa($base);
+		$type->isa($base)
+			or $self->log(INTERNAL => "You need to pass a $base derived");
 
-        $threads = $type->new(manager => $self, %args);
-    }
+		$threads = $type->new(manager => $self, %args);
+	}
 
-    $threads->includeFolder($_) foreach @folders;
-    push @{$self->{MBM_threads}}, $threads;
-    $threads;
+	$threads->includeFolder($_) for @folders;
+	push @{$self->{MBM_threads}}, $threads;
+	$threads;
 }
 
-#-------------------------------------------
+#--------------------
 =section Internals
 
 =method toBeThreaded $folder, $messages
@@ -928,8 +915,8 @@ coming in.
 =cut
 
 sub toBeThreaded($@)
-{   my $self = shift;
-    $_->toBeThreaded(@_) foreach @{$self->{MBM_threads}};
+{	my $self = shift;
+	$_->toBeThreaded(@_) for $self->threads;
 }
 
 =method toBeUnthreaded $folder, $messages
@@ -939,8 +926,8 @@ or going out.
 =cut
 
 sub toBeUnthreaded($@)
-{   my $self = shift;
-    $_->toBeUnthreaded(@_) foreach @{$self->{MBM_threads}};
+{	my $self = shift;
+	$_->toBeUnthreaded(@_) for $self->threads;
 }
 
 =method decodeFolderURL $url
@@ -950,50 +937,50 @@ used in the user or password parts must be passed $url-encoded.
 =cut
 
 sub decodeFolderURL($)
-{   my ($self, $name) = @_;
+{	my ($self, $name) = @_;
 
-    return unless
-       my ($type, $username, $password, $hostname, $port, $path)
-          = $name =~ m!^(\w+)\:             # protocol
-                       (?://
-                          (?:([^:@/]*)      # username
-                            (?:\:([^@/]*))? # password
-                           \@)?
-                           ([\w.-]+)?       # hostname
-                           (?:\:(\d+))?     # port number
-                        )?
-                        (.*)                # foldername
-                      !x;
+	return unless
+		my ($type, $username, $password, $hostname, $port, $path)
+		= $name =~ m!^(\w+)\:             # protocol
+						(?://
+						(?:([^:@/]*)      # username
+							(?:\:([^@/]*))? # password
+							\@)?
+							([\w.-]+)?       # hostname
+							(?:\:(\d+))?     # port number
+						)?
+						(.*)                # foldername
+					!x;
 
-    $username ||= $ENV{USER} || $ENV{LOGNAME};
-    $password ||= '';
+	$username ||= $ENV{USER} || $ENV{LOGNAME};
+	$password ||= '';
 
-    for($username, $password)
-    {   s/\+/ /g;
-        s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
-    }
+	for($username, $password)
+	{	s/\+/ /g;
+		s/\%([A-Fa-f0-9]{2})/chr hex $1/ge;
+	}
 
-    $hostname ||= 'localhost';
-    $path     ||= '=';
+	$hostname ||= 'localhost';
+	$path     ||= '=';
 
-    ( type        => $type,     folder      => $path
-    , username    => $username, password    => $password
-    , server_name => $hostname, server_port => $port
-    );
+	( type        => $type,     folder      => $path,
+	  username    => $username, password    => $password,
+	  server_name => $hostname, server_port => $port
+	);
 }
 
-#-------------------------------------------
+#--------------------
 =section Error handling
 
 =chapter DETAILS
 On many places in the documentation you can read that it is useful to
-have a manager object.  There are two of them: the M<Mail::Box::Manager>,
+have a manager object.  There are two of them: the Mail::Box::Manager,
 which maintains a set of open folders, and an extension of it: the
-M<Mail::Box::Manage::User>.
+Mail::Box::Manage::User.
 
 =section Managing open folders
 It is useful to start your program by creating a folder manager object,
-an M<Mail::Box::Manager>.  The object takes a few burdons from your neck:
+an Mail::Box::Manager.  The object takes a few burdons from your neck:
 
 =over 4
 =item * autodetect the type of folder which is used.
@@ -1028,12 +1015,12 @@ without it.
 
 =section Managing a user
 
-One step further is the M<Mail::Box::Manage::User> object (since MailBox
+One step further is the Mail::Box::Manage::User object (since MailBox
 v2.057), which not only keeps track on open folders, but also collects
 information about not-open folders.
 
 The user class is, as the name says, targeted on managing one single user.
-Where the M<Mail::Box::Manager> will open any set of folder files, probably
+Where the Mail::Box::Manager will open any set of folder files, probably
 from multiple users, the user class want one root folder directory.
 
 In many aspects, the user manager simplifies the task for user-based servers

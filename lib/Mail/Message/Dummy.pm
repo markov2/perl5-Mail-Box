@@ -1,6 +1,8 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
+#oorestyle: use of deprecated Carp: use Log::Report
 
 package Mail::Message::Dummy;
 use base 'Mail::Message';
@@ -10,6 +12,7 @@ use warnings;
 
 use Carp;
 
+#--------------------
 =chapter NAME
 
 Mail::Message::Dummy - a placeholder for a missing messages
@@ -20,7 +23,7 @@ Mail::Message::Dummy - a placeholder for a missing messages
 
 Dummy messages are used by modules which maintain ordered lists
 of messages, usually based on message-id.  A good example is
-M<Mail::Box::Thread::Manager>, which detects related messages by
+Mail::Box::Thread::Manager, which detects related messages by
 scanning the known message headers for references to other messages.
 As long as the referenced messages are not found inside the mailbox,
 their place is occupied by a dummy.
@@ -32,7 +35,6 @@ dummy message.
 =chapter METHODS
 
 =c_method new $message_id, %options
-
 Create a new dummy message to occupy the space for
 a real message with the specified $message_id.
 
@@ -45,30 +47,26 @@ a real message with the specified $message_id.
 =default trusted <always true>
 
 =examples
-
- my $message = Mail::Message::Dummy->new($msgid);
- if($message->isDummy) {...}
+  my $message = Mail::Message::Dummy->new($msgid);
+  if($message->isDummy) {...}
 
 =error Message-Id is required for a dummy.
-
 A dummy message occupies the place for a real message.  When a dummy is created,
 the id of the message which place it is holding must be known.
 
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
+{	my ($self, $args) = @_;
 
-    @$args{ qw/modified trusted/ } = (0, 1);
-    $self->SUPER::init($args);
+	@$args{ qw/modified trusted/ } = (0, 1);
+	$self->SUPER::init($args);
 
-    $self->log(ERROR => "Message-Id is required for a dummy.")
-       unless exists $args->{messageId};
+	exists $args->{messageId}
+		or $self->log(ERROR => "Message-Id is required for a dummy.");
 
-    $self;
+	$self;
 }
- 
-#-------------------------------------------
 
 sub isDummy()    { 1 }
 
@@ -84,13 +82,13 @@ node returned a dummy or not.
 =cut
 
 sub head()
-{    shift->log(ERROR => "You cannot take the head of a dummy message");
-     ();
+{	shift->log(ERROR => "You cannot take the head of a dummy message");
+	();
 }
 
 sub body()
-{    shift->log(ERROR => "You cannot take the body of a dummy message");
-     ();
+{	shift->log(ERROR => "You cannot take the body of a dummy message");
+	();
 }
 
 1;

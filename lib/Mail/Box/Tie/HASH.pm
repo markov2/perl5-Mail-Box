@@ -1,29 +1,32 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Tie::HASH;
+use parent Mail::Box::Tie;
 
 use strict;
 use warnings;
 
 use Carp;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Tie::HASH - access an existing message folder as a hash
 
 =chapter SYNOPSIS
 
- tie my(%inbox), 'Mail::Box::Tie::HASH', $folder;
+  tie my(%inbox), 'Mail::Box::Tie::HASH', $folder;
 
- foreach my $msgid (keys %inbox)
- {   print $inbox{$msgid};
-     delete $inbox{$msgid};
- }
+  foreach my $msgid (keys %inbox)
+  {   print $inbox{$msgid};
+      delete $inbox{$msgid};
+  }
 
- $inbox{$msg->messageId} = $msg;
-   
+  $inbox{$msg->messageId} = $msg;
+
 =chapter DESCRIPTION
 
 Certainly when you look at a folder as being a set of related messages
@@ -40,66 +43,62 @@ to the message-id.
 
 =section Constructors
 
-=tie %hash, 'Mail::Box::Tie::HASH', FOLDER
-
+=tie %hash 'Mail::Box::Tie::HASH', FOLDER
 Connects the FOLDER object to a HASH.
 
 =example
-
- my $mgr    = Mail::Box::Manager->new;
- my $folder = $mgr->open(access => 'rw');
- tie my(%inbox), 'Mail::Box::Tie::HASH', $folder;
-
+  my $mgr    = Mail::Box::Manager->new;
+  my $folder = $mgr->open(access => 'rw');
+  tie my(%inbox), 'Mail::Box::Tie::HASH', $folder;
 =cut
 
 sub TIEHASH(@)
-{   my ($class, $folder) = @_;
-    croak "No folder specified to tie to."
-        unless ref $folder && $folder->isa('Mail::Box');
-
-    bless { MBT_folder => $folder, MBT_type => 'HASH' }, $class;
+{	my ($class, $folder) = @_;
+	$class->new($folder, 'HASH');
 }
 
-#-------------------------------------------
+#--------------------
+=section Attributes
+=cut
+
+#--------------------
 =section Tied Interface
 
 =method FETCH $message_id
 Get the message with the specified id.  The returned message may be
-a dummy if message thread detection is used.  Returns C<undef> when
+a dummy if message thread detection is used.  Returns undef when
 there is no message with the specified id.
 
 =examples
-
- my $msg = $inbox{$msgid};
- if($inbox{$msgid}->isDummy)  ...
-
+  my $msg = $inbox{$msgid};
+  if($inbox{$msgid}->isDummy)  ...
 =cut
 
-sub FETCH($) { shift->{MBT_folder}->messageId(shift) }
+sub FETCH($) { $_[0]->folder->messageId($_[1]) }
 
 =method STORE undef, $message
-Store a message in the folder.  The key must be C<undef>, because the
+Store a message in the folder.  The key must be undef, because the
 message-id of the specified message is taken.  This is shown in the
 first example.  However, as you see, it is a bit complicated to specify
-C<undef>, therefore the string C<"undef"> is accepted as well.
+undef, therefore the string C<"undef"> is accepted as well.
 
 The message may be converted into something which can be stored in the
 folder type which is at stake.  The added instance is returned.
 
 =examples
 
- $inbox{ (undef) } = $msg;
- $inbox{undef} = $msg;
+  $inbox{ (undef) } = $msg;
+  $inbox{undef} = $msg;
 
 =cut
 
 sub STORE($$)
-{   my ($self, $key, $basicmsg) = @_;
+{	my ($self, $key, $basicmsg) = @_;
 
-    carp "Use undef as key, because the message-id of the message is used."
-        if defined $key && $key ne 'undef';
+	carp "Use undef as key, because the message-id of the message is used."
+		if defined $key && $key ne 'undef';
 
-    $self->{MBT_folder}->addMessages($basicmsg);
+	$self->folder->addMessages($basicmsg);
 }
 
 =method FIRSTKEY
@@ -107,14 +106,12 @@ See M<NEXTKEY()>.
 =cut
 
 sub FIRSTKEY()
-{   my $self   = shift;
-    my $folder = $self->{MBT_folder};
+{	my $self   = shift;
+	my $folder = $self->folder;
 
-    $self->{MBT_each_index} = 0;
-    $self->NEXTKEY();
+	$self->{MBT_each_index} = 0;
+	$self->NEXTKEY();
 }
-
-#-------------------------------------------
 
 =method NEXTKEY $previous
 
@@ -128,80 +125,69 @@ about the folder message order.
 
 =examples
 
- foreach my $msgid (keys %inbox) ...
- foreach my $msg (values %inbox) ...
+  foreach my $msgid (keys %inbox) ...
+  foreach my $msg (values %inbox) ...
 
- while(my ($msgid, $msg) = each %inbox) {
-    $msg->print unless $msg->isDeleted;
- }
+  while(my ($msgid, $msg) = each %inbox) {
+     $msg->print unless $msg->isDeleted;
+  }
 
 =cut
 
 sub NEXTKEY($)
-{   my $self   = shift;
-    my $folder = $self->{MBT_folder};
-    my $nrmsgs = $folder->messages;
+{	my $self   = shift;
+	my $folder = $self->{MBT_folder};
+	my $nrmsgs = $folder->messages;
 
-    my $msg;
-    while(1)
-    {   my $index = $self->{MBT_each_index}++;
-        return undef if $index >= $nrmsgs;
+	my $msg;
+	while(1)
+	{	my $index = $self->{MBT_each_index}++;
+		return undef if $index >= $nrmsgs;
 
-        $msg      = $folder->message($index);
-        last unless $msg->isDeleted;
-    }
+		$msg      = $folder->message($index);
+		$msg->isDeleted or last;
+	}
 
-    $msg->messageId;
+	$msg->messageId;
 }
 
 =method EXISTS $message_id
 Check whether a message with a certain $message_id exists.
+
 =example
-
- if(exists $inbox{$msgid}) ...
-
+  if(exists $inbox{$msgid}) ...
 =cut
 
 sub EXISTS($)
-{   my $folder = shift->{MBT_folder};
-    my $msgid  = shift;
-    my $msg    = $folder->messageId($msgid);
-    defined $msg && ! $msg->isDeleted;
+{	my ($self, $msgid) = @_;
+	my $msg = $self->folder->messageId($msgid);
+	defined $msg && ! $msg->isDeleted;
 }
 
 =method DELETE $message_id
 Remove the message with the specified $message_id.
 
 =example
-
- delete $inbox{$msgid};
-
+  delete $inbox{$msgid};
 =cut
 
 sub DELETE($)
-{    my ($self, $msgid) = @_;
-     $self->{MBT_folder}->messageId($msgid)->delete;
+{	my ($self, $msgid) = @_;
+	$self->folder->messageId($msgid)->delete;
 }
 
-#-------------------------------------------
-
 =method CLEAR
-
 Remove the contents of the hash.  This is not really possible, but all
 the messages will be flagged for deletion.
 
 =examples
-
- %inbox = ();
- %inbox = ($msg->messageId, $msg); #before adding msg
-
+  %inbox = ();
+  %inbox = ($msg->messageId, $msg); #before adding msg
 =cut
 
 sub CLEAR()
-{   my $folder = shift->{MBT_folder};
-    $_->delete foreach $folder->messages;
+{	my $self = shift;
+	$_->delete for $self->folder->messages;
 }
-
-#-------------------------------------------
 
 1;

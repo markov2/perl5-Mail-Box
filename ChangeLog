@@ -1,10 +1,13 @@
 
 ===== ChangeLog of distribution Mail-Box version 3.*
 
+TODO: Mail::Box::Message::new(body_type) not used?
+
 version 3.012:
 
 	Changes:
 	- mid-life upgrade project: require minimal Perl version 5.16
+	- remove deprecated use of Mail::Box::Tie, use ::ARRAY or ::HASH
 
 	Improvements:
 	- remove all internal use of bareword file-handles.

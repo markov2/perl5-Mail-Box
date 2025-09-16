@@ -1,3 +1,12 @@
+oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
+#oorestyle: use of deprecated Carp: use Log::Report
+
+#oorestyle: old style disclaimer to be removed.
+#oorestyle: not using Log::Report yet.
+
 # This code is part of distribution Mail-Box.  Meta-POD processed with
 # OODoc into POD and HTML manual-pages.  See README.md
 # Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
@@ -9,28 +18,25 @@ use strict;
 use warnings;
 use filetest 'access';
 
-use Mail::Box::Dir::Message;
-
-use Mail::Message::Body::Lines;
-use Mail::Message::Body::File;
-use Mail::Message::Body::Delayed;
-use Mail::Message::Body::Multipart;
-
-use Mail::Message::Head;
-use Mail::Message::Head::Delayed;
+use Mail::Box::Dir::Message        ();
+use Mail::Message::Body::Lines     ();
+use Mail::Message::Body::File      ();
+use Mail::Message::Body::Delayed   ();
+use Mail::Message::Body::Multipart ();
+use Mail::Message::Head            ();
+use Mail::Message::Head::Delayed   ();
 
 use Carp;
-use File::Copy;
-use File::Spec;
-use File::Basename;
+use File::Spec::Functions           qw/rel2abs/;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Dir - handle folders with a file per message.
 
 =chapter SYNOPSIS
 
- # Do not instantiate this object
+  # Do not instantiate this object
 
 =chapter DESCRIPTION
 
@@ -39,11 +45,11 @@ At the moment, this object is extended by
 
 =over 4
 
-=item * M<Mail::Box::MH>
+=item * Mail::Box::MH
 MH folders, which are represented by a directory containing files which
 are sequentially numbered.
 
-=item * M<Mail::Box::Maildir>
+=item * Mail::Box::Maildir
 Maildir folders, which are located in a directory which has sub-directories
 named C<tmp>, C<new>, and C<cur>.  Each of these directories may contain
 files with names which are a combination of a numeric timestamp and some
@@ -60,7 +66,7 @@ available (yet).
 
 =c_method new %options
 
-=default body_type M<Mail::Message::Body::Lines>
+=default body_type Mail::Message::Body::Lines
 =default lock_file <folder>C</.lock>
 
 =option  directory DIRECTORY
@@ -74,121 +80,97 @@ interfere with the requested write access.  Change new(access) or the
 permissions on the directory.
 
 =warning No directory $name for folder of $class
-
 =cut
 
 sub init($)
-{   my ($self, $args)    = @_;
+{	my ($self, $args)    = @_;
 
-    $args->{body_type} ||= sub {'Mail::Message::Body::Lines'};
+	$args->{body_type} //= sub { 'Mail::Message::Body::Lines' };
+	$self->SUPER::init($args) or return undef;
 
-    return undef
-        unless $self->SUPER::init($args);
+	my $class     = ref $self;
+	my $directory = $self->{MBD_directory} = $args->{directory} || $self->directory;
 
-    my $class            = ref $self;
-    my $directory        = $self->{MBD_directory}
-        = $args->{directory} || $self->directory;
+		if(-d $directory) {;}
+	elsif($args->{create} && $class->create($directory, %$args)) {;}
+	else
+	{	$self->log(NOTICE => "No directory $directory for folder of $class");
+		return undef;
+	}
 
-       if(-d $directory) {;}
-    elsif($args->{create} && $class->create($directory, %$args)) {;}
-    else
-    {   $self->log(NOTICE => "No directory $directory for folder of $class");
-        return undef;
-    }
+	# About locking
 
-    # About locking
+	my $lf = $args->{lock_file} // '.lock';
+	$self->locker->filename(rel2abs $lf, $directory);
 
-    for($args->{lock_file})
-    {   $self->locker->filename
-          ( !defined $_ ? File::Spec->catfile($directory, '.lock')   # default
-          : File::Spec->file_name_is_absolute($_) ? $_               # absolute
-          :               File::Spec->catfile($directory, $_)        # relative
-          );
-    }
+	# Check if we can write to the folder, if we need to.
 
-    # Check if we can write to the folder, if we need to.
+	if($self->writable && -e $directory && ! -w $directory)
+	{	$self->log(WARNING=> "Folder directory $directory is write-protected.");
+		$self->access('r');
+	}
 
-    if($self->writable && -e $directory && ! -w $directory)
-    {   $self->log(WARNING=> "Folder directory $directory is write-protected.");
-        $self->{MB_access} = 'r';
-    }
-
-    $self;
+	$self;
 }
-
-#-------------------------------------------
 
 sub organization() { 'DIRECTORY' }
 
-#-------------------------------------------
-
+#--------------------
 =section The folder
 
 =method directory
-
 Returns the directory related to this folder.
 
 =example
- print $folder->directory;
+  print $folder->directory;
 
 =cut
 
 sub directory()
-{   my $self = shift;
-
-    $self->{MBD_directory}
-       ||= $self->folderToDirectory($self->name, $self->folderdir);
+{	my $self = shift;
+	$self->{MBD_directory} ||= $self->folderToDirectory($self->name, $self->folderdir);
 }
-
-#-------------------------------------------
 
 sub nameOfSubFolder($;$)
-{   my ($thing, $name) = (shift, shift);
-    my $parent = @_ ? shift : ref $thing ? $thing->directory : undef;
-    defined $parent ? "$parent/$name" : $name;
+{	my ($thing, $name) = (shift, shift);
+	my $parent = @_ ? shift : ref $thing ? $thing->directory : undef;
+	defined $parent ? "$parent/$name" : $name;
 }
 
-#-------------------------------------------
-
+#--------------------
 =section Internals
 
 =method folderToDirectory $foldername, $folderdir
-
 (class method)  Translate a foldername into a filename, with use of the
 $folderdir to replace a leading C<=>.
-
 =cut
 
 sub folderToDirectory($$)
-{   my ($class, $name, $folderdir) = @_;
-    my $dir = ( $name =~ m#^=\/?(.*)# ? "$folderdir/$1" : $name);
-    $dir =~ s!/$!!r;
+{	my ($class, $name, $folderdir) = @_;
+	my $dir = ($name =~ m#^=\/?(.*)# ? "$folderdir/$1" : $name);
+	$dir =~ s!/$!!r;
 }
 
 sub storeMessage($)
-{   my ($self, $message) = @_;
-    $self->SUPER::storeMessage($message);
-    my $fn = $message->filename or return $message;
-    $self->{MBD_by_fn}{$fn} = $message;
+{	my ($self, $message) = @_;
+	$self->SUPER::storeMessage($message);
+	my $fn = $message->filename or return $message;
+	$self->{MBD_by_fn}{$fn} = $message;
 }
 
 =method messageInFile $filename
-Returns the folder message which is found the indicated C<filename>.  This
+Returns the folder message which is found the indicated $filename.  This
 may be useful when some external tool reports filename to be opened.
 =cut
 
 sub messageInFile($) { $_[0]->{MBD_by_fn}{$_[1]} }
 
 =method readMessageFilenames $directory
-
 Returns a list of all filenames which are found in this folder
-directory and represent a message.  The filenames are returned as
+$directory and represent a message.  The filenames are returned as
 relative path.
-
 =cut
 
-sub readMessageFilenames() {shift->notImplemented}
-
-#-------------------------------------------
+sub readMessageFilenames() { $_[0]->notImplemented }
 
 1;

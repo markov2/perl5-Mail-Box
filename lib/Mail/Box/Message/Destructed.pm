@@ -1,6 +1,7 @@
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Message::Destructed;
 use base 'Mail::Box::Message';
@@ -10,13 +11,14 @@ use warnings;
 
 use Carp;
 
+#--------------------
 =chapter NAME
 
 Mail::Box::Message::Destructed - a destructed message
 
 =chapter SYNOPSIS
 
- $folder->message(3)->destruct;
+  $folder->message(3)->destruct;
 
 =chapter DESCRIPTION
 
@@ -34,7 +36,7 @@ be deleted.
 
 =chapter METHODS
 
-=c_method new $message_id, %options
+=c_method new $msgid, %options
 You cannot instantiate a destructed message object.  Destruction is
 done by calling M<Mail::Box::Message::destruct()>.
 
@@ -46,15 +48,15 @@ folder message.
 =cut
 
 sub new(@)
-{   my $class = shift;
-    $class->log(ERROR => 'You cannot instantiate a destructed message');
-    undef;
+{	my $class = shift;
+	$class->log(ERROR => 'You cannot instantiate a destructed message');
+	undef;
 }
- 
+
 sub isDummy()    { 1 }
 
 =method head [$head]
-When C<undef> is specified for $head, no change has to take place and
+When undef is specified for $head, no change has to take place and
 the method returns silently.  In all other cases, this method will
 complain that the header has been removed.
 
@@ -67,68 +69,66 @@ destruction, which is not possible.
 =cut
 
 sub head(;$)
-{    my $self = shift;
-     return undef if @_ && !defined(shift);
+{	my ($self, $head) = @_;
+	return undef if @_ && !defined(shift);
 
-     $self->log(ERROR => "You cannot take the head of a destructed message");
-     undef;
+	$self->log(ERROR => "You cannot take the head of a destructed message");
+	undef;
 }
 
 =method body [$body]
-When C<undef> is specified for $body, no change has to take place and
+When undef is specified for $body, no change has to take place and
 the method returns silently.  In all other cases, this method will
 complain that the body data has been removed.
 =cut
 
 sub body(;$)
-{    my $self = shift;
-     return undef if @_ && !defined(shift);
+{	my $self = shift;
+	return undef if @_ && !defined(shift);
 
-     $self->log(ERROR => "You cannot take the body of a destructed message");
-     undef;
+	$self->log(ERROR => "You cannot take the body of a destructed message");
+	undef;
 }
 
 =c_method coerce $message
-Coerce a M<Mail::Box::Message> into destruction.
+Coerce a Mail::Box::Message into destruction.
 
 =examples of coercion to death
 
- Mail::Box::Message::Destructed->coerce($folder->message(1));
- $folder->message(1)->destruct;  # same
+  Mail::Box::Message::Destructed->coerce($folder->message(1));
+  $folder->message(1)->destruct;  # same
 
- my $msg = $folder->message(1);
- Mail::Box::Message::Destructed->coerce($msg);
- $msg->destruct;                 # same
+  my $msg = $folder->message(1);
+  Mail::Box::Message::Destructed->coerce($msg);
+  $msg->destruct;                 # same
 
 =error Cannot coerce a (class) into destruction
-Only real M<Mail::Box::Message> objects can get destructed into
-M<Mail::Box::Message::Destructed> objects.  M<Mail::Message> free
+Only real Mail::Box::Message objects can get destructed into
+Mail::Box::Message::Destructed objects.  Mail::Message free
 their memory immediately when the last reference is lost.
 
 =cut
 
 sub coerce($)
-{  my ($class, $message) = @_;
+{	my ($class, $message) = @_;
 
-   unless($message->isa('Mail::Box::Message'))
-   {  $class->log(ERROR=>"Cannot coerce a ",ref($message), " into destruction");
-      return ();
-   }
+	$message->isa('Mail::Box::Message')
+		or $class->log(ERROR=>"Cannot coerce a ",ref($message), " into destruction"), return ();
 
-   $message->body(undef);
-   $message->head(undef);
-   $message->modified(0);
+	$message->body(undef);
+	$message->head(undef);
+	$message->modified(0);
 
-   bless $message, $class;
+	bless $message, $class;
 }
 
 sub modified(;$)
-{  my $self = shift;
+{	my $self = shift;
 
-   $self->log(ERROR => 'Do not set the modified flag on a destructed message')
-      if @_ && $_[0];
+	$self->log(ERROR => 'Do not set the modified flag on a destructed message')
+		if @_ && $_[0];
 
-   0;
+	0;
 }
 
 sub isModified() { 0 }
@@ -146,25 +146,25 @@ you can not use M<Mail::Box::Message::destruct()>.
 =cut
 
 sub label($;@)
-{  my $self = shift;
+{	my $self = shift;
 
-   if(@_==1)
-   {   my $label = shift;
-       return $self->SUPER::label('deleted') if $label eq 'deleted';
-       $self->log(ERROR => "Destructed message has no labels except 'deleted', requested is $label");
-       return 0;
-   }
+	if(@_==1)
+	{	my $label = shift;
+		return $self->SUPER::label('deleted') if $label eq 'deleted';
+		$self->log(ERROR => "Destructed message has no labels except 'deleted', requested is $label");
+		return 0;
+	}
 
-   my %flags = @_;
-   unless(keys %flags==1 && exists $flags{deleted})
-   {   $self->log(ERROR => "Destructed message has no labels except 'deleted', trying to set @{[ keys %flags ]}");
-       return;
-   }
+	my %flags = @_;
+	unless(keys %flags==1 && exists $flags{deleted})
+	{	$self->log(ERROR => "Destructed message has no labels except 'deleted', trying to set @{[ keys %flags ]}");
+		return;
+	}
 
-   $self->log(ERROR => "Destructed messages can not be undeleted")
-      unless $flags{deleted};
+	$self->log(ERROR => "Destructed messages can not be undeleted")
+	unless $flags{deleted};
 
-   1;
+	1;
 }
 
 sub labels() { wantarray ? ('deleted') : +{deleted => 1} }
