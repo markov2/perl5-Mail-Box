@@ -33,12 +33,10 @@ what you can do with the Mbox folder object Mail::Box::Mbox.
 
 =option  subfolder_extension STRING
 =default subfolder_extension C<'.d'>
-
 Mbox folders do not support sub-folders.  However, this module can
 simulate sub-directories if the user wants it to.  When a subfolder of
 folder C<xyz> is created, we create a directory which is called C<xyz.d>
 to contain them.  This extension C<.d> can be changed using this option.
-
 =cut
 
 our $default_folder_dir    = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
@@ -57,7 +55,6 @@ sub init($)
 
 =option  subfolder_extension STRING
 =default subfolder_extension undef
-
 If a directory is found on the location of the folder to be created, this
 STRING is used to extend that directory name with.  This will cause the
 directory to be seen as sub-folder for the created folder.  This argument

@@ -2,36 +2,37 @@ use ExtUtils::MakeMaker;
 
 require 5.016;
 
-use IO::Handle;
+use warnings;
+use strict;
 
-my $VERSION = '3.012';
+my $version = '3.012';
 
-my %prereq =
- ( Carp           => 0
- , Cwd            => 0
- , Date::Parse    => 0
- , Devel::GlobalDestruction => 0.09
- , Errno          => 0
- , Fcntl          => 0
- , File::Basename => 0
- , File::Spec     => 0.7
- , File::Compare  => 0
- , File::Copy     => 0
- , File::Remove   => 0.20
- , File::Temp     => 0
- , IO::Scalar     => 0
- , Mail::Message  => 3.013
- , Mail::Transport => 3.003
- , Object::Realize::Later => 0.19
- , POSIX          => 0
- , Scalar::Util   => 1.13
- , Sys::Hostname  => 0.0
- , Test::More     => 0.47
+my %prereq = (
+	'Carp'           => 0,
+	'Cwd'            => 0,
+	'Date::Parse'    => 0,
+	'Devel::GlobalDestruction' => 0.09,
+	'Errno'          => 0,
+	'Fcntl'          => 0,
+	'File::Basename' => 0,
+	'File::Spec'     => 0.7,
+	'File::Compare'  => 0,
+	'File::Copy'     => 0,
+	'File::Remove'   => 0.20,
+	'File::Temp'     => 0,
+	'IO::Scalar'     => 0,
+	'Mail::Message'  => 3.013,
+	'Mail::Transport' => 3.003,
+	'Object::Realize::Later' => 0.19,
+	'POSIX'          => 0,
+	'Scalar::Util'   => 1.13,
+	'Sys::Hostname'  => 0.0,
+	'Test::More'     => 0.47,
 
 # Currently, it seems to be wise not to depend on these
 #   Mail::SpamAssassin    split-off?
 #   File::FcntLock
- );
+);
 
 
 my @errors;
@@ -46,17 +47,15 @@ foreach my $module (sort keys %prereq)
         push @errors, $module;
     }
     elsif($module->VERSION < $reqversion)
-    {   print "    $module version ",$module->VERSION
-            , " is outdated; requires $reqversion\n";
+    {   print "    $module version ",$module->VERSION, " is outdated; requires $reqversion\n";
     }
     else
-    {   print "    $module version ",$module->VERSION
-            , " is ok (required is $reqversion)\n";
+    {   print "    $module version ",$module->VERSION, " is ok (required is $reqversion)\n";
     }
 }
 
 if($errors)
-{   die <<'FIX';
+{   die <<FIX;
 *** ERROR! You have to install @errors manually,
 *** before you can retry to install MailBox.
 FIX
@@ -64,12 +63,12 @@ FIX
 }
 
 WriteMakefile
- ( NAME       => 'Mail::Box'
- , VERSION    => $VERSION
- , AUTHOR     => 'Mark Overmeer'
- , ABSTRACT   => 'complete E-mail handling suite'
- , PREREQ_PM  => \%prereq
- , LICENSE    => 'perl_5'
+	NAME       => 'Mail::Box',
+	VERSION    => $version,
+	AUTHOR     => 'Mark Overmeer',
+	ABSTRACT   => 'complete E-mail handling suite',
+	PREREQ_PM  => \%prereq,
+	LICENSE    => 'perl_5',
 
  , META_MERGE =>
       { 'meta-spec' => { version => 2 }
@@ -83,7 +82,7 @@ WriteMakefile
           , license  => [ 'http://dev.perl.org/licenses/' ]
           }
       }
- );
+;
 
 ### used by oodist during production of distribution
 sub MY::postamble { <<'__POSTAMBLE' }

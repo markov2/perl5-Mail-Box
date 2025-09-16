@@ -90,8 +90,7 @@ sub clone()
 }
 
 #-------------------------------------------
-
-=section The message
+=section Attributes
 
 =method fromLine [$line]
 Many people detest file-style folders because they store messages all in
@@ -105,10 +104,12 @@ If $line is provided, then the starting line is set to this value.
 
 sub fromLine(;$)
 {   my $self = shift;
-
     $self->{MBMM_from_line} = shift if @_;
     $self->{MBMM_from_line} ||= $self->head->createFromLine;
 }
+
+#-------------------------------------------
+=section The message
 
 =method escapedBody
 Mbox folders contain multiple messages in one file, using a separator
@@ -126,7 +127,6 @@ sub escapedBody()
 }
 
 #------------------------------------------
-
 =section Internals
 
 =method readFromParser $parser
@@ -137,7 +137,7 @@ leading message separator.
 sub readFromParser($)
 {   my ($self, $parser) = @_;
     my ($start, $fromline)  = $parser->readSeparator;
-    return unless $fromline;
+    $fromline or return;
 
     $self->{MBMM_from_line} = $fromline;
     $self->{MBMM_begin}     = $start;
@@ -154,23 +154,18 @@ sub loadHead() { shift->head }
 
 sub loadBody()
 {   my $self     = shift;
-
     my $body     = $self->body;
-    return $body unless $body->isDelayed;
+    $body->isDelayed or return $body;
 
     my ($begin, $end) = $body->fileLocation;
     my $parser   = $self->folder->parser;
     $parser->filePosition($begin);
 
-    my $newbody  = $self->readBody($parser, $self->head);
-    unless($newbody)
-    {   $self->log(ERROR => 'Unable to read delayed body.');
-        return;
-    }
+    my $newbody  = $self->readBody($parser, $self->head)
+        or $self->log(ERROR => 'Unable to read delayed body.'), return;
 
     $self->log(PROGRESS => 'Loaded delayed body.');
     $self->storeBody($newbody->contentInfoFrom($self->head));
-
     $newbody;
 }
 
@@ -202,7 +197,5 @@ sub moveLocation($)
     $self->body->moveLocation($dist);
     $self;
 }
-
-#-------------------------------------------
 
 1;

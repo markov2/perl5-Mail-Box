@@ -75,11 +75,9 @@ file within the same directory.
 No object in your program will be of type C<Mail::Box>: it is only used
 as base class for the real folder types.  C<Mail::Box> is extended by
 
-
 =cut
 
 #-------------------------------------------
-
 =chapter OVERLOADED
 
 =overload @{}
@@ -121,7 +119,6 @@ use overload '@{}' => sub { shift->{MB_messages} }
            , 'cmp' => sub {$_[0]->name cmp "${_[1]}"};
 
 #-------------------------------------------
-
 =chapter METHODS
 
 =section Constructors
@@ -212,7 +209,7 @@ not trused by default, and require some extra checking.
 If you do not check encodings of received messages, you may print
 binary data to the screen, which is a security risk.
 
-=option  extract INTEGER | CODE | METHOD | 'LAZY'|'ALWAYS'
+=option  extract INTEGER | CODE | METHOD | 'LAZY'| 'ALWAYS'
 =default extract C<10240>
 
 Defines when to parse (process) the content of the message.
@@ -434,7 +431,6 @@ sub init($)
     $self->{MB_access}       = $args->{access}         || 'r';
     $self->{MB_remove_empty} = exists $args->{remove_when_empty} ? $args->{remove_when_empty} : 1;
     $self->{MB_save_on_exit} = exists $args->{save_on_exit} ? $args->{save_on_exit} : 1;
-
     $self->{MB_messages}     = [];
     $self->{MB_msgid}        = {};
     $self->{MB_organization} = $args->{organization} || 'FILE';
@@ -494,7 +490,6 @@ sub init($)
 }
 
 #-------------------------------------------
-
 =section The folder
 
 =method folderdir [$directory]
@@ -556,7 +551,7 @@ because the in-memory representation of messages is not always the
 same as the size when they are written.
 =cut
 
-sub size() { sum map { $_->size } shift->messages('ACTIVE') }
+sub size() { sum map $_->size, shift->messages('ACTIVE') }
 
 =method update %options
 Read new messages from the folder, which where received after opening
@@ -1563,7 +1558,6 @@ can't.
 sub topFolderWithMessages() { 1 }
 
 #-------------------------------------------
-
 =section Internals
 
 =method read %options
@@ -1607,8 +1601,6 @@ sub read(@)
     $self;
 }
 
-#-------------------------------------------
-
 =method write %options
 
 Write the data to disk.  The folder (a C<true> value) is returned if
@@ -1625,24 +1617,20 @@ then move all the messages, and then write or M<close()> that new folder.
 
 =option  force BOOLEAN
 =default force <false>
-
 Override write-protection with M<new(access)> while opening the folder
 (whenever possible, it may still be blocked by the operating system).
 
 =option  save_deleted BOOLEAN
 =default save_deleted <false>
-
 Do also write messages which where flagged to be deleted to their folder.  The
 flag for deletion is conserved (when possible), which means that a re-open of
 the folder may remove the messages for real.  See M<close(save_deleted)>.
 
 =error Folder $name is opened read-only
-
 You can not write to this folder unless you have opened the folder to
 write or append with M<new(access)>, or the C<force> option is set true.
 
 =error Writing folder $name failed
-
 For some reason (you probably got more error messages about this problem)
 it is impossible to write the folder, although you should because there
 were changes made.
@@ -1652,39 +1640,32 @@ were changes made.
 sub write(@)
 {   my ($self, %args) = @_;
 
-    unless($args{force} || $self->writable)
-    {   $self->log(ERROR => "Folder $self is opened read-only.");
-        return;
-    }
+    $args{force} || $self->writable
+        or $self->log(ERROR => "Folder $self is opened read-only."), return;
 
     my (@keep, @destroy);
     if($args{save_deleted})
     {   @keep = $self->messages;
     }
     else
-    {   foreach ($self->messages)
-        {   if($_->isDeleted)
-            {   push @destroy, $_;
-                $_->diskDelete;
+    {   foreach my $msg ($self->messages)
+        {   if($msg->isDeleted)
+            {   push @destroy, $msg;
+                $msg->diskDelete;
             }
-            else {push @keep, $_}
+            else { push @keep, $msg }
         }
     }
 
-    unless(@destroy || $self->isModified)
-    {   $self->log(PROGRESS => "Folder $self not changed, so not updated.");
-        return $self;
-    }
+    @destroy || $self->isModified
+        or $self->log(PROGRESS => "Folder $self not changed, so not updated."), return $self;
 
     $args{messages} = \@keep;
-    unless($self->writeMessages(\%args))
-    {   $self->log(WARNING => "Writing folder $self failed.");
-        return undef;
-    }
+    $self->writeMessages(\%args)
+        or $self->log(WARNING => "Writing folder $self failed."), return undef;
 
     $self->modified(0);
     $self->{MB_messages} = \@keep;
-
     $self;
 }
 
@@ -1886,7 +1867,6 @@ sub toBeUnthreaded(@)
 }
 
 #-------------------------------------------
-
 =section Other methods
 
 =ci_method timespan2seconds $time
@@ -1901,19 +1881,15 @@ is permitted as parameter.
 
 sub timespan2seconds($)
 {
-    if( $_[1] =~ /^\s*(\d+\.?\d*|\.\d+)\s*(hour|day|week)s?\s*$/ )
-    {     $2 eq 'hour' ? $1 * 3600
-        : $2 eq 'day'  ? $1 * 86400
-        :                $1 * 604800;  # week
-    }
-    else
-    {   $_[0]->log(ERROR => "Invalid timespan '$_' specified.");
-        undef;
-    }
+    $_[1] =~ /^\s*(\d+\.?\d*|\.\d+)\s*(hour|day|week)s?\s*$/
+        or $_[0]->log(ERROR => "Invalid timespan '$_[1]' specified."), undef;
+
+        $2 eq 'hour' ? $1 * 3600
+      : $2 eq 'day'  ? $1 * 86400
+      :                $1 * 604800;  # week
 }
 
 #-------------------------------------------
-
 =section Error handling
 
 =section Cleanup
@@ -1929,7 +1905,6 @@ sub DESTROY
 }
 
 #-------------------------------------------
-
 =chapter DETAILS
 
 =section Different kinds of folders
