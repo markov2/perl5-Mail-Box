@@ -4,17 +4,17 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Message::Head::Delayed;
-use base 'Mail::Message::Head';
+use parent 'Mail::Message::Head';
 
 use strict;
 use warnings;
 
 use Object::Realize::Later
-	becomes          => 'Mail::Message::Head::Complete',
-	realize          => 'load',
-	believe_caller   => 1;
+	becomes        => 'Mail::Message::Head::Complete',
+	realize        => 'load',
+	believe_caller => 1;
 
-use Scalar::Util 'weaken';
+use Scalar::Util   qw/weaken/;
 
 #--------------------
 =chapter NAME
@@ -97,7 +97,7 @@ without much cost.  Subtract a few hundred bytes for the header, and
 you will get a good estimate.
 =cut
 
-sub guessBodySize() {undef}
+sub guessBodySize() { undef }
 
 =method guessTimeStamp
 Make a guess about when the message was originally posted.
@@ -106,7 +106,7 @@ For messages in directory or network organized folders,
 M<Mail::Message::timestamp()> usually will give a figure without much cost.
 =cut
 
-sub guessTimestamp() {undef}
+sub guessTimestamp() { undef }
 
 #--------------------
 =section Internals
@@ -120,7 +120,7 @@ sub read($)
 	$self;
 }
 
-sub load() {$_[0] = $_[0]->message->loadHead}
+sub load() { $_[0] = $_[0]->message->loadHead }
 sub setNoRealize($) { $_[0]->log(INTERNAL => "Setting field on a delayed?") }
 
 1;

@@ -4,12 +4,13 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Maildir::Message;
-use base 'Mail::Box::Dir::Message';
+use parent 'Mail::Box::Dir::Message';
 
 use strict;
 use warnings;
 
-use File::Copy;
+use File::Copy              qw/move/;
+use File::Spec::Functions   qw/catfile/;
 
 #--------------------
 =chapter NAME
@@ -48,7 +49,8 @@ sub filename(;$)
 	@_ or return $oldname;
 
 	my $newname = shift;
-	return $newname if defined $oldname && $oldname eq $newname;
+	! defined $oldname || $oldname ne $newname
+		or return $newname;
 
 	my ($id, $semantics, $flags) = $newname =~ m!(.*?)(?:\:([12])\,([A-Za-z]*))!  ? ($1, $2, $3) : ($newname, '','');
 
@@ -66,10 +68,8 @@ sub filename(;$)
 		unknown => join('', sort keys %flags) # application specific
 	);
 
-	if(defined $oldname && ! move $oldname, $newname)
-	{	$self->log(ERROR => "Cannot move $oldname to $newname: $!");
-		return undef;
-	}
+	! defined $oldname || move $oldname, $newname
+		or $self->log(ERROR => "Cannot move $oldname to $newname: $!"), return undef;
 
 	$self->SUPER::filename($newname);
 }
@@ -132,7 +132,7 @@ sub labelsToFilename()
 	}
 
 	my $flags = $newset ne 'new' || $newflags ne '' ? ":2,$newflags" : $oldflags ? ':2,' : '';
-	my $new   = File::Spec->catfile($folderdir, $newset, $oldname.$flags);
+	my $new   = catfile $folderdir, $newset, $oldname.$flags;
 
 	if($new ne $old)
 	{	move $old, $new
@@ -178,11 +178,11 @@ constructed from the time-of-arrival, a hostname, an unique component,
 a syntax marker, and flags. For example C<1014220791.meteor.42:2,DF>.
 The filename must match:
 
-  my ($time, $unique, $hostname, $info)
-     = $filename =~ m!^(\d+)\.(.*)\.(\w+)(\:.*)?$!;
+  my ($time, $unique, $hostname, $info) =
+     $filename =~ m!^(\d+)\.(.*)\.(\w+)(\:.*)?$!;
 
-  my ($semantics, $flags)
-     = $info =~ m!([12])\,([DFPRST]*)$!;
+  my ($semantics, $flags) =
+     $info =~ m!([12])\,([DFPRST]*)$!;
 
   my @flags = split //, $flags;
 

@@ -3,19 +3,8 @@
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
 
-#oorestyle: not found P for c_method new($head)
-#oorestyle: not found P for c_method new($body)
-#oorestyle: not found P for c_method new($head)
-#oorestyle: not found P for c_method new($body)
-#oorestyle: not found P for c_method new($field)
-#oorestyle: not found P for c_method new($line)
-#oorestyle: not found P for c_method new($linenr)
-#oorestyle: not found P for c_method new($field)
-#oorestyle: not found P for c_method new($line)
-#oorestyle: not found P for c_method new($linenr)
-
 package Mail::Box::Search::Grep;
-use base 'Mail::Box::Search';
+use parent 'Mail::Box::Search';
 
 use strict;
 use warnings;
@@ -61,7 +50,6 @@ result.
 =chapter METHODS
 
 =c_method new %options
-
 Create a UNIX-grep like search filter.
 
 =default in <$field ? C<'HEAD'> : C<'BODY'>>
@@ -86,21 +74,20 @@ any matching header resp body line was found.  The output is minimized
 by not reprinting the message info on multiple matches in the same
 message.
 
-C<DELETE> will flag
-the message to be deleted in case of a match.  When a multipart's part
-is matched, the whole message will be flagged for deletion.
+C<DELETE> will flag the message to be deleted in case of a match.
+When a multipart's part is matched, the whole message will be flagged
+for deletion.
 
-=option  field undef|STRING|REGEX|CODE
+=option  field undef|$field|REGEX|CODE
 =default field undef
 Not valid in combination with P<in> set to C<BODY>.
-The STRING is one full field name (case-insensitive).  Use a REGEX
-to select more than one header line to be scanned. CODE is a routine which
-is called for each field in the header.   The CODE is called with the header
-as first, and the field as second argument.  If the CODE returns true, the
-message is selected.
+Pass one full $field name (case-insensitive).  Use a REGEX to select more
+than one header line to be scanned. CODE is a routine which is called
+for each field in the header.   The CODE is called with the header as
+first, and the field as second argument.  If the CODE returns true,
+the message is selected.
 
 =requires match STRING|REGEX|CODE
-
 The pattern to be search for can be a REGular EXpression, or a STRING.  In
 both cases, the match succeeds if it is found anywhere within the selected
 fields.
@@ -118,6 +105,9 @@ tell the matching line in the body.
 Be warned that when you search in C<MESSAGE> the code must accept
 both formats.
 
+=error illegal field selector $take
+=error no match pattern specified
+=error illegal match pattern $match
 =cut
 
 sub init($)
@@ -141,16 +131,16 @@ sub init($)
 	  : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
 	  :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
 	  :  ref $take eq 'CODE'   ? $take
-	  :    croak "Illegal field selector $take.";
+	  :    croak "illegal field selector $take";
 
 	my $match = $args->{match}
-		or croak "No match pattern specified.\n";
+		or croak "no match pattern specified";
 
 	$self->{MBSG_match_check}
 	= !ref $match             ? sub { index("$_[1]", $match) >= $[ }
 	:  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match }
 	:  ref $match eq 'CODE'   ? $match
-	:    croak "Illegal match pattern $match.";
+	:    croak "illegal match pattern $match";
 
 	$self;
 }

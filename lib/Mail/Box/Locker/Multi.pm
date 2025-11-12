@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::Multi;
-use base 'Mail::Box::Locker';
+use parent 'Mail::Box::Locker';
 
 use strict;
 use warnings;
@@ -59,17 +59,16 @@ sub init($)
 	$self->SUPER::init($args);
 
 	my @use
-	= exists $args->{use} ? @{delete $args->{use}}
-	: $^O eq 'MSWin32'    ? qw/Flock/
-	:                       qw/NFS FcntlLock Flock/;
+	  = exists $args->{use} ? @{delete $args->{use}}
+	  : $^O eq 'MSWin32'    ? qw/Flock/
+	  :   qw/NFS FcntlLock Flock/;
 
 	my (@lockers, @used);
 
 	foreach my $method (@use)
 	{	if(blessed $method && $method->isa('Mail::Box::Locker'))
 		{	push @lockers, $method;
-			my $used = ref $method =~ s/.*\:\://r;
-			push @used, $used;
+			push @used, ref $method =~ s/.*\:\://r;
 			next;
 		}
 
@@ -85,16 +84,25 @@ sub init($)
 	$self;
 }
 
+#--------------------
+=section Attributes
+
+=method lockers
+Returns a list with all locker objects used by this object.
+=cut
+
+sub lockers() { @{ $_[0]->{MBLM_lockers}} }
+
 sub name() {'MULTI'}
 
-sub _try_lock($)
+sub _try_lock()
 {	my $self     = shift;
 	my @successes;
 
 	foreach my $locker ($self->lockers)
 	{
 		unless($locker->lock)
-		{	$_->unlock foreach @successes;
+		{	$_->unlock for @successes;
 			return 0;
 		}
 		push @successes, $locker;
@@ -103,10 +111,14 @@ sub _try_lock($)
 	1;
 }
 
+#--------------------
+=section Locking
+=cut
+
 sub unlock()
 {	my $self = shift;
 	$self->hasLock or return $self;
-	$_->unlock foreach $self->lockers;
+	$_->unlock for $self->lockers;
 	$self->SUPER::unlock;
 	$self;
 }
@@ -133,20 +145,12 @@ sub isLocked()
 {	my $self     = shift;
 
 	# Try get a lock
-	$self->_try_lock($self->filename) or return 0;
+	$self->_try_lock or return 0;
 
 	# and release it immediately
 	$self->unlock;
 	1;
 }
 
-#--------------------
-=section The Locker
-
-=method lockers
-Returns a list with all locker objects used by this object.
-=cut
-
-sub lockers() { @{ $_[0]->{MBLM_lockers}} }
 
 1;

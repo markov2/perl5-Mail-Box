@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Scalar::Util   qw/blessed/;
 
 #--------------------
 =chapter NAME
@@ -59,25 +60,18 @@ Examples what you I<cannot> do:
 
 =section Constructors
 
-=tie @array, 'Mail::Box::Tie::ARRAY', FOLDER
-
+=tie @array 'Mail::Box::Tie::ARRAY', FOLDER
 Create the tie on an existing folder.
 
 =example tie an array to a folder
-
   my $mgr   = Mail::Box::Manager->new;
   my $inbox = $mgr->new(folder => $ENV{MAIL});
   tie my(@inbox), 'Mail::Box::Tie::Array', ref $inbox, $inbox;
-
 =cut
 
 sub TIEARRAY(@)
 {	my ($class, $folder) = @_;
-
-	ref $folder && $folder->isa('Mail::Box')
-		or croak "No folder specified to tie to.";
-
-	bless { MBT_folder => $folder }, $class;
+	$class->new($folder, 'ARRAY');
 }
 
 #--------------------
@@ -146,7 +140,7 @@ Add @messages to the end of the folder.
 =cut
 
 sub PUSH(@)
-{	my $folder = $_[0]->folder;
+{	my $folder = shift->folder;
 	$folder->addMessages(@_);
 	scalar $folder->messages;
 }

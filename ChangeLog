@@ -8,6 +8,8 @@ version 3.012:
 	Changes:
 	- mid-life upgrade project: require minimal Perl version 5.16
 	- remove deprecated use of Mail::Box::Tie, use ::ARRAY or ::HASH
+	- rename ::Manager::threads() into ::discoverThreads().  Old name
+	  still supported.
 
 	Improvements:
 	- remove all internal use of bareword file-handles.
@@ -15,6 +17,8 @@ version 3.012:
 	- use s///r
 	- use defined-or
 	- syntax of tie docs
+	- remove use of filetest.pm: plays bad with method access()
+	- replace IO::File by open(my $fh)
 
 version 3.011: Fri 18 Apr 18:33:17 CEST 2025
 

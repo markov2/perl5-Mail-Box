@@ -4,14 +4,14 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
 
 use Carp;
-use Scalar::Util 'weaken';
-use Devel::GlobalDestruction 'in_global_destruction';
+use Scalar::Util     qw/weaken/;
+use Devel::GlobalDestruction qw/in_global_destruction/;
 
 #--------------------
 =chapter NAME
@@ -48,19 +48,17 @@ a multiple inheritance construction with a Mail::Box.
 Generally the client program specifies the locking behavior through
 options given to the folder class.
 
-=option  method STRING|CLASS|ARRAY
+=option  method $name|CLASS|\@names
 =default method C<'DOTLOCK'>
+Which kind of locking, specified as one of the following tokens as $name.
+You may also specify a CLASS name, or multiple @names.  In the latter case,
+a 'multi' locker is started with all the specified @names.
 
-Which kind of locking, specified as one of the following names as STRING.
-You may also specify a CLASS name, or an ARRAY of names.  In case of an
-ARRAY, a 'multi' locker is started with all thee
-full CLASS name.
-
-Supported locking names are
+Supported locking method names are (lower-case is also accepted)
 
 =over 4
 
-=item 'DOTLOCK' | 'dotlock'
+=item 'DOTLOCK'
 
 The folder handler creates a file which signals that it is in use.  This
 is a bit problematic, because not all mail-handling software agree on
@@ -70,34 +68,34 @@ On various folder types, the lockfile differs.  See the documentation for
 each folder, which describes the locking strategy as well as special
 options to change the default behavior.
 
-=item 'FLOCK' | 'flock'
+=item 'FLOCK'
 For some folder handlers, locking is based on a file locking mechanism
 provided by the operating system.  However, this does not work on all
 systems, such as network filesystems, and such. This also doesn't work on
 folders based on directories (Mail::Box::Dir and derived).
 
-=item 'FCNTLLOCK' | 'fcntllock'
+=item 'FCNTLLOCK'
 POSIX locking via File::FcntlLock, which works on more platforms.
 However, that module requires a C compiler to install.
 
-=item 'POSIX' | 'posix'
+=item 'POSIX'
 Use the POSIX standard fcntl locking.
 
-=item 'MULTI' | 'multi'
+=item 'MULTI'
 Use ALL available locking methods at the same time, to have a bigger
 chance that the folder will not be modified by some other application
 which uses an unspecified locking method.  When one of the locking
 methods disallows access, the locking fails.
 
-=item 'MUTT'| 'mutt'
+=item 'MUTT'
 Use the external program 'mutt_dotlock' to lock and unlock.
 
-=item 'NFS' | 'nfs'
+=item 'NFS'
 A kind of C<dotlock> file-locking mechanism, but adapted to work over
 NFS.  Extra precaution is needed because an C<open O_EXCL> on NFS is
 not an atomic action.
 
-=item 'NONE' | 'none'
+=item 'NONE'
 Do not use locking.
 
 =back
@@ -110,32 +108,31 @@ class with this parameter:
   my $locker = Mail::Box::Locker::MyOwn->new;
   $folder->open(locker => $locker);
 
-=option  expires SECONDS
+=option  expires $seconds
 =default expires 1 hour
-
 How long can a lock exist?  If a different e-mail program leaves a stale
 lock, then this lock will be removed automatically after the specified
 number of seconds.
 
-=option  folder FOLDER
+=option  folder $folder
 =default folder <undef>
-Which FOLDER is to be locked, a Mail::Box object.
+Which $folder is to be locked, a Mail::Box object.
 
-=option  timeout SECONDS|'NOTIMEOUT'
+=option  timeout $seconds|'NOTIMEOUT'
 =default timeout 10
-
 How long to wait while trying to acquire the lock. The lock request will
-fail when the specified number of seconds is reached.  If C<'NOTIMEOUT'> is
+fail when the specified number of $seconds is reached.  If C<'NOTIMEOUT'> is
 specified, the module will wait until the lock can be taken.
 
 Whether it is possible to limit the wait time is platform- and
 locking-method-specific.  For instance, the `dotlock' method on Windows
 will always wait until the lock has been received.
 
-=option  file FILENAME
+=option  file $file
 =default file undef
-Name of the file to lock.  By default, the name of the folder is taken.
+Name of the $file to lock.  By default, the name of the folder is taken.
 
+=error no locking method $method defined: use @names
 =cut
 
 my %lockers = (
@@ -166,7 +163,7 @@ sub new(@)
 
 	local $"   = ' or ';
 	$create
-		or confess "No locking method $method defined: use @{[ keys %lockers ]}";
+		or confess "no locking method $method defined: use @{[ keys %lockers ]}";
 
 	# compile the locking module (if needed)
 	eval "require $create";
@@ -291,10 +288,8 @@ sub unlock() { $_[0]->{MBL_has_lock} = 0 }
 =section Cleanup
 
 =method DESTROY
-
 When the locker is destroyed, for instance when the folder is closed
 or the program ends, the lock will be automatically removed.
-
 =cut
 
 sub DESTROY()

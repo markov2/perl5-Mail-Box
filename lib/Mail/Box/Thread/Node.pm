@@ -4,12 +4,13 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Thread::Node;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
 
 use Carp;
+use List::Util  qw/first/;
 
 #--------------------
 =chapter NAME
@@ -82,6 +83,27 @@ sub init($)
 }
 
 #--------------------
+=section Attributes
+
+=method isDummy
+Returns true if the message is a dummy. A dummy is a "hole" in a thread
+which has follow-ups but does not have a message.
+=cut
+
+sub isDummy()
+{	my $self = shift;
+	my $msgs = $self->{MBTN_messages};
+	! defined $msgs || ! @$msgs || $msgs->[0]->isDummy;
+}
+
+=method messageId
+Return the message-id related to this thread node.  Each of the messages
+listed in this node will have the same ID.
+=cut
+
+sub messageId() { $_[0]->{MBTN_msgid} }
+
+#--------------------
 =section The thread node
 
 =method message
@@ -142,23 +164,6 @@ sub addMessage($)
 	push @{$self->{MBTN_messages}}, $message;
 	$message;
 }
-
-=method isDummy
-Returns true if the message is a dummy. A dummy is a "hole" in a thread
-which has follow-ups but does not have a message.
-=cut
-
-sub isDummy()
-{	my $self = shift;
-	!defined $self->{MBTN_messages} || $self->{MBTN_messages}[0]->isDummy;
-}
-
-=method messageId
-Return the message-id related to this thread node.  Each of the messages
-listed in this node will have the same ID.
-=cut
-
-sub messageId() { $_[0]->{MBTN_msgid} }
 
 =method expand [BOOLEAN]
 Returns whether this (part of the) folder has to be shown expanded or not.
@@ -488,11 +493,11 @@ not counting the dummies.
 sub numberOfMessages()
 {	my $self  = shift;
 	my $total = 0;
-	$self->recurse( sub { ++$total unless shift->isDummy; 1 } );
+	$self->recurse( sub { $_[0]->isDummy or ++$total; 1 } );
 	$total;
 }
 
-sub nrMessages() {shift->numberOfMessages}  # compatibility
+sub nrMessages() { $_[0]->numberOfMessages }  # compatibility
 
 =method threadMessages
 Returns all the messages in the thread starting at the current thread
@@ -525,7 +530,7 @@ Returns all the ids in the thread starting at the current thread node.
 sub ids()
 {	my $self = shift;
 	my @ids;
-	$self->recurse( sub {push @ids, shift->messageId} );
+	$self->recurse( sub { push @ids, $_[0]->messageId } );
 	@ids;
 }
 

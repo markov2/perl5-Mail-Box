@@ -1,22 +1,13 @@
-oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
 #oodist: This file contains OODoc-style documentation which will get stripped
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
-#oorestyle: use of deprecated Carp: use Log::Report
-
-#oorestyle: old style disclaimer to be removed.
-#oorestyle: not using Log::Report yet.
-
-# This code is part of distribution Mail-Box.  Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::Dir;
-use base 'Mail::Box';
+use parent 'Mail::Box';
 
 use strict;
 use warnings;
-use filetest 'access';
 
 use Mail::Box::Dir::Message        ();
 use Mail::Message::Body::Lines     ();
@@ -69,17 +60,18 @@ available (yet).
 =default body_type Mail::Message::Body::Lines
 =default lock_file <folder>C</.lock>
 
-=option  directory DIRECTORY
+=option  directory $directory
 =default directory <derived from folder name>
-For rare folder types, the directory name may differ from the folder
+For rare folder types, the $directory name may differ from the folder
 name.
 
 =warning Folder directory $directory is write-protected.
-The folder directory does already exist and is write protected, which may
+The folder $directory does already exist and is write protected, which may
 interfere with the requested write access.  Change new(access) or the
 permissions on the directory.
 
 =warning No directory $name for folder of $class
+=warning Folder directory $directory is write-protected
 =cut
 
 sub init($)
@@ -94,7 +86,7 @@ sub init($)
 		if(-d $directory) {;}
 	elsif($args->{create} && $class->create($directory, %$args)) {;}
 	else
-	{	$self->log(NOTICE => "No directory $directory for folder of $class");
+	{	$self->log(WARNING => "No directory $directory for folder of $class");
 		return undef;
 	}
 
@@ -106,12 +98,16 @@ sub init($)
 	# Check if we can write to the folder, if we need to.
 
 	if($self->writable && -e $directory && ! -w $directory)
-	{	$self->log(WARNING=> "Folder directory $directory is write-protected.");
+	{	$self->log(WARNING => "Folder directory $directory is write-protected.");
 		$self->access('r');
 	}
 
 	$self;
 }
+
+#--------------------
+=section Attributes
+=cut
 
 sub organization() { 'DIRECTORY' }
 
@@ -123,7 +119,6 @@ Returns the directory related to this folder.
 
 =example
   print $folder->directory;
-
 =cut
 
 sub directory()

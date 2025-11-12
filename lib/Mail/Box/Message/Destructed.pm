@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Message::Destructed;
-use base 'Mail::Box::Message';
+use parent 'Mail::Box::Message';
 
 use strict;
 use warnings;
@@ -125,8 +125,8 @@ sub coerce($)
 sub modified(;$)
 {	my $self = shift;
 
-	$self->log(ERROR => 'Do not set the modified flag on a destructed message')
-		if @_ && $_[0];
+	! @_ || ! $_[0]
+		or $self->log(ERROR => 'Do not set the modified flag on a destructed message');
 
 	0;
 }
@@ -151,18 +151,17 @@ sub label($;@)
 	if(@_==1)
 	{	my $label = shift;
 		return $self->SUPER::label('deleted') if $label eq 'deleted';
+
 		$self->log(ERROR => "Destructed message has no labels except 'deleted', requested is $label");
 		return 0;
 	}
 
 	my %flags = @_;
-	unless(keys %flags==1 && exists $flags{deleted})
-	{	$self->log(ERROR => "Destructed message has no labels except 'deleted', trying to set @{[ keys %flags ]}");
-		return;
-	}
+	keys %flags==1 && exists $flags{deleted}
+		or $self->log(ERROR => "Destructed message has no labels except 'deleted', trying to set @{[ keys %flags ]}"), return 0;
 
-	$self->log(ERROR => "Destructed messages can not be undeleted")
-	unless $flags{deleted};
+	$flags{deleted}
+		or $self->log(ERROR => "Destructed messages can not be undeleted"), return 0;
 
 	1;
 }

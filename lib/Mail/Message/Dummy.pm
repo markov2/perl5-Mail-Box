@@ -2,15 +2,12 @@
 #oodist: This file contains OODoc-style documentation which will get stripped
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
-#oorestyle: use of deprecated Carp: use Log::Report
 
 package Mail::Message::Dummy;
-use base 'Mail::Message';
+use parent 'Mail::Message';
 
 use strict;
 use warnings;
-
-use Carp;
 
 #--------------------
 =chapter NAME
@@ -63,7 +60,7 @@ sub init($)
 	$self->SUPER::init($args);
 
 	exists $args->{messageId}
-		or $self->log(ERROR => "Message-Id is required for a dummy.");
+		or $self->log(ERROR => "Message-Id is required for a dummy."), return undef;
 
 	$self;
 }

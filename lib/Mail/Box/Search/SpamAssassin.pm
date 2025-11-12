@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Search::SpamAssassin;
-use base 'Mail::Box::Search';
+use parent 'Mail::Box::Search';
 
 use strict;
 use warnings;
@@ -31,8 +31,7 @@ Mail::Box::Search::SpamAssassin - select spam messages with Mail::SpamAssassin
   {   $msg->delete if $msg->label('spam');
   }
 
-  my $spam2 = Mail::Box::Search::SpamAssassin
-                ->new(deliver => 'DELETE');
+  my $spam2 = Mail::Box::Search::SpamAssassin->new(deliver => 'DELETE');
   $spam2->search($folder);
   $mgr->moveMessages($spamfolder, $folder->messages('spam'));
 
@@ -71,26 +70,25 @@ Mark all selected message with the specified $label.  If this
 option is explicitly set to undef, the label will not be set.
 
 =option  rewrite_mail BOOLEAN
-=default rewrite_mail <true>
+=default rewrite_mail true
 Add lines to the message header describing the results of the spam
 scan. See M<Mail::SpamAssassin::PerMsgStatus::rewrite_mail()>.
 
-=option  spam_assassin OBJECT
+=option  spam_assassin $object
 =default spam_assassin undef
-Provide a Mail::SpamAssassin object to be used for searching spam.  If
+Provide a Mail::SpamAssassin $object to be used for searching spam.  If
 none is specified, one is created internally.  The object can be
 retrieved with assassinator().
 
-=option  sa_options     HASH
+=option  sa_options     \%options
 =default sa_options     C< +{ } >
-Options to create the internal Mail::SpamAssassin object; see its
+The %options to create the internal Mail::SpamAssassin object; see its
 manual page for the available options.  Other setting may be provided
 via SpamAssassins configuration file mechanism, which is explained in
 L<Mail::SpamAssassin::Conf>.
 
 =examples
-  my $filter = Mail::Box::Search::SpamAssassin
-     ->new(found => 'DELETE');
+  my $filter = Mail::Box::Search::SpamAssassin->new(found => 'DELETE');
 =cut
 
 sub init($)

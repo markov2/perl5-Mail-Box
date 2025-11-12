@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Mbox::Message;
-use base 'Mail::Box::File::Message';
+use parent 'Mail::Box::File::Message';
 
 use strict;
 use warnings;

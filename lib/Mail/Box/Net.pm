@@ -9,21 +9,15 @@ use parent 'Mail::Box';
 use strict;
 use warnings;
 
-
-use Mail::Box::Net::Message;
-
-use Mail::Message::Body::Lines;
-use Mail::Message::Body::File;
-use Mail::Message::Body::Delayed;
-use Mail::Message::Body::Multipart;
-
-use Mail::Message::Head;
-use Mail::Message::Head::Delayed;
+use Mail::Box::Net::Message        ();
+use Mail::Message::Body::Lines     ();
+use Mail::Message::Body::File      ();
+use Mail::Message::Body::Delayed   ();
+use Mail::Message::Body::Multipart ();
+use Mail::Message::Head            ();
+use Mail::Message::Head::Delayed   ();
 
 use Carp;
-use File::Copy;
-use File::Spec;
-use File::Basename;
 
 #--------------------
 =chapter NAME
@@ -59,21 +53,21 @@ Implements the IMAP4 protocol.
 =default trusted   <false>
 =default folder    C<'/'>
 
-=option  server_name HOSTNAME
+=option  server_name $host
 =default server_name undef
-The name of the host which contains the remote mail server.
+The name of the $host which contains the remote mail server.
 
-=option  password STRING
+=option  password $password
 =default password undef
-The password which is required to contact the remote server.
+The $password which is required to contact the remote server.
 
-=option  username STRING
+=option  username $username
 =default username undef
 The username which is to be used for the remote server.
 
-=option  server_port INTEGER
+=option  server_port $number
 =default server_port undef
-Port number in use by the server application.
+Port $number in use by the server application.
 
 =cut
 
@@ -93,8 +87,8 @@ sub init($)
 			      (?:  \: ( [^\@/]+ ))? # password
 			   \@ )?
 			  ( [a-zA-Z0-9.-]+ )?       # hostname
-			  (?: \: ([0-9]+)  )?       # port(
-			    / .* )?                 # path
+			  (?: \: ([0-9]+)  )?       # port
+			  ( / .* )?                 # path
 		!x;
 
 		defined && s/%([0-9a-fA-F]{2})/hex $1/ge

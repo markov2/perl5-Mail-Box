@@ -4,12 +4,11 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::Flock;
-use base 'Mail::Box::Locker';
+use parent 'Mail::Box::Locker';
 
 use strict;
 use warnings;
 
-use IO::File;
 use Fcntl         qw/:DEFAULT :flock/;
 use Errno         qw/EAGAIN/;
 
@@ -20,7 +19,7 @@ Mail::Box::Locker::Flock - lock a folder using kernel file-locking
 
 =chapter SYNOPSIS
 
-  See Mail::Box::Locker
+  See the generic Mail::Box::Locker interface
 
 =chapter DESCRIPTION
 
@@ -52,59 +51,55 @@ sub _unlock($)
 	$self;
 }
 
+#--------------------
+=section Locking
 
 =method lock
+Acquire a lock on the folder.
 
 =warning Folder $folder already flocked
-The folder is already locked, but you attempt to lock it again.  The
+The $folder is already locked, but you attempt to lock it again.  The
 behavior of double flock's is platform dependent, and therefore should
-not be attempted.  The second lock is ignored (but the unlock isn't)
+not be attempted.  The second lock is ignored (but the unlock isn't).
 
-=error Unable to open flock file $filename for $folder: $!
-For flock-ing a folder it must be opened, which does not succeed for the
+=error Unable to open flock file $file for $folder: $!
+For C<flock>-ing a $folder it must be opened, which does not succeed for the
 specified reason.
 
-=error Will never get a flock at $filename for $folder: $!
-Tried to flock the folder, but it did not succeed.  The error code received
+=error Will never get a flock at $file for $folder: $!
+Tried to C<flock> the $folder, but it did not succeed.  The error code received
 from the OS indicates that it will not succeed ever, so we do not need to
 try again.
 
 =cut
 
 # 'r+' is require under Solaris and AIX, other OSes are satisfied with 'r'.
-my $lockfile_access_mode = ($^O eq 'solaris' || $^O eq 'aix') ? 'r+' : 'r';
+my $lockfile_access_mode = ($^O eq 'solaris' || $^O eq 'aix') ? '+<:raw' : '<:raw';
 
 sub lock()
 {	my $self   = shift;
 	my $folder = $self->folder;
 
-	if($self->hasLock)
-	{	$self->log(WARNING => "Folder $folder already flocked.");
-		return 1;
-	}
+	! $self->hasLock
+		or $self->log(WARNING => "Folder $folder already flocked."), return 1;
 
 	my $filename = $self->filename;
-	my $file      = IO::File->new($filename, $lockfile_access_mode);
-	unless($file)
-	{	$self->log(ERROR => "Unable to open flock file $filename for $folder: $!");
-		return 0;
-	}
+	open my $fh, $lockfile_access_mode, $filename
+		or $self->log(ERROR => "Unable to open flock file $filename for $folder: $!"), return 0;
 
 	my $timeout = $self->timeout;
 	my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
 
 	while(1)
-	{	if($self->_try_lock($file))
-		{	$self->{MBLF_filehandle} = $file;
+	{	if($self->_try_lock($fh))
+		{	$self->{MBLF_filehandle} = $fh;
 			return $self->SUPER::lock;
 		}
 
-		if($! != EAGAIN)
-		{	$self->log(ERROR => "Will never get a flock on $filename for $folder: $!");
-			last;
-		}
+		$! == EAGAIN
+			or $self->log(ERROR => "Will never get a flock on $filename for $folder: $!"), last;
 
-		last unless --$end;
+		--$end or last;
 		sleep 1;
 	}
 
@@ -113,7 +108,7 @@ sub lock()
 
 =method isLocked
 =error Unable to check lock file $filename for $folder: $!
-To check whether the filename is used to flock a folder, the file must be
+To check whether the $filename is used to C<flock> a $folder, the file must be
 opened.  Apparently this fails, which does not mean that the folder is
 locked neither that it is unlocked.
 
@@ -123,17 +118,16 @@ sub isLocked()
 {	my $self     = shift;
 	my $filename = $self->filename;
 
-	my $file     = IO::File->new($filename, $lockfile_access_mode);
-	unless($file)
+	open my($fh), $lockfile_access_mode, $filename;
+	unless($fh)
 	{	my $folder = $self->folder;
-		$self->log(ERROR =>
-			"Unable to check lock file $filename for $folder: $!");
+		$self->log(ERROR => "Unable to check lock file $filename for $folder: $!");
 		return 0;
 	}
 
-	$self->_try_lock($file) or return 0;
-	$self->_unlock($file);
-	$file->close;
+	$self->_try_lock($fh) or return 0;
+	$self->_unlock($fh);
+	$fh->close;
 
 	$self->SUPER::unlock;
 	1;

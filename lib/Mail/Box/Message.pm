@@ -53,7 +53,7 @@ If the body of a message is used delay-loaded, the message must what type
 of message to become when it finally gets parsed.  The folder which is
 delaying the load must specify the algorithm to determine that type.
 
-=option  size INTEGER
+=option  size $bytes
 =default size undef
 The size of the message, which includes head and body, but without the
 message separators which may be used by the folder type.
@@ -65,7 +65,9 @@ sub init($)
 	$self->SUPER::init($args);
 
 	$self->{MBM_body_type} = $args->{body_type};
-	$self->folder($args->{folder});
+	$self->{MBM_folder}    = $args->{folder};
+	weaken($self->{MBM_folder});
+
 	$self;
 }
 
@@ -77,7 +79,8 @@ sub head(;$)
 	my $old   = $self->head;
 	$self->SUPER::head($new);
 
-	defined $new || defined $old return;
+	defined $new || defined $old
+		or return undef;
 
 	my $folder = $self->folder
 		or return $new;
@@ -98,9 +101,8 @@ sub head(;$)
 =section Attributes
 
 =method folder [$folder]
-In with folder did we detect this message/dummy?  This is a reference
+In which folder did we detect this message/dummy?  This is a reference
 to the folder-object.
-
 =cut
 
 sub folder(;$)
@@ -129,21 +131,21 @@ original.  The coerced message (the clone in the destination folder)
 is returned.
 
 =option  share  BOOLEAN
-=default share  <false>
+=default share  false
 Try to share the physical storage of the message between the two folders.
 Sometimes, they even may be of different types.  When not possible, this
 options will be silently ignored.
 
 =option  shallow BOOLEAN
-=default shallow <false>
+=default shallow false
 Used for M<clone(shallow)>.
 
 =option  shallow_body BOOLEAN
-=default shallow_body <false>
+=default shallow_body false
 Used for M<clone(shallow_body)>.
 
 =option  shallow_head BOOLEAN
-=default shallow_head <false>
+=default shallow_head false
 Used for M<clone(shallow_head)>.
 
 =example
@@ -173,7 +175,7 @@ this must be set to false.  Otherwise a shallow clone will be made, which
 will share the header which can be modified in the undeleted message.
 
 =option  shallow_body BOOLEAN
-=default shallow_body <undef>
+=default shallow_body undef
 Only create a shallow body, which means that the header can not be
 reused.  A message can therefore not be shared in storage unless
 explicitly stated.
@@ -192,8 +194,8 @@ is equivalent to
 sub moveTo($@)
 {	my ($self, $folder, %args) = @_;
 
-	$args{share} = 1
-		unless exists $args{share} || exists $args{shallow_body};
+	exists $args{share} || exists $args{shallow_body}
+		or $args{share} = 1;
 
 	my $added = $self->copyTo($folder, %args);
 	$self->label(deleted => 1);

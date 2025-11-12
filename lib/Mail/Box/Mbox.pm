@@ -8,7 +8,6 @@ use parent 'Mail::Box::File';
 
 use strict;
 use warnings;
-use filetest 'access';
 
 use Mail::Box::Mbox::Message ();
 
@@ -88,7 +87,7 @@ is taken.  A mbox folder is a file which starts with a separator
 line: a line with C<'From '> as first characters.  Blank lines which
 start the file are ignored, which is not for all MUA's acceptable.
 
-=option  folder FOLDERNAME
+=option  folder $name
 =default folder undef
 
 =option  subfolder_extension STRING
@@ -144,7 +143,6 @@ sub delete(@)
 
 sub writeMessages($)
 {	my ($self, $args) = @_;
-
 	$self->SUPER::writeMessages($args) or return;
 
 	if($self->removeEmpty)

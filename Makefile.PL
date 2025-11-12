@@ -5,7 +5,6 @@ require 5.016;
 use warnings;
 use strict;
 
-
 # Use command 'oodist' to produce your whole software release.
 my $version = '3.012';
 my $webpages = "../public_html";
@@ -71,7 +70,7 @@ my %oodist   = (
 );
 
 
-my %prereq = (
+my %requires = (
 	'Carp'           => 0,
 	'Cwd'            => 0,
 	'Date::Parse'    => 0,
@@ -91,7 +90,6 @@ my %prereq = (
 	'POSIX'          => 0,
 	'Scalar::Util'   => 1.13,
 	'Sys::Hostname'  => 0.0,
-	'Test::More'     => 0.47,
 
 # Currently, it seems to be wise not to depend on these
 #   Mail::SpamAssassin    split-off?
@@ -104,7 +102,6 @@ WriteMakefile
 	VERSION    => $version,
 	AUTHOR     => 'Mark Overmeer',
 	ABSTRACT   => 'complete E-mail handling suite',
-	PREREQ_PM  => \%prereq,
 	LICENSE    => 'perl_5',
 
 	META_MERGE => {
@@ -115,20 +112,26 @@ WriteMakefile
 				url  => "$git.git",
 				web  => $git,
 			},
+			bugtracker => {
+				web  => "$git/issues",
+			},
 			homepage => $homepage,
 			license  => [ 'http//dev.perl.org/licenses/' ],
 		},
 		prereqs => {
+			runtime => {
+				requires => \%requires,
+			},
 			develop => {
 				requires => {
 					'OODoc' => '3.00',
-				}
+				},
 			},
 			test => {
 				requires => {
 					'Test::More' => 1.00,
 					'Test::Pod'  => 1.00,
-				}
+				},
 			},
 		},
 

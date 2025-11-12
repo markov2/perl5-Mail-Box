@@ -3,14 +3,13 @@
 # Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Mail::Box::Test;
-use base 'Exporter';
+use parent 'Exporter';
 
 use strict;
 use warnings;
 
 use File::Copy            qw/copy/;
 use List::Util            qw/first/;
-use IO::File;             # to overrule open()
 use File::Spec::Functions qw/catdir catfile devnull/;;
 use File::Temp            qw/tempdir/;
 use Cwd                   qw/getcwd/;
@@ -18,8 +17,8 @@ use Sys::Hostname         qw/hostname/;
 use Test::More;
 
 
-our @EXPORT =
-qw/clean_dir copy_dir
+our @EXPORT = qw/
+	clean_dir copy_dir
 	unpack_mbox2mh unpack_mbox2maildir
 	compare_lists listdir
 	compare_message_prints reproducable_text
@@ -32,7 +31,7 @@ qw/clean_dir copy_dir
 	$cpy $cpyfn
 	$raw_html_data
 	$crlf_platform $windows
-	/;
+/;
 
 our ($logfile, $folderdir);
 our ($src, $unixsrc, $winsrc);
@@ -203,12 +202,12 @@ our @maildir_names =
 	'110000039.l.43',
 	'110000040.l.43',
 	'110000041.l.43',
-	'110000042.l.43'
+	'110000042.l.43',
 );
 
 sub unpack_mbox2maildir($$)
 {	my ($file, $dir) = @_;
-	clean_dir($dir);
+	clean_dir $dir;
 
 	@maildir_names==45 or die;
 	mkdir $dir or die;

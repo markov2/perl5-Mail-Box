@@ -4,14 +4,14 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::NFS;
-use base 'Mail::Box::Locker';
+use parent 'Mail::Box::Locker';
 
 use strict;
 use warnings;
 
 use Sys::Hostname;
-use IO::File;
 use Carp;
+use Fcntl  qw/O_CREAT O_WRONLY/;
 
 #--------------------
 =chapter NAME
@@ -38,7 +38,11 @@ for NFS --and for local disks as well.
 =default method C<'NFS'>
 =cut
 
-sub name() {'NFS'}
+sub name() { 'NFS' }
+
+#--------------------
+=section Locking
+=cut
 
 # METHOD nfs
 # This hack is copied from the Mail::Folder packages, as written
@@ -62,7 +66,7 @@ sub _construct_tmpfile()
 {	my $self    = shift;
 	my $tmpfile = $self->_tmpfilename;
 
-	my $fh      = IO::File->new($tmpfile, O_CREAT|O_WRONLY, 0600)
+	sysopen my $fh, $tmpfile, O_CREAT|O_WRONLY, 0600
 		or return undef;
 
 	$fh->close;
@@ -97,12 +101,12 @@ sub _unlock($$)
 Do not try to lock the folder when the application already has the
 lock: it will give you dead-locks.
 
-=warning Removed expired lockfile $filename.
-A lock file was found which was older than the expiration period as
+=warning Removed expired lockfile $file
+A lock $file was found which was older than the expiration period as
 specified with M<new(timeout)>.  The lock file was successfully
 removed.
 
-=error Unable to remove expired lockfile $lockfile: $!
+=error Unable to remove expired lockfile $file: $!
 A lock file was found which was older than the expiration period as
 specified with the M<new(timeout)> option.  It is impossible to remove that
 lock file, so we need to wait until it vanishes by some external cause.
@@ -113,10 +117,8 @@ sub lock()
 {	my $self     = shift;
 	my $folder   = $self->folder;
 
-	if($self->hasLock)
-	{	$self->log(WARNING => "Folder $folder already locked over nfs");
-		return 1;
-	}
+	$self->hasLock
+		and $self->log(WARNING => "Folder $folder already locked over nfs"), return 1;
 
 	my $lockfile = $self->filename;
 	my $tmpfile  = $self->_construct_tmpfile or return;
@@ -125,16 +127,17 @@ sub lock()
 	my $expires  = $self->expires / 86400;  # in days for -A
 
 	if(-e $lockfile && -A $lockfile > $expires)
-	{	if(unlink $lockfile)
-			 { $self->log(WARNING => "Removed expired lockfile $lockfile.") }
-		else { $self->log(ERROR   => "Unable to remove expired lockfile $lockfile: $!") }
+	{	unlink $lockfile
+			or $self->log(ERROR => "Unable to remove expired lockfile $lockfile: $!"), return 0;
+
+		$self->log(WARNING => "Removed expired lockfile $lockfile.");
 	}
 
 	while(1)
 	{	return $self->SUPER::lock
 			if $self->_try_lock($tmpfile, $lockfile);
 
-		last unless --$end;
+		--$end or last;
 		sleep 1;
 	}
 
@@ -147,8 +150,8 @@ sub isLocked()
 	my $lockfile = $self->filename;
 
 	my $fh = $self->_try_lock($tmpfile, $lockfile) or return 0;
-
 	close $fh;
+
 	$self->_unlock($tmpfile, $lockfile);
 	$self->SUPER::unlock;
 

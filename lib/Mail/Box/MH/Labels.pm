@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::MH::Labels;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
@@ -57,13 +57,16 @@ sub init($)
 }
 
 #--------------------
-=section The Label Table
+=section Attributes
 
 =method filename
 Returns the name of the index file.
 =cut
 
 sub filename() { $_[0]->{MBML_filename} }
+
+#--------------------
+=section The Label Table
 
 =method get $msgnr
 Look if there is label info for message $msgnr.

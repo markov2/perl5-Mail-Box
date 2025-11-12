@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Message::Body::Delayed;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
@@ -16,7 +16,7 @@ use Object::Realize::Later
 	believe_caller   => 1;
 
 use Carp;
-use Scalar::Util 'weaken';
+use Scalar::Util     qw/weaken/;
 
 #--------------------
 =chapter NAME
@@ -60,7 +60,7 @@ to produce a string for C<Carp>.  The latter to avoid deep recursions.
 use overload
 	'""'    => 'string_unless_carp',
 	bool    => sub {1},
-	'@{}'   => sub {shift->load->lines};
+	'@{}'   => sub { $_[0]->load->lines };
 
 #--------------------
 =chapter METHODS

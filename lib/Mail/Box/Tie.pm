@@ -41,15 +41,16 @@ look simpler than programs using the more traditional method calls.
 =section Constructors
 
 =c_method new $folder, $type
+Do not call this method directly, but via the tie interface.
 =cut
 
-sub _new($$)
+sub new($$)
 {	my ($class, $folder, $type) = @_;
 
 	blessed $folder && $folder->isa('Mail::Box')
         or croak "No folder specified to tie to.";
 
-	bless +{ MBT_folder => $folder, MBT_type =. $type }, $class;
+	bless +{ MBT_folder => $folder, MBT_type => $type }, $class;
 }
 
 #--------------------

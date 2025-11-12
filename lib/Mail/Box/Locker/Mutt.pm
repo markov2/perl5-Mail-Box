@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Locker::Mutt;
-use base 'Mail::Box::Locker';
+use parent 'Mail::Box::Locker';
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ Mail::Box::Locker::Mutt - lock a folder using mutt_dotlock
 
 =chapter DESCRIPTION
 
-The C<mutt> mail reader includes an separate program which is specialized
+The C<mutt> email reader includes a separate program which is specialized
 in locking folders.  This locker class uses this external program.
 Mutt is not automatically installed.
 
@@ -42,9 +42,11 @@ sub init($)
 	$self;
 }
 
-sub name()     {'MUTT'}
+sub name()     { 'MUTT' }
 sub lockfile() { $_[0]->filename . '.lock' }
 
+#--------------------
+=section Attributes
 =method exe
 Returns the name of the external binary.
 =cut
@@ -59,7 +61,7 @@ sub unlock()
 {	my $self = shift;
 	$self->hasLock or return $self;
 
-	unless(system($self->exe, '-u', $self->filename))
+	unless(system $self->exe, '-u', $self->filename)
 	{	my $folder = $self->folder;
 		$self->log(WARNING => "Couldn't remove mutt-unlock $folder: $!");
 	}
@@ -68,6 +70,8 @@ sub unlock()
 	$self;
 }
 
+#--------------------
+=section Locking
 
 =method lock
 =warning Folder $folder already mutt-locked
@@ -76,12 +80,11 @@ sub unlock()
 =cut
 
 sub lock()
-{	my $self   = shift;
-	my $folder = $self->folder;
-	if($self->hasLock)
-	{	$self->log(WARNING => "Folder $folder already mutt-locked");
-		return 1;
-	}
+{	my $self     = shift;
+	my $folder   = $self->folder;
+
+	$self->hasLock
+		and $self->log(WARNING => "Folder $folder already mutt-locked"), return 1;
 
 	my $filename = $self->filename;
 	my $lockfn   = $self->lockfile;
@@ -93,39 +96,30 @@ sub lock()
 
 	while(1)
 	{
-		if(system($exe, '-p', '-r', 1, $filename))
-		{	unless(WIFEXITED($?) && WEXITSTATUS($?)==3)
-			{	$self->log(ERROR => "Will never get a mutt-lock: $!");
-				return 0;
-			}
-		}
-		else
-		{	return $self->SUPER::lock;
-		}
+		system $exe, '-p', '-r', 1, $filename
+			or return $self->SUPER::lock;
+
+		WIFEXITED($?) && WEXITSTATUS($?)==3
+			or $self->log(ERROR => "Will never get a mutt-lock: $!"), return 0;
 
 		if(-e $lockfn && -A $lockfn > $expire)
-		{
-			if(system($exe, '-f', '-u', $filename))
-			{	$self->log(ERROR => "Failed to remove expired mutt-lock $lockfn: $!");
-				last;
-			}
-			else
-			{	$self->log(WARNING => "Removed expired mutt-lock $lockfn");
-				redo;
-			}
+		{	system $exe, '-f', '-u', $filename
+				and $self->log(WARNING => "Removed expired mutt-lock $lockfn"), redo;
+
+			$self->log(ERROR => "Failed to remove expired mutt-lock $lockfn: $!");
+			last;
 		}
 
-		last unless --$end;
+		--$end or last;
 		sleep 1;
 	}
 
-	return 0;
+	0;
 }
-
 
 sub isLocked()
 {	my $self     = shift;
-	system($self->exe, '-t', $self->filename);
+	system $self->exe, '-t', $self->filename;
 	WIFEXITED($?) && WEXITSTATUS($?)==3;
 }
 

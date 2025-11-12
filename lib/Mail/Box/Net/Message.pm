@@ -4,12 +4,11 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Net::Message;
-use base 'Mail::Box::Message';
+use parent 'Mail::Box::Message';
 
 use strict;
 use warnings;
 
-use File::Copy;
 use Carp;
 
 #--------------------
@@ -61,7 +60,6 @@ sub unique(;$)
 
 #--------------------
 =section Internals
-
 =cut
 
 sub loadHead()
@@ -107,7 +105,7 @@ sub loadBody()
 		$parser->filePosition($begin);
 	}
 
-	my $newbody  = $self->readBody($parser, $head);
+	my $newbody  = $self->readBody($parser, $head)
 		or $self->log(ERROR => 'Unable to read delayed body.'), return;
 
 	$self->log(PROGRESS => 'Loaded delayed body.');

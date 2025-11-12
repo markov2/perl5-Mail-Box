@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Tie::HASH;
-use parent Mail::Box::Tie;
+use parent 'Mail::Box::Tie';
 
 use strict;
 use warnings;
@@ -142,8 +142,7 @@ sub NEXTKEY($)
 	my $msg;
 	while(1)
 	{	my $index = $self->{MBT_each_index}++;
-		return undef if $index >= $nrmsgs;
-
+		$index < $nrmsgs or return undef;
 		$msg      = $folder->message($index);
 		$msg->isDeleted or last;
 	}

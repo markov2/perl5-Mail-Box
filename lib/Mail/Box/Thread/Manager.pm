@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Thread::Manager;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
@@ -51,10 +51,10 @@ creates flexible trees with Mail::Box::Thread::Node objects.
 =chapter METHODS
 
 =c_method new %options
-A C<Mail::Box::Thread::Manager> object is usually created by a
-Mail::Box::Manager.  One manager can produce more than one of these
-objects.  One thread manager can combine messages from a set of folders,
-which may be partially overlapping with other objects of the same type.
+A thread manager object is usually created by a Mail::Box::Manager.
+One manager can produce more than one of these objects.  One thread
+manager can combine messages from a set of folders, which may be partially
+overlapping with other objects of the same type.
 
 =option  dummy_type CLASS
 =default dummy_type Mail::Message::Dummy
@@ -62,14 +62,14 @@ The type of dummy messages.  Dummy messages are used to fill holes in
 detected threads: referred to by messages found in the folder, but itself
 not in the folder.
 
-=option  folder FOLDER | REF-ARRAY-FOLDERS
+=option  folder $folder|\@folders
 =default folder C<[ ]>
-Specifies which folders are to be covered by the threads.  You can
+Specifies which @folders are to be covered by the threads.  You can
 specify one or more open folders.  When you close a folder, the
 manager will automatically remove the messages of that folder from
 your threads.
 
-=option  folders FOLDER | REF-ARRAY-FOLDERS
+=option  folders $folder|\@folders
 =default folders C<[ ]>
 Equivalent to the P<folder> option.
 
@@ -98,7 +98,7 @@ With 'EVER', the search for messages in a thread
 will only be limited by the window-size.
 
 =option  thread_body BOOLEAN
-=default thread_body <false>
+=default thread_body false
 May thread-detection be based on the content of a message?  This has
 a serious performance implication when there are many messages without
 C<In-Reply-To> and C<References> headers in the folder, because it
@@ -129,6 +129,8 @@ sub init($)
 	$self->{MBTM_thread_type}= $args->{thread_type} // 'Mail::Box::Thread::Node';
 	$self->{MBTM_dummy_type} = $args->{dummy_type}  // 'Mail::Message::Dummy';
 	$self->{MBTM_window}     = $args->{window}      // 10;
+	$self->{MBTM_ids}        = +{ };
+	$_[0]->{MBTM_folders}    = +{ };
 
 	my $ts = $args->{timespan} || '3 days';
 	$self->{MBTM_timespan} = $ts eq 'EVER' ? 'EVER' : Mail::Box->timespan2seconds($ts);
@@ -136,16 +138,35 @@ sub init($)
 }
 
 #--------------------
-=section Grouping Folders
+=section Attributes
 
+=method folderIndex
 =method folders
 Returns the folders as managed by this threader.
+=method folder $name
 =cut
 
-sub folders() { values %{ $_[0]->{MBTM_folders}} }
+sub folderIndex() { $_[0]->{MBTM_folders} }
+sub folders()     { values %{$_[0]->folderIndex} }
+sub folder($)     { $_[0]->folderIndex->{$_[1]} }
 
-=method includeFolder $folders
-Add one or more folders to the list of folders whose messages are
+=method byId
+Returns a reference to the index which maps message ids to messages.
+=cut
+
+sub byId { $_[0]->{MBTM_ids} }
+
+=method msgById $id, [$node]
+Returns the message which the specified $id.
+=cut
+
+sub msgById($) { my $ids = $_[0]->byId; @_ > 2 ? $ids->{$_[1]} = $_[2] : $ids->{$_[1]} }
+
+#--------------------
+=section Grouping Folders
+
+=method includeFolder @folders
+Add one or more @folders to the LIST of folders whose messages are
 organized in the threads maintained by this object.  Duplicated
 inclusions will not cause any problems.
 
@@ -160,26 +181,25 @@ Messages of which the header is known only later will have to report this
 =cut
 
 sub includeFolder(@)
-{	my $self = shift;
+{	my $self  = shift;
+	my $index = $self->folderIndex;
 
 	foreach my $folder (@_)
 	{	blessed $folder && $folder->isa('Mail::Box')
 			or croak "Not a folder: $folder";
 
 		my $name = $folder->name;
-		next if exists $self->{MBTM_folders}{$name};
+		next if exists $index->{$name};
 
-		$self->{MBTM_folders}{$name} = $folder;
-		foreach my $msg ($folder->messages)
-		{	$self->inThread($msg) unless $msg->head->isDelayed;
-		}
+		$index->{$name} = $folder;
+		$self->inThread($_) for grep ! $_->head->isDelayed, $folder->messages;
 	}
 
 	$self;
 }
 
-=method removeFolder $folders
-Remove one or more folders from the list of folders whose messages are
+=method removeFolder @folders
+Remove one or more @folders from the LIST of folders whose messages are
 organized in the threads maintained by this object.
 
 =example
@@ -188,14 +208,15 @@ organized in the threads maintained by this object.
 =cut
 
 sub removeFolder(@)
-{	my $self = shift;
+{	my $self  = shift;
+	my $index = $self->folderIndex;
 
 	foreach my $folder (@_)
 	{	blessed $folder && $folder->isa('Mail::Box')
 			or croak "Not a folder: $folder";
 
 		my $name = $folder->name;
-		delete $self->{MBTM_folders}{$name} or next;
+		delete $index->{$name} or next;
 
 		$_->headIsRead && $self->outThread($_)
 			for $folder->messages;
@@ -231,7 +252,7 @@ sub thread($)
 	my $timestamp = $message->timestamp;
 
 	$self->_processDelayedNodes;
-	my $thread    = $self->{MBTM_ids}{$msgid} || return;
+	my $thread    = $self->msgById($msgid) or return;
 
 	my @missing;
 	$thread->recurse( sub {
@@ -246,7 +267,7 @@ sub thread($)
 	{
 		# Pull-in all messages received after this-one, from any folder.
 		# Clocks may drift a bit, so use margin.
-		my @now_missing = $folder->scanForMessages($msgid, [ @missing ], $timestamp - 3600, 0);
+		my @now_missing = $folder->scanForMessages($msgid, \@missing, $timestamp - 3600, 0);
 
 		if(@now_missing != @missing)
 		{	$self->_processDelayedNodes;
@@ -259,14 +280,13 @@ sub thread($)
 }
 
 =method threadStart $message
-Based on a message, and facts from previously detected threads, try
+Based on a $message, and facts from previously detected threads, try
 to build solid knowledge about the thread where this message is in.
 =cut
 
 sub threadStart($)
 {	my ($self, $message) = @_;
-
-	my $thread = $self->thread($message) || return;
+	my $thread = $self->thread($message) or return;
 
 	while(my $parent = $thread->repliedTo)
 	{	unless($parent->isDummy)
@@ -332,7 +352,7 @@ the return of the method can change.
 
 sub known()
 {	my $self      = shift->_processDelayedNodes->_cleanup;
-	grep !defined $_->repliedTo, values %{$self->{MBTM_ids}};
+	grep !defined $_->repliedTo, values %{$self->byId};
 }
 
 =method sortedKnown [$prepare, [$compare]]
@@ -357,11 +377,11 @@ sub sortedKnown(;$$)
 
 sub _cleanup()
 {	my $self = shift;
-	return $self unless $self->{MBTM_cleanup_needed};
+	$self->{MBTM_cleanup_needed} or return $self;
 
-	foreach ($self->known)
+	foreach my $thread ($self->known)
 	{	my $real = 0;
-		$_->recurse( sub {
+		$thread->recurse( sub {
 			my $node = shift;
 			foreach my $msg ($node->messages)
 			{	next if $msg->isDummy;
@@ -373,9 +393,9 @@ sub _cleanup()
 
 		next if $real;
 
-		$_->recurse( sub {
+		$thread->recurse( sub {
 			my $node  = shift;
-			delete $self->{MBTM_ids}{$node->messageId};
+			delete $self->byId->{$node->messageId};
 			1;
 		});
 	}
@@ -390,12 +410,11 @@ sub _cleanup()
 =method toBeThreaded $folder, @messages
 Include the specified messages in/from the threads managed by
 this object, if this folder is maintained by this thread-manager.
-
 =cut
 
 sub toBeThreaded($@)
 {	my ($self, $folder) = (shift, shift);
-	exists $self->{MBTM_folders}{$folder->name} or return $self;
+	$self->folder($folder->name) or return $self;
 	$self->inThread($_) for @_;
 	$self;
 }
@@ -403,12 +422,11 @@ sub toBeThreaded($@)
 =method toBeUnthreaded $folder, @messages
 Remove the specified @messages in/from the threads managed by
 this object, if this folder is maintained by this thread-manager.
-
 =cut
 
 sub toBeUnthreaded($@)
 {	my ($self, $folder) = (shift, shift);
-	exists $self->{MBTM_folders}{$folder->name} or reeturn $self;
+	$self->folder($folder->name) or return $self;
 	$self->outThread($_) for @_;
 	$self;
 }
@@ -418,19 +436,18 @@ Collect the thread-information of one message.  The `In-Reply-To' and
 `Reference' header-fields are processed.  If this method is called on
 a message whose header was not read yet (as usual for MH-folders,
 for instance) the reading of that header will be triggered here.
-
 =cut
 
 sub inThread($)
 {	my ($self, $message) = @_;
 	my $msgid = $message->messageId;
-	my $node  = $self->{MBTM_ids}{$msgid};
+	my $node  = $self->msgById($msgid);
 
 	# Already known, but might reside in many folders.
 	if($node) { $node->addMessage($message) }
 	else
 	{	$node = Mail::Box::Thread::Node->new(message => $message, msgid => $msgid, dummy_type => $self->{MBTM_dummy_type});
-		$self->{MBTM_ids}{$msgid} = $node;
+		$self->msgById($msgid, $node);
 	}
 
 	$self->{MBTM_delayed}{$msgid} = $node; # removes doubles.
@@ -464,7 +481,7 @@ sub _processDelayedMessage($$)
 	if(my $irt  = $head->get('in-reply-to'))
 	{	for($irt =~ m/\<(\S+\@\S+)\>/)
 		{	my $msgid = $1;
-			$replies  = $self->{MBTM_ids}{$msgid} || $self->createDummy($msgid);
+			$replies  = $self->msgById($msgid) || $self->createDummy($msgid);
 		}
 	}
 
@@ -472,7 +489,7 @@ sub _processDelayedMessage($$)
 	if(my $refs = $head->get('references'))
 	{	while($refs =~ s/\<(\S+\@\S+)\>//s)
 		{	my $msgid = $1;
-			push @refs, $self->{MBTM_ids}{$msgid} || $self->createDummy($msgid);
+			push @refs, $self->msgById($msgid) || $self->createDummy($msgid);
 		}
 	}
 
@@ -511,7 +528,7 @@ replaced by a dummy.
 sub outThread($)
 {	my ($self, $message) = @_;
 	my $msgid = $message->messageId;
-	my $node  = $self->{MBTM_ids}{$msgid} or return $message;
+	my $node  = $self->msgById($msgid) or return $message;
 
 	$node->{MBTM_messages} = [ grep {$_ ne $message} @{$node->{MBTM_messages}} ];
 	$self;
@@ -526,7 +543,7 @@ available to real messages.
 
 sub createDummy($)
 {	my ($self, $msgid) = @_;
-	$self->{MBTM_ids}{$msgid} = $self->{MBTM_thread_type}->new(msgid => $msgid, dummy_type => $self->{MBTM_dummy_type});
+	$self->byId->{$msgid} = $self->{MBTM_thread_type}->new(msgid => $msgid, dummy_type => $self->{MBTM_dummy_type});
 }
 
 #--------------------

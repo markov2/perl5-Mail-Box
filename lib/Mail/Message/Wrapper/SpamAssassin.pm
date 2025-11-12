@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Message::Wrapper::SpamAssassin;
-use base 'Mail::SpamAssassin::Message';
+use parent 'Mail::SpamAssassin::Message';
 
 use strict;
 use warnings;

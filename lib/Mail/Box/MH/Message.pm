@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::MH::Message;
-use base 'Mail::Box::Dir::Message';
+use parent 'Mail::Box::Dir::Message';
 
 use strict;
 use warnings;
@@ -30,8 +30,6 @@ as for all Mail::Box::Dir folder types.
 
 =chapter METHODS
 
-=cut
-
 =method seqnr [$integer]
 The order of this message in the folder, counted from zero.  Do not
 change the number (unless you understand the implications).
@@ -41,7 +39,7 @@ filename, which in case of MH folders are also numbers!  If you need
 that one, use the M<File::Basename::basename()> of the filename.
 =cut
 
-# Purpose of doc is only the warning... no new implementation required.
+# Purpose of above doc is only the warning... no new implementation required.
 
 #--------------------
 =chapter DETAILS

@@ -4,20 +4,18 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::MH;
-use base 'Mail::Box::Dir';
+use parent 'Mail::Box::Dir';
 
 use strict;
 use warnings;
-use filetest 'access';
 
-use Mail::Box::MH::Index;
-use Mail::Box::MH::Message;
-use Mail::Box::MH::Labels;
+use Mail::Box::MH::Index   ();
+use Mail::Box::MH::Message ();
+use Mail::Box::MH::Labels  ();
 
 use Carp;
-use File::Spec::Functions qw/rel2abs/;
-use File::Basename        qw/basename/;
-use IO::Handle       ();
+use File::Spec::Functions  qw/rel2abs/;
+use File::Basename         qw/basename/;
 
 # Since MailBox 2.052, the use of File::Spec is reduced to the minimum,
 # because it is too slow.  The '/' directory separators do work on
@@ -46,7 +44,7 @@ can do with the MH folder object C<Mail::Box::MH>.
 =default lock_file <index_file>
 
 =option  keep_index BOOLEAN
-=default keep_index 0
+=default keep_index false
 Keep an index file of the specified mailbox, one file per directory.
 Using an index file will speed up things considerably, because it avoids
 reading all the message files the moment that you open the folder.  When
@@ -54,40 +52,37 @@ you open a folder, you can use the index file to retrieve information such
 as the subject of each message, instead of having to read possibly
 thousands of messages.
 
-=option  index_filename FILENAME
+=option  index_filename $file
 =default index_filename <foldername>C</.index>
-The FILENAME which is used in each directory to store the headers of all
+The $file which is used in each directory to store the headers of all
 mails. The filename shall not contain a directory path. (e.g. Do not use
 C</usr/people/jan/.index>, nor C<subdir/.index>, but say C<.index>.)
 
-=option  index OBJECT
+=option  index $object
 =default index undef
-You may specify an OBJECT of a type which extends Mail::Box::MH::Index
+You may specify an $object of a type which extends Mail::Box::MH::Index
 (at least implements a C<get()> method), as alternative for an index file
 reader as created by C<Mail::Box::MH>.
 
-=option  labels_filename FILENAME
+=option  labels_filename $file
 =default labels_filename <foldername>C</.mh_sequence>
 In MH-folders, messages can be labeled, for instance based on the
 sender or whether it is read or not.  This status is kept in a
-file which is usually called C<.mh_sequences>, but that name can
+$file which is usually called C<.mh_sequences>, but that name can
 be overruled with this flag.
 
-=option  labels OBJECT
+=option  labels $object
 =default labels undef
-You may specify an OBJECT of a type which extends Mail::Box::MH::Labels
+You may specify an $object of a type which extends Mail::Box::MH::Labels
 (at least implements the C<get()> method), as alternative for labels file
 reader as created by C<Mail::Box::MH>.
 
-=option  index_type CLASS
+=option  index_type $class
 =default index_type Mail::Box::MH::Index
 
-=option  labels_type CLASS
+=option  labels_type $class
 =default labels_type Mail::Box::MH::Labels
 
-=cut
-
-=fault $ENV$HOME/.mh: $!
 =cut
 
 my $default_folder_dir = exists $ENV{HOME} ? "$ENV{HOME}/.mh" : '.';
@@ -127,7 +122,7 @@ sub init($)
 
 =error Cannot create MH folder $name: $!
 For some reason, it is impossible to create the folder.  Check the permissions
-and the name of the folder.  Does the path to the directory to be created
+and the $name of the folder.  Does the path to the directory to be created
 exist?
 =cut
 
@@ -197,7 +192,7 @@ sub listSubFolders(@)
 	# are created by all kinds of programs, but are no folders.
 
 	-d $dir && opendir my $dh, $dir or return ();
-	my @dirs = grep { !/^\d+$|^\./ && -d "$dir/$_" && -r _ } readdir $dh;
+	my @dirs = grep { !/^\d+$|^\./ && -d "$dir/$_" } readdir $dh;
 	closedir $dh;
 
 	# Skip empty folders.  If a folder has sub-folders, then it is not
@@ -239,12 +234,16 @@ sub listSubFolders(@)
 	grep $class->foundIn("$dir/$_"), @dirs;
 }
 
+=method openSubFolder
+=warning Cannot create subfolder $name for $self: $!
+=cut
+
 sub openSubFolder($)
 {	my ($self, $name) = @_;
 
 	my $subdir = $self->nameOfSubFolder($name);
 	-d $subdir || mkdir $subdir, 0755
-		or warn("Cannot create subfolder $name for $self: $!\n"), return;
+		or $self->log(WARNING => "Cannot create subfolder $name for $self: $!"), return;
 
 	$self->SUPER::openSubFolder($name, @_);
 }
@@ -336,10 +335,8 @@ sub index()
 {	my $self  = shift;
 	$self->{MBM_keep_index} or return ();
 
-	$self->{MBM_index} //= $self->{MBM_index_type}->new(
-		filename => $self->{MBM_index_filename},
-		$self->logSettings,
-	);
+	$self->{MBM_index} //=
+		$self->{MBM_index_type}->new(filename => $self->{MBM_index_filename}, $self->logSettings);
 }
 
 =method labels
@@ -348,10 +345,8 @@ Create a label reader/writer object.
 
 sub labels()
 {	my $self = shift;
-	$self->{MBM_labels} //= $self->{MBM_labels_type}->new(
-		filename => $self->{MBM_labels_filename},
-		$self->logSettings,
-	);
+	$self->{MBM_labels} //=
+		$self->{MBM_labels_type}->new(filename => $self->{MBM_labels_filename}, $self->logSettings);
 }
 
 sub readMessageFilenames
@@ -405,7 +400,7 @@ sub readMessages(@)
 			head       => $head,
 			filename   => $msgfile,
 			folder     => $self,
-			fix_header => $self->{MB_fix_headers}
+			fix_header => $self->fixHeaders,
 		);
 
 		my $labref  = $labels ? $labels->get($msgnr) : ();
@@ -439,7 +434,7 @@ sub delete(@)
 =method writeMessages %options
 
 =option  renumber BOOLEAN
-=default renumber <true>
+=default renumber true
 Permit renumbering of message.  By default this is true, but for some
 unknown reason, you may be thinking that messages should not be renumbered.
 

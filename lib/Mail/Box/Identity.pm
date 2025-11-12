@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Identity;
-use base qw/User::Identity::Item Mail::Reporter/;
+use parent qw/User::Identity::Item Mail::Reporter/;
 
 use strict;
 use warnings;
@@ -41,14 +41,13 @@ object.  This corresponds with IMAP's C<\NoSelect>, for instance.
 Nearly all methods can return undef.
 
 =chapter METHODS
-=cut
 
 =c_method new [$name], %options
 
 =option  folder_type CLASS
 =default folder_type C<from parent>
 
-=option  location    DIRECTORY|FILENAME
+=option  location    $directory|$file
 =default location    undef
 The location of this folder.  Often, only the manager can figure-out
 where this folder really is.
@@ -59,16 +58,16 @@ Some folder types can have messages in their toplevel folder, other
 cannot. That determines the default.
 See M<Mail::Box::topFolderWithMessages()>
 
-=option   manager     OBJECT
+=option   manager     $object
 =default  manager     <from parent>
-Any Mail::Box::Manager or Mail::Box::Manage::User OBJECT.
+Any Mail::Box::Manager or Mail::Box::Manage::User $object.
 
-=option   subf_type   CLASS
+=option   subf_type   $class
 =default  subf_type   <same as parent>
-The type for a subfolder collection, must extend CLASS
+The type for a subfolder collection, must extend class
 Mail::Box::Collection.
 
-=option   marked      BOOLEAN|undef
+=option   marked      0|1|undef
 =default  marked      undef
 Whether the folder is flagged for some reason, for instance because
 new messages have arrived.
@@ -328,12 +327,12 @@ sub foreach($)
 }
 
 
-=method addSubfolder $m<Mail::Box::Identity>|$data
+=method addSubfolder Mail::Box::Identity-object|$data
 Add a new folder into the administration.  With $data, a new object
 will be instantiated first.  The identity is returned on success.
 
 =error It is not permitted to add subfolders to $name
-The $m<inferiors()> flag prohibits the creation of subfolders to this
+The M<inferiors()> flag prohibits the creation of subfolders to this
 folder.
 =cut
 

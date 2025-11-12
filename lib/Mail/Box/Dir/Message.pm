@@ -4,13 +4,12 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Dir::Message;
-use base 'Mail::Box::Message';
+use parent 'Mail::Box::Message';
 
 use strict;
 use warnings;
 
 use File::Copy qw/move/;
-use IO::File;
 
 #--------------------
 =chapter NAME
@@ -56,9 +55,9 @@ code is not GPLed (yet).
 =c_method new %options
 Create a messages in a directory organized folder.
 
-=option  filename FILENAME
+=option  filename $file
 =default filename undef
-The file where the message is stored in.
+The $file where the message is stored in.
 
 =option  fix_header BOOLEAN
 =default fix_header false
@@ -169,8 +168,7 @@ sub parser()
 		mode     => 'r',
 		fix_header_errors => $self->fixHeader,
 		$self->logSettings
-	)
-		or $self->log(ERROR => "Cannot create parser for $self->{MBDM_filename}."), return;
+	) or $self->log(ERROR => "Cannot create parser for $self->{MBDM_filename}."), return;
 
 	$parser;
 }
@@ -226,27 +224,21 @@ sub loadBody()
 	my $parser   = $self->parser or return;
 
 	if($head->isDelayed)
-	{	$head = $self->readHead($parser);
-		if(defined $head)
-		{	$self->log(PROGRESS => 'Loaded delayed head.');
-			$self->head($head);
-		}
-		else
-		{	$self->log(ERROR => 'Unable to read delayed head.');
-			return;
-		}
+	{	$head = $self->readHead($parser)
+			or $self->log(ERROR => 'Unable to read delayed head.'), return;
+
+		$self->log(PROGRESS => 'Loaded delayed head.');
+		$self->head($head);
 	}
 	else
 	{	my ($begin, $end) = $body->fileLocation;
 		$parser->filePosition($begin);
 	}
 
-	my $newbody  = $self->readBody($parser, $head);
-	$parser->stop;
-
-	defined $newbody
+	my $newbody  = $self->readBody($parser, $head)
 		or $self->log(ERROR => 'Unable to read delayed body.'), return;
 
+	$parser->stop;
 	$self->log(PROGRESS => 'Loaded delayed body.');
 	$self->storeBody($newbody->contentInfoFrom($head));
 }
@@ -278,12 +270,12 @@ sub create($)
 
 	# Write the new data to a new file.
 
-	my $new     = $filename . '.new';
-	my $newfile = IO::File->new($new, 'w')
+	my $new = $filename . '.new';
+	open my $newfh, '>:raw', $new
 		or $self->log(ERROR => "Cannot write message to $new: $!"), return;
 
-	$self->write($newfile);
-	$newfile->close;
+	$self->write($newfh);
+	$newfh->close;
 
 	# Accept the new data
 # maildir produces warning where not expected...

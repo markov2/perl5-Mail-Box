@@ -3,16 +3,14 @@
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
 
-#oorestyle: not found P for c_method new($id)
-#oorestyle: not found P for method delete($folder)
-
 package Mail::Box::Manage::User;
-use base 'Mail::Box::Manager';
+use parent 'Mail::Box::Manager';
 
 use strict;
 use warnings;
 
 use Mail::Box::Collection     ();
+use Carp                      qw/croak/;
 
 #--------------------
 =chapter NAME
@@ -58,14 +56,14 @@ The smallest identity that will do: C<< my $id = User::Identity->new('myname') >
 =option  folder_id_type CLASS|OBJECT
 =default folder_id_type Mail::Box::Identity
 
-=option  topfolder_name STRING
+=option  topfolder_name $name
 =default topfolder_name C<'='>
 
-=option  inbox          NAME
+=option  inbox          $name
 =default inbox          undef
-The name of the user's inbox.
+The $name of the user's inbox.
 
-=option  collection_type CLASS
+=option  collection_type $class
 =default collection_type Mail::Box::Collection
 Subfolders grouped together.
 
@@ -112,14 +110,14 @@ sub init($)
 =method identity
 Returns a User::Identity object.
 =method delimiter
-
-=method topFolder
+Folder path delimiter
+=method topfolder
 Returns the top folder of the user's mailbox storage.
 =cut
 
 sub identity()  { $_[0]->{MBMU_id} }
 sub delimiter() { $_[0]->{MBMU_delim} }
-sub topFolder() { $_[0]->{MBMU_top} }
+sub topfolder() { $_[0]->{MBMU_top} }
 
 =method inbox [$name]
 (Set and) get the $name of the mailbox which is considered the folder
@@ -150,7 +148,7 @@ sub folder($)
 {	my ($self, $name) = @_;
 	my $top  = $self->topFolder or return ();
 	my @path = split $self->delimiter, $name;
-	shift @path eq $top->name or return ();
+	(shift @path) eq $top->name or return ();
 
 	$top->folder(@path);
 }
@@ -252,7 +250,6 @@ sub create($@)
 	$id;
 }
 
-
 =method delete $name
 Remove all signs from the folder on the file-system.  Messages still in
 the folder will be removed.  This method returns a true value when the
@@ -275,7 +272,6 @@ sub delete($)
 	$id->remove;
 	$self->SUPER::delete($name);
 }
-
 
 =method rename $oldname, $newname, %options
 Rename the folder with name $oldname to $newname.  Both names are full
@@ -320,14 +316,5 @@ sub rename($$@)
 	$self->log(PROGRESS => "Renamed folder $oldname to $newname");
 	$new;
 }
-
-#--------------------
-=section Move messages to folders
-
-=section Internals
-
-=section Error handling
-
-=cut
 
 1;

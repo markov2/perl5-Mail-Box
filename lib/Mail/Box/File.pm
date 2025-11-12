@@ -4,12 +4,10 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::File;
-use base 'Mail::Box';
+use parent 'Mail::Box';
 
 use strict;
 use warnings;
-
-use filetest 'access';
 
 use Mail::Box::File::Message       ();
 use Mail::Message::Body::Lines     ();
@@ -22,11 +20,8 @@ use Carp;
 use File::Copy            qw/move/;
 use File::Spec::Functions qw/file_name_is_absolute catfile/;
 use File::Basename        qw/dirname basename/;
-use POSIX                 ':unistd_h';
-
-# tell() is not available for open(my $fh) on perl versions <= 5.10  So,
-# we need to stick to IO::File syntax.
-use IO::File;
+use Scalar::Util          qw/blessed/;
+#use POSIX                qw/:unistd_h/;
 
 my $windows;
 BEGIN { $windows = $^O =~ m/mswin32/i }
@@ -54,20 +49,19 @@ the next one.
 
 =default message_type Mail::Box::File::Message
 
-=option  lock_extension FILENAME|STRING
+=option  lock_extension $file|STRING
 =default lock_extension C<'.lock'>
-
 When the dotlock locking mechanism is used, the lock is created with a
 hardlink to the folder file.  For C<Mail::Box::File> type of folders, this
-file is by default named as the folder-file itself followed by
+filename is by default named as the folder-file itself followed by
 C<.lock>.  For example: the C<Mail/inbox> folder file will have a hardlink
 made as C<Mail/inbox.lock>.
 
-You may specify an absolute filename, a relative (to the folder's
+You may specify an absolute $file, a relative (to the folder's
 directory) filename, or an extension (preceded by a dot).  So valid
 examples are:
 
-  .lock        # appended to the folder's filename
+  .lock                  # appended to the folder's filename
   my_own_lockfile.test   # full filename, same dir
   /etc/passwd            # somewhere else
 
@@ -96,10 +90,12 @@ in memory, is implemented like this:
 A lock is required to get access to the folder.  If no locking is needed,
 specify the NONE lock type.
 
-=warning Folder $name file $filename is write-protected.
+=warning Folder $name file $file is write-protected.
 The folder is opened writable or for appending via M<new(access)>,
-but the operating system does not permit writing to the file.  The folder
+but the operating system does not permit writing to the $file.  The folder
 will be opened read-only.
+
+=info File $filename for folder $self does not exist.
 =cut
 
 my $default_folder_dir = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
@@ -187,13 +183,13 @@ sub create($@)
 		$filename  = catfile $dir, basename $filename;
 	}
 
-	$class->log(ERROR => "Cannot create directory $dir for folder $name: $!"),return
-		unless -d $dir || mkdir $dir, 0755;
+	-d $dir || mkdir $dir, 0755
+		or $class->log(ERROR => "Cannot create directory $dir for folder $name: $!"), return;
 
 	$class->moveAwaySubFolder($filename, $subext)
 		if -d $filename && defined $subext;
 
-	my $create = IO::File->new($filename, 'w')
+	open my $create, '>:raw', $filename
 		or $class->log(WARNING => "Cannot create folder file $name: $!"), return;
 
 	$class->log(PROGRESS => "Created folder $name.");
@@ -280,7 +276,7 @@ sub appendMessages(@)
 		or return ();
 
 	my $filename = $folder->filename;
-	my $out      = IO::File->new($filename, 'a')
+	open my $out, '>>', $filename
 		or $class->log(ERROR => "Cannot append messages to folder file $filename: $!"), return ();
 
 	my $msgtype = $class.'::Message';
@@ -312,13 +308,13 @@ the folder is open.
 =cut
 
 sub parser()
-{	my $self = shift;
+{	my $self   = shift;
 	return $self->{MBF_parser} if defined $self->{MBF_parser};
 
 	my $source = $self->filename;
 
-	my $mode = $self->access || 'r';
-	$mode    = 'r+' if $mode eq 'rw' || $mode eq 'a';
+	my $mode   = $self->access || 'r';
+	$mode      = 'r+' if $mode eq 'rw' || $mode eq 'a';
 
 	my $parser = $self->{MBF_parser} = Mail::Box::Parser->new(
 		filename          => $source,
@@ -371,14 +367,12 @@ sub updateMessages(@)
 
 	while(1)
 	{	my $message = $type->new(@msgopts);
-		last unless $message->readFromParser($parser);
+		$message->readFromParser($parser) or last;
 		$self->storeMessage($message);
 		$count++;
 	}
 
-	$self->log(PROGRESS => "Found $count new messages in $filename")
-		if $count;
-
+	$self->log(PROGRESS => "Found $count new messages in $filename");
 	$self;
 }
 
@@ -394,7 +388,7 @@ $type and $config, a new configuration is set.
 sub messageCreateOptions(@)
 {	my ($self, @options) = @_;
 	if(@options)
-	{	ref($_) && ref($_) =~ m/^Mail::/ && weaken $_ for @options;
+	{	blessed($_) && ref($_) =~ m/^Mail::/ && weaken $_ for @options;
 		$self->{MBF_create_options} = \@options;
 	}
 
@@ -411,8 +405,9 @@ returned if this failed.
 
 sub moveAwaySubFolder($$)
 {	my ($self, $dir, $extension) = @_;
+
 	move $dir, $dir.$extension
-		or $self->log(ERROR => "Cannot move away sub-folder $dir");
+		or $self->log(ERROR => "Cannot move away sub-folder $dir"), return undef;
 
 	$self;
 }
@@ -532,15 +527,14 @@ sub _write_new($)
 {	my ($self, $args) = @_;
 
 	my $filename = $self->filename;
-	my $new      = IO::File->new($filename, 'w');
-	return 0 unless defined $new;
+	open my $new, ">:raw", $filename
+		or return 0;
 
-	$new->binmode;
-	$_->write($new) for @{$args->{messages}};
-
+	my $msgs = $args->{messages};
+	$_->write($new) for @$msgs;
 	$new->close or return 0;
 
-	$self->log(PROGRESS => "Wrote new folder $self with ".@{$args->{messages}}."msgs.");
+	$self->log(PROGRESS => "Wrote new folder $self with ".@$msgs."msgs.");
 	1;
 }
 
@@ -555,11 +549,8 @@ sub _write_replace($)
 	my $filename = $self->filename;
 	my $tmpnew   = $self->tmpNewFolder($filename);
 
-	my $new      = IO::File->new($tmpnew, 'w')   or return 0;
-	$new->binmode;
-
-	my $old      = IO::File->new($filename, 'r') or return 0;
-	$old->binmode;
+	open my $new, '>:raw', $tmpnew   or return 0;
+	open my $old, '<:raw', $filename or return 0;
 
 	my ($reprint, $kept) = (0,0);
 
@@ -583,7 +574,7 @@ sub _write_replace($)
 		my $size = $old->read($whole, $need);
 
 		$size == $need
-			or $self->log(ERROR => "File too short to get write message " . $message->seqnr. " ($size, $need)");
+			or $self->log(ERROR => "File too short to get write message " . $message->seqnr. " ($size, $need)"), return 0;
 
 		$new->print($whole);
 		$new->print($Mail::Message::crlf_platform ? "\r\n" : "\n");
@@ -636,11 +627,11 @@ sub _write_inplace($)
 		return 1;
 	}
 
-	$_->body->load foreach @messages;
+	$_->body->load for @messages;
 
-	my $mode     = $^O eq 'MSWin32' ? 'a' : 'r+';
+	my $mode     = $^O eq 'MSWin32' ? '>>:raw' : '+<:raw';
 	my $filename = $self->filename;
-	my $old      = IO::File->new($filename, $mode) or return 0;
+	open my $old, $mode, $filename or return 0;
 
 	# Chop the folder after the messages which does not have to change.
 
@@ -680,11 +671,9 @@ sub _write_inplace($)
 }
 
 =ci_method folderToFilename $foldername, $folderdir, [$subext]
-
-Translate a folder name into a filename, using the
-$folderdir value to replace a leading C<=>.  $subext is only used for MBOX
+Translate a $foldername into a filename, using the $folderdir value
+to replace a leading C<=>.  The optional $subext is only used for MBOX
 folders.
-
 =cut
 
 sub folderToFilename($$;$)

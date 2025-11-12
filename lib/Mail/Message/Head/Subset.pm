@@ -96,9 +96,7 @@ sub guessBodySize()
 	return $1 if defined $cl && $cl =~ m/(\d+)/;
 
 	my $lines = $self->SUPER::get('Lines');   # 40 chars per lines
-	return $1*40 if defined $lines && $lines =~ m/(\d+)/;
-
-	undef;
+	defined $lines && $lines =~ m/(\d+)/ ? $1 * 40 : undef
 }
 
 # Be careful not to trigger loading: this is not the thoroughness
@@ -114,8 +112,8 @@ sub guessTimestamp()
 	}
 
 	unless($stamp)
-	{	foreach ($self->SUPER::get('received'))
-		{	$stamp = str2time($_, 'GMT');
+	{	foreach my $time ($self->SUPER::get('received'))
+		{	$stamp = str2time($time, 'GMT');
 			last if $stamp;
 		}
 	}

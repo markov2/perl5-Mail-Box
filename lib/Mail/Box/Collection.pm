@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Collection;
-use base qw/User::Identity::Collection Mail::Reporter/;
+use parent qw/User::Identity::Collection Mail::Reporter/;
 
 use strict;
 use warnings;
@@ -34,11 +34,11 @@ the folders of a single user, even if those folders are closed.
 =default  name      C<'folders'>
 =default  item_type Mail::Box::Identity
 
-=option   manager   OBJECT
+=option   manager   $object
 =default  manager   <from parent>
-An Mail::Box::Manager OBJECT (could be a Mail::Box::Manage::User).
+A pre-prepared Mail::Box::Manager $object (could be a Mail::Box::Manage::User).
 
-=option   folder_type CLASS
+=option   folder_type $class
 =default  folder_type <from parent>
 
 =cut

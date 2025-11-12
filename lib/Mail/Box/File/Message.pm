@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::File::Message;
-use base 'Mail::Box::Message';
+use parent 'Mail::Box::Message';
 
 use strict;
 use warnings;
@@ -31,9 +31,9 @@ extension.
 =c_method new %options
 Messages in file-based folders use the following options for creation:
 
-=option  from_line STRING
+=option  from_line $line
 =default from_line undef
-The line which begins each message in the file. Some people detest
+The $line which begins each message in the file. Some people detest
 this line, but this is just how things were invented...
 
 =cut

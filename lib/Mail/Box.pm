@@ -2,7 +2,6 @@
 #oodist: This file contains OODoc-style documentation which will get stripped
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
-#oorestyle: use of deprecated Carp: use Log::Report
 
 package Mail::Box;
 use parent 'Mail::Reporter';
@@ -12,6 +11,7 @@ use warnings;
 
 use Mail::Box::Message     ();
 use Mail::Box::Locker      ();
+
 use Scalar::Util           qw/weaken/;
 use List::Util             qw/sum first/;
 use Devel::GlobalDestruction 'in_global_destruction';
@@ -111,9 +111,9 @@ rules are those of the build-in C<cmp>.
 =cut
 
 use overload
-	'@{}' => sub { shift->{MB_messages} },
+	'@{}' => sub { $_[0]->{MB_messages} },
 	'""'  => 'name',
-	'cmp' => sub {$_[0]->name cmp "${_[1]}"};
+	'cmp' => sub { $_[0]->name cmp "${_[1]}" };
 
 #--------------------
 =chapter METHODS
@@ -129,10 +129,10 @@ To control delay-loading of messages, as well the headers as the bodies,
 a set of C<*_type> options are available. P<extract> determines whether
 we want delay-loading.
 
-=option  access MODE
+=option  access $mode
 =default access C<'r'>
 Access-rights to the folder.  Folders are opened for read-only (which
-means write-protected) by default! MODE can be
+means write-protected) by default!  The $mode can be
 =over 4
 =item C<'r'>: read-only (default)
 =item C<'a'>: append
@@ -148,7 +148,7 @@ Be warned: writing a MBOX folder may create a new file to replace the old
 folder.  The permissions and owner of the file may get changed by this.
 
 =option  create BOOLEAN
-=default create <false>
+=default create false
 Automatically create the folder when it does not exist yet.  This will only
 work when access is granted for writing or appending to the folder.
 
@@ -167,7 +167,7 @@ The folder name can be preceded by a C<"=">, to indicate that it is named
 relative to the directory specified in new(folderdir).  Otherwise, it is
 taken as relative or absolute path.
 
-=option  folderdir DIRECTORY
+=option  folderdir $directory
 =default folderdir undef
 Where are folders to be found by default?  A folder-name may be preceded by
 a equals-sign (C<=>, a C<mutt> convension) to explicitly state that the folder
@@ -176,7 +176,7 @@ C<folderdir =E<gt> '/tmp'> and C<folder =E<gt> '=abc'>, the name of the
 folder-file is C<'/tmp/abc'>.  Each folder type has already some default set.
 
 =option  keep_dups BOOLEAN
-=default keep_dups <false>
+=default keep_dups false
 Indicates whether or not duplicate messages within the folder should
 be retained.  A message is considered to be a duplicate if its message-id
 is the same as a previously parsed message within the same folder. If this
@@ -184,13 +184,13 @@ option is false (the default) such messages are automatically deleted,
 because it is considered useless to store the same message twice.
 
 =option  save_on_exit BOOLEAN
-=default save_on_exit <true>
+=default save_on_exit true
 Sets the policy for saving the folder when it is closed.
 A folder can be closed manually (see M<close()>) or in a number of
 implicit ways, including on the moment the program is terminated.
 
 =option  remove_when_empty BOOLEAN
-=default remove_when_empty <true>
+=default remove_when_empty true
 Determines whether to remove the folder file or directory
 automatically when the write would result in a folder without
 messages nor sub-folders.
@@ -208,7 +208,6 @@ binary data to the screen, which is a security risk.
 
 =option  extract INTEGER | CODE | METHOD | 'LAZY'| 'ALWAYS'
 =default extract C<10240>
-
 Defines when to parse (process) the content of the message.
 When the header of a message is read, you may want to postpone the
 reading of the body: header information is more often needed than
@@ -308,7 +307,7 @@ The bodies which are delayed: which will be read from file when it
 is needed, but not before.
 
 =option  coerce_options ARRAY
-=default coerce_options C<[]>
+=default coerce_options C<+[]>
 Keep configuration information for messages which are coerced into the
 specified folder type, starting with a different folder type (or even
 no folder at all).
@@ -343,22 +342,22 @@ specified list.
 An OBJECT which extends Mail::Box::Locker, and will handle folder locking
 replacing the default lock behavior.
 
-=option  lock_file FILENAME
+=option  lock_file $file
 =default lock_file undef
-The name of the file which is used to lock.  This must be specified when
+The name of the $file which is used to lock.  This must be specified when
 locking is to be used.
 
-=option  lock_timeout SECONDS
+=option  lock_timeout $seconds
 =default lock_timeout 1 hour
-When the lock file is older than the specified number of SECONDS, it is
+When the lock file is older than the specified number of $seconds, it is
 considered a mistake.  The original lock is released, and accepted for
 this folder.
 
-=option  lock_wait SECONDS
+=option  lock_wait $seconds
 =default lock_wait 10 seconds
-SECONDS to wait before failing on opening this folder.
+How many $seconds to wait before failing on opening this folder.
 
-=option  manager MANAGER
+=option  manager $manager
 =default manager undef
 A reference to the object which manages this folder -- typically an
 Mail::Box::Manager instance.
@@ -371,7 +370,7 @@ For instance, the message type for C<Mail::Box::POP3> is
 C<Mail::Box::POP3::Message>
 
 =option  fix_headers BOOLEAN
-=default fix_headers <false>
+=default fix_headers false
 Broken MIME headers usually stop the parser: all lines not parsed are
 added to the body of the message.  With this flag set, the erroneous line
 is added to the previous header field and parsing is continued.
@@ -423,7 +422,7 @@ sub init($)
 	$self->{MB_msgid}        = {};
 	$self->{MB_organization} = $args->{organization} || 'FILE';
 	$self->{MB_linesep}      = "\n";
-	$self->{MB_keep_dups}    = ! $self->writable || $args->{keep_dups};
+	$self->{MB_keep_dups}    = $args->{keep_dups};
 	$self->{MB_fix_headers}  = $args->{fix_headers};
 
 	my $folderdir = $self->folderdir($args->{folderdir});
@@ -437,24 +436,21 @@ sub init($)
 		weaken($self->{MB_manager});
 	}
 
-	my $message_type =
-		$self->{MB_message_type}  = $args->{message_type}      || $class . '::Message';
+	$self->{MB_message_type}      = $args->{message_type}      || $class . '::Message';
+	$self->{MB_head_type}         = $args->{head_type}         || 'Mail::Message::Head::Complete';
 	$self->{MB_body_type}         = $args->{body_type}         || 'Mail::Message::Body::Lines';
 	$self->{MB_body_delayed_type} = $args->{body_delayed_type} || 'Mail::Message::Body::Delayed';
 	$self->{MB_head_delayed_type} = $args->{head_delayed_type} || 'Mail::Message::Head::Delayed';
 	$self->{MB_multipart_type}    = $args->{multipart_type}    || 'Mail::Message::Body::Multipart';
 	$self->{MB_field_type}        = $args->{field_type};
 
-	my $headtype     = $self->{MB_head_type}
-		= $args->{head_type}        || 'Mail::Message::Head::Complete';
-
 	my $extract  = $args->{extract} || 'extractDefault';
 	$self->{MB_extract}
 	  = ref $extract eq 'CODE' ? $extract
-	  : $extract eq 'ALWAYS'   ? sub {1}
-	  : $extract eq 'LAZY'     ? sub {0}
-	  : $extract eq 'NEVER'    ? sub {1}  # compatibility
-	  : $extract =~ m/\D/      ? sub {no strict 'refs'; shift->$extract(@_)}
+	  : $extract eq 'ALWAYS'   ? sub { 1 }
+	  : $extract eq 'LAZY'     ? sub { 0 }
+	  : $extract eq 'NEVER'    ? sub { 1 }  # compatibility
+	  : $extract =~ m/\D/      ? sub { no strict 'refs'; shift->$extract(@_) }
 	  :   sub { my $size = $_[1]->guessBodySize; defined $size && $size < $extract };
 
 	#
@@ -547,7 +543,7 @@ because the in-memory representation of messages is not always the
 same as the size when they are written.
 =cut
 
-sub size() { sum map $_->size, shift->messages('ACTIVE') }
+sub size() { sum 0, map $_->size, $_[0]->messages('ACTIVE') }
 
 =method update %options
 Read new messages from the folder, which where received after opening
@@ -749,9 +745,10 @@ sub _copy_to($@)
 	$self->log(PROGRESS => "Copying ".@select." messages from $self to $to.");
 
 	foreach my $msg (@select)
-	{	if($msg->copyTo($to, share => $share))
-			 { $msg->label(deleted => 1) if $delete }
-		else { $self->log(ERROR => "Copying failed for one message.") }
+	{	$msg->copyTo($to, share => $share)
+			or $self->log(ERROR => "Copying failed for one message.");
+
+		$msg->label(deleted => 1) if $delete;
 	}
 
 	$flatten || $recurse
@@ -771,11 +768,8 @@ SUBFOLDER:
 			}
 		}
 		else           # recurse
-		{	my $subto = $to->openSubFolder($subf, create => 1, access => 'rw');
-			unless($subto)
-			{	$self->log(ERROR => "Unable to create subfolder $subf of $to");
-				next SUBFOLDER;
-			}
+		{	my $subto = $to->openSubFolder($subf, create => 1, access => 'rw')
+				or $self->log(ERROR => "Unable to create subfolder $subf of $to"), next SUBFOLDER;
 
 			unless($subfolder->_copy_to($subto, @options))
 			{	$subfolder->close;
@@ -804,14 +798,14 @@ folder.  Otherwise you may lose data if the system crashes or if there
 are software problems.
 
 =option  write 'ALWAYS'|'NEVER'|'MODIFIED'
-=default write C<MODIFIED>
+=default write C<'MODIFIED'>
 Specifies whether the folder should be written.  As could be expected,
 C<ALWAYS> means always (even if there are no changes), C<NEVER> means
 that changes to the folder will be lost, and C<MODIFIED> only saves the
 folder if there are any changes.
 
 =option  force BOOLEAN
-=default force <false>
+=default force false
 Override the M<new(access)> setting which was specified when the folder
 was opened. This option only has an effect if its value is TRUE. NOTE:
 Writing to the folder may not be permitted by the operating system,
@@ -835,12 +829,10 @@ the folder may remove the messages for real.  See M<write(save_deleted)>.
       or die "Couldn't write $f: $!\n";
 
 =warning Changes not written to read-only folder $self.
-
 You have opened the folder read-only --which is the default set
 by M<new(access)>--, made modifications, and now want to close it.
 Set M<close(force)> if you want to overrule the access mode, or close
 the folder with M<close(write)> set to C<NEVER>.
-
 =cut
 
 sub close(@)
@@ -855,7 +847,7 @@ sub close(@)
 	$manager->close($self, close_by_self =>1)
 		if defined $manager && !$args{close_by_manager};
 
-	my $when  = $args{write} || 'MODIFIED';
+	my $when  = $args{write} // 'MODIFIED';
 	my $write
 	  = $when eq 'MODIFIED' ? $self->isModified
 	  : $when eq 'ALWAYS'   ? 1
@@ -864,8 +856,7 @@ sub close(@)
 
 	my $locker = $self->locker;
 	if($write && !$force && !$self->writable)
-	{	$self->log(WARNING => "Changes not written to read-only folder $self.
-Suggestion: \$folder->close(write => 'NEVER')");
+	{	$self->log(WARNING => "Changes not written to read-only folder $self; suggestion: \$folder->close(write => 'NEVER')");
 		$locker->unlock if $locker;
 		$self->{MB_messages} = [];    # Boom!
 		return 0;
@@ -991,8 +982,8 @@ Checks whether the current folder is writable.
 =cut
 
 sub writable()  { $_[0]->access =~ /w|a|d/ }
-sub writeable() {shift->writable}  # compatibility [typo]
-sub readable()  {1}  # compatibility
+sub writeable() { $_[0]->writable }  # compatibility [typo]
+sub readable()  { 1 }  # compatibility
 
 =method access
 Returns the access mode of the folder, as set by M<new(access)>
@@ -1030,9 +1021,9 @@ sub isModified()
 {	my $self     = shift;
 	return 1 if $self->{MB_modified};
 
-	foreach (@{$self->{MB_messages}})
+	foreach my $msg (@{$self->{MB_messages}})
 	{	return $self->{MB_modified} = 1
-			if $_->isDeleted || $_->isModified;
+			if $msg->isDeleted || $msg->isModified;
 	}
 
 	0;
@@ -1140,7 +1131,7 @@ sub messageId($;$)
 	$message;
 }
 
-sub messageID(@) {shift->messageId(@_)} # compatibility
+sub messageID(@) { shift->messageId(@_) } # compatibility
 
 =method find $message_id
 Like M<messageId()>, this method searches for a message with the
@@ -1216,33 +1207,30 @@ simply a code reference.  The message is passed as only argument.
 
 sub messages($;$)
 {	my $self = shift;
+	my $msgs = $self->{MB_messages};
 
-	return @{$self->{MB_messages}} unless @_;
-	my $nr = @{$self->{MB_messages}};
+	@_ or return @$msgs;
 
 	if(@_==2)   # range
 	{	my ($begin, $end) = @_;
+		my $nr = @$msgs;
 		$begin += $nr   if $begin < 0;
 		$begin  = 0     if $begin < 0;
 		$end   += $nr   if $end < 0;
 		$end    = $nr-1 if $end >= $nr;
-
-		return () if $begin > $end;
-
-		my @range = @{$self->{MB_messages}}[$begin..$end];
-		return @range;
+		return $begin > $end ? () : @{$msgs}[$begin..$end];
 	}
 
 	my $what = shift;
 	my $action
 	  = ref $what eq 'CODE'? $what
-	  : $what eq 'DELETED' ? sub {$_[0]->isDeleted}
-	  : $what eq 'ACTIVE'  ? sub {not $_[0]->isDeleted}
-	  : $what eq 'ALL'     ? sub {1}
-	  : $what =~ s/^\!//   ? sub {not $_[0]->label($what)}
-	  :                      sub {$_[0]->label($what)};
+	  : $what eq 'DELETED' ? sub { $_[0]->isDeleted }
+	  : $what eq 'ACTIVE'  ? sub { not $_[0]->isDeleted }
+	  : $what eq 'ALL'     ? sub { 1 }
+	  : $what =~ s/^\!//   ? sub { not $_[0]->label($what) }
+	  :                      sub { $_[0]->label($what) };
 
-	grep $action->($_), @{$self->{MB_messages}};
+	grep $action->($_), @$msgs;
 }
 
 =method nrMessages %options
@@ -1295,7 +1283,7 @@ sub current(;$)
 
 		# Which one becomes current?
 		my $current
-		  = $self->findFirstLabeled(current => 1)
+		   = $self->findFirstLabeled(current => 1)
 		  || $self->findFirstLabeled(seen    => 0)
 		  || $self->message(-1)
 		  || return undef;
@@ -1419,12 +1407,9 @@ When a message does not have the requested label, it is taken as false.
 sub findFirstLabeled($;$$)
 {	my ($self, $label, $set, $msgs) = @_;
 
-	if(!defined $set || $set)
-	{	my $f = first { $_->label($label) } (defined $msgs ? @$msgs : $self->messages);
-	}
-	else
-	{	return first { not $_->label($label) } (defined $msgs ? @$msgs : $self->messages);
-	}
+	  !defined $set || $set
+	? (first {     $_->label($label) } (defined $msgs ? @$msgs : $self->messages))
+	: (first { not $_->label($label) } (defined $msgs ? @$msgs : $self->messages));
 }
 
 #--------------------
@@ -1556,7 +1541,7 @@ sub read(@)
 	local $self->{MB_lazy_permitted} = 1;
 
 	# Read from existing folder.
-	return unless $self->readMessages(
+	$self->readMessages(
 		trusted      => $self->{MB_trusted},
 		head_type    => $self->{MB_head_type},
 		field_type   => $self->{MB_field_type},
@@ -1564,7 +1549,7 @@ sub read(@)
 		body_delayed_type => $self->{MB_body_delayed_type},
 		head_delayed_type => $self->{MB_head_delayed_type},
 		@_
-	);
+	) or return;
 
 	if($self->{MB_modified})
 	{	$self->log(INTERNAL => "Modified $self->{MB_modified}");
@@ -1589,12 +1574,12 @@ To write a folder to a different file, you must first create a new folder,
 then move all the messages, and then write or M<close()> that new folder.
 
 =option  force BOOLEAN
-=default force <false>
+=default force false
 Override write-protection with M<new(access)> while opening the folder
 (whenever possible, it may still be blocked by the operating system).
 
 =option  save_deleted BOOLEAN
-=default save_deleted <false>
+=default save_deleted false
 Do also write messages which where flagged to be deleted to their folder.  The
 flag for deletion is conserved (when possible), which means that a re-open of
 the folder may remove the messages for real.  See M<close(save_deleted)>.
@@ -1701,7 +1686,7 @@ my %seps = (CR => "\015", LF => "\012", CRLF => "\015\012");
 
 sub lineSeparator(;$)
 {	my $self = shift;
-	return $self->{MB_linesep} unless @_;
+	@_ or return $self->{MB_linesep};
 
 	my $sep  = shift;
 	$sep = $seps{$sep} if exists $seps{$sep};
@@ -1717,9 +1702,9 @@ The folder is created, but not opened!  If you want to open a file which
 may need to be created, then use M<Mail::Box::Manager::open()> with the
 create flag, or M<Mail::Box::new(create)>.
 
-=option  folderdir DIRECTORY
+=option  folderdir $directory
 =default folderdir undef
-When the foldername is preceded by a C<=>, the P<folderdir> directory
+When the foldername is preceded by a C<=>, the $directory
 will be searched for the named folder.
 =cut
 
@@ -1737,11 +1722,11 @@ this first argument.
 the documentation for each type of folder for type specific options, but
 each folder class will at least support the P<folderdir> option:
 
-=option  folderdir DIRECTORY
+=option  folderdir $directory
 =default folderdir undef
 The location where the folders of this class are stored by default.  If the
 user specifies a name starting with a C<=>, that indicates that the folder is
-to be found in this default DIRECTORY.
+to be found in this default $directory.
 
 =examples
   Mail::Box::Mbox->foundIn('=markov', folderdir => "$ENV{HOME}/Mail");
@@ -1836,7 +1821,7 @@ sub toBeUnthreaded(@)
 =section Other methods
 
 =ci_method timespan2seconds $time
-$time is a string, which starts with a float, and then one of the
+Parameter $time is a string, which starts with a float, and then one of the
 words 'hour', 'hours', 'day', 'days', 'week', or 'weeks'.  For instance:
 '1 hour' or '4 weeks'.
 

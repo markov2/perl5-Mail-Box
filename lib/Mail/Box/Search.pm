@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Search;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
@@ -91,17 +91,17 @@ In most cases, you will not be interested in results which are
 found in messages flagged to be deleted.  However, with this option
 you can specify you want them to be searched too.
 
-=option  label STRING
+=option  label $label
 =default label undef
-Mark all selected messages with the specified STRING.  If this field is
-not specified, the message will not get a label; search() also returns
-a list of selected messages.
+Mark all selected messages with the specified label.  If this field is
+not specified, the message will not get a label; C<search()> also returns
+a LIST of selected messages.
 
-=option  limit NUMBER
+=option  limit $number
 =default limit C<0>
-Limit the search to the specified NUMBER of messages.  When the NUMBER
+Limit the search to the specified $number of messages.  When the $number
 is positive, the search starts at the first message in the folder or
-thread.  A negative NUMBER starts at the end of the folder.  If the limit
+thread.  A negative $number starts at the end of the folder.  If the limit
 is set to zero, there is no limit.
 
 =option  logical 'REPLACE'|'AND'|'OR'|'NOT'|'AND NOT'|'OR NOT'
@@ -186,6 +186,7 @@ sub init($)
 
 #--------------------
 =section Attributes
+
 =method deliver
 =method doMultiparts
 =method parseDelayed
@@ -343,10 +344,9 @@ sub inBody(@) { $_[0]->notImplemented }
 =section The Results
 
 =method printMatch [$fh], HASH
-Print the information about the match (see M<new(deliver)>) in
-some understandable way.  If no file handle
-is specified, the output will go to the selected filehandle (see
-C<perldoc -f select>).
+Print the information about the match (see M<new(deliver)>) in some
+understandable way.  If no file handle $fh is specified, the output will
+go to the selected filehandle (see C<perldoc -f select>).
 =cut
 
 sub printMatch($) { $_[0]->notImplemented }

@@ -4,12 +4,12 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::MH::Index;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
 
-use Mail::Message::Head::Subset;
+use Mail::Message::Head::Subset ();
 use Carp;
 
 #--------------------
@@ -45,16 +45,13 @@ of the folder).
 
 =section Constructors
 
-=cut
-
 =c_method new %options
 
-=requires filename FILENAME
-
-The FILENAME which is used to store the headers of all the e-mails for
+=requires filename $file
+The $file which is used to store the headers of all the e-mails for
 one folder. This must be an absolute pathname.
 
-=option  head_type CLASS
+=option  head_type $class
 =default head_type Mail::Message::Head::Subset
 The type of headers which will be used to store header information when
 it is read from the index file.  You can not be sure the index contains
@@ -62,10 +59,9 @@ all header line (the mailbox may have been updated without updating
 the index) so this will usually be (an sub-class of)
 Mail::Message::Head::Subset.
 
-=option  head_wrap INTEGER
+=option  head_wrap $nrchars
 =default head_wrap 72
-The preferred number of character in each header line.
-
+The preferred maximum number of characters in each header line.
 =cut
 
 sub init($)
@@ -81,13 +77,16 @@ sub init($)
 }
 
 #--------------------
-=section The Index
+=section Attributes
 
 =method filename
 Returns the name of the index file.
 =cut
 
 sub filename() { $_[0]->{MBMI_filename} }
+
+#--------------------
+=section The Index
 
 =method write @messages
 Write an index file containing the headers specified @messages
@@ -162,9 +161,7 @@ with the M<get()> method.
 sub read(;$)
 {	my $self      = shift;
 	my $filename  = $self->filename;
-
-	my $parser    = Mail::Box::Parser->new(filename => $filename, mode => 'r')
-		or return;
+	my $parser    = Mail::Box::Parser->new(filename => $filename, mode => 'r') or return;
 
 	my @options   = ($self->logSettings, wrap_length => $self->{MBMI_head_wrap});
 	my $type      = $self->{MBMI_head_type};

@@ -4,11 +4,10 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Maildir;
-use base 'Mail::Box::Dir';
+use parent 'Mail::Box::Dir';
 
 use strict;
 use warnings;
-use filetest 'access';
 
 use Mail::Box::Maildir::Message;
 
@@ -53,12 +52,13 @@ which are not accepted by the Windows system.
 =default lock_wait    <not used>
 
 =option  accept_new   BOOLEAN
-=default accept_new   <false>
+=default accept_new   false
 
 When the folder is open, some messages may be stored in the C<new>
 sub-directory.  By default, these messages are immediately moved to
 the C<cur> directory when the folder is opened.  Otherwise, you have
 to call M<acceptMessages()> or M<Mail::Box::Maildir::Message::accept()>.
+
 =cut
 
 my $default_folder_dir = exists $ENV{HOME} ? "$ENV{HOME}/.maildir" : '.';
@@ -108,7 +108,7 @@ sub foundIn($@)
 	-d "$directory/cur";
 }
 
-sub type() {'maildir'}
+sub type() { 'maildir' }
 
 sub listSubFolders(@)
 {	my ($class, %args) = @_;
@@ -139,7 +139,7 @@ sub listSubFolders(@)
 	{	next if $d =~ m/^(new|tmp|cur|\.\.?)$/;
 
 		my $dir = "$dir/$d";
-		push @dirs, $d if -d $dir && -r _;
+		push @dirs, $d if -d $dir;
 	}
 
 	closedir $dh;
@@ -190,7 +190,7 @@ sub coerce($)
 	my $new = "$dir/new/$basename";
 
 	$coerced->create($tmp) && $coerced->create($new)
-		or $self->log(ERROR    => "Cannot create Maildir message file $new.");
+		or $self->log(ERROR => "Cannot create Maildir message file $new."), return undef;
 
 	$self->log(PROGRESS => "Added Maildir message in $new");
 	$coerced->labelsToFilename unless $is_native;
@@ -222,8 +222,8 @@ the indicated reason.
 sub createDirs($)
 {	my ($thing, $dir) = @_;
 
-	$thing->log(ERROR => "Cannot create Maildir folder directory $dir: $!"), return
-		unless -d $dir || mkdir $dir;
+	-d $dir || mkdir $dir
+		or $thing->log(ERROR => "Cannot create Maildir folder directory $dir: $!"), return;
 
 	my $tmp = "$dir/tmp";
 	-d $tmp || mkdir $tmp
@@ -255,7 +255,7 @@ sub folderIsEmpty($)
 
 	foreach (qw/tmp new cur/)
 	{	my $subdir = "$dir/$_";
-		next unless -d $subdir;
+		-d $subdir or next;
 
 		opendir my $dh, $subdir or return 0;
 		my $first  = readdir $dh;
@@ -358,6 +358,12 @@ sub acceptMessages($)
 	@accept;
 }
 
+=method writeMessages
+=error Cannot create directory $tmpdir: $!
+=error Cannot create file $newtmp: $!
+=error Cannot move $newtmp to $filename: $
+=cut
+
 sub writeMessages($)
 {	my ($self, $args) = @_;
 
@@ -374,7 +380,7 @@ sub writeMessages($)
 
 	my $tmpdir    = "$directory/tmp";
 	-d $tmpdir || mkdir $tmpdir
-		or die "Cannot create directory $tmpdir: $!";
+		or $self->log(ERROR => "Cannot create directory $tmpdir: $!"), return;
 
 	foreach my $message (@messages)
 	{	$message->isModified or next;
@@ -384,14 +390,14 @@ sub writeMessages($)
 
 		my $newtmp   = "$directory/tmp/$basename";
 		open my $new, '>:raw', $newtmp
-			or croak "Cannot create file $newtmp: $!";
+			or $self->log(ERROR => "Cannot create file $newtmp: $!"), return;
 
 		$message->write($new);
 		close $new;
 
 		unlink $filename;
 		move $newtmp, $filename
-			or warn "Cannot move $newtmp to $filename: $!\n";
+			or $self->log(ERROR => "Cannot move $newtmp to $filename: $!"), return;
 	}
 
 	# Remove an empty folder.  This is done last, because the code before
@@ -413,6 +419,10 @@ sub writeMessages($)
 =error Cannot append Maildir message in $new to folder $self.
 The message (or messages) could not be stored in the right directories
 for the Maildir folder.
+
+=error Cannot create directory $tmpdir: $!
+=error Cannot append Maildir message in $new to folder $self.
+=info Appended Maildir message in $new
 =cut
 
 sub appendMessages(@)
@@ -430,7 +440,7 @@ sub appendMessages(@)
 
 	my $tmpdir   = "$directory/tmp";
 	-d $tmpdir || mkdir $tmpdir
-		or croak "Cannot create directory $tmpdir: $!", return;
+		or $self->log(ERROR => "Cannot create directory $tmpdir: $!"), return;
 
 	my $msgtype  = $args{message_type} || 'Mail::Box::Maildir::Message';
 
@@ -452,7 +462,7 @@ sub appendMessages(@)
 		my $new = "$dir/new/$basename";
 
 		$coerced->create($tmp) && $coerced->create($new)
-			or $self->log(ERROR => "Cannot append Maildir message in $new to folder $self.");
+			or $self->log(ERROR => "Cannot append Maildir message in $new to folder $self."), next;
 
 		$self->log(PROGRESS => "Appended Maildir message in $new");
 	}
