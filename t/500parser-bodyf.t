@@ -28,9 +28,7 @@ $parser->pushSeparator('From ');
 my ($where, $sep) = $parser->readSeparator;
 cmp_ok($where, "==", 0,            "begin at file-start");
 ok(defined $sep,                   "reading first separator");
-
-like($sep, qr/^From /,             "correctness first separator")
-    if defined $sep;
+like($sep, qr/^From /,             "correctness first separator") if defined $sep;
 
 my $head = Mail::Message::Head->new;
 ok(defined $head);
@@ -79,10 +77,10 @@ while(1)
 	ok defined $sep, "read seperator ". ($sep =~ s/\n*$//r);
 
     my $count = @msgs;
-    like($sep, qr/^From /,                     "1 from $count");
+    like $sep, qr/^From /,      "1 from $count";
 
     $head = Mail::Message::Head->new;
-    ok(defined $head,                          "1 head count");
+    ok defined $head,           "1 head count";
 
     $head->read($parser);
 
@@ -96,10 +94,10 @@ while(1)
     my $size  = $body->size;
     my $lines = $body->nrLines;
 
-    cmp_ok($lines, "==", $li,                "1 lines $count") if defined $li;
+    cmp_ok $lines, "==", $li,   "1 lines $count" if defined $li;
 
     $cl -= $li if $crlf_platform;
-    cmp_ok($size, "==", $cl,                 "1 size $count")  if defined $cl;
+    cmp_ok $size, "==", $cl,    "1 size $count"  if defined $cl;
 
     my $msg = +{
 		size   => $size,

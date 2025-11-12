@@ -39,7 +39,7 @@ attempt to reduce the dependencies:
 
 =item * Mail::Message
 
-=item * Mail::Transfer
+=item * Mail::Transport
 
 =item * Mail::Box
 

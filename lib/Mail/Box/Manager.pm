@@ -56,7 +56,7 @@ more portable and safer code if you do use it.
 
 =chapter METHODS
 
-=c_method new $args
+=c_method new %options
 
 =option  folder_types $typedef|\@typedefs
 =default folder_types <all standard types>
@@ -645,7 +645,6 @@ not a folder type which extends Mail::Box.  Probably, it is not a folder
 at all.
 
 =warning Use moveMessage() or copyMessage() to move between open folders.
-
 The message is already part of a folder, and now it should be appended
 to a different folder.  You need to decide between copy or move, which
 both will clone the message (not the body, because they are immutable).
@@ -733,8 +732,8 @@ sub appendMessages(@)
 }
 
 
-=method copyMessage [$folder|$foldername], $messages, %options
-Copy a message from one folder into another folder.  If the destination
+=method copyMessage [$folder|$foldername], @messages, %options
+Copy @messages from one folder into another folder.  If the destination
 folder is already opened, M<Mail::Box::copyTo()> is used.  Otherwise,
 M<Mail::Box::appendMessages()> is called.
 
@@ -811,8 +810,8 @@ sub copyMessage(@)
 }
 
 
-=method moveMessage [$folder|$foldername], $messages, %options
-Move a $message from one $folder to another.
+=method moveMessage [$folder|$foldername], @messages, %options
+Move @message from one $folder to another.
 
 BE WARNED that removals from a folder only take place when the folder
 is closed, so the message is only flagged to be deleted in the opened
@@ -830,7 +829,7 @@ is equivalent to
   $inbox->message(1)->delete;
 
 =option  share BOOLEAN
-=default share <true>
+=default share true
 
 =cut
 

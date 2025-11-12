@@ -1,7 +1,6 @@
 ChangeLog
 MANIFEST
 MANIFEST.extra
-META.yml
 Makefile.PL
 README.md
 README.todo

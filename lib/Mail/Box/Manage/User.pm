@@ -41,8 +41,7 @@ folder files.
 
 =chapter METHODS
 
-=c_method new $args
-
+=c_method new %options
 Use M<new(default_folder_type)> to explicitly state which kind of folders
 you use.
 
