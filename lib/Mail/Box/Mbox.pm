@@ -81,58 +81,6 @@ sub create($@)
 
 sub subfolderExtension() { $_[0]->{MBM_sub_ext} }
 
-=c_method foundIn [$foldername], %options
-If no $foldername is specified, then the value of the P<folder> option
-is taken.  A mbox folder is a file which starts with a separator
-line: a line with C<'From '> as first characters.  Blank lines which
-start the file are ignored, which is not for all MUA's acceptable.
-
-=option  folder $name
-=default folder undef
-
-=option  subfolder_extension STRING
-=default subfolder_extension <from object>
-=cut
-
-sub foundIn($@)
-{	my $class = shift;
-	my $name  = @_ % 2 ? shift : undef;
-	my %args  = @_;
-	$name   ||= $args{folder} or return;
-
-	my $folderdir = $args{folderdir} || $default_folder_dir;
-	my $extension = $args{subfolder_extension} || $default_sub_extension;
-	my $filename  = $class->folderToFilename($name, $folderdir, $extension);
-
-	if(-d $filename)
-	{	# Maildir and MH Sylpheed have a 'new' sub-directory
-		return 0 if -d catdir $filename, 'new';
-		if(opendir my $dir, $filename)
-		{	my @f = grep !/^\./, readdir $dir;   # skip . .. and hidden
-			return 0 if @f && ! grep /\D/, @f;              # MH
-			closedir $dir;
-		}
-
-		return 0                                             # Other MH
-			if -f "$filename/.mh_sequences";
-
-		return 1;      # faked empty Mbox sub-folder (with subsub-folders?)
-	}
-
-	return 0 unless -f $filename;
-	return 1 if -z $filename;               # empty folder is ok
-
-	open my $file, '<:raw', $filename or return 0;
-	local $_;
-	while(<$file>)
-	{	next if /^\s*$/;                    # skip empty lines
-		$file->close;
-		return substr($_, 0, 5) eq 'From '; # found Mbox separator?
-	}
-
-	return 1;
-}
-
 sub delete(@)
 {	my $self = shift;
 	$self->SUPER::delete(@_);
@@ -156,6 +104,9 @@ sub writeMessages($)
 }
 
 sub type() {'mbox'}
+
+#--------------------
+=section Sub-folders
 
 =ci_method listSubFolders %options
 =option  subfolder_extension STRING
@@ -256,6 +207,58 @@ sub folderToFilename($$;$)
 	}
 
 	$real;
+}
+
+=c_method foundIn [$foldername], %options
+If no $foldername is specified, then the value of the P<folder> option
+is taken.  A mbox folder is a file which starts with a separator
+line: a line with C<'From '> as first characters.  Blank lines which
+start the file are ignored, which is not for all MUA's acceptable.
+
+=option  folder $name
+=default folder undef
+
+=option  subfolder_extension STRING
+=default subfolder_extension <from object>
+=cut
+
+sub foundIn($@)
+{	my $class = shift;
+	my $name  = @_ % 2 ? shift : undef;
+	my %args  = @_;
+	$name   ||= $args{folder} or return;
+
+	my $folderdir = $args{folderdir} || $default_folder_dir;
+	my $extension = $args{subfolder_extension} || $default_sub_extension;
+	my $filename  = $class->folderToFilename($name, $folderdir, $extension);
+
+	if(-d $filename)
+	{	# Maildir and MH Sylpheed have a 'new' sub-directory
+		return 0 if -d catdir $filename, 'new';
+		if(opendir my $dir, $filename)
+		{	my @f = grep !/^\./, readdir $dir;   # skip . .. and hidden
+			return 0 if @f && ! grep /\D/, @f;              # MH
+			closedir $dir;
+		}
+
+		return 0                                             # Other MH
+			if -f "$filename/.mh_sequences";
+
+		return 1;      # faked empty Mbox sub-folder (with subsub-folders?)
+	}
+
+	return 0 unless -f $filename;
+	return 1 if -z $filename;               # empty folder is ok
+
+	open my $file, '<:raw', $filename or return 0;
+	local $_;
+	while(<$file>)
+	{	next if /^\s*$/;                    # skip empty lines
+		$file->close;
+		return substr($_, 0, 5) eq 'From '; # found Mbox separator?
+	}
+
+	return 1;
 }
 
 #--------------------

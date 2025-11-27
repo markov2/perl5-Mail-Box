@@ -1,4 +1,8 @@
 
+=encoding utf8
+
+=pod
+
 =chapter NAME
 
 Mail::Box-Index - list of all extended documentation
@@ -58,7 +62,6 @@ Only the HTML version of this manual page will list the sections.
       <li>L<Mail::Message::Field/Using study() field>
       <li>L<Mail::Message::Field/Using resent groups> (M<Mail::Message::Head::ResentGroup>)
       <li>L<Mail::Message::Head::ListGroup/Mailing list fields>
-      <li>L<Mail::Message::Head::SpamGroup/Spam fighting fields>
       </ul>
   <li>L<Mail::Message::Field/The field's data>
       <ul>

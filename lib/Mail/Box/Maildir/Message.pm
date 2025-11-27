@@ -52,7 +52,8 @@ sub filename(;$)
 	! defined $oldname || $oldname ne $newname
 		or return $newname;
 
-	my ($id, $semantics, $flags) = $newname =~ m!(.*?)(?:\:([12])\,([A-Za-z]*))!  ? ($1, $2, $3) : ($newname, '','');
+	my ($id, $semantics, $flags) = $newname
+		=~ m!(.*?)(?:\:([12])\,([A-Za-z]*))! ? ($1, $2, $3) : ($newname, '', '');
 
 	my %flags;
 	$flags{$_}++ for split //, $flags;
@@ -73,6 +74,10 @@ sub filename(;$)
 
 	$self->SUPER::filename($newname);
 }
+
+#--------------------
+=section The header
+=cut
 
 =method guessTimestamp
 The filename of a C<Mail::Box::Maildir::Message> contains a timestamp.  This

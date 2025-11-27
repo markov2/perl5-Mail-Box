@@ -137,7 +137,7 @@ sub inbox(;$)
 # the "existence" administration as well.
 
 #--------------------
-=section Manage folders
+=section Manage existing folders
 
 =method folder $name
 Returns the folder description, a Mail::Box::Identity.
@@ -168,7 +168,6 @@ sub folderCollection($)
 	my $base = pop @path;
 	($top->folder(@path), $base);
 }
-
 
 =method create $name, %options
 Creates a new folder with the specified name.  An folder's administrative

@@ -234,19 +234,9 @@ sub listSubFolders(@)
 	grep $class->foundIn("$dir/$_"), @dirs;
 }
 
-=method openSubFolder
-=warning Cannot create subfolder $name for $self: $!
+#-------------
+=section The folder
 =cut
-
-sub openSubFolder($)
-{	my ($self, $name) = @_;
-
-	my $subdir = $self->nameOfSubFolder($name);
-	-d $subdir || mkdir $subdir, 0755
-		or $self->log(WARNING => "Cannot create subfolder $name for $self: $!"), return;
-
-	$self->SUPER::openSubFolder($name, @_);
-}
 
 sub topFolderWithMessages() { 1 }
 
@@ -300,6 +290,23 @@ sub appendMessages(@)
 	$self->close(write => 'NEVER');
 
 	@messages;
+}
+
+#--------------------
+=section Sub-folders
+
+=method openSubFolder
+=warning Cannot create subfolder $name for $self: $!
+=cut
+
+sub openSubFolder($)
+{	my ($self, $name) = @_;
+
+	my $subdir = $self->nameOfSubFolder($name);
+	-d $subdir || mkdir $subdir, 0755
+		or $self->log(WARNING => "Cannot create subfolder $name for $self: $!"), return;
+
+	$self->SUPER::openSubFolder($name, @_);
 }
 
 #--------------------

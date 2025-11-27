@@ -155,7 +155,7 @@ work when access is granted for writing or appending to the folder.
 Be careful: you may create a different folder type than you expect unless you
 explicitly specify M<Mail::Box::Manager::open(type)>.
 
-=option  folder FOLDERNAME
+=option  folder $name
 =default folder C<$ENV{MAIL}>
 Which folder to open (for reading or writing). When used for reading (the
 P<access> option set to C<"r"> or C<"a">) the mailbox should already exist
@@ -756,7 +756,7 @@ sub _copy_to($@)
 
 	# Take subfolders
 
-SUBFOLDER:
+  SUBFOLDER:
 	foreach my $subf ($self->listSubFolders(check => 1))
 	{	my $subfolder = $self->openSubFolder($subf, access => 'r')
 			or $self->log(ERROR => "Unable to open subfolder $subf"), next;
@@ -880,7 +880,7 @@ destination folder before deleting the source folder.  Otherwise you may lose
 data if the system crashes or if there are software problems.
 
 =option  recursive BOOLEAN
-=default recursive 1
+=default recursive true
 
 =example removing an open folder
   my $folder = Mail::Box::Mbox->new(folder => 'InBox', access => 'rw');
@@ -933,22 +933,22 @@ be used for appending.  This can be fast, but this can also be very
 slow (depends on the implementation).  All %options passed will also be
 used to open the folder, if needed.
 
-=requires folder FOLDERNAME
-The name of the folder to which the messages are to be appended.  The folder
+=requires folder $name
+The $name of the folder to which the messages are to be appended.  The folder
 implementation will avoid opening the folder when possible, because this is
 resource consuming.
 
-=option  message MESSAGE
+=option  message $message
 =default message undef
 
-=option  messages ARRAY-OF-MESSAGES
+=option  messages $message|\@messages
 =default messages undef
-One reference to a MESSAGE or a reference to an ARRAY of MESSAGEs, which may
+One reference to one $message or an ARRAY of @messages, which may
 be of any type.  The messages will be first coerced into the correct
 message type to fit in the folder, and then will be added to it.
 
 =option  share BOOLEAN
-=default share <false>
+=default share false
 Try to share physical storage of the message.  Only available for a
 limited number of folder types, otherwise no-op.
 
@@ -1014,7 +1014,6 @@ were added after the folder was read from file.
 
 WARNING: this flag is not related to an external change to the folder
 structure on disk.  Have a look at M<update()> for that.
-
 =cut
 
 sub isModified()
@@ -1388,10 +1387,10 @@ sub scanForMessages($$$$)
 	keys %search;
 }
 
-=method findFirstLabeled $label, [BOOLEAN, [$msgs]]
+=method findFirstLabeled $label, [BOOLEAN, [\@msgs]]
 Find the first message which has this $label with the correct setting. The
 BOOLEAN indicates whether any true value or any false value is to be
-found in the ARRAY of $msgs.  By default, a true value is searched for.
+found in the ARRAY of @msgs.  By default, a true value is searched for.
 When a message does not have the requested label, it is taken as false.
 
 =examples looking for a labeled message
@@ -1422,21 +1421,21 @@ access to that folder.
 
 For MBOX folders, sub-folders are simulated.
 
-=option  folder FOLDERNAME
+=option  folder $name
 =default folder <from calling object>
 The folder whose sub-folders should be listed.
 
-=option  folderdir DIRECTORY
+=option  folderdir $dir
 =default folderdir <from folder>
 
 =option  check BOOLEAN
-=default check <false>
+=default check false
 Should all returned foldernames be checked to be sure that they are of
 the right type?  Each sub-folder may need to be opened to check this,
 with a folder type dependent penalty (in some cases very expensive).
 
 =option  skip_empty BOOL
-=default skip_empty <false>
+=default skip_empty false
 Shall empty folders (folders which currently do not contain any messages)
 be included?  Empty folders are not useful to open, but may be useful
 to save to.

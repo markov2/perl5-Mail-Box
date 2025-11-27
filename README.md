@@ -14,6 +14,15 @@ Sending emails can be found in Mail-Transport... and there is more.
 Start reading with Mail::Box-Overview and Mail::Box-Index.
 Browseable documentation at <http://perl.overmeer.net/mailbox/>
 
+## Installing
+
+On github, you can find the processed version for each release.  But the
+better source is CPAN; to get it installed simply run:
+
+```sh
+   cpan -i Mail::Box
+```
+
 ## Development &rarr; Release
 
 Important to know, is that I use an extension on POD to write the manuals.
@@ -27,13 +36,6 @@ existed, sorry for the confusion)
 
 Clone from github for the "raw" version.  For instance, when you want
 to contribute a new feature.
-
-On github, you can find the processed version for each release.  But the
-better source is CPAN; to get it installed simply run:
-
-```sh
-   cpan -i Mail::Box
-```
 
 ## Contributing
 

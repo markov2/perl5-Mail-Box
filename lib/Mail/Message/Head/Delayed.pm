@@ -37,13 +37,12 @@ by a Mail::Message::Head when someone accesses the header of a message.
 
 =section Constructors
 
-=method build $fields
+=c_method build $fields
 You cannot create a delayed header with fields.
 
 =error Cannot build() a delayed header.
 A delayed message header cannot contain any information, so cannot be
 build.  You can construct complete or subset headers.
-
 =cut
 
 sub build(@) { $_[0]->log(ERROR => "Cannot build() a delayed header.") }
@@ -60,16 +59,14 @@ sub init($$)
 	$self;
 }
 
-sub isDelayed() {1}
-
 sub modified(;$)
 {	return 0 if @_==1 || !$_[1];
 	shift->forceRealize->modified(1);
 }
 
+sub isDelayed()  { 1 }
 sub isModified() { 0 }
-
-sub isEmpty() { 0 }
+sub isEmpty()    { 0 }
 
 #--------------------
 =section Access to the header
@@ -79,10 +76,7 @@ Get the information about the header line $name.  Realization will
 take place.
 =cut
 
-sub get($;$)
-{	my $self = shift;
-	$self->load->get(@_);
-}
+sub get($;$) { shift->load->get(@_) }
 
 #--------------------
 =section About the body

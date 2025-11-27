@@ -53,6 +53,9 @@ Returns the name of the external binary.
 
 sub exe() { $_[0]->{MBLM_exe} }
 
+#--------------------
+=section Locking
+
 =method unlock
 =warning Couldn't remove mutt-unlock $folder: $!
 =cut
@@ -69,9 +72,6 @@ sub unlock()
 	$self->SUPER::unlock;
 	$self;
 }
-
-#--------------------
-=section Locking
 
 =method lock
 =warning Folder $folder already mutt-locked

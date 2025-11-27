@@ -51,7 +51,7 @@ is an interface to the spam checking software of Mail::SpamAssassin.
 
 =c_method new $message, %options
 Creates a wrapper around the $message.  The already present fields
-from a previous run of Spam::Assassin (or probably fake lines) are
+from a previous run of SpamAssassin (or probably fake lines) are
 removed first.
 
 =cut

@@ -19,16 +19,16 @@ my %oodist   = (
 
 	include  => [
 		'../HTML-FromMail',
- 		'../MIME-Types',
- 		'../Mail-Box-IMAP4',
- 		'../Mail-Box-POP3',
- 		'../Mail-Box-Parser-C',
- 		'../Mail-Message',
- 		'../Mail-Transport',
- 		'../MailTools',
- 		'../Object-Realize-Later',
- 		'../User-Identity',
- 		'/p/MailDbx',
+		'../MIME-Types',
+		'../Mail-Box-IMAP4',
+		'../Mail-Box-POP3',
+		'../Mail-Box-Parser-C',
+		'../Mail-Message',
+		'../Mail-Transport',
+		'../MailTools',
+		'../Object-Realize-Later',
+		'../User-Identity',
+		'/p/MailDbx',
 	],
 
 	use      => [
@@ -53,19 +53,21 @@ my %oodist   = (
 	},
 
 	generate => [
-	  {
-		# Add real pod to the releases
-		format         => 'pod3',
+	  {	format         => 'pod3',
 		podtail        => undef,
 	  },
- 	  {	format         => 'html',
+	  {	format         => 'html',
 		webpages       => "$webpages/mailbox/html",
 		publish        => "$publish/htmlpkg",
 		docroot        => "/mailbox/html",
 		templates      => "html",
 		stylesheet     => "/oodoc.css",
 	  },
- 		  # You may add exporter configurations here.
+	  {	export         => 'website',
+		serializer     => 'json',
+		markup         => 'html',
+		publish        => "$publish/doctree",
+	  },
 	],
 );
 
@@ -84,9 +86,9 @@ my %requires = (
 	'File::Remove'   => 0.20,
 	'File::Temp'     => 0,
 	'IO::Scalar'     => 0,
-	'Mail::Message'  => 3.013,
-	'Mail::Transport' => 3.003,
-	'Object::Realize::Later' => 0.19,
+	'Mail::Message'   => '3.013, <4.0',
+	'Mail::Transport' => '3.003, <4.0',
+	'Object::Realize::Later' => '0.19, <4.0',
 	'POSIX'          => 0,
 	'Scalar::Util'   => 1.13,
 	'Sys::Hostname'  => 0.0,
@@ -96,6 +98,12 @@ my %requires = (
 #   File::FcntLock
 );
 
+my %optional = (
+	'Mail::Box::Parser::C' => '3.0, <4.0',
+	'Mail::Box::IMAP4'     => '3.0, <4.0',
+	'Mail::Box::POP3'      => '3.0, <4.0',
+	'HTML::FromMail'       => '0, <4.0',
+);
 
 WriteMakefile
 	NAME       => 'Mail::Box',
@@ -121,6 +129,7 @@ WriteMakefile
 		prereqs => {
 			runtime => {
 				requires => \%requires,
+				optional => \%optional,
 			},
 			develop => {
 				requires => {

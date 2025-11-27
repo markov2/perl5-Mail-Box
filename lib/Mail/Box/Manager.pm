@@ -811,7 +811,7 @@ sub copyMessage(@)
 
 
 =method moveMessage [$folder|$foldername], @messages, %options
-Move @message from one $folder to another.
+Move @messages from one $folder to another.
 
 BE WARNED that removals from a folder only take place when the folder
 is closed, so the message is only flagged to be deleted in the opened
