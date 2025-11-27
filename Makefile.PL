@@ -6,7 +6,7 @@ use warnings;
 use strict;
 
 # Use command 'oodist' to produce your whole software release.
-my $version = '3.012';
+my $version = '4.000';
 my $webpages = "../public_html";
 my $git      = "https://github.com/markov2/perl5-Mail-Box";
 my $publish  = "../public_html/mail-box";
@@ -71,9 +71,7 @@ my %oodist   = (
 	],
 );
 
-
 my %requires = (
-	'Carp'           => 0,
 	'Cwd'            => 0,
 	'Date::Parse'    => 0,
 	'Devel::GlobalDestruction' => 0.09,
@@ -86,12 +84,14 @@ my %requires = (
 	'File::Remove'   => 0.20,
 	'File::Temp'     => 0,
 	'IO::Scalar'     => 0,
-	'Mail::Message'   => '3.013, <4.0',
-	'Mail::Transport' => '3.003, <4.0',
-	'Object::Realize::Later' => '0.19, <4.0',
+	'Log::Report'    => '1.42',
 	'POSIX'          => 0,
 	'Scalar::Util'   => 1.13,
 	'Sys::Hostname'  => 0.0,
+
+	'Mail::Message'          => '4.000',
+	'Mail::Transport'        => '4.000',
+	'Object::Realize::Later' => '4.000',
 
 # Currently, it seems to be wise not to depend on these
 #   Mail::SpamAssassin    split-off?

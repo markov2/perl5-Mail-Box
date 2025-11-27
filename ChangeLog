@@ -3,6 +3,16 @@
 
 TODO: Mail::Box::Message::new(body_type) not used?
 
+#!!! Mail::Box 3 compatibility is still maintained on github in branch
+#!!! maint3, and published.  So: you may find newer versions with major
+#!!! number 3.  Use (at least) version 4 for new developments.
+#!!! Convert? See https://github.com/markov2/perl5-Mail-Box/wiki/
+
+version 4.000:
+
+	Changes:
+	- use Mail::Box 4 exception model: use Log::Report
+
 version 3.012:
 
 	Changes:

@@ -66,6 +66,12 @@ A Mail::Box::Manager creates C<Mail::Box> objects.  But you already
 knew, because you started with the M<Mail::Box-Overview> manual page.
 That page is obligatory reading, sorry!
 
+B<Be aware:>
+This module versions 4.0 and up is not fully compatible with older releases:
+mainly the exception handling has changed.  When you need to upgrade, please
+read F<https://github.com/markov2/perl5-Mail-Box/wiki/>
+B<Version 3 is still maintained> and may see new releases as well.
+
 C<Mail::Box> is the base class for accessing various types of mailboxes
 (folders) in a uniform manner.  The various folder types vary on how
 they store their messages, but when some effort those differences could
