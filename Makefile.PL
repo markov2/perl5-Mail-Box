@@ -54,7 +54,6 @@ my %oodist   = (
 
 	generate => [
 	  {
-		# Add real pod to the releases
 		format         => 'pod3',
 		podtail        => undef,
 	  },
@@ -65,7 +64,6 @@ my %oodist   = (
 		templates      => "html",
 		stylesheet     => "/oodoc.css",
 	  },
- 		  # You may add exporter configurations here.
 	],
 );
 
@@ -84,12 +82,13 @@ my %requires = (
 	'File::Remove'   => 0.20,
 	'File::Temp'     => 0,
 	'IO::Scalar'     => 0,
-	'Mail::Message'  => 3.013,
-	'Mail::Transport' => 3.003,
-	'Object::Realize::Later' => 0.19,
 	'POSIX'          => 0,
 	'Scalar::Util'   => 1.13,
 	'Sys::Hostname'  => 0.0,
+
+	'Mail::Message'          => '3.013, <4.0',
+	'Mail::Transport'        => '3.003, <4.0',
+	'Object::Realize::Later' => '0.19, <4.0',
 
 # Currently, it seems to be wise not to depend on these
 #   Mail::SpamAssassin    split-off?

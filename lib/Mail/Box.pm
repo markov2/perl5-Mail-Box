@@ -64,7 +64,11 @@ Tied-interface:
 
 A Mail::Box::Manager creates C<Mail::Box> objects.  But you already
 knew, because you started with the M<Mail::Box-Overview> manual page.
-That page is obligatory reading, sorry!
+That page is B<obligatory reading>, sorry!
+
+B<This is a maintenance release for the old interface>.  Read
+F<https://github.com/markov2/perl5-Mail-Box/wiki/> how
+to move towards version 4.
 
 C<Mail::Box> is the base class for accessing various types of mailboxes
 (folders) in a uniform manner.  The various folder types vary on how
@@ -74,8 +78,8 @@ messages in one single file, where other store each message in a separate
 file within the same directory.
 
 No object in your program will be of type C<Mail::Box>: it is only used
-as base class for the real folder types.  C<Mail::Box> is extended by
-
+as base class for the real folder types.  See Mail::Box::Mbox, Mail::Box::MH,
+Mail::Box::IMAP4, etc.
 =cut
 
 #--------------------
