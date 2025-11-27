@@ -6,7 +6,7 @@ use warnings;
 use strict;
 
 # Use command 'oodist' to produce your whole software release.
-my $version = '3.012';
+my $version = '3.013';
 my $webpages = "../public_html";
 my $git      = "https://github.com/markov2/perl5-Mail-Box";
 my $publish  = "../public_html/mail-box";
