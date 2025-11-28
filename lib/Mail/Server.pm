@@ -9,6 +9,8 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 #--------------------
 =chapter NAME
 

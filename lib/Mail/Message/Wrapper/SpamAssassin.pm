@@ -9,8 +9,10 @@ use parent 'Mail::SpamAssassin::Message';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Carp;
-use Mail::Message::Body;
+use Mail::Message::Body ();
 
 BEGIN
 {	my $v = $Mail::SpamAssassin::VERSION;

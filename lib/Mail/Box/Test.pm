@@ -8,6 +8,8 @@ use parent 'Exporter';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use File::Copy            qw/copy/;
 use List::Util            qw/first/;
 use File::Spec::Functions qw/catdir catfile devnull/;;

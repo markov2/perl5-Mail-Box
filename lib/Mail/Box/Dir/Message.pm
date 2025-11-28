@@ -9,7 +9,9 @@ use parent 'Mail::Box::Message';
 use strict;
 use warnings;
 
-use File::Copy qw/move/;
+use Log::Report      'mail-box';
+
+use File::Copy       qw/move/;
 
 #--------------------
 =chapter NAME
@@ -69,9 +71,7 @@ sub init($)
 {	my ($self, $args) = @_;
 	$self->SUPER::init($args);
 
-	$self->filename($args->{filename})
-		if $args->{filename};
-
+	$self->filename($args->{filename}) if $args->{filename};
 	$self->{MBDM_fix_header} = $args->{fix_header};
 	$self;
 }
@@ -154,23 +154,16 @@ sub diskDelete()
 
 =method parser
 Create and return a parser for this message (-file).
-
-=error Cannot create parser for $filename.
-For some reason (the previous message have told you already) it was not possible
-to create a message parser for the specified filename.
 =cut
 
 sub parser()
 {	my $self   = shift;
 
-	my $parser = Mail::Box::Parser->new(
+	Mail::Box::Parser->new(
 		filename => $self->filename,
 		mode     => 'r',
 		fix_header_errors => $self->fixHeader,
-		$self->logSettings
-	) or $self->log(ERROR => "Cannot create parser for $self->{MBDM_filename}."), return;
-
-	$parser;
+	);
 }
 
 =method loadHead
@@ -192,7 +185,7 @@ sub loadHead()
 
 	$folder->lazyPermitted(0);
 
-	$self->log(PROGRESS => 'Loaded delayed head.');
+	trace "Loaded delayed head.";
 	$self->head;
 }
 
@@ -200,14 +193,14 @@ sub loadHead()
 This method is called by the autoloader when the body of the message
 is needed.
 
-=error Unable to read delayed head.
+=error unable to read delayed head for message $msgid.
 Mail::Box tries to be I<lazy> with respect to parsing messages.  When a
 directory organized folder is opened, only the filenames of messages are
 collected.  At first use, the messages are read from their file.  Apperently,
 a message is used for the first time here, but has disappeared or is
 unreadible for some other reason.
 
-=error Unable to read delayed body.
+=error unable to read delayed body for message $msgid.
 For some reason, the header of the message could be read, but the body
 cannot.  Probably the file has disappeared or the permissions were
 changed during the progress of the program.
@@ -220,14 +213,15 @@ sub loadBody()
 	my $body     = $self->body;
 	$body->isDelayed or return $body;
 
-	my $head     = $self->head;
-	my $parser   = $self->parser or return;
+	my $parser   = $self->parser;
+	my $msgid    = $self->messageId;
 
+	my $head     = $self->head;
 	if($head->isDelayed)
 	{	$head = $self->readHead($parser)
-			or $self->log(ERROR => 'Unable to read delayed head.'), return;
+			or error __x"unable to read delayed head for message {msgid}.", msgid => $msgid;
 
-		$self->log(PROGRESS => 'Loaded delayed head.');
+		trace "Loaded delayed head for $msgid.";
 		$self->head($head);
 	}
 	else
@@ -236,10 +230,10 @@ sub loadBody()
 	}
 
 	my $newbody  = $self->readBody($parser, $head)
-		or $self->log(ERROR => 'Unable to read delayed body.'), return;
+		or error __x"unable to read delayed body for message {msgid}.", msgid => $msgid;
 
 	$parser->stop;
-	$self->log(PROGRESS => 'Loaded delayed body.');
+	trace "Loaded delayed body for $msgid";
 	$self->storeBody($newbody->contentInfoFrom($head));
 }
 
@@ -250,12 +244,12 @@ message is printed to the file.  If the $filename already exists for
 this message, nothing is done.  In any case, the new $filename is set
 as well.
 
-=error Cannot write message to $filename: $!
+=fault cannot write message to $file: $!
 When a modified or new message is written to disk, it is first written
 to a temporary file in the folder directory.  For some reason, it is
 impossible to create this file.
 
-=error Failed to move $new to $filename: $!
+=fault failed to rename file $from to $to: $!
 When a modified or new message is written to disk, it is first written
 to a temporary file in the folder directory.  Then, the new file is
 moved to replace the existing file.  Apparently, the latter fails.
@@ -272,20 +266,15 @@ sub create($)
 
 	my $new = $filename . '.new';
 	open my $newfh, '>:raw', $new
-		or $self->log(ERROR => "Cannot write message to $new: $!"), return;
+		or fault __x"cannot write message to {file}", file => $new;
 
 	$self->write($newfh);
 	$newfh->close;
 
-	# Accept the new data
-# maildir produces warning where not expected...
-#   $self->log(WARNING => "Failed to remove $old: $!")
-#       if $old && !unlink $old;
-
 	unlink $old if $old;
 
 	move $new, $filename
-		or $self->log(ERROR => "Failed to move $new to $filename: $!"), return;
+		or error __x"failed to rename file {from} to {to}", from => $new, to => $filename;
 
 	$self->modified(0);
 

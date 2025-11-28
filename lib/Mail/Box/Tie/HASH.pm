@@ -9,7 +9,7 @@ use parent 'Mail::Box::Tie';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
 
 #--------------------
 =chapter NAME
@@ -90,13 +90,14 @@ folder type which is at stake.  The added instance is returned.
   $inbox{ (undef) } = $msg;
   $inbox{undef} = $msg;
 
+=warning use undef as key, because the message-id of the message is used.
 =cut
 
 sub STORE($$)
 {	my ($self, $key, $basicmsg) = @_;
 
-	carp "Use undef as key, because the message-id of the message is used."
-		if defined $key && $key ne 'undef';
+	! defined $key || $key eq 'undef'
+		or warning __x"use undef as key, because the message-id of the message is used.";
 
 	$self->folder->addMessages($basicmsg);
 }
@@ -107,8 +108,6 @@ See M<NEXTKEY()>.
 
 sub FIRSTKEY()
 {	my $self   = shift;
-	my $folder = $self->folder;
-
 	$self->{MBT_each_index} = 0;
 	$self->NEXTKEY();
 }

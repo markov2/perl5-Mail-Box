@@ -9,8 +9,9 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Message::Head::Subset ();
-use Carp;
 
 #--------------------
 =chapter NAME
@@ -62,6 +63,8 @@ Mail::Message::Head::Subset.
 =option  head_wrap $nrchars
 =default head_wrap 72
 The preferred maximum number of characters in each header line.
+
+=error MH index requires a filename.
 =cut
 
 sub init($)
@@ -69,7 +72,7 @@ sub init($)
 	$self->SUPER::init($args);
 
 	$self->{MBMI_filename}  = $args->{filename}
-		or croak "No index filename specified.";
+		or error __x"MH index requires a filename.";
 
 	$self->{MBMI_head_wrap} = $args->{head_wrap} || 72;
 	$self->{MBMI_head_type} = $args->{head_type} || 'Mail::Message::Head::Subset';

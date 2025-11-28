@@ -9,6 +9,8 @@ use parent 'Mail::Message::Head';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Object::Realize::Later
 	becomes        => 'Mail::Message::Head::Complete',
 	realize        => 'load',
@@ -40,12 +42,12 @@ by a Mail::Message::Head when someone accesses the header of a message.
 =c_method build $fields
 You cannot create a delayed header with fields.
 
-=error Cannot build() a delayed header.
+=error cannot build() a delayed header.
 A delayed message header cannot contain any information, so cannot be
 build.  You can construct complete or subset headers.
 =cut
 
-sub build(@) { $_[0]->log(ERROR => "Cannot build() a delayed header.") }
+sub build(@) { error __x"cannot build() a delayed header." }
 
 sub init($$)
 {	my ($self, $args) = @_;
@@ -61,7 +63,7 @@ sub init($$)
 
 sub modified(;$)
 {	return 0 if @_==1 || !$_[1];
-	shift->forceRealize->modified(1);
+	$_[0]->forceRealize->modified(1);
 }
 
 sub isDelayed()  { 1 }
@@ -115,6 +117,12 @@ sub read($)
 }
 
 sub load() { $_[0] = $_[0]->message->loadHead }
-sub setNoRealize($) { $_[0]->log(INTERNAL => "Setting field on a delayed?") }
+
+=method setNoRealize $field
+Not possible.
+=error attempt to set field on a delayed header.
+=cut
+
+sub setNoRealize($) { error __x"attempt to set field on a delayed header." }
 
 1;

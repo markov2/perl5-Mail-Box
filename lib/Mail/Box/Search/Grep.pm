@@ -9,7 +9,7 @@ use parent 'Mail::Box::Search';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
 
 #--------------------
 =chapter NAME
@@ -105,9 +105,9 @@ tell the matching line in the body.
 Be warned that when you search in C<MESSAGE> the code must accept
 both formats.
 
-=error illegal field selector $take
-=error no match pattern specified
-=error illegal match pattern $match
+=error unsupported field selector '$take'.
+=error grep requires a match pattern.
+=error unsupported match pattern '$match'.
 =cut
 
 sub init($)
@@ -121,7 +121,7 @@ sub init($)
 	  : ref $deliver eq 'CODE'  ? $deliver
 	  : $deliver eq 'PRINT'     ? sub { $_[0]->printMatch($_[1]) }
 	  : ref $deliver eq 'ARRAY' ? sub { push @$deliver, $_[1] }
-	  :   $deliver;
+	  :    $deliver;
 
 	$self->SUPER::init($args);
 
@@ -131,16 +131,16 @@ sub init($)
 	  : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
 	  :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
 	  :  ref $take eq 'CODE'   ? $take
-	  :    croak "illegal field selector $take";
+	  :     error __x"unsupported field selector '{take EL(30)}'.", take => $take;
 
 	my $match = $args->{match}
-		or croak "no match pattern specified";
+		or error __x"grep requires a match pattern.";
 
 	$self->{MBSG_match_check}
 	= !ref $match             ? sub { index("$_[1]", $match) >= $[ }
 	:  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match }
 	:  ref $match eq 'CODE'   ? $match
-	:    croak "illegal match pattern $match";
+	:     error __x"unsupported match pattern '{match EL(30)}'.", match => $match;
 
 	$self;
 }

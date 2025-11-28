@@ -9,6 +9,8 @@ use parent 'Mail::Box';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::Dir::Message        ();
 use Mail::Message::Body::Lines     ();
 use Mail::Message::Body::File      ();
@@ -17,7 +19,6 @@ use Mail::Message::Body::Multipart ();
 use Mail::Message::Head            ();
 use Mail::Message::Head::Delayed   ();
 
-use Carp;
 use File::Spec::Functions           qw/rel2abs/;
 
 #--------------------
@@ -70,24 +71,23 @@ The folder $directory does already exist and is write protected, which may
 interfere with the requested write access.  Change new(access) or the
 permissions on the directory.
 
-=warning No directory $name for folder of $class
-=warning Folder directory $directory is write-protected
+=error no directory $dir for folder of $type.
+=warning folder directory $dir is write-protected
 =cut
 
 sub init($)
 {	my ($self, $args)    = @_;
 
 	$args->{body_type} //= sub { 'Mail::Message::Body::Lines' };
-	$self->SUPER::init($args) or return undef;
+	$self->SUPER::init($args);
 
 	my $class     = ref $self;
 	my $directory = $self->{MBD_directory} = $args->{directory} || $self->directory;
 
 		if(-d $directory) {;}
-	elsif($args->{create} && $class->create($directory, %$args)) {;}
+	elsif($args->{create} && $class->create($directory, %$args)) { ;}
 	else
-	{	$self->log(WARNING => "No directory $directory for folder of $class");
-		return undef;
+	{	error __x"no directory {dir} for folder of type.", dir => $directory, type => $class;
 	}
 
 	# About locking
@@ -98,7 +98,7 @@ sub init($)
 	# Check if we can write to the folder, if we need to.
 
 	if($self->writable && -e $directory && ! -w $directory)
-	{	$self->log(WARNING => "Folder directory $directory is write-protected.");
+	{	warning __x"folder directory {dir} is write-protected.", dir => $directory;
 		$self->access('r');
 	}
 

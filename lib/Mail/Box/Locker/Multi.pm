@@ -9,8 +9,9 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
-use Carp;
-use Scalar::Util   qw/blessed/;
+use Log::Report      'mail-box';
+
+use Scalar::Util     qw/blessed/;
 
 #--------------------
 =chapter NAME
@@ -72,7 +73,7 @@ sub init($)
 			next;
 		}
 
-		my $locker = eval {	Mail::Box::Locker->new(%$args, method => $method, timeout => 1) };
+		my $locker = try { Mail::Box::Locker->new(%$args, method => $method, timeout => 1) };
 		defined $locker or next;
 
 		push @lockers, $locker;
@@ -80,7 +81,7 @@ sub init($)
 	}
 
 	$self->{MBLM_lockers} = \@lockers;
-	$self->log(PROGRESS => "Multi-locking via @used.");
+	trace "Multi-locking via @used.";
 	$self;
 }
 

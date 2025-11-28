@@ -9,6 +9,8 @@ use parent 'Mail::Box';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::Net::Message        ();
 use Mail::Message::Body::Lines     ();
 use Mail::Message::Body::File      ();
@@ -16,8 +18,6 @@ use Mail::Message::Body::Delayed   ();
 use Mail::Message::Body::Multipart ();
 use Mail::Message::Head            ();
 use Mail::Message::Head::Delayed   ();
-
-use Carp;
 
 #--------------------
 =chapter NAME
@@ -69,6 +69,7 @@ The username which is to be used for the remote server.
 =default server_port undef
 Port $number in use by the server application.
 
+=warning the term 'hostname' is confusing wrt folder. You probably need 'server_name'.
 =cut
 
 sub init($)
@@ -107,7 +108,7 @@ sub init($)
 	$self->{MBN_password} = $args->{password}     || $pwd;
 
 	! exists $args->{hostname}
-		or $self->log(WARNING => "The term 'hostname' is confusing wrt folder. You probably need 'server_name'");
+		or warning __x"the term 'hostname' is confusing wrt folder. You probably need 'server_name'.";
 
 	$self;
 }

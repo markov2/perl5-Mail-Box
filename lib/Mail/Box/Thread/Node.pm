@@ -9,7 +9,8 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
+
 use List::Util  qw/first/;
 
 #--------------------
@@ -57,6 +58,7 @@ specify it when you don't have the message yet.
 Indicates the $class name of dummy messages. Dummy messages are
 placeholders in a Mail::Box::Thread::Manager data structure.
 
+=error thread node needs a message object or msgid.
 =cut
 
 sub new(@)
@@ -75,7 +77,7 @@ sub init($)
 	{	$self->{MBTN_msgid} = $msgid;
 	}
 	else
-	{	croak "Need to specify message or message-id";
+	{	error __x"thread node needs a message object or msgid.";
 	}
 
 	$self->{MBTN_dummy_type} = $args->{dummy_type};
@@ -204,12 +206,10 @@ related. Values for the STRING may be:
 =over 4
 
 =item * C<'REPLY'>
-
 This relation was directly derived from an `in-reply-to' message header
 field. The relation has a high confidence.
 
 =item * C<'REFERENCE'>
-
 This relation is based on information found in a `Reference' message
 header field.  One message may reference a list of messages which
 precede it in the thread. The heuristic attempts to determine
@@ -217,7 +217,6 @@ relationships between messages assuming that the references are in order.
 This relation has a lower confidence.
 
 =item * C<'GUESS'>
-
 The relation is a big guess, with low confidence.  It may be based on
 a subject which seems to be related, or commonalities in the message's
 body.
@@ -298,7 +297,7 @@ be duplicated.
 
 sub followedBy(@)
 {	my $self = shift;
-	$self->{MBTN_followUps}{$_->messageId} = $_ foreach @_;
+	$self->{MBTN_followUps}{$_->messageId} = $_ for @_;
 	$self;
 }
 
@@ -374,7 +373,7 @@ presents a folded thread with three messages.
 
 sub threadToString(;$$$)   # two undocumented parameters for layout args
 {	my $self    = shift;
-	my $code    = shift || sub {shift->head->study('subject')};
+	my $code    = shift || sub { $_[0]->head->study('subject') };
 	my ($first, $other) = (shift || '', shift || '');
 	my $message = $self->message;
 	my @follows = $self->sortedFollowUps;

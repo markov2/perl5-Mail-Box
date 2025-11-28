@@ -9,7 +9,7 @@ use parent 'Mail::Box::Message';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
 
 #--------------------
 =chapter NAME
@@ -40,18 +40,14 @@ be deleted.
 You cannot instantiate a destructed message object.  Destruction is
 done by calling M<Mail::Box::Message::destruct()>.
 
-=error You cannot instantiate a destructed message
+=error you cannot instantiate a destructed message.
 You cannot instantiate a destructed message object directly.  Destruction
 is done by calling M<Mail::Box::Message::destruct()> on any existing
 folder message.
 
 =cut
 
-sub new(@)
-{	my $class = shift;
-	$class->log(ERROR => 'You cannot instantiate a destructed message');
-	undef;
-}
+sub new(@) { error __x"you cannot instantiate a destructed message." }
 
 sub isDummy()    { 1 }
 
@@ -66,13 +62,14 @@ forcefully by means of M<Mail::Box::Message::destruct()>.  Apparently,
 your program still tries to get to the header or body data after this
 destruction, which is not possible.
 
+=error you cannot take the head of a destructed message.
+=error you cannot set the head on a destructed message.
 =cut
 
 sub head(;$)
 {	my ($self, $head) = @_;
-	return undef if @_ && !defined(shift);
-
-	$self->log(ERROR => "You cannot take the head of a destructed message");
+	@_==1 and error __x"you cannot take the head of a destructed message.";
+	defined $head and error __x"you cannot set the head on a destructed message.";
 	undef;
 }
 
@@ -80,13 +77,15 @@ sub head(;$)
 When undef is specified for $body, no change has to take place and
 the method returns silently.  In all other cases, this method will
 complain that the body data has been removed.
+
+=error you cannot take the body of a destructed message.
+=error you cannot set the body on a destructed message.
 =cut
 
 sub body(;$)
-{	my $self = shift;
-	return undef if @_ && !defined(shift);
-
-	$self->log(ERROR => "You cannot take the body of a destructed message");
+{	my ($self, $body) = @_;
+	@_==1 and error __x"you cannot take the body of a destructed message.";
+	defined $body and error __x"you cannot set the body on a destructed message.";
 	undef;
 }
 
@@ -102,18 +101,17 @@ Coerce a Mail::Box::Message into destruction.
   Mail::Box::Message::Destructed->coerce($msg);
   $msg->destruct;                 # same
 
-=error Cannot coerce a (class) into destruction
+=error you cannot coerce a $class into destruction.
 Only real Mail::Box::Message objects can get destructed into
 Mail::Box::Message::Destructed objects.  Mail::Message free
 their memory immediately when the last reference is lost.
-
 =cut
 
 sub coerce($)
 {	my ($class, $message) = @_;
 
 	$message->isa('Mail::Box::Message')
-		or $class->log(ERROR=>"Cannot coerce a ",ref($message), " into destruction"), return ();
+		or error __x"you cannot coerce a {class} into destruction.", class => ref $message;
 
 	$message->body(undef);
 	$message->head(undef);
@@ -122,11 +120,15 @@ sub coerce($)
 	bless $message, $class;
 }
 
+=method modified [$flag]
+=error you cannot set the modified flag on a destructed message.
+=cut
+
 sub modified(;$)
 {	my $self = shift;
 
 	! @_ || ! $_[0]
-		or $self->log(ERROR => 'Do not set the modified flag on a destructed message');
+		or error __x"you cannot set the modified flag on a destructed message.";
 
 	0;
 }
@@ -136,13 +138,13 @@ sub isModified() { 0 }
 =method label $label|PAIRS
 It is possible to delete a destructed message, but not to undelete it.
 
-=error Destructed message has no labels except 'deleted'
+=error destructed message has no labels except 'deleted', requested is $label.
+=error destructed message has no labels except 'deleted', trying to set @labels.
 
-=error Destructed messages can not be undeleted
+=error destructed message can not be undeleted
 Once a message is destructed, it can not be revived.  Destruction is an
 optimization in memory usage: if you need an undelete functionality, then
 you can not use M<Mail::Box::Message::destruct()>.
-
 =cut
 
 sub label($;@)
@@ -152,16 +154,15 @@ sub label($;@)
 	{	my $label = shift;
 		return $self->SUPER::label('deleted') if $label eq 'deleted';
 
-		$self->log(ERROR => "Destructed message has no labels except 'deleted', requested is $label");
-		return 0;
+		error __x"destructed message has no labels except 'deleted', requested is {label}.", label => $label;
 	}
 
 	my %flags = @_;
 	keys %flags==1 && exists $flags{deleted}
-		or $self->log(ERROR => "Destructed message has no labels except 'deleted', trying to set @{[ keys %flags ]}"), return 0;
+		or error __x"destructed message has no labels except 'deleted', trying to set {labels}.", labels => [keys %flags];
 
 	$flags{deleted}
-		or $self->log(ERROR => "Destructed messages can not be undeleted"), return 0;
+		or error __x"destructed message can not be undeleted.";
 
 	1;
 }

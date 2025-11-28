@@ -9,13 +9,14 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::Message     ();
 use Mail::Box::Locker      ();
 
 use Scalar::Util           qw/weaken/;
 use List::Util             qw/sum first/;
 use Devel::GlobalDestruction 'in_global_destruction';
-use Carp;
 
 #--------------------
 =chapter NAME
@@ -382,10 +383,9 @@ added to the body of the message.  With this flag set, the erroneous line
 is added to the previous header field and parsing is continued.
 See M<Mail::Box::Parser::Perl::new(fix_header_errors)>.
 
-=error No folder name specified.
+=error no folder name specified.
 You did not specify the name of a folder to be opened.  Use the
 M<new(folder)> option or set the C<MAIL> environment variable.
-
 =cut
 
 sub new(@)
@@ -394,15 +394,16 @@ sub new(@)
 	if($class eq __PACKAGE__)
 	{	my $package = __PACKAGE__;
 
-		croak <<USAGE;
+		print STDERR <<USAGE;
 You should not instantiate $package directly, but rather one of the
 sub-classes, such as Mail::Box::Mbox.  If you need automatic folder
 type detection then use Mail::Box::Manager.
 USAGE
+		exit 1;
 	}
 
 	weaken $args{manager};   # otherwise, the manager object may live too long
-	my $self = $class->SUPER::new(%args, init_options => \%args) or return;
+	my $self = $class->SUPER::new(%args, init_options => \%args);
 
 	$self->read or return
 		if $self->{MB_access} =~ /r|a/;
@@ -412,11 +413,11 @@ USAGE
 
 sub init($)
 {	my ($self, $args) = @_;
-	defined $self->SUPER::init($args) or return;
+	$self->SUPER::init($args);
 
 	my $class      = ref $self;
 	my $foldername = $args->{folder} || $ENV{MAIL}
-		or $self->log(ERROR => "No folder name specified."), return;
+		or error __x"no folder name specified.";
 
 	$self->{MB_foldername}   = $foldername;
 	$self->{MB_init_options} = $args->{init_options};
@@ -469,7 +470,6 @@ sub init($)
 		timeout  => $args->{lock_timeout},
 		expires  => $args->{lock_wait},
 		file     => ($args->{lockfile} || $args->{lock_file}),
-		$self->logSettings,
 	);
 
 	$self;
@@ -615,6 +615,7 @@ of the folders.... but maybe not, depending on the folder types involved.
   $folder->addMessage($msg);
   $folder->addMessages($msg1, $msg2, ...);
 
+=error you cannot add a message which is already part of a folder to a new one.  Please use moveTo or copyTo.
 =cut
 
 sub addMessage($@)
@@ -622,10 +623,8 @@ sub addMessage($@)
 	my $message = shift or return $self;
 	my %args    = @_;
 
-	confess <<ERROR if $message->can('folder') && defined $message->folder;
-You cannot add a message which is already part of a folder to a new
-one.  Please use moveTo or copyTo.
-ERROR
+	$message->can('folder') && defined $message->folder
+		and error __x"you cannot add a message which is already part of a folder to a new one.  Please use moveTo or copyTo.";
 
 	# Force the message into the right folder-type.
 	my $coerced = $self->coerce($message);
@@ -702,20 +701,15 @@ folder types do support it by creating a hardlink (on UNIX/Linux).
   $imap->copyTo($mh, delete_copied => 1);
   $mh->close; $imap->close;
 
-=error Destination folder $name is not writable.
+=error destination folder $name is not writable.
 The folder where the messages are copied to is not opened with write
 access (see M<new(access)>).  This has no relation with write permission
 to the folder which is controlled by your operating system.
 
-=error Copying failed for one message.
-For some reason, for instance disc full, removed by external process, or
+=error copying failed for one message.
+For some reason, for instance disk full, removed by external process, or
 read-protection, it is impossible to copy one of the messages.  Copying will
 proceed for the other messages.
-
-=error Unable to create subfolder $name of $folder.
-The copy includes the subfolders, but for some reason it was not possible
-to copy one of these.  Copying will proceed for all other sub-folders.
-
 =cut
 
 sub copyTo($@)
@@ -744,15 +738,15 @@ sub _copy_to($@)
 	my ($select, $flatten, $recurse, $delete, $share) = @options;
 
 	$to->writable
-		or $self->log(ERROR => "Destination folder $to is not writable."), return;
+		or error __x"destination folder {name} is not writable.", name => $to;
 
 	# Take messages from this folder.
 	my @select = $self->messages($select);
-	$self->log(PROGRESS => "Copying ".@select." messages from $self to $to.");
+	trace "Copying ".@select." messages from $self to $to.";
 
 	foreach my $msg (@select)
 	{	$msg->copyTo($to, share => $share)
-			or $self->log(ERROR => "Copying failed for one message.");
+			or error __x"copying failed for one message.";
 
 		$msg->label(deleted => 1) if $delete;
 	}
@@ -764,8 +758,7 @@ sub _copy_to($@)
 
   SUBFOLDER:
 	foreach my $subf ($self->listSubFolders(check => 1))
-	{	my $subfolder = $self->openSubFolder($subf, access => 'r')
-			or $self->log(ERROR => "Unable to open subfolder $subf"), next;
+	{	my $subfolder = $self->openSubFolder($subf, access => 'r');
 
 		if($flatten)   # flatten
 		{	unless($subfolder->_copy_to($to, @options))
@@ -774,9 +767,7 @@ sub _copy_to($@)
 			}
 		}
 		else           # recurse
-		{	my $subto = $to->openSubFolder($subf, create => 1, access => 'rw')
-				or $self->log(ERROR => "Unable to create subfolder $subf of $to"), next SUBFOLDER;
-
+		{	my $subto = $to->openSubFolder($subf, create => 1, access => 'rw');
 			unless($subfolder->_copy_to($subto, @options))
 			{	$subfolder->close;
 				$subto->close;
@@ -834,7 +825,9 @@ the folder may remove the messages for real.  See M<write(save_deleted)>.
   $f->close
       or die "Couldn't write $f: $!\n";
 
-=warning Changes not written to read-only folder $self.
+=error unknown value to folder->close(write => $when).
+
+=warning changes not written to read-only folder $name.
 You have opened the folder read-only --which is the default set
 by M<new(access)>--, made modifications, and now want to close it.
 Set M<close(force)> if you want to overrule the access mode, or close
@@ -858,11 +851,11 @@ sub close(@)
 	  = $when eq 'MODIFIED' ? $self->isModified
 	  : $when eq 'ALWAYS'   ? 1
 	  : $when eq 'NEVER'    ? 0
-	  :   croak "Unknown value to folder->close(write => $when).";
+	  :    error __x"unknown value to folder->close(write => {when}).", when => $when;
 
 	my $locker = $self->locker;
 	if($write && !$force && !$self->writable)
-	{	$self->log(WARNING => "Changes not written to read-only folder $self; suggestion: \$folder->close(write => 'NEVER')");
+	{	warning __x"changes not written to read-only folder {name}; suggestion: \$folder->close(write => 'NEVER')", name => $self->name;
 		$locker->unlock if $locker;
 		$self->{MB_messages} = [];    # Boom!
 		return 0;
@@ -897,7 +890,7 @@ data if the system crashes or if there are software problems.
   my $folder = Mail::Box::Mbox->new(folder => 'INBOX', access => 'd');
   $folder->delete;
 
-=error Folder $name not deleted: not writable.
+=warning folder $name not deleted: not writable.
 The folder must be opened with write access via M<new(access)>, otherwise
 removing it will be refused.  So, you may have write-access according to
 the operating system, but that will not automatically mean that this
@@ -911,7 +904,7 @@ sub delete(@)
 
 	# Extra protection: do not remove read-only folders.
 	unless($self->writable)
-	{	$self->log(ERROR => "Folder $self not deleted: not writable.");
+	{	warning __x"folder {name} not deleted: not writable.", name => $self->name;
 		$self->close(write => 'NEVER');
 		return;
 	}
@@ -1079,13 +1072,13 @@ info around the angles will be removed too.
   my $msg = $folder->messageId('complex-message.id');
   my $msg = $folder->messageId('garbage <complex-message.id> trash');
 
-=warning Message-id '$msgid' does not contain a domain.
+=warning message-id '$msgid' does not contain a domain.
 According to the RFCs, message-ids need to contain a unique random part,
 then an C<@>, and then a domain name.  This is made to avoid the creation
 of two messages with the same id.  The warning emerges when the C<@> is
 missing from the string.
 
-=warning Different messages with id $msgid
+=warning different messages with id $msgid.
 The message id is discovered more than once within the same folder, but the
 content of the message seems to be different.  This should not be possible:
 each message must be unique.
@@ -1099,7 +1092,7 @@ sub messageId($;$)
 	{	$msgid = $1 =~ s/\s//grs;
 
 		index($msgid, '@') >= 0
-			or $self->log(WARNING => "Message-id '$msgid' does not contain a domain.");
+			or warning __x"message-id '{msgid}' does not contain a domain.", msgid => $msgid;
 	}
 
 	@_ or return $self->{MB_msgid}{$msgid};
@@ -1127,7 +1120,7 @@ sub messageId($;$)
 		return $message->label(deleted => 1)
 			if $subj1 eq $subj2 && $to1 eq $to2;
 
-		$self->log(WARNING => "Different messages with id $msgid");
+		warning __x"different messages with id {msgid}.", msgid => $msgid;
 		$msgid = $message->takeMessageId(undef);
 	}
 
@@ -1263,7 +1256,7 @@ to be read.  See their respective manual pages.
 
 =cut
 
-sub messageIds()    { map $_->messageId,  $_[0]->messages }
+sub messageIds()    { map $_->messageId, $_[0]->messages }
 sub allMessageIds() { $_[0]->messageIds }  # compatibility
 sub allMessageIDs() { $_[0]->messageIds }  # compatibility
 
@@ -1556,11 +1549,7 @@ sub read(@)
 		@_
 	) or return;
 
-	if($self->{MB_modified})
-	{	$self->log(INTERNAL => "Modified $self->{MB_modified}");
-		$self->{MB_modified} = 0;  #after reading, no changes found yet.
-	}
-
+	$self->{MB_modified} and panic "Modified $self->{MB_modified}";
 	$self;
 }
 
@@ -1592,19 +1581,13 @@ the folder may remove the messages for real.  See M<close(save_deleted)>.
 =error Folder $name is opened read-only
 You can not write to this folder unless you have opened the folder to
 write or append with M<new(access)>, or the P<force> option is set true.
-
-=error Writing folder $name failed
-For some reason (you probably got more error messages about this problem)
-it is impossible to write the folder, although you should because there
-were changes made.
-
 =cut
 
 sub write(@)
 {	my ($self, %args) = @_;
 
 	$args{force} || $self->writable
-		or $self->log(ERROR => "Folder $self is opened read-only."), return;
+		or error __x"folder {name} is opened read-only.", name => $self->name;
 
 	my (@keep, @destroy);
 	if($args{save_deleted})
@@ -1621,12 +1604,10 @@ sub write(@)
 	}
 
 	@destroy || $self->isModified
-		or $self->log(PROGRESS => "Folder $self not changed, so not updated."), return $self;
+		or trace("Folder $self not changed, so not updated."), return $self;
 
 	$args{messages} = \@keep;
-	$self->writeMessages(\%args)
-		or $self->log(WARNING => "Writing folder $self failed."), return undef;
-
+	$self->writeMessages(\%args);
 	$self->modified(0);
 	$self->{MB_messages} = \@keep;
 	$self;
@@ -1830,7 +1811,7 @@ Parameter $time is a string, which starts with a float, and then one of the
 words 'hour', 'hours', 'day', 'days', 'week', or 'weeks'.  For instance:
 '1 hour' or '4 weeks'.
 
-=error Invalid timespan '$timespan' specified.
+=error invalid timespan '$span'.
 The string does not follow the strict rules of the time span syntax which
 is permitted as parameter.
 =cut
@@ -1838,7 +1819,7 @@ is permitted as parameter.
 sub timespan2seconds($)
 {
 	$_[1] =~ /^\s*(\d+\.?\d*|\.\d+)\s*(hour|day|week)s?\s*$/
-		or $_[0]->log(ERROR => "Invalid timespan '$_[1]' specified."), return undef;
+		or error(__x"invalid timespan '{span}'.", span => $_[1]), return undef;
 
 	  $2 eq 'hour' ? $1 * 3600
 	: $2 eq 'day'  ? $1 * 86400

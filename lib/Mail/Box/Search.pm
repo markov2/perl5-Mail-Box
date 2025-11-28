@@ -9,7 +9,7 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
 
 #--------------------
 =chapter NAME
@@ -127,18 +127,18 @@ problems handling details received from the search.  When this flag
 is turned off, the body of multiparts will be ignored.  The parts
 search will include the preamble and epilogue.
 
-=error Search in BODY, HEAD or MESSAGE not $in.
-The P<in> option defines only three names.
+=error search in BODY, HEAD or MESSAGE not '$source'.
+The P<in> option offers only three alternatives.
 
-=error Cannot search in header.
+=error cannot search in header.
 The search object does not implement M<inHead()>, and can therefore
 not search a message header.
 
-=error Cannot search in body.
+=error cannot search in body.
 The search object does not implement M<inBody()>, and can therefore
 not search a message body.
 
-=error Don't know how to deliver via results in $way.
+=error don't know how to deliver results in '$way'."
 The search results cannot be delivered in the specific way, because that is
 not a defined alternative.
 
@@ -154,20 +154,17 @@ sub init($)
 	  = $in eq 'BODY'    ? (0,1)
 	  : $in eq 'HEAD'    ? (1,0)
 	  : $in eq 'MESSAGE' ? (1,1)
-	  :    ($self->log(ERROR => "Search in BODY, HEAD or MESSAGE not $in."), return);
+	  :    error __x"search in BODY, HEAD or MESSAGE not '{source EL(30)}'.", source => ref $in // $in;
 
-	! $self->{MBS_check_head} || $self->can('inHead')
-		or $self->log(ERROR => "Cannot search in header."), return;
-
-	! $self->{MBS_check_body} || $self->can('inBody')
-		or $self->log(ERROR => "Cannot search in body."), return;
+	! $self->{MBS_check_head} || $self->can('inHead') or error __x"cannot search in header.";
+	! $self->{MBS_check_body} || $self->can('inBody') or error __x"cannot search in body.";
 
 	my $deliver             = $args->{deliver};
 	$self->{MBS_deliver}
 	  = ref $deliver eq 'CODE' ? sub { $deliver->($self, $_[0]) }
 	  : !defined $deliver      ? undef
 	  : $deliver eq 'DELETE'   ? sub { $_[0]->{part}->toplevel->label(deleted => 1) }
-	  :    $self->log(ERROR => "Don't know how to deliver results in $deliver.");
+	  :    error __x"don't know how to deliver results in '{way EL(30)}'.", way => ref $deliver // $deliver;
 
 	my $logic               = $args->{logical}  || 'REPLACE';
 	$self->{MBS_negative}   = $logic =~ s/\s*NOT\s*$//;
@@ -227,6 +224,7 @@ or C<1>, or when the search in done in scalar context.
   my $thread  = $message->threadStart;
   $grep->search($thread);
 
+=error expect messages to search, not '$got'.
 =cut
 
 sub search(@)
@@ -240,7 +238,7 @@ sub search(@)
 	  : $object->isa('Mail::Box')     ? $object->messages
 	  : $object->isa('Mail::Message') ? ($object)
 	  : $object->isa('Mail::Box::Thread::Node') ? $object->threadMessages
-	  :   croak "Expect messages to search, not $object.";
+	  :   error __x"expect messages to search, not '{got EL(30)}'.", got => ref $object // $object;
 
 	my $take = 0;
 	   if($limit < 0) { $take = -$limit; @messages = reverse @messages }
@@ -261,7 +259,7 @@ sub search(@)
 		  =  $set && $logic eq 'OR'  ? 1
 		  : !$set && $logic eq 'AND' ? 0
 		  : $self->{MBS_negative}    ? ! $self->searchPart($message)
-		  :   $self->searchPart($message);
+		  :    $self->searchPart($message);
 
 		$message->label($label => $selected) if defined $label;
 		if($selected)

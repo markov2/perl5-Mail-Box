@@ -9,8 +9,9 @@ use parent 'Mail::Box::Manager';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::Collection     ();
-use Carp                      qw/croak/;
 
 #--------------------
 =chapter NAME
@@ -71,15 +72,16 @@ Subfolders grouped together.
 The separator used in folder names.  This doesn't need to be the
 same as your directory system is using.
 
+=error user manager requires an identity.
 =cut
 
 sub init($)
 {	my ($self, $args) = @_;
 
-	$self->SUPER::init($args) or return ();
+	$self->SUPER::init($args);
 
-	my $identity = $self->{MBMU_id} = $args->{identity};
-	defined $identity or die;
+	my $identity = $self->{MBMU_id} = $args->{identity}
+		or error __x"user manager requires an identity.";
 
 	my $top     = $args->{folder_id_type}  // 'Mail::Box::Identity';
 	my $coltype = $args->{collection_type} // 'Mail::Box::Collection';
@@ -155,6 +157,8 @@ sub folder($)
 =method folderCollection $name
 Returns a pair: the folder collection (Mail::Box::Collection) and
 the base name of $name.
+
+=error folder $name not under top.
 =cut
 
 sub folderCollection($)
@@ -163,7 +167,7 @@ sub folderCollection($)
 
 	my @path = split $self->delimiter, $name;
 	shift @path eq $top->name
-		or $self->log(ERROR => "Folder name $name not under top."), return ();
+		or error __x"folder {name} not under top.", name => $name;
 
 	my $base = pop @path;
 	($top->folder(@path), $base);
@@ -199,9 +203,11 @@ The folder starts as deleted.
 When this option is false, the pysical folder will not be created, but
 only the administration is updated.
 
-=error Cannot create $name: higher levels missing
+=error cannot create folder $name: higher levels missing.
 Unless you set M<create(create_supers)>, all higher level folders must
 exist before this new one can be created.
+
+=error folder $name already exists.
 =cut
 
 # This feature is thoroughly tested in the Mail::Box::Netzwert distribution
@@ -212,12 +218,10 @@ sub create($@)
 
 	unless(defined $dir)
 	{	$args{create_supers}
-			or $self->log(ERROR => "Cannot create $name: higher levels missing"), return undef;
+			or error __x"cannot create folder {name}: higher levels missing.", name => $name;
 
 		my $delim = $self->delimiter;
-		my $upper = $name =~ s!$delim$base!!r
-			or die "$name - $base";
-
+		my $upper = $name =~ s!$delim$base!!r or panic "$name - $base";
 		$dir = $self->create($upper, %args, deleted => 1);
 	}
 
@@ -236,14 +240,11 @@ sub create($@)
 	}
 	else
 	{	# Bumped into existing folder
-		$self->log(ERROR => "Folder $name already exists");
-		return undef;
+		error __x"folder {name} already exists.", name => $name;
 	}
 
-	if(!defined $args{create_real} || $args{create_real})
-	{	$self->defaultFolderType->create($id->location, %args)
-			or return undef;
-	}
+	$self->defaultFolderType->create($id->location, %args)
+		if ! exists $args{create_real} || $args{create_real};
 
 	$id;
 }
@@ -261,13 +262,12 @@ required details.
 =example how to delete a folder
   print "no xyz (anymore)\n" if $user->delete('xyz');
 
-=error Unable to remove folder $dir
 =cut
 
 sub delete($)
 {	my ($self, $name) = @_;
-	my $id = $self->folder($name) or return ();
-	$id->remove;
+	my $folder = $self->folder($name) or return ();
+	$folder->remove;
 	$self->SUPER::delete($name);
 }
 
@@ -280,7 +280,8 @@ pathnames.
 When you rename a folder to a place where upper hierarchy levels are
 missing, they will get be defined, but with the deleted flag set.
 
-=error Cannot rename $name to $new: higher levels missing
+=error source folder for rename does not exist: $from to $to.
+=error cannot rename folder $from to $to: higher levels are missing.
 Unless you set M<create(create_supers)>, all higher level folders must
 exist before this new one can be created.
 =cut
@@ -289,18 +290,16 @@ sub rename($$@)
 {	my ($self, $oldname, $newname, %args) = @_;
 
 	my $old     = $self->folder($oldname)
-		or $self->log(WARNING => "Source for rename does not exist: $oldname to $newname"), return ();
+		or error __x"source folder for rename does not exist: {from} to {to}.", from => $oldname, to => $newname;
 
 	my ($newdir, $base) = $self->folderCollection($newname);
 	unless(defined $newdir)
 	{	$args{create_supers}
-			or $self->log(ERROR => "Cannot rename $oldname to $newname: higher levels missing"), return ();
+			or error __x"cannot rename folder {from} to {to}: higher levels are missing.", from => $oldname, to => $newname;
 
 		my $delim = $self->delimiter;
-		my $upper = $newname =~ s!$delim$base!!r
-			or die "$newname - $base";
-
-		$newdir = $self->create($upper, %args, deleted => 1);
+		my $upper = $newname =~ s!$delim$base!!r or panic "$newname - $base";
+		$newdir   = $self->create($upper, %args, deleted => 1);
 	}
 
 	my $oldlocation = $old->location;
@@ -308,10 +307,10 @@ sub rename($$@)
 
 	my $newlocation = $new->location;
 	$oldlocation eq $newlocation
-		or croak "Physical folder relocation not yet implemented";
+		or panic "Physical folder relocation not yet implemented";  #XXX
 		# this needs a $old->rename(xx,yy) which isn't implemented yet
 
-	$self->log(PROGRESS => "Renamed folder $oldname to $newname");
+	trace "renamed folder $oldname to $newname";
 	$new;
 }
 

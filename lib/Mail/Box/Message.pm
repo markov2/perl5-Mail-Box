@@ -9,6 +9,8 @@ use parent 'Mail::Message';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Scalar::Util  qw/weaken/;
 
 use Mail::Box::Message::Destructed  ();

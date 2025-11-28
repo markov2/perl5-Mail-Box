@@ -9,13 +9,14 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Object::Realize::Later
 	becomes          => 'Mail::Message::Body',
 	realize          => 'load',
 	warn_realization => 0,
 	believe_caller   => 1;
 
-use Carp;
 use Scalar::Util     qw/weaken/;
 
 #--------------------
@@ -68,6 +69,7 @@ use overload
 =c_method new %options
 =requires  message MESSAGE
 The MESSAGE object which contains this delayed body.
+=error a message must be specified to a delayed body.
 =cut
 
 sub init($)
@@ -76,7 +78,7 @@ sub init($)
 
 	$self->{MMB_seqnr}    = -1;  # for overloaded body comparison
 	$self->{MMBD_message} = $args->{message}
-		or $self->log(INTERNAL => "A message must be specified to a delayed body.");
+		or error __x"a message must be specified to a delayed body.";
 
 	weaken($self->{MMBD_message});
 	$self;

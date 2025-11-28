@@ -4,12 +4,14 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Box::Manager;
-use base 'Mail::Reporter';
+use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
 
-use Mail::Box;
+use Log::Report  'mail-box';
+
+use Mail::Box    ();
 
 use List::Util   qw/first/;
 use Scalar::Util qw/weaken blessed/;
@@ -308,30 +310,30 @@ folder types, especially by POP and IMAP.
     type => 'pop3', username => 'myself', password => 'secret'
     server_name => 'pop3.server.com', server_port => '120');
 
-=error Illegal folder URL '$url'.
+=error illegal folder URL '$url'.
 The folder name was specified as URL, but not according to the syntax.
 See M<decodeFolderURL()> for an description of the syntax.
 
-=error No foldername specified to open.
+=error no foldername specified to open.
 M<open()> needs a folder name as first argument (before the list of options),
 or with the P<folder> option within the list.  If no name was found, the
 MAIL environment variable is checked.  When even that does not result in
 a usable folder, then this error is produced.  The error may be caused by
 an accidental odd-length option list.
 
-=warning Will never create a folder $name without having write access.
+=warning will never create a folder $name without having write access.
 You have set M<open(create)>, but only want to read the folder.  Create is
 only useful for folders which have write or append access modes
 (see M<Mail::Box::new(access)>).
 
-=warning Folder type $type is unknown, using autodetect.
+=warning folder type $type is unknown, using autodetect.
 The specified folder type (see M<open(type)>, possibly derived from
 the folder name when specified as url) is not known to the manager.
 This may mean that you forgot to require the Mail::Box extension
 which implements this folder type, but probably it is a typo.  Usually,
 the manager is able to figure-out which type to use by itself.
 
-=warning Folder does not exist, failed opening $type folder $name.
+=error folder $name does not exist, failed opening $type.
 The folder does not exist and creating is not permitted (see
 M<open(create)>) or did not succeed.  When you do not have sufficient
 access rights to the folder (for instance wrong password for POP3),
@@ -343,13 +345,14 @@ There will probably be another warning or error message which is related
 to this report and provides more details about its cause.  You may also
 have a look at M<new(autodetect)> and M<new(folder_types)>.
 
-=error Folder $name is already open.
+=error folder $name is already open.
 You cannot ask the manager for a folder which is already open. In some
 older releases (before MailBox 2.049), this was permitted, but then
 behaviour changed, because many nasty side-effects are to be expected.
 For instance, an M<Mail::Box::update()> on one folder handle would
 influence the second, probably unexpectedly.
 
+=error failed for folder default $class: $@
 =cut
 
 sub open(@)
@@ -364,7 +367,7 @@ sub open(@)
 	{	# Complicated folder URL
 		my %decoded = $self->decodeFolderURL($name);
 		keys %decoded
-			or $self->log(ERROR => "Illegal folder URL '$name'."), return;
+			or error __x"illegal folder URL '{name}'.", name => $name;
 
 		# accept decoded info
 		@args{keys %decoded} = values %decoded;
@@ -402,10 +405,8 @@ sub open(@)
 		$args{folderdir} = $name = "imap4s://$un\@$srv:$port";
 	}
 
-	unless(defined $name && length $name)
-	{	$self->log(ERROR => "No foldername specified to open.");
-		return undef;
-	}
+	defined $name && length $name
+		or error __x"no foldername specified to open.";
 
 	$args{folderdir} ||= $self->{MBM_folderdirs}->[0]
 		if $self->{MBM_folderdirs};
@@ -413,13 +414,13 @@ sub open(@)
 	$args{access} ||= 'r';
 
 	if($args{create} && $args{access} !~ m/w|a/)
-	{	$self->log(WARNING => "Will never create a folder $name without having write access.");
+	{	warning __x"will never create a folder {name} without having write access.", name => $name;
 		undef $args{create};
 	}
 
 	# Do not open twice.
 	my $folder = $self->isOpenFolder($name)
-		and $self->log(ERROR => "Folder $name is already open."), return undef;
+		and error __x"folder {name} is already open.", name => $name;
 
 	#
 	# Which folder type do we need?
@@ -439,7 +440,7 @@ sub open(@)
 		}
 
 		$folder_type
-			or $self->log(ERROR => "Folder type $type is unknown, using autodetect.");
+			or warning __x"folder type {type} is unknown, using autodetect.", $type => $type;
 	}
 
 	unless($folder_type)
@@ -486,7 +487,7 @@ sub open(@)
 	return if $require_failed{$class};
 	eval "require $class";
 	if($@)
-	{	$self->log(ERROR => "Failed for folder default $class: $@");
+	{	error __x"failed for folder default {class}: {errors}", class => $class, errors => $@;
 		$require_failed{$class}++;
 		return ();
 	}
@@ -495,11 +496,11 @@ sub open(@)
 	$folder = $class->new(@defaults, %args);
 	unless(defined $folder)
 	{	$args{access} eq 'd'
-			or $self->log(WARNING => "Folder does not exist, failed opening $folder_type folder $name.");
+			or error __x"folder {name} does not exist, failed opening {type}.", type => $folder_type, name => $name;
 		return;
 	}
 
-	$self->log(PROGRESS => "Opened folder $name ($folder_type).");
+	trace "Opened folder $name ($folder_type).";
 	push @{$self->{MBM_folders}}, $folder;
 	$folder;
 }
@@ -639,7 +640,6 @@ the default options for the detected folder type.
   $_->label(seen => 1) for @appended;
 
 =error Folder $name is not a Mail::Box; cannot add a message.
-
 The folder where the message should be appended to is an object which is
 not a folder type which extends Mail::Box.  Probably, it is not a folder
 at all.
@@ -675,11 +675,11 @@ sub appendMessages(@)
 	if(blessed $folder)
 	{	# An open file.
 		$folder->isa('Mail::Box')
-			or $self->log(ERROR => "Folder $folder is not a Mail::Box; cannot add a message.\n"), return ();
+			or error __x"folder {name} is not a Mail::Box; cannot add a message.", name => $folder;
 
 		foreach my $msg (@messages)
 		{	$msg->isa('Mail::Box::Message') && $msg->folder or next;
-			$self->log(WARNING => "Use moveMessage() or copyMessage() to move between open folders.");
+			warning __x"use moveMessage() or copyMessage() to move between open folders.";
 		}
 
 		return $folder->addMessages(@messages);
@@ -776,7 +776,7 @@ sub copyMessage(@)
 	while(@_ && blessed $_[0])
 	{	my $message = shift;
 		$message->isa('Mail::Box::Message')
-			or $self->log(ERROR => "Use appendMessage() to add messages which are not in a folder.");
+			or error __x"use appendMessage() to add messages which are not in a folder.";
 		push @messages, $message;
 	}
 
@@ -787,9 +787,9 @@ sub copyMessage(@)
 
 	# Try to resolve filenames into opened-files.
 	$folder   = $self->isOpenFolder($folder) || $folder
-		unless ref $folder;
+		unless blessed $folder;
 
-	unless(ref $folder)
+	unless(blessed $folder)
 	{	my @c = $self->appendMessages(@messages, %args, folder => $folder);
 		if($args{_delete})
 		{	$_->label(deleted => 1) for @messages;
@@ -852,11 +852,17 @@ All other %options are passed to M<Mail::Box::Thread::Manager::new()>.
 As alternative for positional parameters to select the @folders, you can also
 pass them via this named parameter.
 
+=option  threader_type CLASS
+=default threader_type Mail::Box::Thread::Manager
+
 =examples
   my $t2 = $mgr->discoverThreads($inbox);
   my $t3 = $mgr->discoverThreads($inbox, $send);
   my $t1 = $mgr->discoverThreads(folders => [ $inbox, $send ]);
 
+=error you need to pass a $base derived threader, got $class.
+=error unusable threader $class: $@
+=error threader $class is not derived from $base.
 =cut
 
 sub discoverThreads(@)
@@ -871,24 +877,20 @@ sub discoverThreads(@)
 	my $folders = delete $args{folder} || delete $args{folders};
 	push @folders, ( !$folders ? () : ref $folders eq 'ARRAY' ? @$folders : $folders );
 
-	@folders
-		or $self->log(INTERNAL => "No folders specified.");
-
 	my $threads;
-	if(ref $type)
-	{	# Already prepared object.
-		$type->isa($base)
-			or $self->log(INTERNAL => "You need to pass a $base derived");
+	if(blessed $type)   # Already prepared object?
+	{	$type->isa($base)
+			or error __x"you need to pass a {base} derived threader, got {class}.", base => $base, class => ref $type;
 		$threads = $type;
 	}
 	else
 	{	# Create an object.  The code is compiled, which safes us the
 		# need to compile Mail::Box::Thread::Manager when no threads are needed.
 		eval "require $type";
-		$self->log(INTERNAL => "Unusable threader $type: $@") if $@;
+		$@ and error __x"unusable threader {class}: {errors}", class => $type, errors => $@;
 
 		$type->isa($base)
-			or $self->log(INTERNAL => "You need to pass a $base derived");
+			or error __x"threader {class} is not derived from {base}.", class => $type, base => $base;
 
 		$threads = $type->new(manager => $self, %args);
 	}

@@ -9,6 +9,8 @@ use parent 'Mail::Message';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 #--------------------
 =chapter NAME
 
@@ -47,7 +49,7 @@ a real message with the specified $message_id.
   my $message = Mail::Message::Dummy->new($msgid);
   if($message->isDummy) {...}
 
-=error Message-Id is required for a dummy.
+=error the messageId is required for a dummy.
 A dummy message occupies the place for a real message.  When a dummy is created,
 the id of the message which place it is holding must be known.
 
@@ -60,32 +62,28 @@ sub init($)
 	$self->SUPER::init($args);
 
 	exists $args->{messageId}
-		or $self->log(ERROR => "Message-Id is required for a dummy."), return undef;
+		or error __x"the messageId is required for a dummy.";
 
 	$self;
 }
 
 sub isDummy()    { 1 }
 
-=method head ...
-
-=error You cannot take the head/body of a dummy message
+=method head [$head]
+=error you cannot take the head/body of a dummy message.
 Dummy messages are place-holders in message threads: the thread detected
 the existence of the message, because it found the message-id in a
 Reply-To or References field, however it did not find the header and
 body of the message yet.  Use M<isDummy()> to check whether the thread
 node returned a dummy or not.
-
 =cut
 
-sub head()
-{	shift->log(ERROR => "You cannot take the head of a dummy message");
-	();
-}
+sub head(;$) { error __x"you cannot take the head of a dummy message." }
 
-sub body()
-{	shift->log(ERROR => "You cannot take the body of a dummy message");
-	();
-}
+=method body [$body]
+=error you cannot take the body of a dummy message.
+=cut
+
+sub body(;$) { error __x"you cannot take the body of a dummy message." }
 
 1;

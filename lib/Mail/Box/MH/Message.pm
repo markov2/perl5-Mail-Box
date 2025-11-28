@@ -9,8 +9,7 @@ use parent 'Mail::Box::Dir::Message';
 use strict;
 use warnings;
 
-use File::Copy;
-use Carp;
+use Log::Report      'mail-box';
 
 #--------------------
 =chapter NAME

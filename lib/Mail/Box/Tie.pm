@@ -8,8 +8,9 @@ package Mail::Box::Tie;
 use strict;
 use warnings;
 
-use Carp;
-use Scalar::Util   qw/blessed/;
+use Log::Report      'mail-box';
+
+use Scalar::Util     qw/blessed/;
 
 #--------------------
 =chapter NAME
@@ -42,13 +43,14 @@ look simpler than programs using the more traditional method calls.
 
 =c_method new $folder, $type
 Do not call this method directly, but via the tie interface.
+=error no folder specified to tie to.
 =cut
 
 sub new($$)
 {	my ($class, $folder, $type) = @_;
 
 	blessed $folder && $folder->isa('Mail::Box')
-        or croak "No folder specified to tie to.";
+        or error __x"no folder specified to tie to.";
 
 	bless +{ MBT_folder => $folder, MBT_type => $type }, $class;
 }

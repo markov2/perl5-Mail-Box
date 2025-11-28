@@ -9,7 +9,9 @@ use parent qw/User::Identity::Item Mail::Reporter/;
 use strict;
 use warnings;
 
-use Mail::Box::Collection;
+use Log::Report      'mail-box';
+
+use Mail::Box::Collection ();
 
 # tests in tests/52message/30collect.t
 
@@ -133,7 +135,7 @@ it is computed based on the knowledge about the folder type.  Be sure to set
 the location of the toplevel folder to the folderdir of the user to get
 this to work.
 
-=error Toplevel directory requires explicit location
+=error toplevel directory requires explicit location.
 =cut
 
 sub location(;$)
@@ -142,7 +144,7 @@ sub location(;$)
 	return $self->{MBI_location} if defined $self->{MBI_location};
 
 	my $parent = $self->parent
-		or $self->log(ERROR => "Toplevel directory requires explicit location"), return undef;
+		or error __x"toplevel directory requires explicit location.";
 
 	$self->folderType->nameOfSubFolder($self->name, $parent->parent->location)
 }
@@ -150,7 +152,7 @@ sub location(;$)
 
 =method folderType
 Returns the type of this folder.
-=error Toplevel directory requires explicit folder type
+=error toplevel directory requires explicit folder type.
 =cut
 
 sub folderType()
@@ -158,7 +160,7 @@ sub folderType()
 	return $self->{MBI_ftype} if defined $self->{MBI_ftype};
 
 	my $parent = $self->parent
-		or $self->log(ERROR => "Toplevel directory requires explicit folder type"), return undef;
+		or error __x"toplevel directory requires explicit folder type.";
 
 	$parent->parent->folderType;
 }
@@ -331,7 +333,7 @@ sub foreach($)
 Add a new folder into the administration.  With $data, a new object
 will be instantiated first.  The identity is returned on success.
 
-=error It is not permitted to add subfolders to $name
+=error it is not permitted to add subfolders to $folder.
 The M<inferiors()> flag prohibits the creation of subfolders to this
 folder.
 =cut
@@ -343,7 +345,7 @@ sub addSubfolder(@)
 	if(defined $subs) { ; }
 	elsif(!$self->inferiors)
 	{	my $name = $self->fullname;
-		$self->log(ERROR => "It is not permitted to add subfolders to $name");
+		error __x"it is not permitted to add subfolders to {folder}.", folder => $name;
 		return undef;
 	}
 	else
@@ -363,7 +365,7 @@ The removed structure is returned, which is undef if not
 found.  This is only an administrative remove, you still need a
 M<Mail::Box::Manager::delete()>.
 
-=error The toplevel folder cannot be removed this way
+=error the toplevel folder cannot be removed this way
 The Mail::Box::Identity folder administration structure requires
 a top directory.  That top is registered somewhere (for instance
 by a Mail::Box::Manage::User).  If you need to remove the top,
@@ -374,7 +376,7 @@ sub remove(;$)
 {	my $self = shift;
 
 	my $parent = $self->parent
-		or $self->log(ERROR => "The toplevel folder cannot be removed this way"), return ();
+		or error __x"the toplevel folder cannot be removed this way.";
 
 	@_ or return $parent->removeRole($self->name);
 

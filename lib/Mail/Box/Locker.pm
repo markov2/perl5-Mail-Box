@@ -9,7 +9,8 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
+
 use Scalar::Util     qw/weaken/;
 use Devel::GlobalDestruction qw/in_global_destruction/;
 
@@ -132,7 +133,8 @@ will always wait until the lock has been received.
 =default file undef
 Name of the $file to lock.  By default, the name of the folder is taken.
 
-=error no locking method $method defined: use @names
+=error failed to use locking module $class: $@
+=error no locking method $name defined: use @avail
 =cut
 
 my %lockers = (
@@ -148,26 +150,21 @@ my %lockers = (
 
 sub new(@)
 {	my ($class, %args) = @_;
-
-	$class eq __PACKAGE__
-		or return $class->SUPER::new(%args);
+	$class eq __PACKAGE__ or return $class->SUPER::new(%args);
 
 	# Try to figure out which locking method we really want (bootstrap)
 
 	my $method
 	  = ! defined $args{method}      ? 'DOTLOCK'
 	  : ref $args{method} eq 'ARRAY' ? 'MULTI'
-	  :   uc $args{method};
+	  :    uc $args{method};
 
-	my $create = $lockers{$method} || $args{$method};
-
-	local $"   = ' or ';
-	$create
-		or confess "no locking method $method defined: use @{[ keys %lockers ]}";
+	my $create = $lockers{$method} || $args{$method}
+		or error __x"no locking method {name} defined: use {avail}.", name => $method, avail => [ keys %lockers ];
 
 	# compile the locking module (if needed)
 	eval "require $create";
-	confess $@ if $@;
+	error __x"failed to use locking module {class}:\n{error}", class => $create, error => $@ if $@;
 
 	$args{use} = $args{method} if ref $args{method} eq 'ARRAY';
 	$create->SUPER::new(%args);
@@ -210,7 +207,7 @@ returned in upper-case.
 
 sub name { $_[0]->notImplemented }
 
-sub lockMethod($$$$) { confess "Method removed: use inheritance to implement own method." }
+sub lockMethod($$$$) { panic "Method removed: use inheritance to implement own method." }
 
 =method folder [$folder]
 Returns the folder object which is locker.
@@ -242,7 +239,7 @@ sub filename(;$) { my $self = shift; @_ ? $self->{MBL_filename} = shift : $self-
 Get a lock on a folder.  This will return false if the lock fails.
 
 =examples
-  die unless $locker->lock;
+  $locker->lock or die;
   if($folder->locker->lock) {...}
 =cut
 

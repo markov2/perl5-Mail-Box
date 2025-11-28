@@ -9,10 +9,9 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Mail::Message::Head::Subset;
+use Log::Report      'mail-box';
 
-use File::Copy;
-use Carp;
+use Mail::Message::Head::Subset ();
 
 #--------------------
 =chapter NAME
@@ -42,17 +41,17 @@ predefined, but more can be added without limitation.
 
 =c_method new %options
 
-=requires filename FILENAME
-The FILENAME which is used in each directory to store the headers of all
+=requires filename $file
+The $file which is used in each directory to store the headers of all
 mails. The filename must be an absolute path.
+
+=error MH labels require a filename.
 =cut
 
 sub init($)
 {	my ($self, $args) = @_;
 	$self->SUPER::init($args);
-	$self->{MBML_filename}  = $args->{filename}
-		or croak "No label filename specified.";
-
+	$self->{MBML_filename}  = $args->{filename} or error __x"MH labels require a filename.";
 	$self;
 }
 
@@ -78,7 +77,8 @@ sub get($)
 }
 
 =method read
-Read all label information from file.
+Read all label information from the file.  When the file does not exist,
+this will return undef.
 =cut
 
 sub read()
@@ -118,6 +118,8 @@ sub read()
 
 =method write @messages
 Write the labels related to the specified @messages to the label file.
+=fault cannot write MH labels file to $file: $!
+=fault error while closing MH labels file $file after write: $!
 =cut
 
 sub write(@)
@@ -130,9 +132,12 @@ sub write(@)
 		return $self;
 	}
 
-	open my $out, '>:raw', $filename or return;
+	open my $out, '>:raw', $filename
+		or fault __x"cannot write MH labels file to {file}", file => $filename;
+
 	$self->print($out, @_);
-	close $out;
+	close $out
+		or fault __x"error while closing MH labels file {file} after write", file => $filename;
 
 	$self;
 }
@@ -141,15 +146,21 @@ sub write(@)
 Append the label information about the specified $messages to the end
 of the label file.  The information will not be merged with the
 information already present in the label file.
+
+=fault cannot append to MH labels file $file: $!
+=fault error while closing MH labels file $file after append: $!
 =cut
 
 sub append(@)
 {	my $self     = shift;
 	my $filename = $self->filename;
 
-	open my $out, '>>:raw', $filename or return;
+	open my $out, '>>:raw', $filename
+		or fault __x"cannot append to MH labels file {file}", file => $filename;
+
 	$self->print($out, @_);
-	close $out;
+	close $out
+		or fault __x"error while closing MH labels file {file} after append", file => $filename;
 
 	$self;
 }

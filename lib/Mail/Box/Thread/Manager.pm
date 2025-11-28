@@ -9,10 +9,11 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Carp;
-use Mail::Box::Thread::Node   ();
-use Mail::Message::Dummy      ();
-use Scalar::Util              qw/blessed/;
+use Log::Report             'mail-box';
+
+use Mail::Box::Thread::Node ();
+use Mail::Message::Dummy    ();
+use Scalar::Util            qw/blessed/;
 
 #--------------------
 =chapter NAME
@@ -117,13 +118,13 @@ will cause many messages to be parsed. NOT IMPLEMENTED YET.
   $threads->includeFolder($inbox);
   $threads->includeFolder($read);
 
+=error thread manager needs a folder manager to work with.
 =cut
 
 sub init($)
 {	my ($self, $args) = @_;
-
 	$self->{MBTM_manager} = $args->{manager}
-		or croak "Need a manager to work with.";
+		or error __x"thread manager needs a folder manager to work with.";
 
 	$self->{MBTM_thread_body}= $args->{thread_body} // 0;
 	$self->{MBTM_thread_type}= $args->{thread_type} // 'Mail::Box::Thread::Node';
@@ -178,6 +179,7 @@ Messages of which the header is known only later will have to report this
 =example
   $threads->includeFolder($inbox, $draft);
 
+=error attempt to include a none folder: '$something'.
 =cut
 
 sub includeFolder(@)
@@ -186,7 +188,7 @@ sub includeFolder(@)
 
 	foreach my $folder (@_)
 	{	blessed $folder && $folder->isa('Mail::Box')
-			or croak "Not a folder: $folder";
+			or error __x"attempt to include a none folder: '{something EL(20)}'.", something => blessed $folder // $folder;
 
 		my $name = $folder->name;
 		next if exists $index->{$name};
@@ -205,6 +207,7 @@ organized in the threads maintained by this object.
 =example
   $threads->removeFolder($draft);
 
+=error attempt to remove a none folder: '{something}'.
 =cut
 
 sub removeFolder(@)
@@ -213,7 +216,7 @@ sub removeFolder(@)
 
 	foreach my $folder (@_)
 	{	blessed $folder && $folder->isa('Mail::Box')
-			or croak "Not a folder: $folder";
+			or error __x"attempt to remove a none folder: '{something EL(20)}'.", something => blessed $folder // $folder;
 
 		my $name = $folder->name;
 		delete $index->{$name} or next;
@@ -347,7 +350,6 @@ M<inThread()> and M<thread()> with a messages from the folder.
 
 Be warned that, each time a message's header is read from the folder,
 the return of the method can change.
-
 =cut
 
 sub known()
@@ -363,8 +365,8 @@ specified.
 
 sub sortedKnown(;$$)
 {	my $self    = shift;
-	my $prepare = shift || sub {shift->startTimeEstimate||0};
-	my $compare = shift || sub {(shift) <=> (shift)};
+	my $prepare = shift || sub { $_[0]->startTimeEstimate || 0 };
+	my $compare = shift || sub { $_[0] <=> $_[1] };
 
 	# Special care for double keys.
 	my %value;
@@ -530,7 +532,7 @@ sub outThread($)
 	my $msgid = $message->messageId;
 	my $node  = $self->msgById($msgid) or return $message;
 
-	$node->{MBTM_messages} = [ grep {$_ ne $message} @{$node->{MBTM_messages}} ];
+	$node->{MBTM_messages} = [ grep $_ ne $message, @{$node->{MBTM_messages}} ];
 	$self;
 }
 
@@ -547,8 +549,6 @@ sub createDummy($)
 }
 
 #--------------------
-=section Error handling
-
 =chapter DETAILS
 
 This module implements thread-detection on a folder.  Messages created

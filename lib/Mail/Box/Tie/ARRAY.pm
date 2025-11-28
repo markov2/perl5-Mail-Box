@@ -9,7 +9,8 @@ use parent 'Mail::Box::Tie';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
+
 use Scalar::Util   qw/blessed/;
 
 #--------------------
@@ -108,6 +109,8 @@ is also achievable with M<PUSH()>).
   $inbox[8]  = $add;
   $inbox[-1] = $add;
   push @inbox, $add;
+
+=error cannot simply replace messages in a folder: use delete old, then push new.
 =cut
 
 sub STORE($$)
@@ -115,7 +118,7 @@ sub STORE($$)
 	my $folder = $self->folder;
 
 	$index == $folder->messages
-		or croak "Cannot simply replace messages in a folder: use delete old, then push new.";
+		or error __x"cannot simply replace messages in a folder: use delete old, then push new.";
 
 	$folder->addMessages($msg);
 	$msg;

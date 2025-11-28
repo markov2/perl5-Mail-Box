@@ -9,6 +9,8 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use POSIX      qw/sys_wait_h/;
 
 #--------------------
@@ -51,42 +53,40 @@ sub lockfile() { $_[0]->filename . '.lock' }
 Returns the name of the external binary.
 =cut
 
-sub exe() { $_[0]->{MBLM_exe} }
+sub exe()      { $_[0]->{MBLM_exe} }
 
 #--------------------
 =section Locking
 
 =method unlock
-=warning Couldn't remove mutt-unlock $folder: $!
+=warning couldn't remove mutt-unlock $folder: $!
 =cut
 
 sub unlock()
 {	my $self = shift;
 	$self->hasLock or return $self;
 
-	unless(system $self->exe, '-u', $self->filename)
-	{	my $folder = $self->folder;
-		$self->log(WARNING => "Couldn't remove mutt-unlock $folder: $!");
-	}
+	system $self->exe, '-u', $self->filename
+		and warning __x"couldn't remove mutt-unlock {folder}", folder => $self->folder;
 
 	$self->SUPER::unlock;
 	$self;
 }
 
 =method lock
-=warning Folder $folder already mutt-locked
-=warning Removed expired mutt-lock $lockfile
-=error Failed to remove expired mutt-lock $lockfile: $!
+=warning folder $name already mutt-locked with $file.
+=fault   folder $name will never get a mutt-lock with $file: $!
+=warning removed expired mutt-lock file $file.
+=fault   failed to remove expired mutt-lock $file: $!
 =cut
 
 sub lock()
 {	my $self     = shift;
-	my $folder   = $self->folder;
+	my $filename = $self->filename;
 
 	$self->hasLock
-		and $self->log(WARNING => "Folder $folder already mutt-locked"), return 1;
+		and warning(__x"folder {name} already mutt-locked with {file}.", name => $self->folder, file => $filename), return 1;
 
-	my $filename = $self->filename;
 	my $lockfn   = $self->lockfile;
 
 	my $timeout  = $self->timeout;
@@ -97,17 +97,16 @@ sub lock()
 	while(1)
 	{
 		system $exe, '-p', '-r', 1, $filename
-			or return $self->SUPER::lock;
+			or return $self->SUPER::lock;   # success
 
 		WIFEXITED($?) && WEXITSTATUS($?)==3
-			or $self->log(ERROR => "Will never get a mutt-lock: $!"), return 0;
+			or fault __x"folder {name} will never get a mutt-lock with {file}", name => $self->folder, file => $filename;
 
 		if(-e $lockfn && -A $lockfn > $expire)
 		{	system $exe, '-f', '-u', $filename
-				and $self->log(WARNING => "Removed expired mutt-lock $lockfn"), redo;
+				and warning(__x"removed expired mutt-lock file {file}.", file => $lockfn), redo;
 
-			$self->log(ERROR => "Failed to remove expired mutt-lock $lockfn: $!");
-			last;
+			fault __x"failed to remove expired mutt-lock {file}", file => $lockfn;
 		}
 
 		--$end or last;

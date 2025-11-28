@@ -4,17 +4,19 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Mail::Message::Head::Subset;
-use base 'Mail::Message::Head';
+use parent 'Mail::Message::Head';
 
 use strict;
 use warnings;
+
+use Log::Report      'mail-box';
 
 use Object::Realize::Later
 	becomes        => 'Mail::Message::Head::Complete',
 	realize        => 'load',
 	believe_caller => 1;
 
-use Date::Parse qw/str2time/;
+use Date::Parse       qw/str2time/;
 
 #--------------------
 =chapter NAME

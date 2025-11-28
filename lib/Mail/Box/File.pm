@@ -9,6 +9,8 @@ use parent 'Mail::Box';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::File::Message       ();
 use Mail::Message::Body::Lines     ();
 use Mail::Message::Body::File      ();
@@ -16,7 +18,6 @@ use Mail::Message::Body::Delayed   ();
 use Mail::Message::Body::Multipart ();
 use Mail::Message::Head            ();
 
-use Carp;
 use File::Copy            qw/move/;
 use File::Spec::Functions qw/file_name_is_absolute catfile/;
 use File::Basename        qw/dirname basename/;
@@ -86,16 +87,13 @@ in memory, is implemented like this:
       'Mail::Message::Body::' . ($size > 10000 ? 'File' : 'Lines');
   }
 
-=error Cannot get a lock on $type folder $self.
-A lock is required to get access to the folder.  If no locking is needed,
-specify the NONE lock type.
-
-=warning Folder $name file $file is write-protected.
+=warning folder $name file $file is write-protected.
 The folder is opened writable or for appending via M<new(access)>,
 but the operating system does not permit writing to the $file.  The folder
 will be opened read-only.
 
-=info File $filename for folder $self does not exist.
+=notice source $file for folder $name does not exist.
+=error cannot get a lock on $type folder $name.
 =cut
 
 my $default_folder_dir = exists $ENV{HOME} ? $ENV{HOME} . '/Mail' : '.';
@@ -110,8 +108,7 @@ sub init($)
 	$args->{folderdir} ||= $default_folder_dir;
 	$args->{body_type} ||= \&_default_body_type;
 	$args->{lock_file} ||= '--';   # to be resolved later
-
-	$self->SUPER::init($args) or return;
+	$self->SUPER::init($args);
 
 	my $class    = ref $self;
 	my $filename = $self->{MBF_filename} = $self->folderToFilename($self->name, $self->folderdir);
@@ -119,7 +116,7 @@ sub init($)
 	if(-e $filename) {;}    # Folder already exists
 	elsif($args->{create} && $class->create($args->{folder}, %$args)) {;}
 	else
-	{	$self->log(PROGRESS => "File $filename for folder $self does not exist.");
+	{	notice "source {file} for folder {name} does not exist.", file => $filename, name => $self->name;
 		return;
 	}
 
@@ -142,11 +139,11 @@ sub init($)
 	}
 
 	$locker->lock
-		or $self->log(ERROR => "Cannot get a lock on $class folder $self."), return;
+		or error __x"cannot get a lock on {type} folder {name}.", type => $class, name => $self->name;
 
 	# Check if we can write to the folder, if we need to.
 	if($self->writable && ! -w $filename)
-	{	$self->log(WARNING => "Folder $self file $filename is write-protected.");
+	{	warning __x"folder {name} file {file} is write-protected.", name => $self->name, file => $filename;
 		$self->access('r');
 	}
 
@@ -156,12 +153,12 @@ sub init($)
 
 =ci_method create $foldername, %options
 
-=error Cannot create directory $dir for folder $name.
+=fault cannot create directory $dir for folder $name: $!
 While creating a file-organized folder, at most one level of directories
 is created above it.  Apparently, more levels of directories are needed,
 or the operating system does not allow you to create the directory.
 
-=error Cannot create folder file $name: $!
+=fault cannot create folder file $file: $!
 The file-organized folder file cannot be created for the indicated reason.
 In common cases, the operating system does not grant you write access to
 the directory where the folder file should be stored.
@@ -184,15 +181,15 @@ sub create($@)
 	}
 
 	-d $dir || mkdir $dir, 0755
-		or $class->log(ERROR => "Cannot create directory $dir for folder $name: $!"), return;
+		or fault __x"cannot create directory {dir} for folder $name: $!", dir => $dir, name => $name;
 
 	$class->moveAwaySubFolder($filename, $subext)
 		if -d $filename && defined $subext;
 
 	open my $create, '>:raw', $filename
-		or $class->log(WARNING => "Cannot create folder file $name: $!"), return;
+		or fault __x"cannot create folder file {file}", file => $filename;
 
-	$class->log(PROGRESS => "Created folder $name.");
+	trace "Created folder $name in $filename.";
 	$create->close or return;
 	$class;
 }
@@ -257,10 +254,9 @@ All %options of M<Mail::Box::Mbox::new()> can be supplied.
 =default lock_type C<NONE>
 See M<Mail::Box::new(lock_type)> for possible values.
 
-=error Cannot append messages to folder file $filename: $!
+=error cannot append messages to folder file $file: $!
 Appending messages to a not-opened file-organized folder may fail when the
 operating system does not allow write access to the file at hand.
-
 =cut
 
 sub appendMessages(@)
@@ -277,17 +273,13 @@ sub appendMessages(@)
 
 	my $filename = $folder->filename;
 	open my $out, '>>', $filename
-		or $class->log(ERROR => "Cannot append messages to folder file $filename: $!"), return ();
+		or fault __x"cannot append messages to folder file {file}.", file => $filename;
 
 	my $msgtype = $class.'::Message';
 	my @coerced;
 
 	foreach my $msg (@messages)
-	{	my $coerced
-		  = $msg->isa($msgtype) ? $msg
-		  : $msg->can('clone')  ? $msgtype->coerce($msg->clone)
-		  :   $msgtype->coerce($msg);
-
+	{	my $coerced = $msg->isa($msgtype) ? $msg : $msgtype->coerce($msg->can('clone') ? $msg->clone : $msg);
 		$coerced->write($out);
 		push @coerced, $coerced;
 	}
@@ -312,7 +304,6 @@ sub parser()
 	return $self->{MBF_parser} if defined $self->{MBF_parser};
 
 	my $source = $self->filename;
-
 	my $mode   = $self->access || 'r';
 	$mode      = 'r+' if $mode eq 'rw' || $mode eq 'a';
 
@@ -321,9 +312,7 @@ sub parser()
 		mode              => $mode,
 		trusted           => $self->isTrusted,
 		fix_header_errors => $self->fixHeaders,
-		$self->logSettings,
-	) or return;
-
+	);
 	$parser->pushSeparator('From ');
 	$parser;
 }
@@ -372,7 +361,7 @@ sub updateMessages(@)
 		$count++;
 	}
 
-	$self->log(PROGRESS => "Found $count new messages in $filename");
+	trace "found $count new messages in $filename";
 	$self;
 }
 
@@ -388,7 +377,7 @@ $type and $config, a new configuration is set.
 sub messageCreateOptions(@)
 {	my ($self, @options) = @_;
 	if(@options)
-	{	blessed($_) && ref($_) =~ m/^Mail::/ && weaken $_ for @options;
+	{	blessed $_ && (ref $_) =~ m/^Mail::/ && weaken $_ for @options;
 		$self->{MBF_create_options} = \@options;
 	}
 
@@ -400,14 +389,14 @@ The $directory is renamed by appending the $extension, which defaults to C<".d">
 to make place for a folder file on that specific location.  false is
 returned if this failed.
 
-=error Cannot move away sub-folder $dir
+=fault cannot move away sub-folder $dir: $!
 =cut
 
 sub moveAwaySubFolder($$)
 {	my ($self, $dir, $extension) = @_;
 
 	move $dir, $dir.$extension
-		or $self->log(ERROR => "Cannot move away sub-folder $dir"), return undef;
+		or fault __x"cannot move away sub-folder {dir}", dir => $dir;
 
 	$self;
 }
@@ -462,22 +451,18 @@ with permission of a normal user, you can only get it to work in C<INPLACE>
 mode.  Be warned that in this case folder locking via a lockfile is not
 possible as well.
 
-=warning Cannot remove folder $name file $filename: $!
-Writing an empty folder will usually cause that folder to be removed,
-which fails for the indicated reason.  M<new(remove_when_empty)>
-
-=warning Cannot remove folder $name file $filename: $!
+=warning cannot remove folder $name file $filename: $!
 Writing an empty folder will usually cause that folder to be removed,
 which fails for the indicated reason.  M<new(remove_when_empty)>
 controls whether the empty folder will removed; setting it to false
 (C<0>) may be needed to avoid this message.
 
-=error Unable to update folder $self.
+=error unable to update folder $name.
 When a folder is to be written, both replace and inplace write policies are
 tried,  If both fail, the whole update fails.  You may see other, related,
 error messages to indicate the real problem.
 
-=error File too short to get write message $nr ($size, $need)
+=error file $name too short to get write message $msgnr ($size < $expect)
 Mail::Box is lazy: it tries to leave messages in the folders until they
 are used, which saves time and memory usage.  When this message appears,
 something is terribly wrong: some lazy message are needed for updating the
@@ -489,7 +474,7 @@ This message does appear regularly on Windows systems when using the
 to do with Windows incorrectly handling multiple filehandles open in the
 same file.
 
-=error Cannot replace $filename by $tempname, to update folder $name: $!
+=fault cannot replace $to by $from to update folder $name: $!
 The replace policy wrote a new folder file to update the existing, but
 was unable to give the final touch: replacing the old version of the
 folder file for the indicated reason.
@@ -502,7 +487,7 @@ sub writeMessages($)
 	my $filename = $self->filename;
 	if( ! @{$args->{messages}} && $self->removeEmpty)
 	{	unlink $filename
-			or $self->log(WARNING => "Cannot remove folder $self file $filename: $!");
+			or warning __x"cannot remove folder {name} file {file}: {rc}", name => $self->name, file => $filename, rc => $!;
 		return $self;
 	}
 
@@ -517,7 +502,7 @@ sub writeMessages($)
 	  :    $self->_write_inplace($args);
 
 	$success
-		or $self->log(ERROR => "Unable to update folder $self."), return;
+		or error __x"unable to update folder {name}.", name => $self->name;
 
 #   $self->parser->restart;
 	$self;
@@ -534,7 +519,7 @@ sub _write_new($)
 	$_->write($new) for @$msgs;
 	$new->close or return 0;
 
-	$self->log(PROGRESS => "Wrote new folder $self with ".@$msgs."msgs.");
+	trace "Wrote new folder $self with ".@$msgs."msgs.";
 	1;
 }
 
@@ -574,7 +559,8 @@ sub _write_replace($)
 		my $size = $old->read($whole, $need);
 
 		$size == $need
-			or $self->log(ERROR => "File too short to get write message " . $message->seqnr. " ($size, $need)"), return 0;
+			or error __x"file {name} too short to get write message {msgnr} ({size} < {expect})",
+				msgnr => $message->seqnr, size => $size, expect => $need;
 
 		$new->print($whole);
 		$new->print($Mail::Message::crlf_platform ? "\r\n" : "\n");
@@ -596,12 +582,11 @@ sub _write_replace($)
 	}
 
 	unless(move $tmpnew, $filename)
-	{	$self->log(WARNING => "Cannot replace $filename by $tmpnew, to update folder $self: $!");
-		unlink $tmpnew;
-		return 0;
+	{	unlink $tmpnew;
+		fault __x"cannot replace {to} by {from} to update folder {name}", to => $filename, from => $tmpnew, name => $self->name;
 	}
 
-	$self->log(PROGRESS => "Folder $self replaced ($kept, $reprint)");
+	trace "folder $self replaced ($kept, $reprint)";
 	1;
 }
 
@@ -623,7 +608,7 @@ sub _write_inplace($)
 	}
 
 	if(@messages==0 && $msgnr==$self->messages)
-	{	$self->log(PROGRESS => "No changes to be written to $self.");
+	{	trace "No changes to be written to $self.";
 		return 1;
 	}
 
@@ -649,7 +634,7 @@ sub _write_inplace($)
 	unless(@messages)
 	{	# All further messages only are flagged to be deleted
 		$old->close or return 0;
-		$self->log(PROGRESS => "Folder $self shortened in-place ($kept kept)");
+		trace "Folder $self shortened in-place ($kept kept)";
 		return 1;
 	}
 
@@ -666,7 +651,7 @@ sub _write_inplace($)
 	}
 
 	$old->close or return 0;
-	$self->log(PROGRESS => "Folder $self updated in-place ($kept, $printed)");
+	trace "Folder $self updated in-place ($kept, $printed)";
 	1;
 }
 

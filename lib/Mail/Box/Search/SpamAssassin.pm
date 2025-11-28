@@ -9,6 +9,8 @@ use parent 'Mail::Box::Search';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::SpamAssassin;
 use Mail::Message::Wrapper::SpamAssassin;
 

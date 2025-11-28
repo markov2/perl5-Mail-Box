@@ -9,11 +9,12 @@ use parent 'Mail::Box::Dir';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::MH::Index   ();
 use Mail::Box::MH::Message ();
 use Mail::Box::MH::Labels  ();
 
-use Carp;
 use File::Spec::Functions  qw/rel2abs/;
 use File::Basename         qw/basename/;
 
@@ -120,7 +121,7 @@ sub init($)
 
 =ci_method create $foldername, %options
 
-=error Cannot create MH folder $name: $!
+=fault cannot create MH folder $name: $!
 For some reason, it is impossible to create the folder.  Check the permissions
 and the $name of the folder.  Does the path to the directory to be created
 exist?
@@ -135,9 +136,9 @@ sub create($@)
 	return $class if -d $directory;
 
 	mkdir $directory, 0700
-		or $class->log(ERROR => "Cannot create MH folder $name: $!"), return;
+		or fault __x"cannot create MH folder {name}", name => $name;
 
-	$class->log(PROGRESS => "Created folder $name.");
+	trace "Created folder $name.";
 	$class;
 }
 
@@ -243,15 +244,11 @@ sub topFolderWithMessages() { 1 }
 =c_method appendMessages %options
 Append a message to a folder which is not open.
 
-=error Cannot append message without lock on $folder.
+=error cannot append message without lock on $folder.
 It is impossible to append one or more messages to the folder which is
 not opened, because locking it fails.  The folder may be in use by
 an other application, or you may need to specify some lock related
 options (see M<new()>).
-
-=error Unable to write message for $folder to $filename: $!
-The new message could not be written to its new file, for the specific
-reason.
 =cut
 
 sub appendMessages(@)
@@ -266,20 +263,16 @@ sub appendMessages(@)
 	my $self     = $class->new(@_, access => 'r')
 		or return ();
 
-	my $directory= $self->directory;
-	-d $directory or return;
-
 	my $locker   = $self->locker;
 	$locker->lock
-		or $self->log(ERROR => "Cannot append message without lock on $self."), return;
+		or error __x"cannot append message without lock on {folder}.", folder => $self->name;
 
 	my $msgnr    = $self->highestMessageNumber +1;
 
+	my $directory= $self->directory;
 	foreach my $message (@messages)
 	{	my $filename = "$directory/$msgnr";
-		$message->create($filename)
-			or $self->log(ERROR => "Unable to write message for $self to $filename: $!\n");
-
+		$message->create($filename);
 		$msgnr++;
 	}
 
@@ -296,7 +289,7 @@ sub appendMessages(@)
 =section Sub-folders
 
 =method openSubFolder
-=warning Cannot create subfolder $name for $self: $!
+=fault cannot create directory $dir for subfolder $name: $!
 =cut
 
 sub openSubFolder($)
@@ -304,7 +297,7 @@ sub openSubFolder($)
 
 	my $subdir = $self->nameOfSubFolder($name);
 	-d $subdir || mkdir $subdir, 0755
-		or $self->log(WARNING => "Cannot create subfolder $name for $self: $!"), return;
+		or fault __x"cannot create directory {dir} for subfolder {name}", dir => $subdir, name => $name;
 
 	$self->SUPER::openSubFolder($name, @_);
 }
@@ -342,8 +335,7 @@ sub index()
 {	my $self  = shift;
 	$self->{MBM_keep_index} or return ();
 
-	$self->{MBM_index} //=
-		$self->{MBM_index_type}->new(filename => $self->{MBM_index_filename}, $self->logSettings);
+	$self->{MBM_index} //= $self->{MBM_index_type}->new(filename => $self->{MBM_index_filename});
 }
 
 =method labels
@@ -352,8 +344,7 @@ Create a label reader/writer object.
 
 sub labels()
 {	my $self = shift;
-	$self->{MBM_labels} //=
-		$self->{MBM_labels_type}->new(filename => $self->{MBM_labels_filename}, $self->logSettings);
+	$self->{MBM_labels} //= $self->{MBM_labels_type}->new(filename => $self->{MBM_labels_filename});
 }
 
 sub readMessageFilenames
@@ -394,14 +385,13 @@ sub readMessages(@)
 
 	my $body_type   = $args{body_delayed_type};
 	my $head_type   = $args{head_delayed_type};
-	my @log         = $self->logSettings;
 
 	foreach my $msgnr (@msgnrs)
 	{	my $msgfile = "$directory/$msgnr";
 
 		my $head;
 		$head       = $index->get($msgfile) if $index;
-		$head     ||= $head_type->new(@log);
+		$head     ||= $head_type->new;
 
 		my $message = $args{message_type}->new(
 			head       => $head,
@@ -413,7 +403,7 @@ sub readMessages(@)
 		my $labref  = $labels ? $labels->get($msgnr) : ();
 		$message->label(seen => 1, $labref ? @$labref : ());
 
-		$message->storeBody($body_type->new(@log, message => $message));
+		$message->storeBody($body_type->new(message => $message));
 		$self->storeMessage($message);
 	}
 
@@ -445,7 +435,7 @@ sub delete(@)
 Permit renumbering of message.  By default this is true, but for some
 unknown reason, you may be thinking that messages should not be renumbered.
 
-=error Cannot write folder $name without lock.
+=error cannot write folder $name without lock.
 It is impossible to get a lock on the folder, which means that the changes
 can not be made.  You may need to tune the lock related options which
 are available at folder creation.
@@ -453,6 +443,7 @@ are available at folder creation.
 
 sub writeMessages($)
 {	my ($self, $args) = @_;
+	my $renumber = exists $args->{renumber} ? $args->{renumber} : 1;
 
 	# Write each message.  Two things complicate life:
 	#   1 - we may have a huge folder, which should not be on disk twice
@@ -462,9 +453,8 @@ sub writeMessages($)
 
 	my $locker    = $self->locker;
 	$locker->lock
-		or $self->log(ERROR => "Cannot write folder $self without lock."), return;
+		or error __x"cannot write folder {name} without lock.", name => $self->name;
 
-	my $renumber  = exists $args->{renumber} ? $args->{renumber} : 1;
 	my $directory = $self->directory;
 	my @messages  = @{$args->{messages}};
 

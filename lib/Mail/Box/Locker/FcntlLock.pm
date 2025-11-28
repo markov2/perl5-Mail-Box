@@ -9,6 +9,8 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use File::FcntlLock  ();
 use Fcntl            qw/F_WRLCK F_SETLK F_UNLCK/;
 use Errno            qw/EAGAIN/;
@@ -67,13 +69,13 @@ sub _unlock($)
 
 =method lock
 
-=warning Folder $folder already lockf'd
+=warning folder $name already lockf'd.
 
-=error Unable to open FcntlLock lock file $file for $folder: $!
+=fault unable to open FcntlLock lock file $file for $folder
 For FcntlLock style locking, a $folder it must be opened, which does not
 succeed for the specified reason.
 
-=error Will never get a FcntlLock lock at $file for $folder: $!
+=fault Will never get a FcntlLock lock at $file for $folder: $!
 Tried to lock the $folder, but it did not succeed.  The error code received
 from the OS indicates that it will not succeed ever, so we do not need to
 try again.
@@ -85,17 +87,13 @@ sub lock()
 
 	if($self->hasLock)
 	{	my $folder = $self->folder;
-		$self->log(WARNING => "Folder $folder already lockf'd");
+		warning __x"folder {name} already lockf'd.", name => $folder;
 		return 1;
 	}
 
 	my $file = $self->filename;
-	open my $fh, '+<:raw', $file;
-	unless(defined $fh)
-	{	my $folder = $self->folder;
-		$self->log(ERROR => "Unable to open FcntlLock lock file $file for $folder: $!");
-		return 0;
-	}
+	open my $fh, '+<:raw', $file
+		or fault __x"unable to open FcntlLock lock file {file} for {folder}", file => $file, folder => $self->folder;
 
 	my $timeout = $self->timeout;
 	my $end     = $timeout eq 'NOTIMEOUT' ? -1 : $timeout;
@@ -107,11 +105,8 @@ sub lock()
 			return 1;
 		}
 
-		unless($!==EAGAIN)
-		{	my $folder = $self->folder;
-			$self->log(ERROR => "Will never get a FcntlLock lock on $file for $folder: $!");
-			last;
-		}
+		$!==EAGAIN
+			or fault __x"will never get a FcntlLock lock on {file} for {folder}", file => $file, folder => $self->folder;
 
 		--$end or last;
 		sleep 1;
@@ -122,7 +117,7 @@ sub lock()
 
 =method isLocked
 
-=error Unable to check lock file $file for $folder: $!
+=fault unable to check lock file $file for $folder: $!
 To check whether the filename is used to flock a folder, the file must be
 opened.  Apparently this fails, which does not mean that the folder is
 locked neither that it is unlocked.
@@ -130,13 +125,10 @@ locked neither that it is unlocked.
 
 sub isLocked()
 {	my $self = shift;
+
 	my $file = $self->filename;
-	open my $fh, '<:raw', $file;
-	unless($fh)
-	{	my $folder = $self->folder;
-		$self->log(ERROR => "Unable to check lock file $file for $folder: $!");
-		return 0;
-	}
+	open my $fh, '<:raw', $file
+		or fault __x"unable to check lock file {file} for {folder}", file => $file, folder => $self->folder;
 
 	$self->_try_lock($fh)==0 or return 0;
 	$self->_unlock($fh);

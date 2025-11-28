@@ -9,7 +9,7 @@ use parent 'Mail::Box::Message';
 use strict;
 use warnings;
 
-use Carp;
+use Log::Report      'mail-box';
 
 #--------------------
 =chapter NAME
@@ -68,36 +68,35 @@ sub loadHead()
 	$head->isDelayed or return $head;
 
 	my $folder   = $self->folder;
+
 	$folder->lazyPermitted(1);
-
-	my $parser   = $self->parser or return;
-	$self->readFromParser($parser);
-
+	$self->readFromParser($self->parser);
 	$folder->lazyPermitted(0);
 
-	$self->log(PROGRESS => 'Loaded delayed head.');
+	trace "Loaded delayed head for message ". $self->messageId;
 	$self->head;
 }
 
 =method loadBody
-=error Unable to read delayed head.
-=error Unable to read delayed body.
+=error unable to read delayed head for $msgid.
+=error unable to read delayed body for $msgid.
 =cut
 
 sub loadBody()
 {	my $self     = shift;
+	my $msgid    = $self->messageId;
 
 	my $body     = $self->body;
 	$body->isDelayed or return;
 
 	my $head     = $self->head;
-	my $parser   = $self->parser or return;
+	my $parser   = $self->parser;
 
 	if($head->isDelayed)
 	{	$head = $self->readHead($parser)
-			or $self->log(ERROR => 'Unable to read delayed head.'), return;
+			or error __x"unable to read delayed head for {msgid}.", msgid => $msgid;
 
-		$self->log(PROGRESS => 'Loaded delayed head.');
+		trace "Loaded delayed head for $msgid.";
 		$self->head($head);
 	}
 	else
@@ -106,9 +105,9 @@ sub loadBody()
 	}
 
 	my $newbody  = $self->readBody($parser, $head)
-		or $self->log(ERROR => 'Unable to read delayed body.'), return;
+		or error __x"unable to read delayed body for {msgid}.", msgid => $msgid;
 
-	$self->log(PROGRESS => 'Loaded delayed body.');
+	trace "Loaded delayed body for $msgid.";
 	$self->storeBody($newbody->contentInfoFrom($head));
 }
 

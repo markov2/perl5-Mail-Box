@@ -9,6 +9,8 @@ use parent 'Mail::Box::File';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use Mail::Box::Mbox::Message ();
 
 use File::Spec::Functions    qw/catdir catfile/;
@@ -62,7 +64,6 @@ If a directory is found on the location of the folder to be created, this
 STRING is used to extend that directory name with.  This will cause the
 directory to be seen as sub-folder for the created folder.  This argument
 is passed to M<folderToFilename()>.
-
 =cut
 
 sub create($@)
@@ -91,7 +92,7 @@ sub delete(@)
 
 sub writeMessages($)
 {	my ($self, $args) = @_;
-	$self->SUPER::writeMessages($args) or return;
+	$self->SUPER::writeMessages($args);
 
 	if($self->removeEmpty)
 	{	# Can the sub-folder directory be removed?  Don't mind if this

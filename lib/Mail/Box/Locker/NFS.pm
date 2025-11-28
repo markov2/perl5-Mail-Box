@@ -9,9 +9,10 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
-use Sys::Hostname;
-use Carp;
-use Fcntl  qw/O_CREAT O_WRONLY/;
+use Log::Report      'mail-box';
+
+use Sys::Hostname    qw/hostname/;
+use Fcntl            qw/O_CREAT O_WRONLY/;
 
 #--------------------
 =chapter NAME
@@ -85,28 +86,18 @@ sub _try_lock($$)
 	$linkcount == 2;
 }
 
-sub _unlock($$)
-{	my ($self, $tmpfile, $lockfile) = @_;
-
-	unlink $lockfile
-		or warn "Couldn't remove lockfile $lockfile: $!\n";
-
-	unlink $tmpfile;
-	$self;
-}
-
 =method lock
 
-=warning Folder $folder already locked over nfs
+=warning folder $name already locked over NFS.
 Do not try to lock the folder when the application already has the
 lock: it will give you dead-locks.
 
-=warning Removed expired lockfile $file
+=warning removed expired lockfile $file.
 A lock $file was found which was older than the expiration period as
 specified with M<new(timeout)>.  The lock file was successfully
 removed.
 
-=error Unable to remove expired lockfile $file: $!
+=fault unable to remove expired lockfile $file: $!
 A lock file was found which was older than the expiration period as
 specified with the M<new(timeout)> option.  It is impossible to remove that
 lock file, so we need to wait until it vanishes by some external cause.
@@ -118,7 +109,7 @@ sub lock()
 	my $folder   = $self->folder;
 
 	$self->hasLock
-		and $self->log(WARNING => "Folder $folder already locked over nfs"), return 1;
+		and warning(__x"folder {name} already locked over NFS.", name => $folder), return 1;
 
 	my $lockfile = $self->filename;
 	my $tmpfile  = $self->_construct_tmpfile or return;
@@ -128,9 +119,9 @@ sub lock()
 
 	if(-e $lockfile && -A $lockfile > $expires)
 	{	unlink $lockfile
-			or $self->log(ERROR => "Unable to remove expired lockfile $lockfile: $!"), return 0;
+			or fault __x"Unable to remove expired lockfile {file}", file => $lockfile;
 
-		$self->log(WARNING => "Removed expired lockfile $lockfile.");
+		warning __x"removed expired lockfile {file}.", file => $lockfile;
 	}
 
 	while(1)
@@ -156,6 +147,20 @@ sub isLocked()
 	$self->SUPER::unlock;
 
 	1;
+}
+
+=method unlock
+=fault couldn't remove lockfile $file: $!
+=cut
+
+sub _unlock($$)
+{	my ($self, $tmpfile, $lockfile) = @_;
+
+	unlink $lockfile
+		or fault __x"couldn't remove lockfile {file}", file => $lockfile;
+
+	unlink $tmpfile;
+	$self;
 }
 
 sub unlock($)

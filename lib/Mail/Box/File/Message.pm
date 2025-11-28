@@ -9,7 +9,9 @@ use parent 'Mail::Box::Message';
 use strict;
 use warnings;
 
-use List::Util   qw/sum/;
+use Log::Report      'mail-box';
+
+use List::Util       qw/sum/;
 
 #--------------------
 =chapter NAME
@@ -42,9 +44,7 @@ sub init($)
 {	my ($self, $args) = @_;
 	$self->SUPER::init($args);
 
-	$self->fromLine($args->{from_line})
-		if exists $args->{from_line};
-
+	$self->fromLine($args->{from_line}) if exists $args->{from_line};
 	$self;
 }
 #--------------------
@@ -72,8 +72,7 @@ sub fromLine(;$)
 
 sub coerce($)
 {	my ($self, $message) = @_;
-	return $message if $message->isa(__PACKAGE__);
-	$self->SUPER::coerce($message)->labelsToStatus;
+	$message->isa(__PACKAGE__) ? $message : $self->SUPER::coerce($message)->labelsToStatus;
 }
 
 =method write [$fh]
@@ -144,8 +143,7 @@ sub readFromParser($)
 	$self->{MBMM_from_line} = $fromline;
 	$self->{MBMM_begin}     = $start;
 
-	$self->SUPER::readFromParser($parser) or return;
-	$self;
+	$self->SUPER::readFromParser($parser);
 }
 
 sub loadHead() { $_[0]->head }
@@ -156,6 +154,7 @@ sub loadHead() { $_[0]->head }
 
 sub loadBody()
 {	my $self     = shift;
+
 	my $body     = $self->body;
 	$body->isDelayed or return $body;
 
@@ -163,10 +162,11 @@ sub loadBody()
 	my $parser   = $self->folder->parser;
 	$parser->filePosition($begin);
 
+	my $msgid    = $self->messageId;
 	my $newbody  = $self->readBody($parser, $self->head)
-		or $self->log(ERROR => 'Unable to read delayed body.'), return;
+		or error __x"unable to read delayed body for {msgid}", msgid => $msgid;
 
-	$self->log(PROGRESS => 'Loaded delayed body.');
+	trace "Loaded delayed body for $msgid";
 	$self->storeBody($newbody->contentInfoFrom($self->head));
 	$newbody;
 }

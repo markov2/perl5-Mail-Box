@@ -9,6 +9,8 @@ use parent 'Mail::Box::Dir::Message';
 use strict;
 use warnings;
 
+use Log::Report      'mail-box';
+
 use File::Copy              qw/move/;
 use File::Spec::Functions   qw/catfile/;
 
@@ -34,13 +36,13 @@ Mail::Box::Maildir folder. Each message is stored in a separate file.
 =section Attributes
 
 =method filename [$filename]
-
 Returns the current filename for this message.  If the $filename argument
 is specified, a new filename will be set.  For maildir messages this
 means that modifications are immediately performed: there will be
 a rename (move) from the old name to the new name.  Labels may change
 within in the message object as well.
 
+=fault cannot rename file $from to $to: $!
 =cut
 
 sub filename(;$)
@@ -52,8 +54,8 @@ sub filename(;$)
 	! defined $oldname || $oldname ne $newname
 		or return $newname;
 
-	my ($id, $semantics, $flags) = $newname
-		=~ m!(.*?)(?:\:([12])\,([A-Za-z]*))! ? ($1, $2, $3) : ($newname, '', '');
+	my ($id, $semantics, $flags) =
+		$newname =~ m!(.*?)(?:\:([12])\,([A-Za-z]*))! ? ($1, $2, $3) : ($newname, '', '');
 
 	my %flags;
 	$flags{$_}++ for split //, $flags;
@@ -70,7 +72,7 @@ sub filename(;$)
 	);
 
 	! defined $oldname || move $oldname, $newname
-		or $self->log(ERROR => "Cannot move $oldname to $newname: $!"), return undef;
+		or fault __x"cannot rename file {from} to {to}", from => $oldname, to => $newname;
 
 	$self->SUPER::filename($newname);
 }
@@ -112,6 +114,8 @@ When the labels on a message change, this may implicate a change in
 the message's filename.  The change will take place immediately.  The
 new filename (which may be the same as the old filename) is returned.
 undef is returned when the rename is required but fails.
+
+=fault cannot rename file $from to $to: $!
 =cut
 
 sub labelsToFilename()
@@ -141,9 +145,9 @@ sub labelsToFilename()
 
 	if($new ne $old)
 	{	move $old, $new
-			or $self->log(ERROR => "Cannot rename $old to $new: $!"), return;
+			or fault __x"cannot rename file {from} to {to}", from => $old, to => $new;
 
-		$self->log(PROGRESS => "Moved $old to $new.");
+		trace "Moved $old to $new.";
 		$self->SUPER::filename($new);
 	}
 
