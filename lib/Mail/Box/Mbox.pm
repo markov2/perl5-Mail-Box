@@ -49,10 +49,7 @@ our $default_sub_extension = '.d';
 
 sub init($)
 {	my ($self, $args) = @_;
-
-    # required during init
 	$self->{MBM_sub_ext} = $args->{subfolder_extension} || $default_sub_extension;
-
 	$self->SUPER::init($args);
 }
 

@@ -109,8 +109,8 @@ sub modified(;$)
 =method guessSize
 =cut
 
-sub isModified()  {0}
-sub isDelayed()   {1}
+sub isModified()  { 0 }
+sub isDelayed()   { 1 }
 sub isMultipart() { $_[0]->message->head->isMultipart }
 sub guessSize()   { $_[0]->{MMBD_size} }
 

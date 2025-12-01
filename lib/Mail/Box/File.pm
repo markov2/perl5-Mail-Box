@@ -92,7 +92,7 @@ The folder is opened writable or for appending via M<new(access)>,
 but the operating system does not permit writing to the $file.  The folder
 will be opened read-only.
 
-=notice source $file for folder $name does not exist.
+=error folder file $name does not exist.
 =error cannot get a lock on $type folder $name.
 =cut
 
@@ -116,8 +116,7 @@ sub init($)
 	if(-e $filename) {;}    # Folder already exists
 	elsif($args->{create} && $class->create($args->{folder}, %$args)) {;}
 	else
-	{	notice "source {file} for folder {name} does not exist.", file => $filename, name => $self->name;
-		return;
+	{	error __x"folder file {file} does not exist.", file => $filename;
 	}
 
 	$self->{MBF_policy}  = $args->{write_policy};
@@ -148,7 +147,8 @@ sub init($)
 	}
 
 	# Start parser if reading is required.
-	$self->access !~ m/r/ || $self->parser ? $self : undef;
+	$self->parser if $self->access =~ m/r/;
+	$self;
 }
 
 =ci_method create $foldername, %options
@@ -322,7 +322,6 @@ sub readMessages(@)
 
 	$self->messageCreateOptions(
 		$args{message_type},
-		$self->logSettings,
 		folder     => $self,
 		head_type  => $args{head_type},
 		field_type => $args{field_type},

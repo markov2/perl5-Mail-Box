@@ -1001,7 +1001,7 @@ sub modified(;$)
 	return
 		if $self->{MB_modified} = shift;    # force modified flag
 
-	# unmodify all messages
+	# Unmodify all messages as well
 	$_->modified(0) for $self->messages;
 	0;
 }

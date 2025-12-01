@@ -79,6 +79,8 @@ sub folder(;$)
 
 #--------------------
 =section Locking
+
+=method lock $file
 =fault lockfile $file can never be created: $!
 =cut
 

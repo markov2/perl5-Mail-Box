@@ -166,7 +166,7 @@ sub read(;$)
 	my $filename  = $self->filename;
 	my $parser    = Mail::Box::Parser->new(filename => $filename, mode => 'r') or return;
 
-	my @options   = ($self->logSettings, wrap_length => $self->{MBMI_head_wrap});
+	my @options   = (wrap_length => $self->{MBMI_head_wrap});
 	my $type      = $self->{MBMI_head_type};
 	my $index_age = -M $filename;
 	my %index;
