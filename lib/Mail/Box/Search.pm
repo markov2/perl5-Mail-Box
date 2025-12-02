@@ -40,12 +40,13 @@ Currently implemented searches:
 Match header or body against a regular expression in a UNIX C<grep> like
 fashion.
 
-=item Mail::Box::Search::SpamAssassin
-Try to detect spam, using Mail::SpamAssassin.
+=item C<Mail::Box::Search::SpamAssassin>
+The original implementation supported only SpamAssassin 2.x, and therefore
+this implementation was removed for Mail::Box 4.
 
-=item Mail::Box::Search::IMAP
+=item C<Mail::Box::Search::IMAP>
 Search an IMAP folder for special interface IMAP folders provide for it.
-UNDER CONSTRUCTION till Mail::Transport::IMAP4 is complete.
+Implementation not completed.
 
 =back
 

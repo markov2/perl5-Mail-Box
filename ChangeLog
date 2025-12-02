@@ -12,6 +12,7 @@ version 4.000:
 
 	Changes:
 	- use Mail::Box 4 exception model: use Log::Report
+	- remove SpamAssassin support; not used and out-dated.
 
 version 3.012:
 

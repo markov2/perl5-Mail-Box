@@ -1023,6 +1023,7 @@ sub isModified()
 	{	return $self->{MB_modified} = 1
 			if $msg->isDeleted || $msg->isModified;
 	}
+$self->{MB_modified} = first { $_->isModified } @{$self->{MB_messages}};
 
 	0;
 }

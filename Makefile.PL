@@ -94,7 +94,6 @@ my %requires = (
 	'Object::Realize::Later' => '4.000',
 
 # Currently, it seems to be wise not to depend on these
-#   Mail::SpamAssassin    split-off?
 #   File::FcntLock
 );
 
