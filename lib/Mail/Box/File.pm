@@ -9,7 +9,7 @@ use parent 'Mail::Box';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error fault trace warning/ ];
 
 use Mail::Box::File::Message       ();
 use Mail::Message::Body::Lines     ();

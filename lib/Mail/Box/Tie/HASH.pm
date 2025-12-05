@@ -9,7 +9,7 @@ use parent 'Mail::Box::Tie';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x warning/ ];
 
 #--------------------
 =chapter NAME

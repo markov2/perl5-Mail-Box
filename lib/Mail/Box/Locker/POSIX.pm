@@ -9,7 +9,7 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error fault warning/ ];
 
 use Fcntl   qw/F_WRLCK F_UNLCK F_SETLK/;
 use Errno   qw/EAGAIN/;

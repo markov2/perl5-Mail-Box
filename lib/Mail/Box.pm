@@ -9,7 +9,7 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error info mistake panic trace warning/ ];
 
 use Mail::Box::Message     ();
 use Mail::Box::Locker      ();

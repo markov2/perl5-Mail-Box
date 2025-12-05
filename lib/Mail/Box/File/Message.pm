@@ -9,7 +9,7 @@ use parent 'Mail::Box::Message';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error trace/ ];
 
 use List::Util       qw/sum/;
 

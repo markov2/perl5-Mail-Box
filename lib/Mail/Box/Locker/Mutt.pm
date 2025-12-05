@@ -9,7 +9,7 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x fault warning/ ];
 
 use POSIX      qw/sys_wait_h/;
 

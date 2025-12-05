@@ -9,7 +9,7 @@ use parent 'Mail::Box::Dir::Message';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/mistake warning/ ];
 
 #--------------------
 =chapter NAME

@@ -9,7 +9,7 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Log::Report             'mail-box';
+use Log::Report             'mail-box', import => [ qw/__x error/ ];
 
 use Mail::Box::Thread::Node ();
 use Mail::Message::Dummy    ();
@@ -179,7 +179,7 @@ Messages of which the header is known only later will have to report this
 =example
   $threads->includeFolder($inbox, $draft);
 
-=error attempt to include a none folder: '$something'.
+=error attempt to include a none folder: $what.
 =cut
 
 sub includeFolder(@)
@@ -188,7 +188,7 @@ sub includeFolder(@)
 
 	foreach my $folder (@_)
 	{	blessed $folder && $folder->isa('Mail::Box')
-			or error __x"attempt to include a none folder: '{something EL(20)}'.", something => blessed $folder // $folder;
+			or error __x"attempt to include a none folder: {what UNKNOWN}.", what => $folder;
 
 		my $name = $folder->name;
 		next if exists $index->{$name};
@@ -207,7 +207,7 @@ organized in the threads maintained by this object.
 =example
   $threads->removeFolder($draft);
 
-=error attempt to remove a none folder: '{something}'.
+=error attempt to remove a none folder: $something.
 =cut
 
 sub removeFolder(@)
@@ -216,7 +216,7 @@ sub removeFolder(@)
 
 	foreach my $folder (@_)
 	{	blessed $folder && $folder->isa('Mail::Box')
-			or error __x"attempt to remove a none folder: '{something EL(20)}'.", something => blessed $folder // $folder;
+			or error __x"attempt to remove a none folder: {what UNKNOWN}.", what => $folder;
 
 		my $name = $folder->name;
 		delete $index->{$name} or next;

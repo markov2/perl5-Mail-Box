@@ -8,7 +8,7 @@ use parent 'Exporter';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw// ];
 
 use File::Copy            qw/copy/;
 use List::Util            qw/first/;

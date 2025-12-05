@@ -8,7 +8,7 @@ package Mail::Box::Tie;
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error/ ];
 
 use Scalar::Util     qw/blessed/;
 

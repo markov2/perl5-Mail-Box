@@ -9,7 +9,7 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error/ ];
 
 #--------------------
 =chapter NAME
@@ -128,7 +128,7 @@ problems handling details received from the search.  When this flag
 is turned off, the body of multiparts will be ignored.  The parts
 search will include the preamble and epilogue.
 
-=error search in BODY, HEAD or MESSAGE not '$source'.
+=error search in BODY, HEAD or MESSAGE, not $what.
 The P<in> option offers only three alternatives.
 
 =error cannot search in header.
@@ -139,7 +139,7 @@ not search a message header.
 The search object does not implement M<inBody()>, and can therefore
 not search a message body.
 
-=error don't know how to deliver results in '$way'."
+=error don't know how to deliver results in $what.
 The search results cannot be delivered in the specific way, because that is
 not a defined alternative.
 
@@ -155,7 +155,7 @@ sub init($)
 	  = $in eq 'BODY'    ? (0,1)
 	  : $in eq 'HEAD'    ? (1,0)
 	  : $in eq 'MESSAGE' ? (1,1)
-	  :    error __x"search in BODY, HEAD or MESSAGE not '{source EL(30)}'.", source => ref $in // $in;
+	  :    error __x"search in BODY, HEAD or MESSAGE, not {what UNKNOWN}.", what => $in;
 
 	! $self->{MBS_check_head} || $self->can('inHead') or error __x"cannot search in header.";
 	! $self->{MBS_check_body} || $self->can('inBody') or error __x"cannot search in body.";
@@ -165,7 +165,7 @@ sub init($)
 	  = ref $deliver eq 'CODE' ? sub { $deliver->($self, $_[0]) }
 	  : !defined $deliver      ? undef
 	  : $deliver eq 'DELETE'   ? sub { $_[0]->{part}->toplevel->label(deleted => 1) }
-	  :    error __x"don't know how to deliver results in '{way EL(30)}'.", way => ref $deliver // $deliver;
+	  :    error __x"don't know how to deliver results in {what UNKNOWN}.", what => $deliver;
 
 	my $logic               = $args->{logical}  || 'REPLACE';
 	$self->{MBS_negative}   = $logic =~ s/\s*NOT\s*$//;
@@ -225,7 +225,7 @@ or C<1>, or when the search in done in scalar context.
   my $thread  = $message->threadStart;
   $grep->search($thread);
 
-=error expect messages to search, not '$got'.
+=error expect messages to search, not $what.
 =cut
 
 sub search(@)
@@ -239,7 +239,7 @@ sub search(@)
 	  : $object->isa('Mail::Box')     ? $object->messages
 	  : $object->isa('Mail::Message') ? ($object)
 	  : $object->isa('Mail::Box::Thread::Node') ? $object->threadMessages
-	  :   error __x"expect messages to search, not '{got EL(30)}'.", got => ref $object // $object;
+	  :   error __x"expect messages to search, not {what UNKNOWN}.", what => $object;
 
 	my $take = 0;
 	   if($limit < 0) { $take = -$limit; @messages = reverse @messages }

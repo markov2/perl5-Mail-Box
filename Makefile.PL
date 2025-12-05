@@ -88,6 +88,7 @@ my %requires = (
 	'POSIX'          => 0,
 	'Scalar::Util'   => 1.13,
 	'Sys::Hostname'  => 0.0,
+	'String::Print'  => '1.01',
 
 	'Mail::Message'          => '4.000',
 	'Mail::Transport'        => '4.000',

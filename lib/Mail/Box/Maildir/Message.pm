@@ -9,7 +9,7 @@ use parent 'Mail::Box::Dir::Message';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x fault info trace/ ];
 
 use File::Copy              qw/move/;
 use File::Spec::Functions   qw/catfile/;

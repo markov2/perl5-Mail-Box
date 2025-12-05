@@ -9,7 +9,7 @@ use parent 'Mail::Message::Head';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw// ];
 
 use Object::Realize::Later
 	becomes        => 'Mail::Message::Head::Complete',

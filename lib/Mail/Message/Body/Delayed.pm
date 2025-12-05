@@ -9,7 +9,7 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error/ ];
 
 use Object::Realize::Later
 	becomes          => 'Mail::Message::Body',

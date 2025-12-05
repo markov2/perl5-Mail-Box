@@ -9,7 +9,7 @@ use parent 'Mail::Reporter';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error panic/ ];
 
 use Scalar::Util     qw/weaken/;
 use Devel::GlobalDestruction qw/in_global_destruction/;

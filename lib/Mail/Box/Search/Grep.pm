@@ -9,7 +9,7 @@ use parent 'Mail::Box::Search';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/__x error info/ ];
 
 #--------------------
 =chapter NAME
@@ -105,9 +105,9 @@ tell the matching line in the body.
 Be warned that when you search in C<MESSAGE> the code must accept
 both formats.
 
-=error unsupported field selector '$take'.
+=error unsupported field selector $take.
 =error grep requires a match pattern.
-=error unsupported match pattern '$match'.
+=error unsupported match pattern $match.
 =cut
 
 sub init($)
@@ -131,7 +131,7 @@ sub init($)
 	  : !ref $take             ? do {$take = lc $take; sub { $_[1] eq $take }}
 	  :  ref $take eq 'Regexp' ? sub { $_[1] =~ $take }
 	  :  ref $take eq 'CODE'   ? $take
-	  :     error __x"unsupported field selector '{take EL(30)}'.", take => $take;
+	  :     error __x"unsupported field selector {take UNKNOWN}.", take => $take;
 
 	my $match = $args->{match}
 		or error __x"grep requires a match pattern.";
@@ -140,7 +140,7 @@ sub init($)
 	= !ref $match             ? sub { index("$_[1]", $match) >= $[ }
 	:  ref $match eq 'Regexp' ? sub { "$_[1]" =~ $match }
 	:  ref $match eq 'CODE'   ? $match
-	:     error __x"unsupported match pattern '{match EL(30)}'.", match => $match;
+	:     error __x"unsupported match pattern {match UNKNOWN}.", match => $match;
 
 	$self;
 }

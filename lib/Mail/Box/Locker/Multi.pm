@@ -9,7 +9,7 @@ use parent 'Mail::Box::Locker';
 use strict;
 use warnings;
 
-use Log::Report      'mail-box';
+use Log::Report      'mail-box', import => [ qw/trace try/ ];
 
 use Scalar::Util     qw/blessed/;
 
