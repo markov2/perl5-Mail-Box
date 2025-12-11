@@ -43,7 +43,7 @@ fashion.
 =item Mail::Box::Search::SpamAssassin
 Try to detect spam, using Mail::SpamAssassin.
 
-=item Mail::Box::Search::IMAP
+=item C<Mail::Box::Search::IMAP>
 Search an IMAP folder for special interface IMAP folders provide for it.
 UNDER CONSTRUCTION till Mail::Transport::IMAP4 is complete.
 
