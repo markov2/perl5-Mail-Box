@@ -80,25 +80,6 @@ sub folder(;$)
 #--------------------
 =section Locking
 
-=method lock $file
-=fault lockfile $file can never be created: $!
-=cut
-
-sub _try_lock($)
-{	my ($self, $lockfile) = @_;
-	return if -e $lockfile;
-
-	my $flags = $^O eq 'MSWin32' ?  O_CREAT|O_EXCL|O_WRONLY :  O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK;
-	my $lock;
-	sysopen $lock, $lockfile, $flags, 0600
-		and $lock->close, return 1;
-
-	$! == EEXIST
-		or fault __x"lockfile {file} can never be created", file => $lockfile;
-
-	1;
-}
-
 =method unlock
 =warning couldn't remove lockfile $file: $!
 =cut
@@ -121,7 +102,23 @@ sub unlock()
 =warning folder already locked with file $file
 =warning removed expired lockfile $file
 =fault failed to remove expired lockfile $file: $!
+=fault lockfile $file can never be created: $!
 =cut
+
+sub _try_lock($)
+{	my ($self, $lockfile) = @_;
+	return if -e $lockfile;
+
+	my $flags = $^O eq 'MSWin32' ?  O_CREAT|O_EXCL|O_WRONLY :  O_CREAT|O_EXCL|O_WRONLY|O_NONBLOCK;
+	my $lock;
+	sysopen $lock, $lockfile, $flags, 0600
+		and $lock->close, return 1;
+
+	$! == EEXIST
+		or fault __x"lockfile {file} can never be created", file => $lockfile;
+
+	1;
+}
 
 sub lock()
 {	my $self   = shift;

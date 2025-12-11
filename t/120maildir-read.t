@@ -124,7 +124,7 @@ my $mbox = Mail::Box::Mbox->new(
 );
 
 my @fsubjects = map { chomp; $_ }
-                   map {$_->head->get('subject') || '<undef>'}
+                   map { $_->head->get('subject') || '<undef>' }
                       $mbox->messages;
 
 $mbox->close;
@@ -150,7 +150,8 @@ my $body = $msg3->body;
 ok defined $body, '... has a body';
 cmp_ok @$body, "==", 42, '... expected nr lines';       # check expected number of lines in message 4.
 
-$folder1->close;
+# Some maildir messages are labeled as 'DELETED', so close() wants to write it.
+$folder1->close(write => 'NEVER');
 
 #
 # Now with partially lazy extract.
@@ -196,7 +197,6 @@ ok ! $mistake, '... no mistakes';
 cmp_ok $parsed , "==",  7, '... some parsed';
 cmp_ok $heads , "==",  9, '... all heads';
 
-warn '#4';
 $folder2->close;
 
 # No clean-dir: see how it behaves when the folder is not explictly

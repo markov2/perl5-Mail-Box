@@ -8,7 +8,9 @@ TODO: Mail::Box::Message::new(body_type) not used?
 #!!! number 3.  Use (at least) version 4 for new developments.
 #!!! Convert? See https://github.com/markov2/perl5-Mail-Box/wiki/
 
-version 4.000:
+version 4.01:
+
+version 4.00: Thu 11 Dec 14:03:32 CET 2025
 
 	Changes:
 	- use Mail::Box 4 exception model: use Log::Report

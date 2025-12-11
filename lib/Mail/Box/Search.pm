@@ -176,8 +176,8 @@ sub init($)
 	$self->{MBS_limit}      = $args->{limit}    || 0;
 	$self->{MBS_decode}     = $args->{decode}   || 1;
 	$self->{MBS_no_deleted} = not $args->{deleted};
-	$self->{MBS_delayed}    = defined $args->{delayed} ? $args->{delayed} : 1;
-	$self->{MBS_multiparts} = defined $args->{multiparts} ? $args->{multiparts} : 1;
+	$self->{MBS_delayed}    = exists $args->{delayed} ? $args->{delayed} : 1;
+	$self->{MBS_multiparts} = exists $args->{multiparts} ? $args->{multiparts} : 1;
 
 	$self;
 }

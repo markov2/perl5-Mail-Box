@@ -60,7 +60,7 @@ sub _unlock($)
 Acquire a lock on the folder.
 
 =warning folder $name already flocked.
-The $folder is already locked, but you attempt to lock it again.  The
+The folder is already locked, but you attempt to lock it again.  The
 behavior of double flock's is platform dependent, and therefore should
 not be attempted.  The second lock is ignored (but the unlock isn't).
 
@@ -110,7 +110,7 @@ sub lock()
 
 =method isLocked
 =fault unable to check lock file $file for $folder: $!
-To check whether the $filename is used to C<flock> a $folder, the file must be
+To check whether the $file is used to C<flock> a $folder, the file must be
 opened.  Apparently this fails, which does not mean that the folder is
 locked neither that it is unlocked.
 
