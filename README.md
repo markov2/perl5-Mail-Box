@@ -1,6 +1,7 @@
 # Distribution Mail-Box
 
-  * My extended documentation: <http://perl.overmeer.net/CPAN/>
+  * My extended documentation: <https://perl.overmeer.net/CPAN/>
+  * Browseable documentation of Mail-Box v3: <https://perl.overmeer.net/mailbox3/>
   * Development via GitHub: <https://github.com/markov2/perl5-Mail-Box>
   * Sponsor me: <https://markov.solutions/sponsor/index-en.html>
   * Download from CPAN: <ftp://ftp.cpan.org/pub/CPAN/authors/id/M/MA/MARKOV/>
@@ -32,7 +33,9 @@ On github, you can find the processed version for each release.  But the
 better source is CPAN; to get it installed simply run:
 
 ```sh
-   cpan -i Mail::Box
+  cpanm Mail::Box~<4      # most recent maintenance release
+  cpanm Mail::Box@3.013   # specific function
+  cpanm git://github.com/markov2/perl5-Mail-Box.git@maint3  
 ```
 
 ## Contributing
