@@ -9,6 +9,9 @@ TODO: Mail::Box::Message::new(body_type) not used?
 
 version 3.013:
 
+	Fixes:
+	- optional modules -> recommends.
+
 	Improvements:
 	- explain how to install maintenance releases.
 	- produce html docs in html3
