@@ -10,6 +10,9 @@ TODO: Mail::Box::Message::new(body_type) not used?
 
 version 4.01:
 
+	Fixes:
+	- optional modules -> recommends
+
 version 4.00: Thu 11 Dec 14:03:32 CET 2025
 
 	Changes:

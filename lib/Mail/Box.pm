@@ -70,7 +70,7 @@ That page is obligatory reading, sorry!
 B<Be aware:>
 This module versions 4.0 and up is not fully compatible with older releases:
 mainly the exception handling has changed.  When you need to upgrade, please
-read F<https://github.com/markov2/perl5-Mail-Box/wiki/>
+read L<the wiki|https://github.com/markov2/perl5-Mail-Box/wiki/>.
 B<Version 3 is still maintained> and may see new releases as well.
 
 C<Mail::Box> is the base class for accessing various types of mailboxes
@@ -82,6 +82,7 @@ file within the same directory.
 
 No object in your program will be of type C<Mail::Box>: it is only used
 as base class for the real folder types.  C<Mail::Box> is extended by
+file, directory, and remote folder types.  See L</Different kinds of folders>
 
 =cut
 
@@ -140,19 +141,15 @@ we want delay-loading.
 =default access C<'r'>
 Access-rights to the folder.  Folders are opened for read-only (which
 means write-protected) by default!  The $mode can be
-=over 4
-=item C<'r'>: read-only (default)
-=item C<'a'>: append
-=item C<'rw'>: read-write
-=item C<'d'>: delete
-=back
+C<'r'> (read-only, default), C<'a'> (append only), C<'rw'> (read-write),
+and C<'d'> (delete only).
 
-These MODE has no relation to the modes actually used to open the folder
-files within this module.  For instance, if you specify C<"rw">, and
-open the folder, only read permission on the folder-file is required.
+This $mode describes the abstract folder access: how the underlaying files are
+really accessed depends on the action which needs to take place.
 
-Be warned: writing a MBOX folder may create a new file to replace the old
-folder.  The permissions and owner of the file may get changed by this.
+Be warned: writing a MBOX type folder may create a new file to replace
+the old folder.  The permissions and owner of the file may get changed
+by this.
 
 =option  create BOOLEAN
 =default create false
@@ -213,7 +210,7 @@ not trused by default, and require some extra checking.
 If you do not check encodings of received messages, you may print
 binary data to the screen, which is a security risk.
 
-=option  extract INTEGER | CODE | METHOD | 'LAZY'| 'ALWAYS'
+=option  extract INTEGER|CODE|METHOD|'LAZY'|'ALWAYS'
 =default extract C<10240>
 Defines when to parse (process) the content of the message.
 When the header of a message is read, you may want to postpone the
