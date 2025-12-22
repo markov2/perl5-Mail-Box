@@ -672,9 +672,9 @@ sub folderToFilename($$;$)
 sub tmpNewFolder($) { $_[0]->filename . '.tmp' }
 
 #--------------------
-=section DETAILS
+=chapter DETAILS
 
-=subsection File based folders
+=section File based folders
 
 File based folders maintain a folder (a set of messages) in one
 single file.  The advantage is that your folder has only one

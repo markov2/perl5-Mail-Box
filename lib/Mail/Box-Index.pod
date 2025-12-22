@@ -1,7 +1,5 @@
-
-=encoding utf8
-
 =pod
+=encoding utf8
 
 =chapter NAME
 

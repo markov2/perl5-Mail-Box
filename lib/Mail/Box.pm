@@ -333,17 +333,17 @@ Mail::Message::Head::Complete.
 The headers which are delayed: which will be read from file when it
 is needed, but not before.
 
-=option  lock_type CLASS|STRING|ARRAY
+=option  lock_type $class|$name|\@names
 =default lock_type Mail::Box::Locker::DotLock
-The type of the locker object.  This may be the full name of a CLASS
-which extends Mail::Box::Locker, or one of the known locker types
+The type of the locker object.  This may be a $class
+which extends Mail::Box::Locker, or one of the known locker types by $name:
 C<DotLock>, C<Flock>, C<FcntlLock>, C<Mutt>, C<NFS>, C<POSIX>, or C<NONE>.
 If an ARRAY is specified, then a Multi locker is built which uses the
-specified list.
+specified list of locker @names.
 
-=option  locker OBJECT
+=option  locker $locker
 =default locker undef
-An OBJECT which extends Mail::Box::Locker, and will handle folder locking
+An object which extends Mail::Box::Locker, and will handle folder locking
 replacing the default lock behavior.
 
 =option  lock_file $file
