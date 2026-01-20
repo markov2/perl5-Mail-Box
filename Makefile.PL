@@ -52,21 +52,23 @@ my %oodist   = (
 		publish        => "$publish/raw",
 	},
 
-	generate => [
-	  {	format         => 'pod3',
+	generate => [ {
+		format         => 'pod3',
 		podtail        => undef,
-	  },
-	  {	format         => 'html',
+	  }, {
+		format         => 'html',
 		webpages       => "$webpages/mailbox/html",
 		publish        => "$publish/htmlpkg",
 		docroot        => "/mailbox/html",
 		templates      => "html",
 		stylesheet     => "/oodoc.css",
-	  },
-	  {	export         => 'website',
+	  }, {
+		export         => 'website',
 		serializer     => 'json',
 		markup         => 'html',
 		publish        => "$publish/doctree",
+		meta           => {
+			main_manual => 'Mail::Box',
 	  },
 	],
 );
