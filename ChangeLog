@@ -15,6 +15,7 @@ version 3.013:
 	Improvements:
 	- explain how to install maintenance releases.
 	- produce html docs in html3
+	- reorg of Mail::Box Synopsis
 
 version 3.012: Thu 27 Nov 14:16:04 CET 2025
 
