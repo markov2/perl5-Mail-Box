@@ -25,37 +25,36 @@ Mail::Box - manage a mailbox, a folder with messages
 
 =chapter SYNOPSIS
 
+  use Mail::Mbox::Mbox ();
+  my $emails = Mail::Mbox::Mbox->new(folder => $ENV{MAIL});
+  print $folder->name;
+
+  print $folder->message(0);    # get the first message.
+  $folder->message(3)->delete;  # delete the third message
+  say "Folder size = ", $folder->nrMessages;
+
+  # Iterate over the messages.
+  foreach my $msg ($folder->messages) {...} # all messages
+  foreach my $msg (@$folder) {...}          # all messages
+
+  $folder->addMessage(Mail::Message->new(...));
+
+Managing multiple mailboxes:
+
   use Mail::Box::Manager;
   my $mgr    = Mail::Box::Manager->new;
   my $folder = $mgr->open(folder => $ENV{MAIL}, ...);
-  print $folder->name;
-
-  # Get the first message.
-  print $folder->message(0);
-
-  # Delete the third message
-  $folder->message(3)->delete;
-
-  # Get the number of messages in scalar context.
-  my $emails = $folder->messages;
-
-  # Iterate over the messages.
-  foreach ($folder->messages) {...} # all messages
-  foreach (@$folder) {...}          # all messages
-
-  $folder->addMessage(Mail::Box::Message->new(...));
 
 Tied-interface:
 
-  tie my(@inbox), 'Mail::Box::Tie::ARRAY', $inbox;
+  tie my(@inbox), 'Mail::Box::Tie::ARRAY', $folder;
+  tie my(%inbox), 'Mail::Box::Tie::HASH', $inbox;
 
   # Four times the same:
   $inbox[3]->print;                 # tied
   $folder->[3]->print;              # overloaded folder
   $folder->message(3)->print;       # usual
   print $folder->[3];               # overloaded message
-
-  tie my(%inbox), 'Mail::Box::Tie::HASH', $inbox;
 
   # Twice times the same
   $inbox{$msgid}->print;            # tied

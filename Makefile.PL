@@ -69,6 +69,7 @@ my %oodist   = (
 		publish        => "$publish/doctree",
 		meta           => {
 			main_manual => 'Mail::Box',
+		},
 	  },
 	],
 );
