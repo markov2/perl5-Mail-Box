@@ -8,7 +8,7 @@ print "Content-Type: text/html\r\n\r\n";
 # Get the question
 
 my $to = $ENV{QUERY_STRING} || '';
-my ($manual, $unique) = $to =~ m/([\w:%]+)\&(\d+)/;
+my ($manual, $unique) = $to =~ m/([\w:%]+)\&(id\d+)/;
 $manual =~ s/\%[a-fA-F0-9]{2}/chr hex $1/ge;
 
 # Contact the database

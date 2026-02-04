@@ -88,7 +88,7 @@ file, directory, and remote folder types.  See L</Different kinds of folders>
 #--------------------
 =chapter OVERLOADED
 
-=overload @{} use as ARRAY
+=overload '@{}' use as ARRAY
 When the folder is used as if it is a reference to an array, it will
 show the messages, like M<messages()> and M<message()> would do.
 
@@ -100,7 +100,7 @@ show the messages, like M<messages()> and M<message()> would do.
   foreach my $msg (@$folder) ...
   foreach my $msg ($folder->messages) ... # same
 
-=overload "" stringification
+=overload '""' stringification
 The folder objects stringify to their name.  This simplifies especially
 print statements and sorting a lot.
 
