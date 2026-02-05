@@ -223,7 +223,7 @@ sub defaultFolderType()
 }
 
 =method threads [@params]
-[3.012] return the descovered threads (cached value).  When any @params are passed, then
+return the descovered threads (cached value).  When any @params are passed, then
 M<discoverThreads()> will be called for backwards compatibility.
 =cut
 
@@ -842,8 +842,8 @@ sub moveMessage(@)
 =section Manage message threads
 
 =method discoverThreads [@folders], %options
-[3.012] Create a new Mail::Box::Thread::Manager object which collects
-the message threads found in the combined specified @folders.
+Create a new Mail::Box::Thread::Manager object which collects the message
+threads found in the combined specified @folders.
 
 All other %options are passed to M<Mail::Box::Thread::Manager::new()>.
 
