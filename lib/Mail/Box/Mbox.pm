@@ -8,6 +8,7 @@ use parent 'Mail::Box::File';
 
 use strict;
 use warnings;
+use utf8;
 
 use Log::Report      'mail-box', import => [ qw// ];
 
@@ -183,9 +184,9 @@ sub openRelatedFolder(@)
 
 =ci_method folderToFilename $foldername, $folderdir, [$extension]
 Translate a folder name into a filename, using the
-$folderdir value to replace a leading C<=>.  If no $extension is specified and
+$folderdir value to replace a leading “C<< = >>”.  If no $extension is specified and
 this method is called as instance method, new(subfolder_extension) is used.
-Otherwise, the extension default to C<'.d'>.
+Otherwise, the extension default to “C<.d>”.
 =cut
 
 sub folderToFilename($$;$)
@@ -210,7 +211,7 @@ sub folderToFilename($$;$)
 =c_method foundIn [$foldername], %options
 If no $foldername is specified, then the value of the P<folder> option
 is taken.  A mbox folder is a file which starts with a separator
-line: a line with C<'From '> as first characters.  Blank lines which
+line: a line with “C<From␣>” as first characters.  Blank lines which
 start the file are ignored, which is not for all MUA's acceptable.
 
 =option  folder $name

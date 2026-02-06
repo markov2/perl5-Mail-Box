@@ -8,6 +8,7 @@ use parent 'Mail::Box';
 
 use strict;
 use warnings;
+use utf8;
 
 use Log::Report      'mail-box', import => [ qw/__x error warning/ ];
 
@@ -137,7 +138,7 @@ sub nameOfSubFolder($;$)
 
 =method folderToDirectory $foldername, $folderdir
 (class method)  Translate a foldername into a filename, with use of the
-$folderdir to replace a leading C<=>.
+$folderdir to replace a leading “C<< = >>”.
 =cut
 
 sub folderToDirectory($$)

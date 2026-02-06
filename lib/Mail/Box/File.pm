@@ -8,6 +8,7 @@ use parent 'Mail::Box';
 
 use strict;
 use warnings;
+use utf8;
 
 use Log::Report      'mail-box', import => [ qw/__x error fault trace warning/ ];
 
@@ -384,7 +385,7 @@ sub messageCreateOptions(@)
 }
 
 =method moveAwaySubFolder $directory, $extension
-The $directory is renamed by appending the $extension, which defaults to C<".d">,
+The $directory is renamed by appending the $extension, which defaults to “C<.d>”,
 to make place for a folder file on that specific location.  false is
 returned if this failed.
 
@@ -582,7 +583,8 @@ sub _write_replace($)
 
 	unless(move $tmpnew, $filename)
 	{	unlink $tmpnew;
-		fault __x"cannot replace {to} by {from} to update folder {name}", to => $filename, from => $tmpnew, name => $self->name;
+		fault __x"cannot replace {to} by {from} to update folder {name}",
+			to => $filename, from => $tmpnew, name => $self->name;
 	}
 
 	trace "folder $self replaced ($kept, $reprint)";
@@ -656,17 +658,13 @@ sub _write_inplace($)
 
 =ci_method folderToFilename $foldername, $folderdir, [$subext]
 Translate a $foldername into a filename, using the $folderdir value
-to replace a leading C<=>.  The optional $subext is only used for MBOX
+to replace a leading “C<<= >>”.  The optional $subext is only used for MBOX
 folders.
 =cut
 
 sub folderToFilename($$;$)
 {	my ($thing, $name, $folderdir) = @_;
-
-	substr $name, 0, 1, $folderdir
-		if substr $name, 0, 1 eq '=';
-
-	$name;
+	$name =~ s/^\=/$folderdir/r;
 }
 
 sub tmpNewFolder($) { $_[0]->filename . '.tmp' }

@@ -8,6 +8,7 @@ use parent 'Mail::Reporter';
 
 use strict;
 use warnings;
+use utf8;
 
 use Log::Report      'mail-box', import => [ qw/__x error info mistake panic trace warning/ ];
 
@@ -161,21 +162,21 @@ explicitly specify M<Mail::Box::Manager::open(type)>.
 =option  folder $name
 =default folder C<$ENV{MAIL}>
 Which folder to open (for reading or writing). When used for reading (the
-P<access> option set to C<"r"> or C<"a">) the mailbox should already exist
+P<access> option set to “C<r>” or “C<a>”) the mailbox should already exist
 and must be readable. The file or directory of the mailbox need not exist if it
-is opened for reading and writing (C<"rw">).  Write-permission is checked when
+is opened for reading and writing (“C<rw>”).  Write-permission is checked when
 opening an existing mailbox.
 
-The folder name can be preceded by a C<"=">, to indicate that it is named
+The folder name can be preceded by a “C<< = >>”, to indicate that it is named
 relative to the directory specified in new(folderdir).  Otherwise, it is
 taken as relative or absolute path.
 
 =option  folderdir $directory
 =default folderdir undef
 Where are folders to be found by default?  A folder-name may be preceded by
-a equals-sign (C<=>, a C<mutt> convension) to explicitly state that the folder
+a equals-sign (“C<< = >>”, a C<mutt> convension) to explicitly state that the folder
 is located below the default directory.  For example: in case
-C<folderdir =E<gt> '/tmp'> and C<folder =E<gt> '=abc'>, the name of the
+“C<< folderdir => '/tmp'>>” and “C<< folder => '=abc' >>”, the name of the
 folder-file is C<'/tmp/abc'>.  Each folder type has already some default set.
 
 =option  keep_dups BOOLEAN
@@ -202,7 +203,7 @@ messages nor sub-folders.
 =default trusted <depends on folder location>
 Flags whether to trust the data in the folder or not.  Folders which
 reside in your P<folderdir> will be trusted by default (even when the
-names if not specified staring with C<=>).  Folders which are outside
+names if not specified staring with “C<< = >>”).  Folders which are outside
 the folderdir or read from STDIN (M<Mail::Message::Construct::read()>) are
 not trused by default, and require some extra checking.
 
@@ -317,17 +318,17 @@ no folder at all).
 Messages which are coerced are always fully read, so this kind of information
 does not need to be kept here.
 
-=option  field_type CLASS
+=option  field_type $class
 =default field_type undef
 The type of the fields to be used in a header. Must extend
 Mail::Message::Field.
 
-=option  head_type CLASS
+=option  head_type $class
 =default head_type Mail::Message::Head::Complete
 The type of header which contains all header information.  Must extend
 Mail::Message::Head::Complete.
 
-=option  head_delayed_type CLASS
+=option  head_delayed_type $class
 =default head_delayed_type Mail::Message::Head::Delayed
 The headers which are delayed: which will be read from file when it
 is needed, but not before.
@@ -365,12 +366,12 @@ How many $seconds to wait before failing on opening this folder.
 A reference to the object which manages this folder -- typically an
 Mail::Box::Manager instance.
 
-=option  message_type CLASS
+=option  message_type $class
 =default message_type <folder-class>::Message
 What kind of message objects are stored in this type of folder.  The
 default is constructed from the folder class followed by C<::Message>.
-For instance, the message type for C<Mail::Box::POP3> is
-C<Mail::Box::POP3::Message>
+For instance, the message type for Mail::Box::POP3 is
+Mail::Box::POP3::Message.
 
 =option  fix_headers BOOLEAN
 =default fix_headers false
@@ -1537,7 +1538,7 @@ sub read(@)
 
 	# Read from existing folder.
 	$self->readMessages(
-		trusted      => $self->{MB_trusted},
+		trusted      => $self->isTrusted,
 		head_type    => $self->{MB_head_type},
 		field_type   => $self->{MB_field_type},
 		message_type => $self->{MB_message_type},
@@ -1687,7 +1688,7 @@ create flag, or M<Mail::Box::new(create)>.
 
 =option  folderdir $directory
 =default folderdir undef
-When the foldername is preceded by a C<=>, the $directory
+When the foldername is preceded by a “C<< = >>”, the $directory
 will be searched for the named folder.
 =cut
 
@@ -1708,7 +1709,7 @@ each folder class will at least support the P<folderdir> option:
 =option  folderdir $directory
 =default folderdir undef
 The location where the folders of this class are stored by default.  If the
-user specifies a name starting with a C<=>, that indicates that the folder is
+user specifies a name starting with a “C<< = >>”, that indicates that the folder is
 to be found in this default $directory.
 
 =examples
