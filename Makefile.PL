@@ -93,7 +93,7 @@ my %requires = (
 	'Sys::Hostname'  => 0.0,
 	'String::Print'  => '1.01',
 
-	'Mail::Message'          => '4.00',
+	'Mail::Message'          => '4.05',
 	'Mail::Transport'        => '4.00',
 	'Object::Realize::Later' => '4.00',
 
